@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python \"C:\\\\Users\\\\Hi\\\\AppData\\\\Roaming\\\\Claude\\\\local-agent-mode-sessions\\\\skills-plugin\\\\f9adebac-9714-4be8-aee6-c4492249b172\\\\b8001212-8344-4c4f-a7b5-1a01b4589b36\\\\skills\\\\docx\\\\scripts\\\\office\\\\unpack.py\" \"C:\\\\Users\\\\Hi\\\\Downloads\\\\PRD_Christian_Event_Platform.docx\" \"C:\\\\Users\\\\Hi\\\\Downloads\\\\prd_unpacked\")",
+      "Bash(where python3:*)",
+      "Bash(where python:*)",
+      "Bash(where py:*)",
+      "Bash(ls /c/Python*)",
+      "Read(//c/Users/Hi/AppData/Local/Programs/**)",
+      "Bash(node -e ':*)",
+      "Bash(cd /tmp)",
+      "Bash(npm install:*)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --yes)",
+      "Read(//c/Users/Hi/Desktop/**)",
+      "Bash(npx create-next-app@latest gospello-app --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --yes)",
+      "Bash(cp -r \"C:\\\\Users\\\\Hi\\\\Desktop\\\\gospello-app/.\" \"C:\\\\Users\\\\Hi\\\\Desktop\\\\Gospello/\")",
+      "Bash(rm -rf \"C:\\\\Users\\\\Hi\\\\Desktop\\\\gospello-app\")",
+      "Bash(npm run:*)"
+    ]
+  }
+}

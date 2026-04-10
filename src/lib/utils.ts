@@ -1,0 +1,73 @@
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    + '-' + Math.random().toString(36).substring(2, 7)
+}
+
+export function formatDate(dateStr: string, options?: Intl.DateTimeFormatOptions): string {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-NG', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    ...options,
+  })
+}
+
+export function formatTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleTimeString('en-NG', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export function isThisWeekend(dateStr: string): boolean {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const dayOfWeek = now.getDay() // 0 = Sunday
+  const daysUntilFriday = (5 - dayOfWeek + 7) % 7
+  const friday = new Date(now)
+  friday.setDate(now.getDate() + daysUntilFriday)
+  friday.setHours(0, 0, 0, 0)
+  const sunday = new Date(friday)
+  sunday.setDate(friday.getDate() + 2)
+  sunday.setHours(23, 59, 59, 999)
+  return date >= friday && date <= sunday
+}
+
+export function isThisWeek(dateStr: string): boolean {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const weekFromNow = new Date(now)
+  weekFromNow.setDate(now.getDate() + 7)
+  return date >= now && date <= weekFromNow
+}
+
+export const CATEGORY_LABELS: Record<string, string> = {
+  worship: 'Worship',
+  prayer: 'Prayer',
+  conference: 'Conference',
+  youth: 'Youth',
+  training: 'Training',
+  other: 'Other',
+}
+
+export const CATEGORY_COLORS: Record<string, string> = {
+  worship: 'bg-purple-100 text-purple-800',
+  prayer: 'bg-blue-100 text-blue-800',
+  conference: 'bg-amber-100 text-amber-800',
+  youth: 'bg-green-100 text-green-800',
+  training: 'bg-orange-100 text-orange-800',
+  other: 'bg-gray-100 text-gray-800',
+}
