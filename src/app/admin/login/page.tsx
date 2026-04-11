@@ -27,14 +27,14 @@ export default function AdminLoginPage() {
       return
     }
 
-    // Check if this user is an admin
-    const { data: adminUser } = await supabase
-      .from('admin_users')
-      .select('id, role')
-      .eq('id', data.user.id)
-      .single()
+    // Verify admin status via server-side API (bypasses RLS)
+    const res = await fetch('/api/admin/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: data.user.id }),
+    })
 
-    if (!adminUser) {
+    if (!res.ok) {
       await supabase.auth.signOut()
       setError('You do not have admin access. Please use the regular sign in page.')
       setLoading(false)

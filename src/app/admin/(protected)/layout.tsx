@@ -10,13 +10,30 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect('/admin/login')
 
-  // Check admin role using service role client to bypass RLS
-  const adminClient = createAdminClient()
-  const { data: adminUser } = await adminClient
+  // Try regular client first (works if RLS policy allows SELECT USING (true))
+  let adminUser = null
+  const { data: anonAdminUser } = await supabase
     .from('admin_users')
     .select('*')
     .eq('id', user.id)
     .single()
+
+  if (anonAdminUser) {
+    adminUser = anonAdminUser
+  } else {
+    // Fall back to service role client to bypass RLS
+    try {
+      const adminClient = createAdminClient()
+      const { data: serviceAdminUser } = await adminClient
+        .from('admin_users')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      adminUser = serviceAdminUser
+    } catch {
+      // Service role client failed
+    }
+  }
 
   if (!adminUser) redirect('/admin/login')
 

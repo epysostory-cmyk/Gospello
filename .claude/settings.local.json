@@ -16,7 +16,10 @@
       "Bash(npx create-next-app@latest gospello-app --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --yes)",
       "Bash(cp -r \"C:\\\\Users\\\\Hi\\\\Desktop\\\\gospello-app/.\" \"C:\\\\Users\\\\Hi\\\\Desktop\\\\Gospello/\")",
       "Bash(rm -rf \"C:\\\\Users\\\\Hi\\\\Desktop\\\\gospello-app\")",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)"
     ]
   }
 }
