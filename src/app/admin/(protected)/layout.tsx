@@ -7,35 +7,18 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { Shield, LayoutDashboard, Calendar, Users, Star, LogOut, UserCog } from 'lucide-react'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // 1. Verify the session is real using the server Supabase client
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/admin/login')
 
-  // Try regular client first (works if RLS policy allows SELECT USING (true))
-  let adminUser = null
-  const { data: anonAdminUser } = await supabase
+  // 2. Verify admin status using the service role client (always bypasses RLS)
+  const adminClient = createAdminClient()
+  const { data: adminUser } = await adminClient
     .from('admin_users')
-    .select('*')
+    .select('id, role, email')
     .eq('id', user.id)
     .single()
-
-  if (anonAdminUser) {
-    adminUser = anonAdminUser
-  } else {
-    // Fall back to service role client to bypass RLS
-    try {
-      const adminClient = createAdminClient()
-      const { data: serviceAdminUser } = await adminClient
-        .from('admin_users')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-      adminUser = serviceAdminUser
-    } catch {
-      // Service role client failed
-    }
-  }
 
   if (!adminUser) redirect('/admin/login')
 
@@ -75,7 +58,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </nav>
 
         <div className="border-t border-gray-800 pt-4 space-y-1">
-          <p className="px-3 text-xs text-gray-600 truncate">{adminUser.email}</p>
+          <p className="px-3 text-xs text-gray-600 truncate">{adminUser.email ?? user.email}</p>
           <Link
             href="/api/admin/signout"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"

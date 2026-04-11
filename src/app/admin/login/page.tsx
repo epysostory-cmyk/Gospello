@@ -1,44 +1,62 @@
 'use client'
 
-import { useState, useTransition, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { Shield, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 const ERROR_MESSAGES: Record<string, string> = {
   invalid: 'Invalid email or password.',
-  noaccess: 'You do not have admin access. Please use the regular sign in page.',
+  noaccess: 'You do not have admin access. Use the regular sign in page.',
   missing: 'Email and password are required.',
 }
 
 function AdminLoginForm() {
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [isPending, startTransition] = useTransition()
   const searchParams = useSearchParams()
   const urlError = searchParams.get('error') ?? ''
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
+    setLoading(true)
     setError('')
 
-    startTransition(async () => {
-      const res = await fetch('/api/admin/auth/login', {
-        method: 'POST',
-        body: formData,
-        credentials: 'same-origin',
-      })
+    const formData = new FormData(e.currentTarget)
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
 
-      const json = await res.json()
+    // Step 1: Sign in with browser Supabase client.
+    // createBrowserClient from @supabase/ssr sets session cookies automatically
+    // in the browser — this is the only reliable way to set auth cookies.
+    const supabase = createClient()
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
-      if (!res.ok || json.error) {
-        setError(ERROR_MESSAGES[json.error] ?? 'Something went wrong. Please try again.')
-        return
-      }
+    if (signInError || !data.user) {
+      setError('Invalid email or password.')
+      setLoading(false)
+      return
+    }
 
-      // Cookies are now set server-side — hard navigate to /admin
-      window.location.href = '/admin'
+    // Step 2: Verify admin status server-side (bypasses RLS with service role key)
+    const res = await fetch('/api/admin/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: data.user.id }),
+      credentials: 'same-origin',
     })
+
+    if (!res.ok) {
+      await supabase.auth.signOut()
+      setError('You do not have admin access. Use the regular sign in page.')
+      setLoading(false)
+      return
+    }
+
+    // Step 3: Cookies are now in the browser. Hard-navigate so the server
+    // sees a fresh request with the new session cookies.
+    window.location.href = '/admin'
   }
 
   const displayError = error || ERROR_MESSAGES[urlError] || ''
@@ -103,11 +121,11 @@ function AdminLoginForm() {
 
             <button
               type="submit"
-              disabled={isPending}
+              disabled={loading}
               className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 disabled:opacity-60 transition-colors"
             >
-              {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isPending ? 'Signing in...' : 'Sign in to Admin'}
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading ? 'Signing in...' : 'Sign in to Admin'}
             </button>
           </form>
 
