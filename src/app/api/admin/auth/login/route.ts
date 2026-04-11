@@ -1,9 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -12,9 +11,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'missing' }, { status: 400 })
   }
 
-  // Use cookies() from next/headers — the ONLY reliable way to set cookies
-  // from a Route Handler so they appear in subsequent requests
-  const cookieStore = await cookies()
+  // Capture every cookie Supabase wants to write
+  const pendingCookies: Array<{ name: string; value: string; options: Record<string, unknown> }> = []
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,12 +20,11 @@ export async function POST(request: Request) {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll()
+          return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options)
-          })
+          // Just collect them — we'll write them onto the response below
+          cookiesToSet.forEach((c) => pendingCookies.push(c))
         },
       },
     }
@@ -52,6 +49,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'noaccess' }, { status: 403 })
   }
 
-  // Cookies are now set in next/headers — return success, client will navigate
-  return NextResponse.json({ success: true })
+  // Build response and stamp every session cookie directly onto it
+  const response = NextResponse.json({ success: true })
+
+  pendingCookies.forEach(({ name, value }) => {
+    response.cookies.set(name, value, {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+    })
+  })
+
+  return response
 }
