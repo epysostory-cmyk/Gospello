@@ -1,8 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { NextResponse, type NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   const formData = await request.formData()
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -11,8 +12,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'missing' }, { status: 400 })
   }
 
-  // Capture every cookie Supabase wants to write
-  const pendingCookies: Array<{ name: string; value: string; options: Record<string, unknown> }> = []
+  const cookieStore = await cookies()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,17 +20,21 @@ export async function POST(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return cookieStore.getAll()
         },
         setAll(cookiesToSet) {
-          // Just collect them — we'll write them onto the response below
-          cookiesToSet.forEach((c) => pendingCookies.push(c))
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          )
         },
       },
     }
   )
 
-  const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
 
   if (signInError || !data.user) {
     return NextResponse.json({ error: 'invalid' }, { status: 401 })
@@ -49,18 +53,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'noaccess' }, { status: 403 })
   }
 
-  // Build response and stamp every session cookie directly onto it
-  const response = NextResponse.json({ success: true })
-
-  pendingCookies.forEach(({ name, value }) => {
-    response.cookies.set(name, value, {
-      path: '/',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-    })
-  })
-
-  return response
+  return NextResponse.json({ success: true })
 }
