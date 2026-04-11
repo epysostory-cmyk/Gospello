@@ -2,22 +2,32 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { Shield, LayoutDashboard, Calendar, Users, Star, LogOut } from 'lucide-react'
+import { Shield, LayoutDashboard, Calendar, Users, Star, LogOut, UserCog } from 'lucide-react'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/admin/login')
 
-  // Temporary: allow any logged-in user to access admin
-  const adminUser = { role: 'super_admin' }
+  // Check admin role using service role client to bypass RLS
+  const adminClient = createAdminClient()
+  const { data: adminUser } = await adminClient
+    .from('admin_users')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
+  if (!adminUser) redirect('/admin/login')
+
+  const isSuperAdmin = adminUser.role === 'super_admin'
 
   const navItems = [
     { href: '/admin', label: 'Overview', icon: LayoutDashboard },
     { href: '/admin/events', label: 'Event Review', icon: Calendar },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/featured', label: 'Featured', icon: Star },
+    ...(isSuperAdmin ? [{ href: '/admin/team', label: 'Admin Team', icon: UserCog }] : []),
   ]
 
   return (
@@ -45,13 +55,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           ))}
         </nav>
 
-        <div className="border-t border-gray-800 pt-4">
+        <div className="border-t border-gray-800 pt-4 space-y-1">
+          <p className="px-3 text-xs text-gray-600 truncate">{adminUser.email}</p>
           <Link
-            href="/"
+            href="/api/admin/signout"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            Exit Admin
+            Sign out
           </Link>
         </div>
       </aside>

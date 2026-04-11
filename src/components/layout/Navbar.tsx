@@ -65,8 +65,8 @@ export default function Navbar() {
             <Link href="/churches" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors">
               Churches
             </Link>
-            <Link href="/events?city=Lagos" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors">
-              Lagos
+            <Link href="/churches" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors">
+              Churches
             </Link>
           </nav>
 

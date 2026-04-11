@@ -3,6 +3,7 @@ import ChurchCard from '@/components/ui/ChurchCard'
 import type { Church } from '@/types/database'
 import { Search } from 'lucide-react'
 import Link from 'next/link'
+import { NIGERIAN_STATES } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +14,7 @@ interface SearchParams {
 }
 
 const PAGE_SIZE = 12
-const CITIES = ['Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Kano']
+const CITIES = NIGERIAN_STATES
 
 async function getChurches(params: SearchParams) {
   const supabase = await createClient()

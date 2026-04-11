@@ -1,6 +1,21 @@
+'use client'
+
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Footer() {
+  const [loggedIn, setLoggedIn] = useState(false)
+  const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setLoggedIn(!!data.user))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setLoggedIn(!!session?.user)
+    })
+    return () => subscription.unsubscribe()
+  }, [supabase])
+
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -16,7 +31,7 @@ export default function Footer() {
             <p className="text-sm text-gray-400 max-w-xs leading-relaxed">
               The central platform for discovering Christian events and churches — helping you find what God is doing around you.
             </p>
-            <p className="text-xs text-gray-500 mt-4">Lagos, Nigeria · Est. 2025</p>
+            <p className="text-xs text-gray-500 mt-4">Nigeria · Est. 2025</p>
           </div>
 
           {/* Discover */}
@@ -38,7 +53,9 @@ export default function Footer() {
               <li><Link href="/auth/signup" className="hover:text-white transition-colors">Post an Event</Link></li>
               <li><Link href="/auth/signup?type=church" className="hover:text-white transition-colors">Register Church</Link></li>
               <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
-              <li><Link href="/auth/login" className="hover:text-white transition-colors">Sign In</Link></li>
+              {!loggedIn && (
+                <li><Link href="/auth/login" className="hover:text-white transition-colors">Sign In</Link></li>
+              )}
             </ul>
           </div>
         </div>
@@ -48,7 +65,7 @@ export default function Footer() {
             © {new Date().getFullYear()} Gospello. All rights reserved.
           </p>
           <p className="text-xs text-gray-500">
-            Connecting believers across Lagos and beyond.
+            Connecting believers across Nigeria and beyond.
           </p>
         </div>
       </div>

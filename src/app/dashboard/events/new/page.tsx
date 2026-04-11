@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { slugify } from '@/lib/utils'
+import { slugify, NIGERIAN_STATES } from '@/lib/utils'
 import { Loader2, Upload } from 'lucide-react'
 import type { EventCategory } from '@/types/database'
 
@@ -233,12 +233,14 @@ export default function NewEventPage() {
             <div>
               <label className={labelCls}>City *</label>
               <input type="text" required value={form.city} onChange={(e) => update('city', e.target.value)}
-                className={inputCls} />
+                placeholder="e.g. Lagos" className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>State *</label>
-              <input type="text" required value={form.state} onChange={(e) => update('state', e.target.value)}
-                className={inputCls} />
+              <select required value={form.state} onChange={(e) => update('state', e.target.value)} className={inputCls}>
+                <option value="">Select state</option>
+                {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
           </div>
         </div>

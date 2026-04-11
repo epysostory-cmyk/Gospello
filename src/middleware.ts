@@ -26,17 +26,24 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-
   const pathname = request.nextUrl.pathname
 
+  // Admin login page — redirect to /admin if already logged in as admin
+  if (pathname === '/admin/login' && user) {
+    return NextResponse.redirect(new URL('/admin', request.url))
+  }
+
+  // Protect admin routes (except /admin/login)
+  if (pathname.startsWith('/admin') && pathname !== '/admin/login' && !user) {
+    return NextResponse.redirect(new URL('/admin/login', request.url))
+  }
+
+  // Protect dashboard routes
   if (pathname.startsWith('/dashboard') && !user) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  if (pathname.startsWith('/admin') && !user) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
-  }
-
+  // Redirect logged-in users away from auth pages
   if ((pathname.startsWith('/auth/login') || pathname.startsWith('/auth/signup')) && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }

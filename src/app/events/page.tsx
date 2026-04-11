@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import EventCard from '@/components/ui/EventCard'
-import { CATEGORY_LABELS } from '@/lib/utils'
+import { CATEGORY_LABELS, NIGERIAN_STATES } from '@/lib/utils'
 import type { Event, EventCategory } from '@/types/database'
 import { Search, SlidersHorizontal, LayoutGrid, List } from 'lucide-react'
 import Link from 'next/link'
@@ -65,7 +65,7 @@ async function getEvents(params: SearchParams) {
 }
 
 const CATEGORIES = ['worship', 'prayer', 'conference', 'youth', 'training', 'other'] as const
-const CITIES = ['Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Kano']
+const CITIES = NIGERIAN_STATES
 
 export default async function EventsPage({
   searchParams,

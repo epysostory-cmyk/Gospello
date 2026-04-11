@@ -63,6 +63,14 @@ export const CATEGORY_LABELS: Record<string, string> = {
   other: 'Other',
 }
 
+export const NIGERIAN_STATES = [
+  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
+  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT', 'Gombe', 'Imo',
+  'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos', 'Nasarawa',
+  'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba',
+  'Yobe', 'Zamfara',
+]
+
 export const CATEGORY_COLORS: Record<string, string> = {
   worship: 'bg-purple-100 text-purple-800',
   prayer: 'bg-blue-100 text-blue-800',

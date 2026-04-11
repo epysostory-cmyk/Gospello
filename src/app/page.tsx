@@ -81,7 +81,7 @@ export default async function HomePage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white text-sm font-medium px-4 py-1.5 rounded-full mb-6 border border-white/20">
               <span className="w-2 h-2 bg-green-400 rounded-full" />
-              Lagos-first · Globally accessible
+              Nigeria-wide · Globally accessible
             </div>
 
             <h1 className="text-4xl md:text-6xl font-extrabold leading-tight tracking-tight">
@@ -109,8 +109,8 @@ export default async function HomePage() {
                 <input
                   type="text"
                   name="city"
-                  defaultValue="Lagos"
-                  placeholder="City"
+                  defaultValue=""
+                  placeholder="State / City"
                   className="w-full sm:w-40 pl-12 pr-4 py-4 rounded-xl bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-lg"
                 />
               </div>
@@ -123,7 +123,7 @@ export default async function HomePage() {
             </form>
 
             <div className="mt-10 flex flex-wrap gap-6 text-sm text-indigo-200">
-              <span>🎯 Lagos-focused</span>
+              <span>🎯 All 36 Nigerian States</span>
               <span>⛪ Churches &amp; Organizers</span>
               <span>📅 Updated daily</span>
             </div>
