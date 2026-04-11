@@ -2,22 +2,43 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Menu, X, Search, ChevronDown } from 'lucide-react'
+import { Menu, X, Search, Shield } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      setUser(data.user)
+      if (data.user) {
+        const { data: adminData } = await supabase
+          .from('admin_users')
+          .select('id')
+          .eq('id', data.user.id)
+          .single()
+        setIsAdmin(!!adminData)
+      }
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data: adminData } = await supabase
+          .from('admin_users')
+          .select('id')
+          .eq('id', session.user.id)
+          .single()
+        setIsAdmin(!!adminData)
+      } else {
+        setIsAdmin(false)
+      }
     })
     return () => subscription.unsubscribe()
-  }, [supabase.auth])
+  }, [supabase])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -56,6 +77,15 @@ export default function Navbar() {
             </Link>
             {user ? (
               <div className="flex items-center gap-3">
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </Link>
+                )}
                 <Link
                   href="/dashboard"
                   className="text-sm font-medium text-gray-700 hover:text-indigo-600"
@@ -105,6 +135,11 @@ export default function Navbar() {
           <Link href="/churches" className="block text-gray-700 font-medium py-2" onClick={() => setMenuOpen(false)}>Churches</Link>
           {user ? (
             <>
+              {isAdmin && (
+                <Link href="/admin" className="block text-indigo-600 font-medium py-2" onClick={() => setMenuOpen(false)}>
+                  🛡️ Admin Panel
+                </Link>
+              )}
               <Link href="/dashboard" className="block text-gray-700 font-medium py-2" onClick={() => setMenuOpen(false)}>Dashboard</Link>
               <button onClick={handleSignOut} className="block text-gray-500 py-2 w-full text-left">Sign out</button>
             </>
