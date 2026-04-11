@@ -18,6 +18,9 @@ export default function AdminLoginPage() {
       const result = await adminLogin(formData)
       if (result?.error) {
         setError(result.error)
+      } else if (result?.success) {
+        // Full page reload so cookies are fully written before server reads them
+        window.location.href = '/admin'
       }
     })
   }

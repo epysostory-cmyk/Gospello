@@ -1,6 +1,5 @@
 'use server'
 
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -33,7 +32,6 @@ export async function adminLogin(formData: FormData) {
       .single()
 
     if (!adminUser) {
-      // Sign out — this user is not an admin
       await supabase.auth.signOut()
       return { error: 'You do not have admin access. Please use the regular sign in page.' }
     }
@@ -42,6 +40,7 @@ export async function adminLogin(formData: FormData) {
     return { error: 'Admin verification failed. Please try again.' }
   }
 
-  // Redirect happens server-side — cookies are already set by createClient()
-  redirect('/admin')
+  // Return success — let the CLIENT do window.location.href so cookies are
+  // fully written to the browser before the next navigation begins.
+  return { success: true }
 }
