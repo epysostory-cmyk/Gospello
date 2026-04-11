@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Shield, Eye, EyeOff } from 'lucide-react'
+import { useState, useTransition, Suspense } from 'react'
+import { Shield, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
 
 const ERROR_MESSAGES: Record<string, string> = {
   invalid: 'Invalid email or password.',
@@ -13,9 +12,36 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 function AdminLoginForm() {
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [isPending, startTransition] = useTransition()
   const searchParams = useSearchParams()
-  const errorKey = searchParams.get('error') ?? ''
-  const errorMessage = ERROR_MESSAGES[errorKey] ?? ''
+  const urlError = searchParams.get('error') ?? ''
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    setError('')
+
+    startTransition(async () => {
+      const res = await fetch('/api/admin/auth/login', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+      })
+
+      const json = await res.json()
+
+      if (!res.ok || json.error) {
+        setError(ERROR_MESSAGES[json.error] ?? 'Something went wrong. Please try again.')
+        return
+      }
+
+      // Cookies are now set server-side — hard navigate to /admin
+      window.location.href = '/admin'
+    })
+  }
+
+  const displayError = error || ERROR_MESSAGES[urlError] || ''
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
@@ -29,11 +55,10 @@ function AdminLoginForm() {
         </div>
 
         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-8">
-          {/* Plain HTML form — POSTs to the API route, no JS auth */}
-          <form action="/api/admin/auth/login" method="POST" className="space-y-5">
-            {errorMessage && (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {displayError && (
               <div className="bg-red-900/30 text-red-400 text-sm px-4 py-3 rounded-lg border border-red-800">
-                {errorMessage}
+                {displayError}
               </div>
             )}
 
@@ -78,9 +103,11 @@ function AdminLoginForm() {
 
             <button
               type="submit"
-              className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 transition-colors"
+              disabled={isPending}
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 disabled:opacity-60 transition-colors"
             >
-              Sign in to Admin
+              {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isPending ? 'Signing in...' : 'Sign in to Admin'}
             </button>
           </form>
 

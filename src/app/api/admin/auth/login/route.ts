@@ -1,20 +1,20 @@
 import { createServerClient } from '@supabase/ssr'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { NextResponse, type NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   const formData = await request.formData()
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
-  const origin = request.nextUrl.origin
-
   if (!email || !password) {
-    return NextResponse.redirect(new URL('/admin/login?error=missing', origin), { status: 302 })
+    return NextResponse.json({ error: 'missing' }, { status: 400 })
   }
 
-  // Build response first — we attach cookies to this as Supabase writes them
-  let supabaseResponse = NextResponse.redirect(new URL('/admin', origin), { status: 302 })
+  // Use cookies() from next/headers — the ONLY reliable way to set cookies
+  // from a Route Handler so they appear in subsequent requests
+  const cookieStore = await cookies()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,12 +22,11 @@ export async function POST(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return cookieStore.getAll()
         },
         setAll(cookiesToSet) {
-          // Write every session cookie directly onto the redirect response
           cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, options)
+            cookieStore.set(name, value, options)
           })
         },
       },
@@ -37,10 +36,10 @@ export async function POST(request: NextRequest) {
   const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
   if (signInError || !data.user) {
-    return NextResponse.redirect(new URL('/admin/login?error=invalid', origin), { status: 302 })
+    return NextResponse.json({ error: 'invalid' }, { status: 401 })
   }
 
-  // Verify admin status via service-role client (bypasses RLS)
+  // Verify admin via service-role client (bypasses RLS)
   const adminClient = createAdminClient()
   const { data: adminUser } = await adminClient
     .from('admin_users')
@@ -49,11 +48,10 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (!adminUser) {
-    // Not an admin — sign out and redirect back with error
     await supabase.auth.signOut()
-    return NextResponse.redirect(new URL('/admin/login?error=noaccess', origin), { status: 302 })
+    return NextResponse.json({ error: 'noaccess' }, { status: 403 })
   }
 
-  // Cookies are already on supabaseResponse — return it to redirect to /admin
-  return supabaseResponse
+  // Cookies are now set in next/headers — return success, client will navigate
+  return NextResponse.json({ success: true })
 }
