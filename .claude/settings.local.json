@@ -22,7 +22,8 @@
       "Bash(git add:*)",
       "Bash(node -e \"const p=require\\('path'\\);const fs=require\\('fs'\\);const v=JSON.parse\\(fs.readFileSync\\('C:/Users/Hi/Desktop/Gospello/node_modules/next/package.json','utf8'\\)\\).version;console.log\\('Next.js version:',v\\)\")",
       "Bash(git commit:*)",
-      "Bash(node -e \"const {MAX_CHUNK_SIZE, createChunks, stringToBase64URL} = require\\('./node_modules/@supabase/ssr'\\); console.log\\('MAX_CHUNK_SIZE:', MAX_CHUNK_SIZE\\); const chunks = createChunks\\('sb-test-auth-token', 'base64-hello'\\); console.log\\('chunks:', chunks\\);\")"
+      "Bash(node -e \"const {MAX_CHUNK_SIZE, createChunks, stringToBase64URL} = require\\('./node_modules/@supabase/ssr'\\); console.log\\('MAX_CHUNK_SIZE:', MAX_CHUNK_SIZE\\); const chunks = createChunks\\('sb-test-auth-token', 'base64-hello'\\); console.log\\('chunks:', chunks\\);\")",
+      "Bash(npx vercel:*)"
     ]
   }
 }

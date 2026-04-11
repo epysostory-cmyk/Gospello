@@ -12,13 +12,28 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/admin/login')
 
-  // 2. Verify admin status using the service role client (always bypasses RLS)
-  const adminClient = createAdminClient()
-  const { data: adminUser } = await adminClient
+  // 2. Verify admin status — try regular client first, fall back to service role
+  let adminUser = null
+
+  // Try with regular (anon) client first — works if RLS has SELECT USING (true)
+  const { data: anonResult } = await supabase
     .from('admin_users')
     .select('id, role, email')
     .eq('id', user.id)
     .single()
+
+  if (anonResult) {
+    adminUser = anonResult
+  } else {
+    // Fall back to service role client
+    const adminClient = createAdminClient()
+    const { data: serviceResult } = await adminClient
+      .from('admin_users')
+      .select('id, role, email')
+      .eq('id', user.id)
+      .single()
+    adminUser = serviceResult
+  }
 
   if (!adminUser) redirect('/admin/login')
 

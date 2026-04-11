@@ -3,63 +3,7 @@
 import { useState, Suspense } from 'react'
 import { Shield, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-// Get project ref from URL e.g. "atrdstihzvnvbgxveplm"
-function getProjectRef() {
-  return SUPABASE_URL.replace('https://', '').split('.')[0]
-}
-
-// Base64url encode (same as @supabase/ssr's stringToBase64URL)
-function toBase64URL(str: string): string {
-  if (typeof btoa === 'function') {
-    return btoa(
-      encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) =>
-        String.fromCharCode(parseInt(p1, 16))
-      )
-    )
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '')
-  }
-  return str
-}
-
-// Chunk and write session cookies directly to document.cookie
-// Mirrors exactly what @supabase/ssr does internally
-function writeSessionCookies(session: Record<string, unknown>) {
-  const projectRef = getProjectRef()
-  const key = `sb-${projectRef}-auth-token`
-  const value = 'base64-' + toBase64URL(JSON.stringify(session))
-  const MAX_CHUNK = 3180
-  const encoded = encodeURIComponent(value)
-  const cookieOpts = '; path=/; max-age=34560000; samesite=lax'
-
-  if (encoded.length <= MAX_CHUNK) {
-    document.cookie = `${key}=${value}${cookieOpts}`
-  } else {
-    // Split into chunks
-    let remaining = encoded
-    let i = 0
-    while (remaining.length > 0) {
-      let head = remaining.slice(0, MAX_CHUNK)
-      // Don't cut in middle of a % escape
-      const lastPct = head.lastIndexOf('%')
-      if (lastPct > MAX_CHUNK - 3) head = head.slice(0, lastPct)
-      const chunkValue = decodeURIComponent(head)
-      document.cookie = `${key}.${i}=${chunkValue}${cookieOpts}`
-      remaining = remaining.slice(head.length)
-      i++
-    }
-  }
-}
-
-const ERROR_MESSAGES: Record<string, string> = {
-  invalid: 'Invalid email or password.',
-  noaccess: 'You do not have admin access.',
-}
+import { createBrowserClient } from '@supabase/ssr'
 
 function AdminLoginForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -77,64 +21,31 @@ function AdminLoginForm() {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
-    // Step 1: Call Supabase Auth REST API directly — no library, no async event chains
-    const authRes = await fetch(
-      `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ email, password }),
-      }
+    // Use createBrowserClient — it handles document.cookie writes correctly
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    if (!authRes.ok) {
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (signInError || !data.user) {
       setError('Invalid email or password.')
       setLoading(false)
       return
     }
 
-    const session = await authRes.json()
+    // Small delay to allow the browser client to finish writing cookies
+    await new Promise(resolve => setTimeout(resolve, 300))
 
-    if (!session.access_token || !session.user) {
-      setError('Invalid email or password.')
-      setLoading(false)
-      return
-    }
-
-    // Step 2: Verify admin status server-side
-    const verifyRes = await fetch('/api/admin/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: session.user.id }),
-      credentials: 'same-origin',
-    })
-
-    if (!verifyRes.ok) {
-      setError('You do not have admin access.')
-      setLoading(false)
-      return
-    }
-
-    // Step 3: Write session cookies directly and synchronously to document.cookie
-    // This bypasses all async event chains in @supabase/ssr and guarantees
-    // cookies are written before the next navigation request is sent
-    writeSessionCookies({
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-      expires_at: Math.floor(Date.now() / 1000) + (session.expires_in ?? 3600),
-      expires_in: session.expires_in ?? 3600,
-      token_type: session.token_type ?? 'bearer',
-      user: session.user,
-    })
-
-    // Step 4: Navigate. Cookies are already set synchronously above.
+    // Navigate — session cookies are now in the browser
     window.location.href = '/admin'
   }
 
-  const displayError = error || ERROR_MESSAGES[urlError] || ''
+  const displayError = error || (urlError === 'noaccess' ? 'You do not have admin access.' : '')
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
