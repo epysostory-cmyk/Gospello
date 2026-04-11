@@ -1,45 +1,25 @@
 'use client'
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useTransition } from 'react'
 import { Shield, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { adminLogin } from './actions'
 
 export default function AdminLoginPage() {
-  const supabase = createClient()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isPending, startTransition] = useTransition()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setLoading(true)
+    const formData = new FormData(e.currentTarget)
     setError('')
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (signInError || !data.user) {
-      setError('Invalid email or password')
-      setLoading(false)
-      return
-    }
-
-    // Verify admin status via server-side API (bypasses RLS)
-    const res = await fetch('/api/admin/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: data.user.id }),
+    startTransition(async () => {
+      const result = await adminLogin(formData)
+      if (result?.error) {
+        setError(result.error)
+      }
     })
-
-    if (!res.ok) {
-      await supabase.auth.signOut()
-      setError('You do not have admin access. Please use the regular sign in page.')
-      setLoading(false)
-      return
-    }
-
-    window.location.href = '/admin'
   }
 
   return (
@@ -55,7 +35,7 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-8">
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="bg-red-900/30 text-red-400 text-sm px-4 py-3 rounded-lg border border-red-800">
                 {error}
@@ -68,9 +48,8 @@ export default function AdminLoginPage() {
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
                 placeholder="admin@gospello.com"
@@ -85,9 +64,8 @@ export default function AdminLoginPage() {
               <div className="relative">
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
                   placeholder="••••••••"
@@ -105,11 +83,11 @@ export default function AdminLoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isPending}
               className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 disabled:opacity-60 transition-colors"
             >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {loading ? 'Signing in...' : 'Sign in to Admin'}
+              {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isPending ? 'Signing in...' : 'Sign in to Admin'}
             </button>
           </form>
 
