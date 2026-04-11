@@ -1,34 +1,25 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { Shield, Eye, EyeOff, Loader2 } from 'lucide-react'
-import { adminLogin } from './actions'
+import { useState } from 'react'
+import { Shield, Eye, EyeOff } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
-export default function AdminLoginPage() {
+const ERROR_MESSAGES: Record<string, string> = {
+  invalid: 'Invalid email or password.',
+  noaccess: 'You do not have admin access. Please use the regular sign in page.',
+  missing: 'Email and password are required.',
+}
+
+function AdminLoginForm() {
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
-  const [isPending, startTransition] = useTransition()
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    setError('')
-
-    startTransition(async () => {
-      const result = await adminLogin(formData)
-      if (result?.error) {
-        setError(result.error)
-      } else if (result?.success) {
-        // Full page reload so cookies are fully written before server reads them
-        window.location.href = '/admin'
-      }
-    })
-  }
+  const searchParams = useSearchParams()
+  const errorKey = searchParams.get('error') ?? ''
+  const errorMessage = ERROR_MESSAGES[errorKey] ?? ''
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl mb-4">
             <Shield className="w-8 h-8 text-white" />
@@ -38,10 +29,11 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
+          {/* Plain HTML form — POSTs to the API route, no JS auth */}
+          <form action="/api/admin/auth/login" method="POST" className="space-y-5">
+            {errorMessage && (
               <div className="bg-red-900/30 text-red-400 text-sm px-4 py-3 rounded-lg border border-red-800">
-                {error}
+                {errorMessage}
               </div>
             )}
 
@@ -86,11 +78,9 @@ export default function AdminLoginPage() {
 
             <button
               type="submit"
-              disabled={isPending}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+              className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 transition-colors"
             >
-              {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isPending ? 'Signing in...' : 'Sign in to Admin'}
+              Sign in to Admin
             </button>
           </form>
 
@@ -103,5 +93,13 @@ export default function AdminLoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense>
+      <AdminLoginForm />
+    </Suspense>
   )
 }
