@@ -62,8 +62,8 @@ export default function Navbar() {
             <Link href="/events" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors">
               Events
             </Link>
-            <Link href="/churches" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors">
-              Churches
+            <Link href="/organizers" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors">
+              Organizers
             </Link>
             <Link href="/churches" className="text-gray-600 hover:text-indigo-600 font-medium text-sm transition-colors">
               Churches
@@ -132,6 +132,7 @@ export default function Navbar() {
       {menuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-3">
           <Link href="/events" className="block text-gray-700 font-medium py-2" onClick={() => setMenuOpen(false)}>Events</Link>
+          <Link href="/organizers" className="block text-gray-700 font-medium py-2" onClick={() => setMenuOpen(false)}>Organizers</Link>
           <Link href="/churches" className="block text-gray-700 font-medium py-2" onClick={() => setMenuOpen(false)}>Churches</Link>
           {user ? (
             <>

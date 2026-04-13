@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Loader2, Star } from 'lucide-react'
+import { toggleFeatured } from './actions'
 
 interface Props {
   id: string
@@ -12,8 +11,6 @@ interface Props {
 }
 
 export default function FeaturedToggle({ id, table, isFeatured }: Props) {
-  const router = useRouter()
-  const supabase = createClient()
   const [featured, setFeatured] = useState(isFeatured)
   const [loading, setLoading] = useState(false)
 
@@ -21,14 +18,13 @@ export default function FeaturedToggle({ id, table, isFeatured }: Props) {
     setLoading(true)
     const newVal = !featured
     setFeatured(newVal)
-
-    await supabase
-      .from(table)
-      .update({ is_featured: newVal })
-      .eq('id', id)
-
-    setLoading(false)
-    router.refresh()
+    try {
+      await toggleFeatured(id, table, newVal)
+    } catch {
+      setFeatured(!newVal)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
