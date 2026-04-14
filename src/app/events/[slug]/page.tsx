@@ -6,12 +6,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate, formatTime, CATEGORY_LABELS, CATEGORY_COLORS, cn } from '@/lib/utils'
 import {
   Calendar, MapPin, Clock, Building2, Tag, ArrowLeft,
-  Eye, Users, Car, Baby, StickyNote, Mic, Ticket,
+  Users, Car, Baby, StickyNote, Mic, Ticket,
 } from 'lucide-react'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import AttendButton from '@/components/ui/AttendButton'
-import ViewTracker from '@/components/ui/ViewTracker'
+import ViewCounter from '@/components/ui/ViewCounter'
 import ShareButton from '@/components/ui/ShareButton'
 
 export const dynamic = 'force-dynamic'
@@ -78,8 +78,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Track view silently */}
-      <ViewTracker eventId={e.id} />
+      {/* intentionally empty — ViewCounter below handles tracking */}
 
       {/* Back */}
       <Link href="/events" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6">
@@ -128,10 +127,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
             {/* Stats */}
             <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-              <span className="flex items-center gap-1.5">
-                <Eye className="w-4 h-4 text-gray-400" />
-                {e.views_count ?? 0} views
-              </span>
+              <ViewCounter eventId={e.id} initialCount={e.views_count ?? 0} />
               <span className="flex items-center gap-1.5">
                 <Users className="w-4 h-4 text-gray-400" />
                 {attendanceCount ?? 0} attending

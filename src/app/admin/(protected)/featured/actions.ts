@@ -6,12 +6,26 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export async function toggleFeatured(
   id: string,
   table: 'events' | 'churches',
-  newVal: boolean
+  newVal: boolean,
+  durationDays?: number | null
 ) {
   const adminClient = createAdminClient()
+
+  const updateData: Record<string, unknown> = { is_featured: newVal }
+
+  if (table === 'events') {
+    if (newVal && durationDays && durationDays > 0) {
+      const until = new Date()
+      until.setDate(until.getDate() + durationDays)
+      updateData.featured_until = until.toISOString()
+    } else if (!newVal) {
+      updateData.featured_until = null
+    }
+  }
+
   const { error } = await adminClient
     .from(table)
-    .update({ is_featured: newVal })
+    .update(updateData)
     .eq('id', id)
 
   if (error) throw new Error(error.message)

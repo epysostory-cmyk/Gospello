@@ -55,6 +55,7 @@ export default async function AdminFeaturedPage() {
                 id={event.id}
                 table="events"
                 isFeatured={event.is_featured}
+                featuredUntil={event.featured_until}
               />
             </div>
           ))}
