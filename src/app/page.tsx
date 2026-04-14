@@ -139,6 +139,8 @@ export default async function HomePage() {
         <SectionHeader
           title="Browse by Category"
           subtitle="Find events that match your spiritual interests"
+          href="/events"
+          linkText="View all events"
         />
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {CATEGORIES.map((cat) => (
