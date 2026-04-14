@@ -88,10 +88,14 @@ export default async function EventsPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Page header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Explore Events</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {params.category ? `${CATEGORY_LABELS[params.category]} Events` : 'Explore Events'}
+        </h1>
         <p className="text-gray-500 mt-1">
           {total > 0 ? `${total} event${total !== 1 ? 's' : ''} found` : 'No events found'}
-          {params.city ? ` in ${params.city}` : ''}
+          {params.category ? ` in ${CATEGORY_LABELS[params.category]}` : ''}
+          {params.city ? ` · ${params.city}` : ''}
+          {params.q ? ` · "${params.q}"` : ''}
         </p>
       </div>
 
@@ -224,10 +228,18 @@ export default async function EventsPage({
       {events.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-5xl mb-4">🔍</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No events found</h3>
-          <p className="text-gray-500 mb-6">Try adjusting your filters or search terms</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {params.category
+              ? `No ${CATEGORY_LABELS[params.category]} events in the next 60 days`
+              : 'No events found'}
+          </h3>
+          <p className="text-gray-500 mb-6">
+            {params.category
+              ? 'Check back soon — new events are added regularly'
+              : 'Try adjusting your filters or search terms'}
+          </p>
           <Link href="/events" className="text-indigo-600 font-medium hover:text-indigo-700">
-            Clear all filters
+            Browse all events
           </Link>
         </div>
       ) : view === 'list' ? (
