@@ -2,6 +2,7 @@ export type AccountType = 'church' | 'organizer'
 export type AdminRole = 'super_admin' | 'admin' | 'moderator'
 export type EventStatus = 'pending' | 'approved' | 'rejected'
 export type EventCategory = 'worship' | 'prayer' | 'conference' | 'youth' | 'training' | 'other'
+export type EventLifecycle = 'upcoming' | 'ongoing' | 'ended'
 
 export interface Profile {
   id: string
@@ -57,6 +58,14 @@ export interface Event {
   external_link: string | null
   is_featured: boolean
   is_free: boolean
+  // Phase 1 additions
+  views_count: number
+  speakers: string | null
+  parking_available: boolean
+  child_friendly: boolean
+  notes: string | null
+  featured_until: string | null
+  // admin fields
   rejection_reason: string | null
   approved_at: string | null
   approved_by: string | null
@@ -65,6 +74,25 @@ export interface Event {
   // joined relations
   profiles?: Profile
   churches?: Church | null
+  attendances?: Attendance[]
+}
+
+export interface Attendance {
+  id: string
+  event_id: string
+  user_id: string | null
+  name: string
+  email: string
+  phone: string | null
+  created_at: string
+}
+
+export interface Follow {
+  id: string
+  follower_id: string
+  target_id: string
+  target_type: 'church' | 'organizer'
+  created_at: string
 }
 
 export interface AdminUser {
@@ -74,6 +102,17 @@ export interface AdminUser {
   created_at: string
 }
 
+/** Returns 'upcoming' | 'ongoing' | 'ended' based on event dates */
+export function getEventLifecycle(startDate: string, endDate?: string | null): EventLifecycle {
+  const now = new Date()
+  const start = new Date(startDate)
+  const end = endDate ? new Date(endDate) : null
+  if (now < start) return 'upcoming'
+  if (end && now > end) return 'ended'
+  if (!end && now > new Date(start.getTime() + 24 * 60 * 60 * 1000)) return 'ended'
+  return 'ongoing'
+}
+
 // Supabase Database type shape
 export type Database = {
   public: {
@@ -81,76 +120,39 @@ export type Database = {
       profiles: {
         Row: Profile
         Insert: Omit<Profile, 'created_at' | 'updated_at'>
-        Update: {
-          id?: string
-          email?: string
-          account_type?: AccountType
-          display_name?: string
-          avatar_url?: string | null
-          updated_at?: string
-        }
+        Update: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>
       }
       churches: {
         Row: Church
         Insert: Omit<Church, 'id' | 'created_at' | 'updated_at' | 'profiles' | 'events'>
-        Update: {
-          profile_id?: string
-          name?: string
-          slug?: string
-          description?: string | null
-          address?: string | null
-          city?: string
-          state?: string
-          country?: string
-          service_times?: string | null
-          logo_url?: string | null
-          banner_url?: string | null
-          website_url?: string | null
-          phone?: string | null
-          is_featured?: boolean
-          is_verified?: boolean
-          updated_at?: string
-        }
+        Update: Partial<Omit<Church, 'id' | 'created_at' | 'updated_at' | 'profiles' | 'events'>>
       }
       events: {
         Row: Event
-        Insert: Omit<Event, 'id' | 'created_at' | 'updated_at' | 'profiles' | 'churches'>
-        Update: {
-          organizer_id?: string
-          church_id?: string | null
-          title?: string
-          slug?: string
-          description?: string
-          category?: EventCategory
-          status?: EventStatus
-          banner_url?: string | null
-          start_date?: string
-          end_date?: string | null
-          location_name?: string
-          address?: string | null
-          city?: string
-          state?: string
-          country?: string
-          external_link?: string | null
-          is_featured?: boolean
-          is_free?: boolean
-          rejection_reason?: string | null
-          approved_at?: string | null
-          approved_by?: string | null
-          updated_at?: string
-        }
+        Insert: Omit<Event, 'id' | 'created_at' | 'updated_at' | 'profiles' | 'churches' | 'attendances'>
+        Update: Partial<Omit<Event, 'id' | 'created_at' | 'updated_at' | 'profiles' | 'churches' | 'attendances'>>
+      }
+      attendances: {
+        Row: Attendance
+        Insert: Omit<Attendance, 'id' | 'created_at'>
+        Update: Partial<Omit<Attendance, 'id' | 'created_at'>>
+      }
+      follows: {
+        Row: Follow
+        Insert: Omit<Follow, 'id' | 'created_at'>
+        Update: never
       }
       admin_users: {
         Row: AdminUser
         Insert: Omit<AdminUser, 'created_at'>
-        Update: {
-          email?: string
-          role?: AdminRole
-        }
+        Update: Partial<Omit<AdminUser, 'id' | 'created_at'>>
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      increment_event_views: { Args: { p_event_id: string }; Returns: void }
+      is_admin: { Args: Record<string, never>; Returns: boolean }
+    }
     Enums: {
       account_type: AccountType
       admin_role: AdminRole

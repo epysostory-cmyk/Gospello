@@ -28,7 +28,7 @@ async function getHomepageData() {
       .select('*, churches(*)')
       .eq('status', 'approved')
       .gte('start_date', new Date().toISOString())
-      .lte('start_date', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
+      .lte('start_date', new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString())
       .order('start_date', { ascending: true })
       .limit(8),
 

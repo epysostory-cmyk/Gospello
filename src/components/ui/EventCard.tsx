@@ -1,15 +1,16 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, MapPin, Tag } from 'lucide-react'
+import { Calendar, MapPin, Users, Eye } from 'lucide-react'
 import { formatDate, formatTime, CATEGORY_LABELS, CATEGORY_COLORS, cn } from '@/lib/utils'
 import type { Event } from '@/types/database'
 
 interface EventCardProps {
   event: Event
   variant?: 'default' | 'compact' | 'featured'
+  attendanceCount?: number
 }
 
-export default function EventCard({ event, variant = 'default' }: EventCardProps) {
+export default function EventCard({ event, variant = 'default', attendanceCount }: EventCardProps) {
   const categoryColor = CATEGORY_COLORS[event.category] ?? 'bg-gray-100 text-gray-800'
   const categoryLabel = CATEGORY_LABELS[event.category] ?? event.category
 
@@ -46,7 +47,7 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
           />
         )}
         <div className="relative p-5 bg-gradient-to-t from-black/80 to-transparent">
-          <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', categoryColor, 'mb-2 inline-block')}>
+          <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full mb-2 inline-block', categoryColor)}>
             {categoryLabel}
           </span>
           <h3 className="font-bold text-lg leading-tight line-clamp-2">{event.title}</h3>
@@ -54,6 +55,16 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
             <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(event.start_date, { month: 'short', day: 'numeric' })}</span>
             <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{event.city}</span>
           </div>
+          {(attendanceCount !== undefined || event.views_count > 0) && (
+            <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+              {attendanceCount !== undefined && attendanceCount > 0 && (
+                <span className="flex items-center gap-1"><Users className="w-3 h-3" />{attendanceCount}</span>
+              )}
+              {event.views_count > 0 && (
+                <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{event.views_count}</span>
+              )}
+            </div>
+          )}
         </div>
       </Link>
     )
@@ -72,10 +83,10 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
         <span className={cn('absolute top-3 left-3 text-xs font-medium px-2.5 py-1 rounded-full', categoryColor)}>
           {categoryLabel}
         </span>
-        {event.is_free && (
-          <span className="absolute top-3 right-3 text-xs font-medium px-2.5 py-1 rounded-full bg-green-100 text-green-800">
-            Free
-          </span>
+        {event.is_free ? (
+          <span className="absolute top-3 right-3 text-xs font-medium px-2.5 py-1 rounded-full bg-green-100 text-green-800">Free</span>
+        ) : (
+          <span className="absolute top-3 right-3 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">Paid</span>
         )}
       </div>
       <div className="p-4">
@@ -93,7 +104,24 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
           </div>
         </div>
         {event.churches && (
-          <p className="mt-2 text-xs text-indigo-600 font-medium">{event.churches.name}</p>
+          <p className="mt-2 text-xs text-indigo-600 font-medium truncate">{event.churches.name}</p>
+        )}
+        {/* Stats */}
+        {(attendanceCount !== undefined || event.views_count > 0) && (
+          <div className="flex items-center gap-3 mt-2.5 pt-2.5 border-t border-gray-50 text-xs text-gray-400">
+            {attendanceCount !== undefined && (
+              <span className="flex items-center gap-1">
+                <Users className="w-3.5 h-3.5" />
+                {attendanceCount} attending
+              </span>
+            )}
+            {event.views_count > 0 && (
+              <span className="flex items-center gap-1">
+                <Eye className="w-3.5 h-3.5" />
+                {event.views_count} views
+              </span>
+            )}
+          </div>
         )}
       </div>
     </Link>

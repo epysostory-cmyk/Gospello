@@ -35,6 +35,10 @@ export default function NewEventPage() {
     country: 'Nigeria',
     external_link: '',
     is_free: true,
+    speakers: '',
+    parking_available: false,
+    child_friendly: false,
+    notes: '',
   })
   const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [bannerPreview, setBannerPreview] = useState<string | null>(null)
@@ -62,11 +66,10 @@ export default function NewEventPage() {
 
     let banner_url: string | null = null
 
-    // Upload banner
     if (bannerFile) {
       const ext = bannerFile.name.split('.').pop()
       const path = `${user.id}/${Date.now()}.${ext}`
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('event-banners')
         .upload(path, bannerFile, { upsert: true })
 
@@ -94,7 +97,7 @@ export default function NewEventPage() {
     const { error: insertError } = await supabase.from('events').insert({
       organizer_id: user.id,
       title: form.title,
-      slug: slugify(form.title),
+      slug: slugify(form.title) + '-' + Date.now(),
       description: form.description,
       category: form.category,
       status: 'pending',
@@ -109,6 +112,10 @@ export default function NewEventPage() {
       external_link: form.external_link || null,
       is_free: form.is_free,
       is_featured: false,
+      speakers: form.speakers || null,
+      parking_available: form.parking_available,
+      child_friendly: form.child_friendly,
+      notes: form.notes || null,
     })
 
     if (insertError) {
@@ -132,9 +139,7 @@ export default function NewEventPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
-            {error}
-          </div>
+          <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">{error}</div>
         )}
 
         {/* Basic Info */}
@@ -144,35 +149,44 @@ export default function NewEventPage() {
           <div>
             <label className={labelCls}>Event Title *</label>
             <input type="text" required value={form.title} onChange={(e) => update('title', e.target.value)}
-              placeholder="e.g. Annual Worship Conference 2025"
-              className={inputCls} />
+              placeholder="e.g. Annual Worship Conference 2025" className={inputCls} />
           </div>
 
           <div>
             <label className={labelCls}>Description *</label>
             <textarea required rows={4} value={form.description} onChange={(e) => update('description', e.target.value)}
-              placeholder="Describe your event..."
-              className={`${inputCls} resize-none`} />
+              placeholder="Describe your event..." className={`${inputCls} resize-none`} />
           </div>
 
           <div>
             <label className={labelCls}>Category *</label>
-            <select required value={form.category} onChange={(e) => update('category', e.target.value as EventCategory)}
-              className={inputCls}>
+            <select required value={form.category} onChange={(e) => update('category', e.target.value as EventCategory)} className={inputCls}>
               {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </div>
 
           <div>
-            <label className={labelCls}>Is this event free?</label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <label className={labelCls}>Guest Speakers <span className="text-gray-400 font-normal">(optional)</span></label>
+            <input type="text" value={form.speakers} onChange={(e) => update('speakers', e.target.value)}
+              placeholder="e.g. Pastor John Doe, Dr. Jane Smith" className={inputCls} />
+          </div>
+
+          <div>
+            <label className={labelCls}>Ticket Type *</label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${form.is_free ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
                 <input type="radio" checked={form.is_free} onChange={() => update('is_free', true)} className="accent-indigo-600" />
-                Free
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Free</p>
+                  <p className="text-xs text-gray-500">No ticket needed</p>
+                </div>
               </label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="radio" checked={!form.is_free} onChange={() => update('is_free', false)} className="accent-indigo-600" />
-                Paid
+              <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${!form.is_free ? 'border-amber-500 bg-amber-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                <input type="radio" checked={!form.is_free} onChange={() => update('is_free', false)} className="accent-amber-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Paid</p>
+                  <p className="text-xs text-gray-500">Ticket required</p>
+                </div>
               </label>
             </div>
           </div>
@@ -181,32 +195,26 @@ export default function NewEventPage() {
         {/* Date & Time */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
           <h2 className="font-semibold text-gray-900">Date &amp; Time</h2>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Start Date *</label>
               <input type="date" required value={form.start_date} onChange={(e) => update('start_date', e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className={inputCls} />
+                min={new Date().toISOString().split('T')[0]} className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>Start Time *</label>
-              <input type="time" required value={form.start_time} onChange={(e) => update('start_time', e.target.value)}
-                className={inputCls} />
+              <input type="time" required value={form.start_time} onChange={(e) => update('start_time', e.target.value)} className={inputCls} />
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>End Date</label>
+              <label className={labelCls}>End Date <span className="text-gray-400 font-normal">(optional)</span></label>
               <input type="date" value={form.end_date} onChange={(e) => update('end_date', e.target.value)}
-                min={form.start_date}
-                className={inputCls} />
+                min={form.start_date} className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>End Time</label>
-              <input type="time" value={form.end_time} onChange={(e) => update('end_time', e.target.value)}
-                className={inputCls} />
+              <input type="time" value={form.end_time} onChange={(e) => update('end_time', e.target.value)} className={inputCls} />
             </div>
           </div>
         </div>
@@ -214,26 +222,20 @@ export default function NewEventPage() {
         {/* Location */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
           <h2 className="font-semibold text-gray-900">Location</h2>
-
           <div>
             <label className={labelCls}>Venue Name *</label>
             <input type="text" required value={form.location_name} onChange={(e) => update('location_name', e.target.value)}
-              placeholder="e.g. RCCG Auditorium"
-              className={inputCls} />
+              placeholder="e.g. RCCG Auditorium" className={inputCls} />
           </div>
-
           <div>
             <label className={labelCls}>Street Address</label>
             <input type="text" value={form.address} onChange={(e) => update('address', e.target.value)}
-              placeholder="e.g. 14 Redemption Way"
-              className={inputCls} />
+              placeholder="e.g. 14 Redemption Way" className={inputCls} />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>City *</label>
-              <input type="text" required value={form.city} onChange={(e) => update('city', e.target.value)}
-                placeholder="e.g. Lagos" className={inputCls} />
+              <input type="text" required value={form.city} onChange={(e) => update('city', e.target.value)} className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>State *</label>
@@ -245,10 +247,31 @@ export default function NewEventPage() {
           </div>
         </div>
 
-        {/* Banner & Link */}
+        {/* Logistics */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+          <h2 className="font-semibold text-gray-900">Event Logistics</h2>
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" checked={form.parking_available} onChange={(e) => update('parking_available', e.target.checked)}
+                className="w-4 h-4 accent-indigo-600 rounded" />
+              <span className="text-sm text-gray-700">Parking available</span>
+            </label>
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" checked={form.child_friendly} onChange={(e) => update('child_friendly', e.target.checked)}
+                className="w-4 h-4 accent-indigo-600 rounded" />
+              <span className="text-sm text-gray-700">Child friendly</span>
+            </label>
+          </div>
+          <div>
+            <label className={labelCls}>Additional Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+            <textarea rows={2} value={form.notes} onChange={(e) => update('notes', e.target.value)}
+              placeholder="Dress code, what to bring, special instructions..." className={`${inputCls} resize-none`} />
+          </div>
+        </div>
+
+        {/* Media & Links */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
           <h2 className="font-semibold text-gray-900">Media &amp; Links</h2>
-
           <div>
             <label className={labelCls}>Banner Image</label>
             <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors overflow-hidden">
@@ -265,13 +288,11 @@ export default function NewEventPage() {
               <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
             </label>
           </div>
-
           <div>
-            <label className={labelCls}>Registration / External Link</label>
+            <label className={labelCls}>Registration / External Link <span className="text-gray-400 font-normal">(optional)</span></label>
             <input type="url" value={form.external_link} onChange={(e) => update('external_link', e.target.value)}
-              placeholder="https://..."
-              className={inputCls} />
-            <p className="text-xs text-gray-400 mt-1">Optional: Link to Eventbrite, Google Form, or registration page</p>
+              placeholder="https://..." className={inputCls} />
+            <p className="text-xs text-gray-400 mt-1">Link to Eventbrite, Google Form, or registration page</p>
           </div>
         </div>
 
@@ -283,7 +304,6 @@ export default function NewEventPage() {
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           {loading ? 'Submitting...' : 'Submit for Review'}
         </button>
-
         <p className="text-xs text-gray-500 text-center">
           Your event will be reviewed by our team before going live. Usually within 24 hours.
         </p>

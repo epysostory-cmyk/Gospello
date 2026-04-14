@@ -3,6 +3,7 @@ import type { Profile } from '@/types/database'
 import { Search, Users } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { formatDate } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -105,9 +106,10 @@ export default async function OrganizersPage({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {organizers.map((organizer) => (
-            <div
+            <Link
               key={organizer.id}
-              className="bg-white rounded-2xl border border-gray-100 p-6 flex items-center gap-4 hover:shadow-md transition-shadow"
+              href={`/organizers/${organizer.id}`}
+              className="bg-white rounded-2xl border border-gray-100 p-6 flex items-center gap-4 hover:shadow-md transition-shadow group"
             >
               <div className="flex-shrink-0">
                 {organizer.avatar_url ? (
@@ -125,10 +127,10 @@ export default async function OrganizersPage({
                 )}
               </div>
               <div className="min-w-0">
-                <p className="font-semibold text-gray-900 truncate">{organizer.display_name}</p>
+                <p className="font-semibold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">{organizer.display_name}</p>
                 <p className="text-sm text-gray-500 mt-0.5">Event Organizer</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
