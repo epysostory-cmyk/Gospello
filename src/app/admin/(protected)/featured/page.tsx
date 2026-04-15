@@ -20,8 +20,7 @@ export default async function AdminFeaturedPage({
 
   let query = adminClient
     .from('events')
-    .select('id, title, is_featured, start_date, views_count, profiles(display_name)', { count: 'exact' })
-    .eq('status', 'approved')
+    .select('id, title, is_featured, status, start_date, views_count, profiles(display_name)', { count: 'exact' })
     .order('created_at', { ascending: false })
 
   if (tab === 'featured') {
@@ -58,7 +57,7 @@ export default async function AdminFeaturedPage({
           href="/admin/featured?tab=all"
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${tab === 'all' ? 'bg-indigo-600 text-white' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}
         >
-          All Approved
+          All Events
         </Link>
       </div>
 
@@ -88,6 +87,7 @@ export default async function AdminFeaturedPage({
               <tr>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Event</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Organizer</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Status</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Date</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Views</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Featured</th>
@@ -96,8 +96,8 @@ export default async function AdminFeaturedPage({
             <tbody className="divide-y divide-white/5">
               {!events || events.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center">
-                    <p className="text-gray-400 text-sm">{tab === 'featured' ? 'No featured events' : 'No approved events'}</p>
+                  <td colSpan={6} className="px-5 py-8 text-center">
+                    <p className="text-gray-400 text-sm">{tab === 'featured' ? 'No featured events yet — go to All Events to feature one' : 'No events found'}</p>
                   </td>
                 </tr>
               ) : (
@@ -115,6 +115,14 @@ export default async function AdminFeaturedPage({
                       </td>
                       <td className="px-5 py-3">
                         <p className="text-sm text-gray-400">{organizer}</p>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border ${
+                          event.status === 'approved' ? 'bg-green-500/10 text-green-400 border-green-500/30' :
+                          event.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                          event.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
+                          'bg-gray-500/10 text-gray-400 border-gray-500/30'
+                        }`}>{event.status}</span>
                       </td>
                       <td className="px-5 py-3">
                         <p className="text-sm text-gray-400">
