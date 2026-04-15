@@ -142,6 +142,9 @@ export default function Navbar() {
                 </Link>
               )}
               <Link href="/dashboard" className="block text-gray-700 font-medium py-2" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+              <Link href="/dashboard/events/new" className="block bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg text-center" onClick={() => setMenuOpen(false)}>
+                + Create Event
+              </Link>
               <button onClick={handleSignOut} className="block text-gray-500 py-2 w-full text-left">Sign out</button>
             </>
           ) : (
