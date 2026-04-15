@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Eye, EyeOff, Loader2, Building2, User } from 'lucide-react'
 import type { AccountType } from '@/types/database'
@@ -16,7 +16,6 @@ export default function SignUpPage() {
 }
 
 function SignUpForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
 
@@ -33,17 +32,18 @@ function SignUpForm() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!displayName.trim()) { setError('Please enter your name'); return }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return }
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           account_type: accountType,
-          display_name: displayName,
+          display_name: displayName.trim(),
         },
       },
     })
@@ -52,6 +52,21 @@ function SignUpForm() {
       setError(error.message)
       setLoading(false)
       return
+    }
+
+    // Belt-and-suspenders: explicitly upsert the profile in case the
+    // Supabase trigger (on_auth_user_created) hasn't been applied yet.
+    if (data.user) {
+      await fetch('/api/auth/setup-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: data.user.id,
+          email,
+          accountType,
+          displayName: displayName.trim(),
+        }),
+      })
     }
 
     setSuccess(true)
@@ -64,9 +79,19 @@ function SignUpForm() {
         <div className="w-full max-w-md text-center">
           <div className="text-5xl mb-4">📧</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
-          <p className="text-gray-500 mb-8">
+          <p className="text-gray-500 mb-4">
             We&apos;ve sent a confirmation link to <strong>{email}</strong>. Click the link to verify your account.
           </p>
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-8 text-left">
+            <p className="text-sm font-semibold text-indigo-800 mb-1">
+              {accountType === 'church' ? '⛪ Church account created' : '🎤 Organizer account created'}
+            </p>
+            <p className="text-xs text-indigo-700">
+              {accountType === 'church'
+                ? 'After confirming your email, you\'ll set up your church profile (name, location, service times).'
+                : 'After confirming your email, you can start posting Christian events right away.'}
+            </p>
+          </div>
           <Link href="/auth/login" className="text-indigo-600 font-medium hover:text-indigo-700">
             Back to sign in
           </Link>
@@ -99,31 +124,41 @@ function SignUpForm() {
 
             {/* Account type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Register as...</label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setAccountType('organizer')}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                  className={`flex flex-col items-start gap-1.5 p-4 rounded-xl border-2 transition-all text-left ${
                     accountType === 'organizer'
-                      ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      ? 'border-indigo-600 bg-indigo-50'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <User className="w-6 h-6" />
-                  <span className="text-sm font-medium">Event Organizer</span>
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${accountType === 'organizer' ? 'bg-indigo-600' : 'bg-gray-100'}`}>
+                    <User className={`w-4 h-4 ${accountType === 'organizer' ? 'text-white' : 'text-gray-500'}`} />
+                  </div>
+                  <span className={`text-sm font-semibold ${accountType === 'organizer' ? 'text-indigo-700' : 'text-gray-700'}`}>
+                    Organizer
+                  </span>
+                  <span className="text-xs text-gray-500 leading-tight">Post Christian events & conferences</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setAccountType('church')}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                  className={`flex flex-col items-start gap-1.5 p-4 rounded-xl border-2 transition-all text-left ${
                     accountType === 'church'
-                      ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      ? 'border-indigo-600 bg-indigo-50'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <Building2 className="w-6 h-6" />
-                  <span className="text-sm font-medium">Church</span>
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${accountType === 'church' ? 'bg-indigo-600' : 'bg-gray-100'}`}>
+                    <Building2 className={`w-4 h-4 ${accountType === 'church' ? 'text-white' : 'text-gray-500'}`} />
+                  </div>
+                  <span className={`text-sm font-semibold ${accountType === 'church' ? 'text-indigo-700' : 'text-gray-700'}`}>
+                    Church
+                  </span>
+                  <span className="text-xs text-gray-500 leading-tight">Manage your church profile & services</span>
                 </button>
               </div>
             </div>
