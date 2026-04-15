@@ -95,7 +95,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const categoryColor = CATEGORY_COLORS[e.category] ?? 'bg-gray-100 text-gray-800'
   const categoryLabel = CATEGORY_LABELS[e.category] ?? e.category
   const lifecycle = getEventLifecycle(e.start_date, e.end_date)
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.vercel.app'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
   const eventUrl = `${siteUrl}/events/${e.slug}`
 
   const lifecycleBadge = {

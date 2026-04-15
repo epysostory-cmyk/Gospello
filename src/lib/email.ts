@@ -1,6 +1,6 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const FROM = process.env.EMAIL_FROM ?? 'Gospello <noreply@gospello.ng>'
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.vercel.app'
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
 
 interface EmailOptions {
   to: string
