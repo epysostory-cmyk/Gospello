@@ -20,7 +20,7 @@ export default async function AdminFeaturedPage({
 
   let query = adminClient
     .from('events')
-    .select('id, title, is_featured, status, start_date, views_count, profiles(display_name)', { count: 'exact' })
+    .select('id, title, is_featured, featured_until, status, start_date, views_count, profiles(display_name)', { count: 'exact' })
     .order('created_at', { ascending: false })
 
   if (tab === 'featured') {
@@ -90,13 +90,14 @@ export default async function AdminFeaturedPage({
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Status</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Date</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Views</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Expires</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Featured</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {!events || events.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center">
+                  <td colSpan={7} className="px-5 py-8 text-center">
                     <p className="text-gray-400 text-sm">{tab === 'featured' ? 'No featured events yet — go to All Events to feature one' : 'No events found'}</p>
                   </td>
                 </tr>
@@ -131,6 +132,21 @@ export default async function AdminFeaturedPage({
                       </td>
                       <td className="px-5 py-3">
                         <p className="text-sm text-gray-400">{event.views_count || 0}</p>
+                      </td>
+                      <td className="px-5 py-3">
+                        {event.is_featured ? (
+                          event.featured_until ? (
+                            <span className={`text-xs font-medium ${new Date(event.featured_until) < new Date() ? 'text-red-400' : 'text-green-400'}`}>
+                              {new Date(event.featured_until) < new Date()
+                                ? '⚠ Expired'
+                                : formatDate(event.featured_until, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-indigo-400 font-medium">Permanent</span>
+                          )
+                        ) : (
+                          <span className="text-xs text-gray-600">—</span>
+                        )}
                       </td>
                       <td className="px-5 py-3">
                         <FeatureToggle eventId={event.id} isFeatured={event.is_featured ?? false} />
