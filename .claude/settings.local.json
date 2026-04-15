@@ -34,7 +34,12 @@
       "Bash(find \"/c/Users/Hi/Desktop/Gospello/src/app\" -name \"*.tsx\" -exec grep -l \"TODO\\\\|FIXME\\\\|placeholder\\\\|stub\\\\|not implemented\\\\|WIP\" {} \\\\;)",
       "Bash(npx next:*)",
       "Bash(curl -s http://localhost:3000/auth/login -o /dev/null -w \"%{http_code}\")",
-      "Bash(kill %1)"
+      "Bash(kill %1)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('next:', p.dependencies.next\\); console.log\\('supabase-js:', p.dependencies['@supabase/supabase-js']\\);\")",
+      "Bash(ls C:/Users/Hi/Desktop/Gospello/.env*)",
+      "Bash(grep -v \"^$\\\\|#\" C:/Users/Hi/Desktop/Gospello/.env.local)",
+      "Bash(grep -r \"gospello\\\\.vercel\\\\.app\\\\|gospello\\\\.ng\\\\|NEXT_PUBLIC_SITE_URL\" C:/Users/Hi/Desktop/Gospello/.env.local C:/Users/Hi/Desktop/Gospello/next.config.*)",
+      "Bash(find /c/Users/Hi/Desktop/Gospello/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec grep -l \"ERROR\\\\|test\\\\|mock\\\\|fake\\\\|hardcoded\" {} \\\\;)"
     ]
   }
 }

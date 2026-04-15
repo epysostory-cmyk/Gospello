@@ -77,15 +77,15 @@ export default async function AdminOrganizationsPage({
     (churches ?? []).map((c) => [c.profile_id, c]),
   )
 
-  // ── 3. Fetch event counts per profile_id ──────────────────────────────────
+  // ── 3. Fetch event counts per organizer_id ────────────────────────────────
   const { data: eventRows } = await supabase
     .from('events')
-    .select('profile_id')
+    .select('organizer_id')
 
   const eventCountMap = new Map<string, number>()
   for (const row of eventRows ?? []) {
-    if (row.profile_id) {
-      eventCountMap.set(row.profile_id, (eventCountMap.get(row.profile_id) ?? 0) + 1)
+    if (row.organizer_id) {
+      eventCountMap.set(row.organizer_id, (eventCountMap.get(row.organizer_id) ?? 0) + 1)
     }
   }
 
@@ -103,7 +103,7 @@ export default async function AdminOrganizationsPage({
       church_name: church?.name ?? null,
       church_city: church?.city ?? null,
       church_slug: church?.slug ?? null,
-      event_count: eventCountMap.get(p.id) ?? 0,
+      event_count: eventCountMap.get(p.id) ?? 0, // p.id === organizer_id
     }
   })
 
