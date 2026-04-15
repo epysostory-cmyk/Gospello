@@ -69,7 +69,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </div>
 
       {/* Mobile Bottom Tab Bar — hidden on form pages */}
-      <DashboardBottomNav navItems={navItems} />
+      <DashboardBottomNav isChurch={isChurch} />
     </div>
   )
 }

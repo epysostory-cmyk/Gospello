@@ -2,26 +2,32 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Calendar, Plus, User, Building2 } from 'lucide-react'
 
-interface NavItem {
-  href: string
-  label: string
-  icon: LucideIcon
+const NAV_ITEMS = {
+  default: [
+    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { href: '/dashboard/events', label: 'My Events', icon: Calendar },
+    { href: '/dashboard/events/new', label: 'Post Event', icon: Plus },
+    { href: '/dashboard/profile', label: 'Profile', icon: User },
+  ],
+  church: [
+    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { href: '/dashboard/church', label: 'Church', icon: Building2 },
+    { href: '/dashboard/events', label: 'My Events', icon: Calendar },
+    { href: '/dashboard/events/new', label: 'Post Event', icon: Plus },
+    { href: '/dashboard/profile', label: 'Account', icon: User },
+  ],
 }
 
-// Pages where the bottom nav should be hidden (they have their own sticky bottom bar)
-const HIDDEN_ON = [
-  '/dashboard/events/new',
-  '/edit',
-]
+const HIDDEN_ON = ['/dashboard/events/new', '/edit']
 
-export default function DashboardBottomNav({ navItems }: { navItems: NavItem[] }) {
+export default function DashboardBottomNav({ isChurch }: { isChurch: boolean }) {
   const pathname = usePathname()
 
-  // Hide on create/edit form pages
-  const isHidden = HIDDEN_ON.some((path) => pathname.includes(path))
-  if (isHidden) return null
+  if (HIDDEN_ON.some((path) => pathname.includes(path))) return null
+
+  const navItems = isChurch ? NAV_ITEMS.church : NAV_ITEMS.default
 
   return (
     <nav
