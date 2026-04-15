@@ -22,6 +22,27 @@ interface SearchParams {
 
 const PAGE_SIZE = 12
 
+function scoreEvent(event: Event, now: Date): number {
+  let score = 0
+  const daysUntil = (new Date(event.start_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+
+  // Urgency: events in next 7 days get big boost
+  if (daysUntil <= 7) score += 50
+  else if (daysUntil <= 14) score += 30
+  else if (daysUntil <= 30) score += 15
+
+  // Engagement
+  score += Math.min((event.views_count ?? 0) / 10, 20) // max 20 points from views
+
+  // Featured boost
+  if (event.is_featured) score += 40
+
+  // Penalize if ended
+  if (daysUntil < 0) score -= 100
+
+  return score
+}
+
 async function getEvents(params: SearchParams) {
   const supabase = await createClient()
   const page = parseInt(params.page ?? '1', 10)
@@ -62,7 +83,9 @@ async function getEvents(params: SearchParams) {
   }
 
   const { data, count } = await query
-  return { events: (data ?? []) as Event[], total: count ?? 0, page, pages: Math.ceil((count ?? 0) / PAGE_SIZE) }
+  const now = new Date()
+  const sorted = ((data ?? []) as Event[]).sort((a, b) => scoreEvent(b, now) - scoreEvent(a, now))
+  return { events: sorted, total: count ?? 0, page, pages: Math.ceil((count ?? 0) / PAGE_SIZE) }
 }
 
 const CATEGORIES = ['worship', 'prayer', 'conference', 'youth', 'training', 'other'] as const

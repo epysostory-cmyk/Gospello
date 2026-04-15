@@ -65,6 +65,18 @@ export interface Event {
   child_friendly: boolean
   notes: string | null
   featured_until: string | null
+  // New fields
+  is_online: boolean
+  online_platform: string | null
+  online_link: string | null
+  price: number | null
+  currency: string
+  payment_link: string | null
+  rsvp_required: boolean
+  capacity: number | null
+  tags: string[]
+  visibility: string
+  gallery_urls: string[]
   // admin fields
   rejection_reason: string | null
   approved_at: string | null
