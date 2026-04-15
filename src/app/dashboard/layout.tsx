@@ -46,13 +46,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </nav>
 
         <form action="/auth/signout" method="POST" className="mt-4">
-          <Link
-            href="/"
+          <button
+            type="submit"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors w-full"
           >
             <LogOut className="w-4 h-4" />
             Sign out
-          </Link>
+          </button>
         </form>
       </aside>
 

@@ -1,0 +1,15 @@
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { NextRequest } from 'next/server'
+
+export async function POST(_req: NextRequest) {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect('/')
+}
+
+export async function GET(_req: NextRequest) {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect('/')
+}
