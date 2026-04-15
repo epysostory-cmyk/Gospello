@@ -13,7 +13,10 @@ import { getEventLifecycle } from '@/types/database'
 import AttendButton from '@/components/ui/AttendButton'
 import ViewCounter from '@/components/ui/ViewCounter'
 import ShareButton from '@/components/ui/ShareButton'
+import SaveButton from '@/components/ui/SaveButton'
 import CountdownTimer from '@/components/ui/CountdownTimer'
+import EventQuickActions from './_components/EventQuickActions'
+import { checkEventSaved } from '@/app/actions/saved-events'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,6 +57,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     .from('attendances')
     .select('id', { count: 'exact', head: true })
     .eq('event_id', e.id)
+
+  // Check if event is saved by current user
+  const isEventSaved = await checkEventSaved(e.id)
 
   // Related events — mix: up to 2 same category + 1 same city
   const [{ data: relatedCat }, { data: relatedCity }] = await Promise.all([
@@ -417,6 +423,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
           {/* Share */}
           <ShareButton eventTitle={e.title} eventUrl={eventUrl} />
+
+          {/* Save */}
+          <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} />
         </div>
       </div>
 
@@ -449,6 +458,19 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </div>
         </div>
       )}
+
+      {/* Mobile Sticky CTA Bar */}
+      <EventQuickActions
+        eventId={e.id}
+        eventTitle={e.title}
+        eventDate={formatDate(e.start_date, { month: 'short', day: 'numeric' })}
+        eventUrl={eventUrl}
+        initialSaved={isEventSaved}
+        isFree={e.is_free}
+        externalLink={e.external_link}
+        lifecycle={lifecycle}
+        attendanceCount={safeAttendance}
+      />
     </div>
   )
 }

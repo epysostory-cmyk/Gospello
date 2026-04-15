@@ -14,6 +14,17 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
   const categoryColor = CATEGORY_COLORS[event.category] ?? 'bg-gray-100 text-gray-800'
   const categoryLabel = CATEGORY_LABELS[event.category] ?? event.category
 
+  // Calculate capacity percentage for "Almost Full" badge
+  const isAlmostFull = event.capacity != null && event.capacity > 0 && attendanceCount != null
+    ? (attendanceCount / event.capacity) >= 0.8
+    : false
+
+  // Check if event is "happening soon" (within 3 days)
+  const now = new Date()
+  const eventStart = new Date(event.start_date)
+  const daysUntilEvent = (eventStart.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+  const isHappeningSoon = daysUntilEvent > 0 && daysUntilEvent <= 3
+
   if (variant === 'compact') {
     return (
       <Link href={`/events/${event.slug}`} className="flex gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
@@ -83,11 +94,19 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
         <span className={cn('absolute top-3 left-3 text-xs font-medium px-2.5 py-1 rounded-full', categoryColor)}>
           {categoryLabel}
         </span>
-        {event.is_free ? (
-          <span className="absolute top-3 right-3 text-xs font-medium px-2.5 py-1 rounded-full bg-green-100 text-green-800">Free</span>
-        ) : (
-          <span className="absolute top-3 right-3 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">Paid</span>
-        )}
+        <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
+          {event.is_free ? (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-green-100 text-green-800">Free</span>
+          ) : (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">Paid</span>
+          )}
+          {isAlmostFull && (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">Almost Full</span>
+          )}
+          {isHappeningSoon && (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800">Happening Soon</span>
+          )}
+        </div>
       </div>
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">

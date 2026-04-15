@@ -29,7 +29,8 @@
       "Bash(echo \"exit: $?\")",
       "Bash(npx tsc:*)",
       "Bash(ls -la /c/Users/Hi/Desktop/Gospello/src/app/dashboard/events/[id]/)",
-      "Bash(find /c/Users/Hi/Desktop/Gospello -name \"*.sql\" -type f -exec grep -l \"attendances\" {} \\\\;)"
+      "Bash(find /c/Users/Hi/Desktop/Gospello -name \"*.sql\" -type f -exec grep -l \"attendances\" {} \\\\;)",
+      "Bash(xargs grep:*)"
     ]
   }
 }
