@@ -1,14 +1,28 @@
 export const dynamic = 'force-dynamic'
 
-import { Settings, Bell, Shield, Database } from 'lucide-react'
+import { Settings, Bell, Shield } from 'lucide-react'
+import { saveGeneralSettings, saveNotificationSettings, saveSecuritySettings } from './actions'
 
-export default async function AdminSettingsPage() {
+export default async function AdminSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const params = await searchParams
+  const saved = params.saved === '1'
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-2xl font-bold text-white">Settings</h1>
         <p className="text-gray-400 mt-1 text-sm">Configure platform settings and preferences</p>
       </div>
+
+      {saved && (
+        <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+          Settings saved successfully.
+        </div>
+      )}
 
       {/* Settings Sections */}
       <div className="space-y-4">
@@ -18,11 +32,12 @@ export default async function AdminSettingsPage() {
             <Settings className="w-5 h-5 text-indigo-400" />
             <h2 className="text-lg font-semibold text-white">General Settings</h2>
           </div>
-          <div className="px-5 py-4 space-y-4">
+          <form action={saveGeneralSettings} className="px-5 py-4 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Platform Name</label>
               <input
                 type="text"
+                name="platform_name"
                 defaultValue="Gospello"
                 className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -31,14 +46,18 @@ export default async function AdminSettingsPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">Support Email</label>
               <input
                 type="email"
+                name="support_email"
                 defaultValue="support@gospello.com"
                 className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-            <button className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium"
+            >
               Save Changes
             </button>
-          </div>
+          </form>
         </div>
 
         {/* Notification Settings */}
@@ -47,20 +66,26 @@ export default async function AdminSettingsPage() {
             <Bell className="w-5 h-5 text-amber-400" />
             <h2 className="text-lg font-semibold text-white">Notifications</h2>
           </div>
-          <div className="px-5 py-4 space-y-3">
+          <form action={saveNotificationSettings} className="px-5 py-4 space-y-3">
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 rounded bg-white/5 border-white/20" />
+              <input type="checkbox" name="email_new_events" defaultChecked className="w-4 h-4 rounded bg-white/5 border-white/20" />
               <span className="text-sm text-gray-300">Email on new events submitted</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 rounded bg-white/5 border-white/20" />
+              <input type="checkbox" name="email_registrations" defaultChecked className="w-4 h-4 rounded bg-white/5 border-white/20" />
               <span className="text-sm text-gray-300">Email on user registrations</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 rounded bg-white/5 border-white/20" />
+              <input type="checkbox" name="weekly_digest" className="w-4 h-4 rounded bg-white/5 border-white/20" />
               <span className="text-sm text-gray-300">Weekly digest summary</span>
             </label>
-          </div>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium"
+            >
+              Save Notifications
+            </button>
+          </form>
         </div>
 
         {/* Security Settings */}
@@ -69,19 +94,23 @@ export default async function AdminSettingsPage() {
             <Shield className="w-5 h-5 text-green-400" />
             <h2 className="text-lg font-semibold text-white">Security</h2>
           </div>
-          <div className="px-5 py-4 space-y-3">
+          <form action={saveSecuritySettings} className="px-5 py-4 space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Session Timeout (minutes)</label>
               <input
                 type="number"
+                name="session_timeout"
                 defaultValue="30"
                 className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-            <button className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium"
+            >
               Update Security Settings
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>

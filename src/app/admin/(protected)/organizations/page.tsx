@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
+import OrgActions from './OrgActions'
 
 interface SearchParams {
   q?: string
@@ -404,28 +405,7 @@ export default async function AdminOrganizationsPage({
                             </Link>
                           )}
 
-                          {/* Suspend / Reactivate — wired in later via server action */}
-                          {suspended ? (
-                            <button
-                              type="button"
-                              disabled
-                              title="Reactivate (coming soon)"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600/20 hover:bg-green-600/30 border border-green-600/30 text-green-400 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              Reactivate
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              disabled
-                              title="Suspend (coming soon)"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 border border-red-600/30 text-red-400 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <ShieldOff className="w-3.5 h-3.5" />
-                              Suspend
-                            </button>
-                          )}
+                          <OrgActions profileId={row.id} suspended={isSuspended(row)} />
                         </div>
                       </td>
                     </tr>

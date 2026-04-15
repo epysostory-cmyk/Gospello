@@ -1,8 +1,10 @@
 export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { Users, Plus, Shield, Trash2 } from 'lucide-react'
+import { Users, Shield } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import AddAdminFormNew from './AddAdminFormNew'
+import DeleteAdminButton from './DeleteAdminButton'
 
 export default async function AdminTeamPage() {
   const adminClient = createAdminClient()
@@ -26,16 +28,13 @@ export default async function AdminTeamPage() {
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Admin Management</h1>
-          <p className="text-gray-400 mt-1 text-sm">Manage administrative team members</p>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium">
-          <Plus className="w-4 h-4" />
-          Add Admin
-        </button>
+      <div>
+        <h1 className="text-2xl font-bold text-white">Admin Management</h1>
+        <p className="text-gray-400 mt-1 text-sm">Manage administrative team members</p>
       </div>
+
+      {/* Add Admin Form */}
+      <AddAdminFormNew />
 
       {/* Admin Team Table */}
       <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
@@ -63,7 +62,7 @@ export default async function AdminTeamPage() {
                       <p className="text-sm font-medium text-white">{user.email}</p>
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${roleColors[user.role as keyof typeof roleColors]}`}>
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${roleColors[user.role as keyof typeof roleColors] ?? 'bg-gray-500/10 text-gray-400 border-gray-500/30'}`}>
                         {roleLabels[user.role as keyof typeof roleLabels] || user.role}
                       </span>
                     </td>
@@ -71,9 +70,7 @@ export default async function AdminTeamPage() {
                       <p className="text-sm text-gray-400">{formatDate(user.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                     </td>
                     <td className="px-5 py-3">
-                      <button className="p-1.5 rounded-lg hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <DeleteAdminButton userId={user.id} />
                     </td>
                   </tr>
                 ))

@@ -2,18 +2,32 @@ export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
-import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
+import ModerationActions from './ModerationActions'
 
 export default async function AdminModerationPage() {
   const adminClient = createAdminClient()
 
-  const { data: pendingEvents } = await adminClient
-    .from('events')
-    .select('id, title, status, created_at, profiles(display_name)')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true })
-    .limit(50)
+  const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
+    adminClient
+      .from('events')
+      .select('id, title, status, created_at, profiles(display_name)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+      .limit(50),
+    adminClient
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'approved'),
+    adminClient
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'rejected'),
+  ])
+
+  const pendingEvents = pendingRes.data
+  const approvedCount = approvedRes.count ?? 0
+  const rejectedCount = rejectedRes.count ?? 0
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -38,7 +52,7 @@ export default async function AdminModerationPage() {
             <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-gray-400">Approved</p>
-              <p className="text-2xl font-bold text-white mt-1">—</p>
+              <p className="text-2xl font-bold text-white mt-1">{approvedCount}</p>
             </div>
           </div>
         </div>
@@ -47,7 +61,7 @@ export default async function AdminModerationPage() {
             <XCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-gray-400">Rejected</p>
-              <p className="text-2xl font-bold text-white mt-1">—</p>
+              <p className="text-2xl font-bold text-white mt-1">{rejectedCount}</p>
             </div>
           </div>
         </div>
@@ -61,7 +75,7 @@ export default async function AdminModerationPage() {
         <div className="divide-y divide-white/5">
           {!pendingEvents || pendingEvents.length === 0 ? (
             <div className="px-5 py-8 text-center">
-              <p className="text-gray-400 text-sm">All events are reviewed! 🎉</p>
+              <p className="text-gray-400 text-sm">All events are reviewed!</p>
             </div>
           ) : (
             pendingEvents.map((event: any) => {
@@ -74,14 +88,7 @@ export default async function AdminModerationPage() {
                     <h3 className="text-sm font-medium text-white">{event.title}</h3>
                     <p className="text-xs text-gray-500 mt-1">By {organizer} • {formatDate(event.created_at, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <button className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 text-xs font-medium transition-colors">
-                      Approve
-                    </button>
-                    <button className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs font-medium transition-colors">
-                      Reject
-                    </button>
-                  </div>
+                  <ModerationActions eventId={event.id} />
                 </div>
               )
             })

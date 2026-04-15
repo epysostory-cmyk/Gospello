@@ -11,11 +11,12 @@ interface SearchParams {
   page?: string
 }
 
-export default async function AdminUsersPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const adminClient = createAdminClient()
-  const search = searchParams.search || ''
-  const type = searchParams.type || ''
-  const page = parseInt(searchParams.page || '1')
+  const resolvedParams = await searchParams
+  const search = resolvedParams.search || ''
+  const type = resolvedParams.type || ''
+  const page = parseInt(resolvedParams.page || '1')
   const pageSize = 20
 
   let query = adminClient
@@ -49,15 +50,22 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 
       {/* Filters */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search by name..."
-            defaultValue={search}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
+        <form method="GET" action="/admin/users" className="flex gap-2">
+          {type && <input type="hidden" name="type" value={type} />}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input
+              type="text"
+              name="search"
+              placeholder="Search by name..."
+              defaultValue={search}
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+            Search
+          </button>
+        </form>
 
         <div className="flex gap-2 flex-wrap">
           <Link href="/admin/users" className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${!type ? 'bg-indigo-600 text-white' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}>

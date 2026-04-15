@@ -3,6 +3,12 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+export async function setFeatured(eventId: string, featured: boolean) {
+  const adminClient = createAdminClient()
+  await adminClient.from('events').update({ is_featured: featured }).eq('id', eventId)
+  revalidatePath('/admin/featured')
+}
+
 export async function toggleFeatured(
   id: string,
   table: 'events' | 'churches',

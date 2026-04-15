@@ -11,11 +11,12 @@ interface SearchParams {
   page?: string
 }
 
-export default async function AdminEventsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function AdminEventsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const adminClient = createAdminClient()
-  const search = searchParams.search || ''
-  const status = searchParams.status || ''
-  const page = parseInt(searchParams.page || '1')
+  const resolvedParams = await searchParams
+  const search = resolvedParams.search || ''
+  const status = resolvedParams.status || ''
+  const page = parseInt(resolvedParams.page || '1')
   const pageSize = 20
 
   let query = adminClient
@@ -50,17 +51,22 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
 
       {/* Filters */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-        <div className="flex gap-3">
+        <form method="GET" action="/admin/events" className="flex gap-2">
+          {status && <input type="hidden" name="status" value={status} />}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input
               type="text"
+              name="search"
               placeholder="Search events..."
               defaultValue={search}
               className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-        </div>
+          <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors">
+            Search
+          </button>
+        </form>
 
         <div className="flex gap-2 flex-wrap">
           <Link href="/admin/events" className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${!status ? 'bg-indigo-600 text-white' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}>
