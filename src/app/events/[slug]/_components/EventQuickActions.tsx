@@ -1,6 +1,6 @@
 'use client'
 
-import { Share2, Heart, Loader2 } from 'lucide-react'
+import { Share2, Heart, Loader2, UserPlus, UserCheck, Ticket } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toggleSaveEvent } from '@/app/actions/saved-events'
@@ -14,7 +14,7 @@ interface Props {
   eventUrl: string
   initialSaved?: boolean
   isFree: boolean
-  externalLink?: string | null
+  rsvpRequired: boolean
   lifecycle: 'upcoming' | 'ongoing' | 'ended'
 }
 
@@ -25,7 +25,7 @@ export default function EventQuickActions({
   eventUrl,
   initialSaved = false,
   isFree,
-  externalLink,
+  rsvpRequired,
   lifecycle,
 }: Props) {
   const [showShareMenu, setShowShareMenu] = useState(false)
@@ -33,11 +33,11 @@ export default function EventQuickActions({
   const [savingEvent, setSavingEvent] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const supabase = createClient()
 
   useEffect(() => {
+    const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
-  }, [supabase.auth])
+  }, [])
 
   const handleSave = async () => {
     if (!user) { setShowAuthModal(true); return }
@@ -47,47 +47,60 @@ export default function EventQuickActions({
     setSavingEvent(false)
   }
 
-  const whatsappText = encodeURIComponent(`Check out: ${eventTitle} • ${eventDate} • ${eventUrl}`)
-  const twitterText = encodeURIComponent(eventTitle)
+  // Scroll to the AttendButton on the page
+  const handleRsvpClick = () => {
+    const el = document.getElementById('attend')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+
+  const whatsappText = encodeURIComponent(
+    `${eventTitle} • ${eventDate} • ${eventUrl}`
+  )
+
+  // Determine mode for button label
+  const mode = !isFree ? 'paid' : rsvpRequired ? 'rsvp' : 'instant'
+
+  const rsvpConfig = {
+    instant: { label: 'ATTEND', Icon: UserPlus, cls: 'bg-indigo-600 hover:bg-indigo-700' },
+    rsvp:    { label: 'REGISTER', Icon: UserCheck, cls: 'bg-indigo-600 hover:bg-indigo-700' },
+    paid:    { label: 'GET TICKETS', Icon: Ticket, cls: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' },
+  }[mode]
 
   const rsvpButton = lifecycle === 'ended' ? (
-    <div className="flex-1 bg-gray-100 text-gray-500 font-semibold py-3 px-4 rounded-xl text-center text-sm">
+    <div className="flex-1 bg-gray-100 text-gray-400 font-semibold py-3 px-4 rounded-2xl text-center text-sm">
       Event Ended
     </div>
-  ) : !isFree && externalLink ? (
-    <a
-      href={externalLink}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-xl text-center text-sm transition-colors"
-    >
-      Get Ticket
-    </a>
   ) : (
-    <a
-      href="#attend"
-      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl text-center text-sm transition-colors"
+    <button
+      onClick={handleRsvpClick}
+      className={`flex-1 flex items-center justify-center gap-2 text-white font-bold py-3 px-4 rounded-2xl text-sm tracking-wide transition-all ${rsvpConfig.cls}`}
     >
-      Register
-    </a>
+      <rsvpConfig.Icon className="w-4 h-4" />
+      {rsvpConfig.label}
+    </button>
   )
 
   return (
     <>
-      {/* Mobile Sticky Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-200 z-40"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="flex items-center gap-2 px-3 py-3">
-
-          {/* RSVP / Get Ticket (full width) */}
+      {/* ── Mobile Sticky Bottom Bar ───────────────────────── */}
+      <div
+        className="fixed bottom-0 left-0 right-0 md:hidden z-40 bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="flex items-center gap-2.5 px-4 py-3">
+          {/* RSVP / Get Ticket CTA (takes most space) */}
           {rsvpButton}
 
           {/* Save */}
           <button
             onClick={handleSave}
             disabled={savingEvent}
-            className={`w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-xl transition-colors ${
-              isSaved ? 'bg-red-50 border border-red-200' : 'bg-gray-100 hover:bg-gray-200'
+            className={`w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-2xl transition-all ${
+              isSaved
+                ? 'bg-red-50 border border-red-200'
+                : 'bg-gray-100 hover:bg-gray-200'
             }`}
             title={isSaved ? 'Unsave' : 'Save event'}
           >
@@ -101,7 +114,7 @@ export default function EventQuickActions({
           <div className="relative flex-shrink-0">
             <button
               onClick={() => setShowShareMenu(!showShareMenu)}
-              className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-100 hover:bg-gray-200 transition-colors"
               title="Share event"
             >
               <Share2 className="w-5 h-5 text-gray-600" />
@@ -109,33 +122,37 @@ export default function EventQuickActions({
 
             {showShareMenu && (
               <>
-                {/* Backdrop */}
                 <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
-                {/* Menu */}
-                <div className="absolute bottom-14 right-0 z-50 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden min-w-[160px]">
+                <div className="absolute bottom-[56px] right-0 z-50 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden min-w-[170px]">
                   <a
                     href={`https://wa.me/?text=${whatsappText}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setShowShareMenu(false)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-green-50 text-sm font-medium text-gray-700 border-b border-gray-100"
+                    className="flex items-center gap-3 px-4 py-3.5 hover:bg-green-50 text-sm font-medium text-gray-700 border-b border-gray-50"
                   >
-                    <span className="text-lg">💬</span> WhatsApp
+                    <span className="text-xl">💬</span>
+                    <span>WhatsApp</span>
                   </a>
                   <a
-                    href={`https://twitter.com/intent/tweet?text=${twitterText}&url=${encodeURIComponent(eventUrl)}`}
+                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(eventTitle)}&url=${encodeURIComponent(eventUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setShowShareMenu(false)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-sky-50 text-sm font-medium text-gray-700 border-b border-gray-100"
+                    className="flex items-center gap-3 px-4 py-3.5 hover:bg-sky-50 text-sm font-medium text-gray-700 border-b border-gray-50"
                   >
-                    <span className="text-lg">🐦</span> Twitter
+                    <span className="text-xl">🐦</span>
+                    <span>Twitter / X</span>
                   </a>
                   <button
-                    onClick={() => { navigator.clipboard.writeText(eventUrl); setShowShareMenu(false) }}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-sm font-medium text-gray-700 w-full"
+                    onClick={() => {
+                      navigator.clipboard.writeText(eventUrl)
+                      setShowShareMenu(false)
+                    }}
+                    className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 text-sm font-medium text-gray-700 w-full"
                   >
-                    <span className="text-lg">📋</span> Copy Link
+                    <span className="text-xl">📋</span>
+                    <span>Copy Link</span>
                   </button>
                 </div>
               </>
@@ -144,15 +161,16 @@ export default function EventQuickActions({
         </div>
       </div>
 
-      {/* Spacer so content isn't hidden behind sticky bar */}
-      <div className="h-20 md:hidden" />
+      {/* Spacer so page content isn't hidden behind sticky bar */}
+      <div className="h-[72px] md:hidden" />
 
-      {/* Auth modal */}
+      {/* Auth modal (for save) */}
       {showAuthModal && (
         <AuthModal
           onClose={() => setShowAuthModal(false)}
           onSuccess={() => {
             setShowAuthModal(false)
+            const supabase = createClient()
             supabase.auth.getUser().then(({ data }) => setUser(data.user))
           }}
           title="Save Event"

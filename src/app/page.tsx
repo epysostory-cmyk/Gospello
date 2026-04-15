@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Search, ArrowRight, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
 import ChurchCard from '@/components/ui/ChurchCard'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -10,56 +11,90 @@ export const revalidate = 60
 
 const SIXTY_DAYS = 60 * 24 * 60 * 60 * 1000
 
+const CATEGORIES = [
+  { label: 'Concerts',       value: 'worship',    emoji: '🎵', gradient: 'from-violet-600 to-indigo-700' },
+  { label: 'Conferences',    value: 'conference', emoji: '🎤', gradient: 'from-blue-600 to-cyan-700' },
+  { label: 'Worship Nights', value: 'worship',    emoji: '🙏', gradient: 'from-indigo-600 to-purple-700' },
+  { label: 'Trainings',      value: 'training',   emoji: '📖', gradient: 'from-emerald-600 to-teal-700' },
+  { label: 'Prayer Events',  value: 'prayer',     emoji: '✨', gradient: 'from-amber-500 to-orange-600' },
+  { label: 'Youth Programs', value: 'youth',      emoji: '🌟', gradient: 'from-pink-600 to-rose-700' },
+]
+
 async function getHomepageData() {
   try {
     const supabase = await createClient()
+    const adminClient = createAdminClient()
     const now = new Date().toISOString()
     const in60Days = new Date(Date.now() + SIXTY_DAYS).toISOString()
 
-    const { data: heroSettings } = await supabase
-      .from('platform_settings')
-      .select('hero_badge, hero_headline_1, hero_headline_gradient, hero_headline_3, hero_subheadline, hero_popular_searches, hero_cta_primary, hero_cta_secondary')
-      .eq('id', 'default')
-      .single()
+    const [
+      heroSettingsRes,
+      featuredRes,
+      upcomingRes,
+      churchesRes,
+      statsEventsRes,
+      statsChurchesRes,
+      statsUsersRes,
+    ] = await Promise.all([
+      supabase
+        .from('platform_settings')
+        .select('hero_badge, hero_headline_1, hero_headline_gradient, hero_headline_3, hero_subheadline, hero_popular_searches, hero_cta_primary, hero_cta_secondary')
+        .eq('id', 'default')
+        .single(),
+      supabase
+        .from('events')
+        .select('*, churches(*)')
+        .eq('status', 'approved')
+        .eq('is_featured', true)
+        .gte('start_date', now)
+        .or(`featured_until.is.null,featured_until.gte.${now}`)
+        .order('start_date', { ascending: true })
+        .limit(4),
+      supabase
+        .from('events')
+        .select('*, churches(*)')
+        .eq('status', 'approved')
+        .gte('start_date', now)
+        .lte('start_date', in60Days)
+        .order('start_date', { ascending: true })
+        .limit(12),
+      supabase.from('churches').select('*').eq('is_featured', true).limit(6),
+      supabase.from('events').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+      supabase.from('churches').select('id', { count: 'exact', head: true }),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+    ])
 
-    const [featuredRes, upcomingRes, churchesRes, statsEventsRes, statsChurchesRes, statsUsersRes] =
-      await Promise.all([
-        supabase
-          .from('events')
-          .select('*, churches(*)')
-          .eq('status', 'approved')
-          .eq('is_featured', true)
-          .gte('start_date', now)
-          .or(`featured_until.is.null,featured_until.gte.${now}`)
-          .order('start_date', { ascending: true })
-          .limit(4),
+    const upcomingEvents = (upcomingRes.data ?? []) as Event[]
+    const featuredEvents = (featuredRes.data ?? []) as Event[]
 
-        supabase
-          .from('events')
-          .select('*, churches(*)')
-          .eq('status', 'approved')
-          .gte('start_date', now)
-          .lte('start_date', in60Days)
-          .order('start_date', { ascending: true })
-          .limit(12),
+    // Batch fetch attendance counts for all events shown on homepage
+    const allEventIds = [
+      ...featuredEvents.map(e => e.id),
+      ...upcomingEvents.map(e => e.id),
+    ]
 
-        supabase.from('churches').select('*').eq('is_featured', true).limit(6),
-
-        supabase.from('events').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
-        supabase.from('churches').select('id', { count: 'exact', head: true }),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-      ])
+    let attendanceCountMap: Record<string, number> = {}
+    if (allEventIds.length > 0) {
+      const { data: attendanceRows } = await adminClient
+        .from('attendances')
+        .select('event_id')
+        .in('event_id', allEventIds)
+      for (const row of attendanceRows ?? []) {
+        attendanceCountMap[row.event_id] = (attendanceCountMap[row.event_id] ?? 0) + 1
+      }
+    }
 
     return {
-      featuredEvents: (featuredRes.data ?? []) as Event[],
-      upcomingEvents: (upcomingRes.data ?? []) as Event[],
+      featuredEvents,
+      upcomingEvents,
       featuredChurches: (churchesRes.data ?? []) as Church[],
       stats: {
         events: statsEventsRes.count ?? 0,
         churches: statsChurchesRes.count ?? 0,
         users: statsUsersRes.count ?? 0,
       },
-      heroSettings: heroSettings ?? null,
+      heroSettings: heroSettingsRes.data ?? null,
+      attendanceCountMap,
     }
   } catch {
     return {
@@ -68,21 +103,20 @@ async function getHomepageData() {
       featuredChurches: [],
       stats: { events: 0, churches: 0, users: 0 },
       heroSettings: null,
+      attendanceCountMap: {} as Record<string, number>,
     }
   }
 }
 
-const CATEGORIES = [
-  { label: 'Concerts',      value: 'worship',    emoji: '🎵', gradient: 'from-purple-500 to-indigo-600' },
-  { label: 'Conferences',   value: 'conference', emoji: '🎤', gradient: 'from-blue-500 to-cyan-600' },
-  { label: 'Worship Nights',value: 'worship',    emoji: '🙏', gradient: 'from-indigo-500 to-purple-600' },
-  { label: 'Trainings',     value: 'training',   emoji: '📖', gradient: 'from-green-500 to-teal-600' },
-  { label: 'Prayer Events', value: 'prayer',     emoji: '✨', gradient: 'from-amber-500 to-orange-600' },
-  { label: 'Youth Programs',value: 'youth',      emoji: '🌟', gradient: 'from-pink-500 to-rose-600' },
-]
-
 export default async function HomePage() {
-  const { featuredEvents, upcomingEvents, featuredChurches, stats, heroSettings } = await getHomepageData()
+  const {
+    featuredEvents,
+    upcomingEvents,
+    featuredChurches,
+    stats,
+    heroSettings,
+    attendanceCountMap,
+  } = await getHomepageData()
 
   const heroBadge        = heroSettings?.hero_badge             ?? "Nigeria's Gospel Event Platform"
   const heroLine1        = heroSettings?.hero_headline_1        ?? 'Discover Every'
@@ -91,7 +125,7 @@ export default async function HomePage() {
   const heroSubheadline  = heroSettings?.hero_subheadline       ?? 'Worship nights, conferences, prayer gatherings, youth programs and more — across all 36 Nigerian states and beyond.'
   const heroCtaPrimary   = heroSettings?.hero_cta_primary       ?? 'Explore Events'
   const heroCtaSecondary = heroSettings?.hero_cta_secondary     ?? 'Post an Event'
-  const popularSearches: string[]  = (heroSettings?.hero_popular_searches ?? 'Worship,Lagos,Conference,Prayer,Youth')
+  const popularSearches: string[] = (heroSettings?.hero_popular_searches ?? 'Worship,Lagos,Conference,Prayer,Youth')
     .split(',')
     .map((s: string) => s.trim())
     .filter(Boolean)
@@ -101,13 +135,11 @@ export default async function HomePage() {
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
       <section className="relative bg-slate-950 text-white overflow-hidden">
-
         {/* Background glow orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-32 -right-32 w-[700px] h-[700px] bg-indigo-600/20 rounded-full blur-[120px]" />
           <div className="absolute -bottom-32 -left-32 w-[600px] h-[600px] bg-purple-700/20 rounded-full blur-[100px]" />
           <div className="absolute top-1/2 left-1/3 w-[400px] h-[400px] bg-amber-500/8 rounded-full blur-[90px] -translate-y-1/2" />
-          {/* Fine dot grid */}
           <div
             className="absolute inset-0 opacity-[0.04]"
             style={{
@@ -115,7 +147,6 @@ export default async function HomePage() {
               backgroundSize: '28px 28px',
             }}
           />
-          {/* Horizontal line accent */}
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         </div>
 
@@ -215,10 +246,10 @@ export default async function HomePage() {
             {/* Stats */}
             <div className="mt-16 pt-8 border-t border-white/10 grid grid-cols-3 gap-6 max-w-sm sm:max-w-none sm:flex sm:gap-12">
               {[
-                { value: stats.events > 0 ? `${stats.events}+` : '—', label: 'Events listed' },
+                { value: stats.events > 0 ? `${stats.events}+` : '—',   label: 'Events listed' },
                 { value: stats.churches > 0 ? `${stats.churches}+` : '—', label: 'Churches' },
-                { value: '36', label: 'Nigerian states' },
-                { value: stats.users > 0 ? `${stats.users}+` : '—', label: 'Members' },
+                { value: '36',                                              label: 'Nigerian states' },
+                { value: stats.users > 0 ? `${stats.users}+` : '—',     label: 'Members' },
               ].map((stat) => (
                 <div key={stat.label} className="text-center sm:text-left">
                   <p className="text-3xl font-black text-white tracking-tight">{stat.value}</p>
@@ -238,19 +269,51 @@ export default async function HomePage() {
           href="/categories"
           linkText="View all categories"
         />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+
+        {/* Mobile: horizontal scroll carousel | Desktop: grid */}
+        <div
+          className="
+            flex gap-3 overflow-x-auto pb-2 -mx-4 px-4
+            sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:pb-0
+            lg:grid-cols-6
+            snap-x snap-mandatory
+          "
+          style={{ scrollbarWidth: 'none' }}
+        >
           {CATEGORIES.map((cat) => (
             <Link
               key={cat.label}
               href={`/events?category=${cat.value}`}
-              className="group flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-white border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all"
+              className="
+                group relative flex-shrink-0 snap-start
+                w-[140px] h-[110px]
+                sm:w-auto sm:h-32
+                rounded-2xl overflow-hidden
+                transition-all duration-300 hover:-translate-y-1 hover:shadow-xl
+              "
             >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cat.gradient} flex items-center justify-center text-2xl shadow-sm`}>
-                {cat.emoji}
+              {/* Gradient background */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-90 group-hover:opacity-100 transition-opacity`} />
+
+              {/* Subtle pattern overlay */}
+              <div
+                className="absolute inset-0 opacity-10"
+                style={{
+                  backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+                  backgroundSize: '16px 16px',
+                }}
+              />
+
+              {/* Glow on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-white/10 rounded-2xl" />
+
+              {/* Content */}
+              <div className="relative h-full flex flex-col items-center justify-center gap-2 p-3">
+                <span className="text-3xl sm:text-4xl drop-shadow-sm">{cat.emoji}</span>
+                <span className="text-white font-bold text-xs sm:text-sm text-center leading-tight drop-shadow-sm">
+                  {cat.label}
+                </span>
               </div>
-              <span className="text-sm font-semibold text-gray-700 group-hover:text-indigo-600 transition-colors text-center leading-tight">
-                {cat.label}
-              </span>
             </Link>
           ))}
         </div>
@@ -267,7 +330,12 @@ export default async function HomePage() {
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {featuredEvents.map((event) => (
-                <EventCard key={event.id} event={event} variant="featured" />
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  variant="featured"
+                  attendanceCount={attendanceCountMap[event.id]}
+                />
               ))}
             </div>
           </section>
@@ -283,7 +351,11 @@ export default async function HomePage() {
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {upcomingEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  attendanceCount={attendanceCountMap[event.id]}
+                />
               ))}
             </div>
             <div className="text-center mt-8">
