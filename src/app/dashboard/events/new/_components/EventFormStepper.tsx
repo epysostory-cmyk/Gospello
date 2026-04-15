@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import StepperProgressBar from './StepperProgressBar'
@@ -92,7 +92,7 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false)
-  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null)
+  const autoSaveTimer = useRef<NodeJS.Timeout | null>(null)
 
   const supabase = createClient()
 
@@ -144,21 +144,21 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
     }
   }, [isEditMode, initialEvent])
 
-  // Auto-save to localStorage
+  // Auto-save to localStorage (debounced, no infinite loop)
   useEffect(() => {
-    if (isEditMode) return // Don't auto-save in edit mode
+    if (isEditMode) return
 
-    if (autoSaveTimer) clearTimeout(autoSaveTimer)
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
 
-    const timer = setTimeout(() => {
+    autoSaveTimer.current = setTimeout(() => {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(formData))
       setLastSaved(new Date())
     }, AUTO_SAVE_DELAY)
 
-    setAutoSaveTimer(timer)
-
-    return () => clearTimeout(timer)
-  }, [formData, isEditMode, autoSaveTimer])
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    }
+  }, [formData, isEditMode])
 
   const updateForm = useCallback((field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))

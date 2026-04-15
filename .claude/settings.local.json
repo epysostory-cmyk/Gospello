@@ -31,7 +31,10 @@
       "Bash(ls -la /c/Users/Hi/Desktop/Gospello/src/app/dashboard/events/[id]/)",
       "Bash(find /c/Users/Hi/Desktop/Gospello -name \"*.sql\" -type f -exec grep -l \"attendances\" {} \\\\;)",
       "Bash(xargs grep:*)",
-      "Bash(find \"/c/Users/Hi/Desktop/Gospello/src/app\" -name \"*.tsx\" -exec grep -l \"TODO\\\\|FIXME\\\\|placeholder\\\\|stub\\\\|not implemented\\\\|WIP\" {} \\\\;)"
+      "Bash(find \"/c/Users/Hi/Desktop/Gospello/src/app\" -name \"*.tsx\" -exec grep -l \"TODO\\\\|FIXME\\\\|placeholder\\\\|stub\\\\|not implemented\\\\|WIP\" {} \\\\;)",
+      "Bash(npx next:*)",
+      "Bash(curl -s http://localhost:3000/auth/login -o /dev/null -w \"%{http_code}\")",
+      "Bash(kill %1)"
     ]
   }
 }
