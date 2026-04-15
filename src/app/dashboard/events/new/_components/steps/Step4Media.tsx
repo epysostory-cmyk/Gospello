@@ -18,6 +18,14 @@ export default function Step4Media({ formData, updateForm, errors }: StepProps) 
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
+  const ensureBucket = async () => {
+    try {
+      await fetch('/api/setup/storage', { method: 'POST' })
+    } catch {
+      // Non-blocking — if this fails, the upload attempt will show its own error
+    }
+  }
+
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -28,6 +36,9 @@ export default function Step4Media({ formData, updateForm, errors }: StepProps) 
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
+
+      // Ensure bucket exists (no-op if already created)
+      await ensureBucket()
 
       const fileExt = file.name.split('.').pop()
       const fileName = `${Date.now()}.${fileExt}`
@@ -64,6 +75,8 @@ export default function Step4Media({ formData, updateForm, errors }: StepProps) 
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
+
+      await ensureBucket()
 
       const newUrls: string[] = []
 

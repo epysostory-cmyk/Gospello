@@ -233,14 +233,17 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         description: formData.description,
         category: formData.category,
         start_date: `${formData.start_date}T${formData.start_time}:00`,
-        end_date: formData.end_date ? `${formData.end_date}T${formData.end_time}:00` : null,
+        end_date: formData.end_date
+          ? `${formData.end_date}T${formData.end_time || '00:00'}:00`
+          : null,
         is_online: formData.is_online,
         online_platform: formData.is_online ? formData.online_platform : null,
         online_link: formData.is_online ? formData.online_link : null,
-        location_name: !formData.is_online ? formData.location_name : null,
+        // Use empty strings for online events — avoids NOT NULL constraint violations
+        location_name: !formData.is_online ? formData.location_name : 'Online Event',
         address: !formData.is_online ? formData.address : null,
-        city: !formData.is_online ? formData.city : null,
-        state: !formData.is_online ? formData.state : null,
+        city: !formData.is_online ? formData.city : 'Online',
+        state: !formData.is_online ? formData.state : 'Online',
         is_free: formData.is_free,
         price: !formData.is_free ? parseFloat(formData.price) : null,
         currency: formData.currency,
@@ -265,7 +268,10 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(eventData),
         })
-        if (!response.ok) throw new Error('Failed to update event')
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || `Failed to update event (${response.status})`)
+        }
       } else {
         // Create event
         const response = await fetch('/api/events', {
@@ -273,7 +279,10 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(eventData),
         })
-        if (!response.ok) throw new Error('Failed to create event')
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || `Failed to create event (${response.status})`)
+        }
       }
 
       // Clear localStorage on success

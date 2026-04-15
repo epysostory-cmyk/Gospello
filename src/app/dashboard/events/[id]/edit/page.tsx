@@ -9,11 +9,12 @@ import type { Event } from '@/types/database'
 
 export default function EditEventPage() {
   const params = useParams()
-  const supabase = createClient()
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Create client inside effect to avoid it as a stale dependency
+    const supabase = createClient()
     const loadEvent = async () => {
       const { data } = await supabase
         .from('events')
@@ -28,7 +29,7 @@ export default function EditEventPage() {
     }
 
     loadEvent()
-  }, [params.id, supabase])
+  }, [params.id])
 
   if (loading) {
     return (
