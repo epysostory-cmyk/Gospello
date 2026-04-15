@@ -1,94 +1,126 @@
 export const dynamic = 'force-dynamic'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { Search, Star } from 'lucide-react'
+import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
-import type { Event, Church } from '@/types/database'
-import FeaturedToggle from './FeaturedToggle'
 
-export default async function AdminFeaturedPage() {
-  const supabase = await createClient()
+interface SearchParams {
+  search?: string
+  page?: string
+}
 
-  const [eventsRes, churchesRes] = await Promise.all([
-    supabase
-      .from('events')
-      .select('*')
-      .eq('status', 'approved')
-      .gte('start_date', new Date().toISOString())
-      .order('is_featured', { ascending: false })
-      .order('start_date', { ascending: true })
-      .limit(30),
+export default async function AdminFeaturedPage({ searchParams }: { searchParams: SearchParams }) {
+  const adminClient = createAdminClient()
+  const search = searchParams.search || ''
+  const page = parseInt(searchParams.page || '1')
+  const pageSize = 20
 
-    supabase
-      .from('churches')
-      .select('*')
-      .order('is_featured', { ascending: false })
-      .order('name', { ascending: true })
-      .limit(30),
-  ])
+  let query = adminClient
+    .from('events')
+    .select('id, title, is_featured, start_date, views_count, profiles(display_name)', { count: 'exact' })
+    .eq('is_featured', true)
+    .order('created_at', { ascending: false })
 
-  const events = (eventsRes.data ?? []) as Event[]
-  const churches = (churchesRes.data ?? []) as Church[]
+  if (search) {
+    query = query.ilike('title', `%${search}%`)
+  }
+
+  const { data: events, count: total } = await query.range((page - 1) * pageSize, page * pageSize - 1)
+
+  const totalPages = Math.ceil((total ?? 0) / pageSize)
 
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Featured Content</h1>
-        <p className="text-gray-500 mt-1">Choose which events and churches appear on the homepage</p>
+        <h1 className="text-2xl font-bold text-white">Featured Events</h1>
+        <p className="text-gray-400 mt-1 text-sm">Manage featured events showcase</p>
       </div>
 
-      {/* Featured Events */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900">Events</h2>
-          <p className="text-sm text-gray-500">Toggle events to feature them on the homepage hero section</p>
-        </div>
-        <div className="divide-y divide-gray-50">
-          {events.map((event) => (
-            <div key={event.id} className="flex items-center justify-between px-5 py-3">
-              <div className="min-w-0">
-                <p className="font-medium text-gray-900 truncate">{event.title}</p>
-                <p className="text-xs text-gray-500">
-                  {formatDate(event.start_date, { month: 'short', day: 'numeric' })} · {event.city}
-                </p>
-              </div>
-              <FeaturedToggle
-                id={event.id}
-                table="events"
-                isFeatured={event.is_featured}
-                featuredUntil={event.featured_until}
-              />
-            </div>
-          ))}
-          {events.length === 0 && (
-            <p className="text-gray-500 text-sm px-5 py-8 text-center">No approved events</p>
-          )}
+      {/* Filters */}
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <input
+            type="text"
+            placeholder="Search events..."
+            defaultValue={search}
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
       </div>
 
-      {/* Featured Churches */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900">Churches</h2>
-          <p className="text-sm text-gray-500">Toggle churches to feature them on the homepage</p>
+      {/* Featured Events Table */}
+      <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="border-b border-white/10 bg-white/5">
+              <tr>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Event</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Organizer</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Date</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400">Views</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {!events || events.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-5 py-8 text-center">
+                    <p className="text-gray-400 text-sm">No featured events</p>
+                  </td>
+                </tr>
+              ) : (
+                events.map((event) => {
+                  const profile = Array.isArray(event.profiles) ? event.profiles[0] : event.profiles
+                  const organizer = (profile as { display_name: string })?.display_name || 'Unknown'
+
+                  return (
+                    <tr key={event.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2">
+                          <Star className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                          <p className="text-sm font-medium text-white truncate">{event.title}</p>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <p className="text-sm text-gray-400">{organizer}</p>
+                      </td>
+                      <td className="px-5 py-3">
+                        <p className="text-sm text-gray-400">
+                          {event.start_date ? formatDate(event.start_date, { month: 'short', day: 'numeric' }) : '—'}
+                        </p>
+                      </td>
+                      <td className="px-5 py-3">
+                        <p className="text-sm text-gray-400">{event.views_count || 0}</p>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-        <div className="divide-y divide-gray-50">
-          {churches.map((church) => (
-            <div key={church.id} className="flex items-center justify-between px-5 py-3">
-              <div>
-                <p className="font-medium text-gray-900">{church.name}</p>
-                <p className="text-xs text-gray-500">{church.city}</p>
-              </div>
-              <FeaturedToggle
-                id={church.id}
-                table="churches"
-                isFeatured={church.is_featured}
-              />
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-5 py-4 border-t border-white/10 flex items-center justify-between">
+            <div className="text-sm text-gray-400">
+              Page {page} of {totalPages}
             </div>
-          ))}
-          {churches.length === 0 && (
-            <p className="text-gray-500 text-sm px-5 py-8 text-center">No churches yet</p>
-          )}
-        </div>
+            <div className="flex gap-2">
+              {page > 1 && (
+                <Link href={`/admin/featured?page=${page - 1}${search ? `&search=${search}` : ''}`} className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium text-gray-400 transition-colors">
+                  Previous
+                </Link>
+              )}
+              {page < totalPages && (
+                <Link href={`/admin/featured?page=${page + 1}${search ? `&search=${search}` : ''}`} className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium text-gray-400 transition-colors">
+                  Next
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

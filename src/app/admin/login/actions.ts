@@ -2,8 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 
-export async function adminLogin(formData: FormData) {
+export async function adminLogin(_prev: { error: string } | null, formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
@@ -22,25 +23,18 @@ export async function adminLogin(formData: FormData) {
     return { error: 'Invalid email or password' }
   }
 
-  // Check admin status using service role client (bypasses RLS)
-  try {
-    const adminClient = createAdminClient()
-    const { data: adminUser } = await adminClient
-      .from('admin_users')
-      .select('id, role')
-      .eq('id', data.user.id)
-      .single()
+  const adminClient = createAdminClient()
+  const { data: adminUser } = await adminClient
+    .from('admin_users')
+    .select('id, role')
+    .eq('id', data.user.id)
+    .single()
 
-    if (!adminUser) {
-      await supabase.auth.signOut()
-      return { error: 'You do not have admin access. Please use the regular sign in page.' }
-    }
-  } catch {
+  if (!adminUser) {
     await supabase.auth.signOut()
-    return { error: 'Admin verification failed. Please try again.' }
+    return { error: 'You do not have admin access.' }
   }
 
-  // Return success — let the CLIENT do window.location.href so cookies are
-  // fully written to the browser before the next navigation begins.
-  return { success: true }
+  // Session cookie is now set server-side — redirect is safe
+  redirect('/admin')
 }

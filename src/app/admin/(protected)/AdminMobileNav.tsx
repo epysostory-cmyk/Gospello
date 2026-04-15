@@ -5,35 +5,34 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   Menu, X, Shield, LayoutDashboard, Calendar, Building2,
-  Users, ShieldCheck, Settings2, ExternalLink, LogOut, Bell,
+  Users, Star, Tag, BarChart2, Lock, Settings, ExternalLink, LogOut, Bell,
 } from 'lucide-react'
 
-interface Props {
-  adminUser: { email: string; role: string }
-  pendingCount: number
-}
+interface Props { adminUser: { email: string; role: string }; pendingCount: number }
 
-const NAV_ITEMS = [
-  { href: '/admin', label: 'Overview', icon: LayoutDashboard, exact: true },
-  { href: '/admin/events', label: 'Events', icon: Calendar, badge: true },
-  { href: '/admin/organizations', label: 'Churches & Organizers', icon: Building2 },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/content', label: 'Content Control', icon: ShieldCheck },
-  { href: '/admin/settings', label: 'Settings', icon: Settings2 },
+const NAV = [
+  { href: '/admin',              label: 'Dashboard',        icon: LayoutDashboard, exact: true, roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/events',        label: 'Events',           icon: Calendar,        badge: true,  roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/organizations', label: 'Orgs & Churches',  icon: Building2,                    roles: ['super_admin','admin'] },
+  { href: '/admin/users',         label: 'Users',            icon: Users,                        roles: ['super_admin','admin'] },
+  { href: '/admin/featured',      label: 'Featured',         icon: Star,                         roles: ['super_admin','admin'] },
+  { href: '/admin/categories',    label: 'Categories',       icon: Tag,                          roles: ['super_admin'] },
+  { href: '/admin/moderation',    label: 'Moderation',       icon: Shield,                       roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/analytics',     label: 'Analytics',        icon: BarChart2,                    roles: ['super_admin','admin'] },
+  { href: '/admin/team',          label: 'Admin Mgmt',       icon: Lock,                         roles: ['super_admin'] },
+  { href: '/admin/settings',      label: 'Settings',         icon: Settings,                     roles: ['super_admin'] },
 ]
 
 export default function AdminMobileNav({ adminUser, pendingCount }: Props) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
-
-  function isActive(href: string, exact?: boolean) {
-    if (exact) return pathname === href
-    return pathname === href || pathname.startsWith(href + '/')
-  }
+  const isActive = (href: string, exact?: boolean) =>
+    exact ? pathname === href : pathname === href || pathname.startsWith(href + '/')
+  const visibleNav = NAV.filter((item) => item.roles.includes(adminUser.role))
 
   return (
-    <div className="md:hidden">
-      <div className="flex items-center justify-between bg-gray-900 px-4 py-3 border-b border-gray-800">
+    <div className="lg:hidden" style={{ background: '#1A1A2E' }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
             <Shield className="w-3.5 h-3.5 text-white" />
@@ -54,22 +53,17 @@ export default function AdminMobileNav({ adminUser, pendingCount }: Props) {
           </button>
         </div>
       </div>
-
       {open && (
-        <div className="bg-gray-900 border-b border-gray-800 px-3 py-3 space-y-0.5">
-          {NAV_ITEMS.map(({ href, label, icon: Icon, exact, badge }) => {
+        <div className="border-b border-white/10 px-3 py-3 space-y-0.5" style={{ background: '#1A1A2E' }}>
+          {visibleNav.map(({ href, label, icon: Icon, exact, badge }) => {
             const active = isActive(href, exact)
             return (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setOpen(false)}
+              <Link key={href} href={href} onClick={() => setOpen(false)}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                  active ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
+                  active ? 'text-yellow-400 bg-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                }`}>
                 <span className="flex items-center gap-3">
-                  <Icon className="w-4 h-4" />
+                  <Icon className={`w-4 h-4 ${active ? 'text-yellow-400' : ''}`} />
                   {label}
                 </span>
                 {badge && pendingCount > 0 && (
@@ -80,13 +74,15 @@ export default function AdminMobileNav({ adminUser, pendingCount }: Props) {
               </Link>
             )
           })}
-          <div className="border-t border-gray-800 pt-2 mt-2 space-y-0.5">
-            <Link href="/" target="_blank" onClick={() => setOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white">
-              <ExternalLink className="w-4 h-4" />View Site
+          <div className="border-t border-white/10 pt-2 mt-2 space-y-0.5">
+            <Link href="/" target="_blank" onClick={() => setOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-400 hover:bg-white/5 hover:text-white">
+              <ExternalLink className="w-4 h-4" /> View Site
             </Link>
-            <Link href="/api/admin/signout" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-800 hover:text-gray-300">
-              <LogOut className="w-4 h-4" />Sign out
-            </Link>
+            <form action="/auth/signout" method="POST">
+              <button type="submit" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-500 hover:bg-white/5 hover:text-gray-300 w-full">
+                <LogOut className="w-4 h-4" /> Sign out
+              </button>
+            </form>
           </div>
         </div>
       )}

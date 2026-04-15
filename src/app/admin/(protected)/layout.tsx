@@ -32,7 +32,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const pendingCount = pendingRes.count ?? 0
 
   return (
-    <div className="min-h-screen bg-gray-950 flex">
+    <div className="min-h-screen flex" style={{ background: '#0D0D14' }}>
       <AdminSidebar adminUser={adminUser} pendingCount={pendingCount} />
       <div className="flex-1 flex flex-col min-h-screen min-w-0">
         <AdminMobileNav adminUser={adminUser} pendingCount={pendingCount} />
