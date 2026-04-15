@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { LayoutDashboard, Calendar, Plus, User, Building2 } from 'lucide-react'
 import SignOutButton from './SignOutButton'
+import DashboardBottomNav from './DashboardBottomNav'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -67,22 +68,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="p-4 pb-24 md:p-8 md:pb-8">{children}</div>
       </div>
 
-      {/* Mobile Bottom Tab Bar */}
-      <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 flex"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        {navItems.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-gray-500 hover:text-indigo-600 active:bg-indigo-50 transition-colors min-h-[56px]"
-          >
-            <Icon className="w-5 h-5" />
-            <span className="text-[10px] font-medium leading-none">{label}</span>
-          </Link>
-        ))}
-      </nav>
+      {/* Mobile Bottom Tab Bar — hidden on form pages */}
+      <DashboardBottomNav navItems={navItems} />
     </div>
   )
 }
