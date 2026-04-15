@@ -16,6 +16,12 @@ async function getHomepageData() {
     const now = new Date().toISOString()
     const in60Days = new Date(Date.now() + SIXTY_DAYS).toISOString()
 
+    const { data: heroSettings } = await supabase
+      .from('platform_settings')
+      .select('hero_badge, hero_headline_1, hero_headline_gradient, hero_headline_3, hero_subheadline, hero_popular_searches, hero_cta_primary, hero_cta_secondary')
+      .eq('id', 'default')
+      .single()
+
     const [featuredRes, upcomingRes, churchesRes, statsEventsRes, statsChurchesRes, statsUsersRes] =
       await Promise.all([
         supabase
@@ -53,6 +59,7 @@ async function getHomepageData() {
         churches: statsChurchesRes.count ?? 0,
         users: statsUsersRes.count ?? 0,
       },
+      heroSettings: heroSettings ?? null,
     }
   } catch {
     return {
@@ -60,6 +67,7 @@ async function getHomepageData() {
       upcomingEvents: [],
       featuredChurches: [],
       stats: { events: 0, churches: 0, users: 0 },
+      heroSettings: null,
     }
   }
 }
@@ -73,10 +81,20 @@ const CATEGORIES = [
   { label: 'Youth Programs',value: 'youth',      emoji: '🌟', gradient: 'from-pink-500 to-rose-600' },
 ]
 
-const POPULAR_SEARCHES = ['Worship', 'Lagos', 'Conference', 'Prayer', 'Youth']
-
 export default async function HomePage() {
-  const { featuredEvents, upcomingEvents, featuredChurches, stats } = await getHomepageData()
+  const { featuredEvents, upcomingEvents, featuredChurches, stats, heroSettings } = await getHomepageData()
+
+  const heroBadge        = heroSettings?.hero_badge             ?? "Nigeria's Gospel Event Platform"
+  const heroLine1        = heroSettings?.hero_headline_1        ?? 'Discover Every'
+  const heroGradient     = heroSettings?.hero_headline_gradient ?? 'Gospel Event'
+  const heroLine3        = heroSettings?.hero_headline_3        ?? 'Near You'
+  const heroSubheadline  = heroSettings?.hero_subheadline       ?? 'Worship nights, conferences, prayer gatherings, youth programs and more — across all 36 Nigerian states and beyond.'
+  const heroCtaPrimary   = heroSettings?.hero_cta_primary       ?? 'Explore Events'
+  const heroCtaSecondary = heroSettings?.hero_cta_secondary     ?? 'Post an Event'
+  const popularSearches: string[]  = (heroSettings?.hero_popular_searches ?? 'Worship,Lagos,Conference,Prayer,Youth')
+    .split(',')
+    .map((s: string) => s.trim())
+    .filter(Boolean)
 
   return (
     <div className="min-h-screen bg-white">
@@ -110,24 +128,23 @@ export default async function HomePage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
               </span>
-              <span className="text-slate-300 font-medium">Nigeria&apos;s Gospel Event Platform</span>
+              <span className="text-slate-300 font-medium">{heroBadge}</span>
             </div>
 
             {/* Headline */}
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-black leading-[1.05] tracking-tight">
-              <span className="text-white">Discover Every</span>
+              <span className="text-white">{heroLine1}</span>
               <br />
               <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent">
-                Gospel Event
+                {heroGradient}
               </span>
               <br />
-              <span className="text-slate-300">Near You</span>
+              <span className="text-slate-300">{heroLine3}</span>
             </h1>
 
             {/* Subheadline */}
             <p className="mt-6 text-lg md:text-xl text-slate-400 max-w-xl leading-relaxed">
-              Worship nights, conferences, prayer gatherings, youth programs and more —
-              across all 36 Nigerian states and beyond.
+              {heroSubheadline}
             </p>
 
             {/* Search card */}
@@ -166,7 +183,7 @@ export default async function HomePage() {
               {/* Popular searches */}
               <div className="flex items-center gap-2 mt-3 flex-wrap">
                 <span className="text-xs text-slate-600">Popular:</span>
-                {POPULAR_SEARCHES.map((tag) => (
+                {popularSearches.map((tag) => (
                   <Link
                     key={tag}
                     href={`/events?q=${tag}`}
@@ -184,14 +201,14 @@ export default async function HomePage() {
                 href="/events"
                 className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 hover:-translate-y-0.5 text-sm"
               >
-                Explore Events
+                {heroCtaPrimary}
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/auth/signup"
                 className="inline-flex items-center gap-2 bg-white/8 hover:bg-white/12 text-white font-semibold px-7 py-3.5 rounded-xl transition-colors border border-white/10 backdrop-blur-sm text-sm"
               >
-                Post an Event
+                {heroCtaSecondary}
               </Link>
             </div>
 
