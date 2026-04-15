@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { Search, Users, Building2, User } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
+import ChangeTypeButton from './ChangeTypeButton'
 
 interface SearchParams {
   search?: string
@@ -113,12 +114,13 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Email</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Type</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Joined</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {!users || users.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-12 text-center">
+                  <td colSpan={5} className="px-5 py-12 text-center">
                     <Users className="w-8 h-8 text-gray-600 mx-auto mb-2" />
                     <p className="text-gray-400 text-sm">
                       {search ? `No users matching "${search}"` : 'No users registered yet'}
@@ -153,6 +155,9 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                     </td>
                     <td className="px-5 py-3.5">
                       <p className="text-sm text-gray-400">{formatDate(user.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <ChangeTypeButton userId={user.id} currentType={user.account_type} />
                     </td>
                   </tr>
                 ))
