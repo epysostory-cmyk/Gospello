@@ -1,52 +1,24 @@
 export const dynamic = 'force-dynamic'
 
 import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import AdminSidebar from './AdminSidebar'
 import AdminMobileNav from './AdminMobileNav'
 
-async function getUserIdFromCookie(): Promise<string | null> {
-  const cookieStore = await cookies()
-  const projectRef = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
-    .replace('https://', '')
-    .split('.')[0]
-  const key = `sb-${projectRef}-auth-token`
-
-  let raw = cookieStore.get(key)?.value ?? null
-  if (!raw) {
-    const chunks: string[] = []
-    for (let i = 0; i < 10; i++) {
-      const chunk = cookieStore.get(`${key}.${i}`)?.value
-      if (!chunk) break
-      chunks.push(chunk)
-    }
-    if (chunks.length > 0) raw = chunks.join('')
-  }
-  if (!raw) return null
-
-  try {
-    const b64url = raw.startsWith('base64-') ? raw.slice(7) : raw
-    const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/')
-    const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4)
-    const json = Buffer.from(padded, 'base64').toString('utf-8')
-    const session = JSON.parse(json)
-    return session?.user?.id ?? null
-  } catch {
-    return null
-  }
-}
-
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const userId = await getUserIdFromCookie()
-  if (!userId) redirect('/admin/login')
+  // Use the standard server client — same approach as the regular dashboard
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) redirect('/admin/login')
 
   const adminClient = createAdminClient()
   const [adminUserRes, pendingRes] = await Promise.all([
     adminClient
       .from('admin_users')
       .select('id, role, email')
-      .eq('id', userId)
+      .eq('id', user.id)
       .single(),
     adminClient
       .from('events')
