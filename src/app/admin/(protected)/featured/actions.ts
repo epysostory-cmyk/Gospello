@@ -39,3 +39,14 @@ export async function toggleFeatured(
   revalidatePath('/')
   revalidatePath('/admin/featured')
 }
+
+// Used by FeatureToggle client component — reads duration_days from FormData
+export async function featureEventWithDuration(eventId: string, formData: FormData) {
+  const days = formData.get('duration_days')
+  const durationDays = days && days !== '0' ? parseInt(days as string) : null
+  await toggleFeatured(eventId, 'events', true, durationDays)
+}
+
+export async function unfeatureEvent(eventId: string) {
+  await toggleFeatured(eventId, 'events', false, null)
+}

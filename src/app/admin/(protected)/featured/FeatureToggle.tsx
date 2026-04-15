@@ -2,7 +2,7 @@
 
 import { useFormStatus } from 'react-dom'
 import { Loader2, Star } from 'lucide-react'
-import { toggleFeatured } from './actions'
+import { featureEventWithDuration, unfeatureEvent } from './actions'
 
 function FeatureButton() {
   const { pending } = useFormStatus()
@@ -39,20 +39,15 @@ export default function FeatureToggle({
   eventId: string
   isFeatured: boolean
 }) {
+  const removeAction = unfeatureEvent.bind(null, eventId)
+  const featureAction = featureEventWithDuration.bind(null, eventId)
+
   if (isFeatured) {
-    const removeAction = toggleFeatured.bind(null, eventId, 'events', false, null)
     return (
       <form action={removeAction}>
         <RemoveButton />
       </form>
     )
-  }
-
-  const featureAction = async (formData: FormData) => {
-    'use server'
-    const days = formData.get('duration_days')
-    const durationDays = days && days !== '0' ? parseInt(days as string) : null
-    await toggleFeatured(eventId, 'events', true, durationDays)
   }
 
   return (
