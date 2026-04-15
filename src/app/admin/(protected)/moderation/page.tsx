@@ -11,7 +11,7 @@ export default async function AdminModerationPage() {
   const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
     adminClient
       .from('events')
-      .select('id, title, status, created_at, profiles(display_name)')
+      .select('id, title, status, created_at, start_date, is_free, city, profiles(display_name)')
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
       .limit(50),
@@ -37,32 +37,26 @@ export default async function AdminModerationPage() {
       </div>
 
       {/* Queue Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-gray-400">Pending Review</p>
-              <p className="text-2xl font-bold text-white mt-1">{pendingEvents?.length || 0}</p>
-            </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-col gap-1">
+            <AlertTriangle className="w-5 h-5 text-amber-400" />
+            <p className="text-2xl font-bold text-white">{pendingEvents?.length || 0}</p>
+            <p className="text-xs text-gray-400">Pending</p>
           </div>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-gray-400">Approved</p>
-              <p className="text-2xl font-bold text-white mt-1">{approvedCount}</p>
-            </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-col gap-1">
+            <CheckCircle className="w-5 h-5 text-green-400" />
+            <p className="text-2xl font-bold text-white">{approvedCount}</p>
+            <p className="text-xs text-gray-400">Approved</p>
           </div>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div className="flex items-start gap-3">
-            <XCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-gray-400">Rejected</p>
-              <p className="text-2xl font-bold text-white mt-1">{rejectedCount}</p>
-            </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-col gap-1">
+            <XCircle className="w-5 h-5 text-red-400" />
+            <p className="text-2xl font-bold text-white">{rejectedCount}</p>
+            <p className="text-xs text-gray-400">Rejected</p>
           </div>
         </div>
       </div>
@@ -70,12 +64,21 @@ export default async function AdminModerationPage() {
       {/* Pending Items */}
       <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
         <div className="px-5 py-4 border-b border-white/10">
-          <h2 className="font-semibold text-white">Pending Events</h2>
+          <h2 className="font-semibold text-white">
+            Pending Events
+            {pendingEvents && pendingEvents.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                {pendingEvents.length} awaiting review
+              </span>
+            )}
+          </h2>
         </div>
+
         <div className="divide-y divide-white/5">
           {!pendingEvents || pendingEvents.length === 0 ? (
-            <div className="px-5 py-8 text-center">
-              <p className="text-gray-400 text-sm">All events are reviewed!</p>
+            <div className="px-5 py-12 text-center">
+              <CheckCircle className="w-8 h-8 text-green-500/40 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">All caught up! No events pending review.</p>
             </div>
           ) : (
             pendingEvents.map((event: any) => {
@@ -83,12 +86,43 @@ export default async function AdminModerationPage() {
               const organizer = (profile as { display_name: string })?.display_name || 'Unknown'
 
               return (
-                <div key={event.id} className="px-5 py-4 hover:bg-white/5 transition-colors flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-white">{event.title}</h3>
-                    <p className="text-xs text-gray-500 mt-1">By {organizer} • {formatDate(event.created_at, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                <div key={event.id} className="px-4 py-4 sm:px-5 hover:bg-white/5 transition-colors">
+                  {/* Stack on mobile, row on desktop */}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+                    {/* Event info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold text-white leading-snug">
+                        {event.title}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                        <span className="text-xs text-gray-500">By {organizer}</span>
+                        {event.city && (
+                          <span className="text-xs text-gray-600">📍 {event.city}</span>
+                        )}
+                        {event.start_date && (
+                          <span className="text-xs text-gray-600">
+                            📅 {formatDate(event.start_date, { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          event.is_free
+                            ? 'bg-green-500/10 text-green-400'
+                            : 'bg-amber-500/10 text-amber-400'
+                        }`}>
+                          {event.is_free ? 'Free' : 'Paid'}
+                        </span>
+                        <span className="text-xs text-gray-600">
+                          Submitted {formatDate(event.created_at, { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions — full width on mobile, auto on desktop */}
+                    <div className="sm:flex-shrink-0">
+                      <ModerationActions eventId={event.id} />
+                    </div>
                   </div>
-                  <ModerationActions eventId={event.id} />
                 </div>
               )
             })
