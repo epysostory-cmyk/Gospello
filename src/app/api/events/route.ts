@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create slug from title
-    const slug = slugify(body.title)
+    // Create unique slug from title + random suffix
+    const slug = `${slugify(body.title)}-${Math.random().toString(36).substring(2, 7)}`
 
     // Prepare event data
     const eventData = {

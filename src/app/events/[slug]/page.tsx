@@ -469,7 +469,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         isFree={e.is_free}
         externalLink={e.external_link}
         lifecycle={lifecycle}
-        attendanceCount={safeAttendance}
       />
     </div>
   )

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Plus, Calendar, CheckCircle, Clock, XCircle, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Calendar, CheckCircle, Clock, XCircle, Pencil } from 'lucide-react'
 import { formatDate, CATEGORY_LABELS } from '@/lib/utils'
 import type { Event } from '@/types/database'
 
