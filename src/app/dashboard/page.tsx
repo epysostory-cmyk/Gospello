@@ -2,13 +2,21 @@ export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Calendar, CheckCircle, Clock, XCircle, Plus, ArrowRight } from 'lucide-react'
+import { Calendar, CheckCircle, Clock, XCircle, Plus, ArrowRight, Building2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import type { Event } from '@/types/database'
+import { redirect } from 'next/navigation'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  // Church accounts without a church profile must complete setup first
+  const { data: profile } = await supabase.from('profiles').select('account_type').eq('id', user!.id).single()
+  if (profile?.account_type === 'church') {
+    const { data: church } = await supabase.from('churches').select('id').eq('profile_id', user!.id).single()
+    if (!church) redirect('/dashboard/church/setup')
+  }
 
   const { data: events } = await supabase
     .from('events')
@@ -123,8 +131,23 @@ export default async function DashboardPage() {
       {stats.pending > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
           <p className="text-sm text-amber-800 font-medium">
-            ⏳ You have {stats.pending} event{stats.pending > 1 ? 's' : ''} awaiting admin review. We&apos;ll notify you once it&apos;s approved.
+            ⏳ You have {stats.pending} event{stats.pending > 1 ? 's' : ''} awaiting admin review. We&apos;ll notify you by email once it&apos;s approved.
           </p>
+        </div>
+      )}
+
+      {/* Church profile prompt */}
+      {profile?.account_type === 'church' && (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Building2 className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+            <p className="text-sm text-indigo-800 font-medium">
+              Manage your church&apos;s public profile, logo, and banner
+            </p>
+          </div>
+          <Link href="/dashboard/church" className="flex-shrink-0 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+            Edit profile →
+          </Link>
         </div>
       )}
     </div>

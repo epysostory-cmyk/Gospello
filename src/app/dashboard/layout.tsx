@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { LayoutDashboard, Calendar, Plus, User, LogOut } from 'lucide-react'
+import { LayoutDashboard, Calendar, Plus, User, Building2 } from 'lucide-react'
+import SignOutButton from './SignOutButton'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -15,12 +16,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
-  const navItems = [
-    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { href: '/dashboard/events', label: 'My Events', icon: Calendar },
-    { href: '/dashboard/events/new', label: 'Post Event', icon: Plus },
-    { href: '/dashboard/profile', label: 'Profile', icon: User },
-  ]
+  const isChurch = profile?.account_type === 'church'
+
+  // Build nav based on account type
+  const navItems = isChurch
+    ? [
+        { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+        { href: '/dashboard/church', label: 'Church Profile', icon: Building2 },
+        { href: '/dashboard/events', label: 'My Events', icon: Calendar },
+        { href: '/dashboard/events/new', label: 'Post Event', icon: Plus },
+        { href: '/dashboard/profile', label: 'Account', icon: User },
+      ]
+    : [
+        { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+        { href: '/dashboard/events', label: 'My Events', icon: Calendar },
+        { href: '/dashboard/events/new', label: 'Post Event', icon: Plus },
+        { href: '/dashboard/profile', label: 'Profile', icon: User },
+      ]
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -45,15 +57,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           ))}
         </nav>
 
-        <form action="/auth/signout" method="POST" className="mt-4">
-          <button
-            type="submit"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors w-full"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        </form>
+        <div className="mt-4">
+          <SignOutButton />
+        </div>
       </aside>
 
       {/* Main content */}

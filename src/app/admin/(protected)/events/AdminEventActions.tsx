@@ -2,23 +2,19 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import type { Event } from '@/types/database'
+import { approveEvent, rejectEvent } from './actions'
 
 export default function AdminEventActions({ event }: { event: Event }) {
   const router = useRouter()
-  const supabase = createClient()
   const [loading, setLoading] = useState<'approve' | 'reject' | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [showRejectForm, setShowRejectForm] = useState(false)
 
   const approve = async () => {
     setLoading('approve')
-    await supabase
-      .from('events')
-      .update({ status: 'approved', approved_at: new Date().toISOString(), rejection_reason: null })
-      .eq('id', event.id)
+    await approveEvent(event.id)
     setLoading(null)
     router.refresh()
   }
@@ -26,10 +22,7 @@ export default function AdminEventActions({ event }: { event: Event }) {
   const reject = async () => {
     if (!rejectionReason.trim()) { alert('Please provide a rejection reason'); return }
     setLoading('reject')
-    await supabase
-      .from('events')
-      .update({ status: 'rejected', rejection_reason: rejectionReason })
-      .eq('id', event.id)
+    await rejectEvent(event.id, rejectionReason)
     setLoading(null)
     setShowRejectForm(false)
     router.refresh()

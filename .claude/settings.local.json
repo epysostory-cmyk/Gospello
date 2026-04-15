@@ -23,7 +23,13 @@
       "Bash(node -e \"const p=require\\('path'\\);const fs=require\\('fs'\\);const v=JSON.parse\\(fs.readFileSync\\('C:/Users/Hi/Desktop/Gospello/node_modules/next/package.json','utf8'\\)\\).version;console.log\\('Next.js version:',v\\)\")",
       "Bash(git commit:*)",
       "Bash(node -e \"const {MAX_CHUNK_SIZE, createChunks, stringToBase64URL} = require\\('./node_modules/@supabase/ssr'\\); console.log\\('MAX_CHUNK_SIZE:', MAX_CHUNK_SIZE\\); const chunks = createChunks\\('sb-test-auth-token', 'base64-hello'\\); console.log\\('chunks:', chunks\\);\")",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Bash(python3 -c \" import sys, json lines = sys.stdin.read\\(\\).strip\\(\\).split\\('\\\\n'\\) for line in lines[-20:]: try: d = json.loads\\(line\\) role = d.get\\('role', ''\\) content = d.get\\('content', ''\\) if isinstance\\(content, list\\): for c in content: if isinstance\\(c, dict\\) and c.get\\('type'\\) == 'text': print\\(f'[{role}] {c[\\\\\"text\\\\\"][:300]}'\\) elif isinstance\\(content, str\\): print\\(f'[{role}] {content[:300]}'\\) except: pass \")",
+      "Bash(ls C:/Users/Hi/Desktop/Gospello/src/app/events/[slug])",
+      "Bash(echo \"exit: $?\")",
+      "Bash(npx tsc:*)",
+      "Bash(ls -la /c/Users/Hi/Desktop/Gospello/src/app/dashboard/events/[id]/)",
+      "Bash(find /c/Users/Hi/Desktop/Gospello -name \"*.sql\" -type f -exec grep -l \"attendances\" {} \\\\;)"
     ]
   }
 }

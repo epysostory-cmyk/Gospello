@@ -64,6 +64,15 @@ export default function NewEventPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('Not authenticated'); setLoading(false); return }
 
+    // If church account, look up their church_id to link the event
+    let church_id: string | null = null
+    const { data: churchRow } = await supabase
+      .from('churches')
+      .select('id')
+      .eq('profile_id', user.id)
+      .single()
+    if (churchRow) church_id = churchRow.id
+
     let banner_url: string | null = null
 
     if (bannerFile) {
@@ -96,6 +105,7 @@ export default function NewEventPage() {
 
     const { error: insertError } = await supabase.from('events').insert({
       organizer_id: user.id,
+      church_id,
       title: form.title,
       slug: slugify(form.title) + '-' + Date.now(),
       description: form.description,
