@@ -24,14 +24,30 @@ export default function Step3Location({ formData, updateForm, errors }: StepProp
   const labelCls = 'block text-sm font-medium text-gray-700 mb-2'
   const errorCls = 'text-red-600 text-xs mt-1'
 
+  // Fix 4: Clear stale data when toggling between Physical and Online
+  const switchToPhysical = () => {
+    updateForm('is_online', false)
+    updateForm('online_platform', '')
+    updateForm('online_link', '')
+  }
+
+  const switchToOnline = () => {
+    updateForm('is_online', true)
+    updateForm('location_name', '')
+    updateForm('address', '')
+    updateForm('city', '')
+    updateForm('state', '')
+  }
+
   return (
     <div className="bg-white rounded-2xl p-6 space-y-5">
       <h3 className="text-lg font-semibold text-gray-900">Location</h3>
 
-      {/* Toggle Physical/Online */}
+      {/* Toggle Physical / Online */}
       <div className="flex gap-3 p-4 bg-gray-50 rounded-xl">
         <button
-          onClick={() => updateForm('is_online', false)}
+          type="button"
+          onClick={switchToPhysical}
           className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${
             !formData.is_online
               ? 'bg-indigo-600 text-white'
@@ -41,7 +57,8 @@ export default function Step3Location({ formData, updateForm, errors }: StepProp
           📍 Physical Location
         </button>
         <button
-          onClick={() => updateForm('is_online', true)}
+          type="button"
+          onClick={switchToOnline}
           className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${
             formData.is_online
               ? 'bg-indigo-600 text-white'
@@ -68,7 +85,7 @@ export default function Step3Location({ formData, updateForm, errors }: StepProp
           </div>
 
           <div>
-            <label className={labelCls}>Address (Optional)</label>
+            <label className={labelCls}>Address <span className="text-gray-400 font-normal">(optional)</span></label>
             <input
               type="text"
               value={formData.address}
@@ -84,7 +101,7 @@ export default function Step3Location({ formData, updateForm, errors }: StepProp
               type="text"
               value={formData.city}
               onChange={(e) => updateForm('city', e.target.value)}
-              placeholder="e.g., Lagos, Ibadan"
+              placeholder="e.g., Lagos, Ibadan, Abuja"
               className={inputCls}
             />
             {errors.city && <p className={errorCls}>{errors.city}</p>}
@@ -113,7 +130,7 @@ export default function Step3Location({ formData, updateForm, errors }: StepProp
       {formData.is_online && (
         <div className="space-y-4">
           <div>
-            <label className={labelCls}>Platform (Optional)</label>
+            <label className={labelCls}>Platform <span className="text-gray-400 font-normal">(optional)</span></label>
             <select
               value={formData.online_platform}
               onChange={(e) => updateForm('online_platform', e.target.value)}

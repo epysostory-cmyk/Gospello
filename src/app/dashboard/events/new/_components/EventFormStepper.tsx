@@ -91,8 +91,8 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false)
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null)
+  const submittedRef = useRef(false)
 
   const supabase = createClient()
 
@@ -143,6 +143,22 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
       }
     }
   }, [isEditMode, initialEvent])
+
+  // Fix 5: Warn user before leaving with unsaved form data
+  useEffect(() => {
+    if (isEditMode) return
+    const hasData = formData.title.trim() !== '' || formData.description.trim() !== ''
+    if (!hasData) return
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (submittedRef.current) return
+      e.preventDefault()
+      e.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [formData.title, formData.description, isEditMode])
 
   // Auto-save to localStorage (debounced, no infinite loop)
   useEffect(() => {
@@ -195,8 +211,10 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
           if (!formData.price) newErrors.price = 'Price is required'
           if (!formData.payment_link.trim()) newErrors.payment_link = 'Payment link is required'
         }
-        if (formData.rsvp_required && !formData.capacity) newErrors.capacity = 'Capacity is required when RSVP is enabled'
-        if (formData.capacity && parseInt(formData.capacity) < 1) newErrors.capacity = 'Capacity must be at least 1'
+        // Fix 3: capacity is optional (blank = unlimited) — only validate if a value is entered
+        if (formData.capacity && parseInt(formData.capacity) < 1) {
+          newErrors.capacity = 'Capacity must be at least 1'
+        }
         break
     }
 
@@ -249,7 +267,7 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         currency: formData.currency,
         payment_link: !formData.is_free ? formData.payment_link : null,
         rsvp_required: formData.rsvp_required,
-        capacity: formData.rsvp_required ? parseInt(formData.capacity) : null,
+        capacity: formData.capacity ? parseInt(formData.capacity) : null,
         tags: formData.tags,
         banner_url: formData.banner_url,
         gallery_urls: formData.gallery_urls,
@@ -285,6 +303,9 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         }
       }
 
+      // Mark as submitted so beforeunload doesn't fire
+      submittedRef.current = true
+
       // Clear localStorage on success
       localStorage.removeItem(DRAFT_KEY)
 
@@ -309,20 +330,13 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
     const props = { formData, updateForm, errors }
 
     switch (currentStep) {
-      case 1:
-        return <Step1Basics {...props} />
-      case 2:
-        return <Step2DateTime {...props} />
-      case 3:
-        return <Step3Location {...props} />
-      case 4:
-        return <Step4Media {...props} />
-      case 5:
-        return <Step5Entry {...props} />
-      case 6:
-        return <Step6Review {...props} />
-      default:
-        return null
+      case 1: return <Step1Basics {...props} />
+      case 2: return <Step2DateTime {...props} />
+      case 3: return <Step3Location {...props} />
+      case 4: return <Step4Media {...props} />
+      case 5: return <Step5Entry {...props} />
+      case 6: return <Step6Review {...props} goToStep={setCurrentStep} />
+      default: return null
     }
   }
 
