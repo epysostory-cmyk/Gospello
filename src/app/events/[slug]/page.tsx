@@ -392,6 +392,33 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
             <hr className="border-gray-100 my-5" />
 
+            {/* CTA — mobile only (desktop: right sidebar) */}
+            <div id="attend" className="lg:hidden">
+              {lifecycle !== 'ended' ? (
+                <AttendButton
+                  eventId={e.id}
+                  eventTitle={e.title}
+                  isFree={e.is_free}
+                  rsvpRequired={e.rsvp_required}
+                  paymentLink={e.payment_link}
+                  initialCount={safeAttendance}
+                  initialAttended={initialAttended}
+                  serverUserId={currentUser?.id ?? null}
+                  serverUserName={currentUser?.user_metadata?.display_name ?? null}
+                  serverUserEmail={currentUser?.email ?? null}
+                />
+              ) : (
+                <div className="w-full text-center text-sm text-gray-400 py-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+                  This event has ended
+                </div>
+              )}
+              <div className="mt-3">
+                <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} />
+              </div>
+            </div>
+
+            <hr className="border-gray-100 my-5" />
+
             {/* Share buttons — mobile only (desktop: right sidebar) */}
             <div className="lg:hidden">
               <ShareButton
@@ -626,7 +653,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               )}
 
               {/* CTA */}
-              <div id="attend">
+              <div>
                 {lifecycle !== 'ended' ? (
                   <AttendButton
                     eventId={e.id}
