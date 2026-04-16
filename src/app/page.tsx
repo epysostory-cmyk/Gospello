@@ -9,7 +9,7 @@ import type { Event, Church } from '@/types/database'
 
 export const revalidate = 60
 
-const SIXTY_DAYS = 60 * 24 * 60 * 60 * 1000
+const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000
 
 const CATEGORIES = [
   { label: 'Concerts',       value: 'worship',    emoji: '🎵', gradient: 'from-violet-600 to-indigo-700' },
@@ -25,7 +25,7 @@ async function getHomepageData() {
     const supabase = await createClient()
     const adminClient = createAdminClient()
     const now = new Date().toISOString()
-    const in60Days = new Date(Date.now() + SIXTY_DAYS).toISOString()
+    const in90Days = new Date(Date.now() + NINETY_DAYS).toISOString()
 
     const [
       heroSettingsRes,
@@ -55,7 +55,7 @@ async function getHomepageData() {
         .select('*, churches(*)')
         .eq('status', 'approved')
         .gte('start_date', now)
-        .lte('start_date', in60Days)
+        .lte('start_date', in90Days)
         .order('start_date', { ascending: true })
         .limit(12),
       supabase.from('churches').select('*').eq('is_featured', true).limit(6),
@@ -346,7 +346,7 @@ export default async function HomePage() {
           <section>
             <SectionHeader
               title="Upcoming Events"
-              subtitle="Gospel events happening in the next 60 days"
+              subtitle="Gospel events happening in the next 3 months"
               href="/events"
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

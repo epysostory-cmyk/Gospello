@@ -70,7 +70,7 @@ const CATEGORIES = [
 async function getCategoryCounts() {
   const supabase = await createClient()
   const now = new Date().toISOString()
-  const in60Days = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+  const in60Days = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
 
   const counts: Record<string, number> = {}
 

@@ -24,29 +24,19 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const supabase = await createClient()
-  const { data } = await supabase
+  // Use admin client — social media scrapers are unauthenticated and RLS would block them
+  const admin = createAdminClient()
+  const { data } = await admin
     .from('events')
     .select('title, description, banner_url, start_date, city')
     .eq('slug', slug)
+    .eq('status', 'approved')
     .single()
   if (!data) return {}
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
   const pageUrl = `${siteUrl}/events/${slug}`
   const description = data.description?.substring(0, 160) ?? ''
-
-  const ogImages = data.banner_url
-    ? [
-        {
-          url: data.banner_url,
-          width: 1200,
-          height: 630,
-          alt: data.title,
-          type: 'image/jpeg',
-        },
-      ]
-    : []
 
   return {
     title: data.title,
@@ -56,7 +46,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description,
       url: pageUrl,
       type: 'article',
-      images: ogImages,
+      images: data.banner_url
+        ? [{ url: data.banner_url, width: 1200, height: 630, alt: data.title }]
+        : [],
     },
     twitter: {
       card: 'summary_large_image',
