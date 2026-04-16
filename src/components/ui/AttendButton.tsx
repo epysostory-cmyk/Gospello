@@ -102,10 +102,12 @@ export default function AttendButton({
   }
 
   const handleClick = () => {
-    if (!user) { setShowAuthModal(true); return }
     if (mode === 'instant') {
+      // One-tap attend uses the user's profile — requires auth
+      if (!user) { setShowAuthModal(true); return }
       doInstantAttend()
     } else {
+      // rsvp and paid: "No password. No full account needed" — show form directly
       setShowForm(true)
     }
   }
