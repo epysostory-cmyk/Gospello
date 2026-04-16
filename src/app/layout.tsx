@@ -1,7 +1,14 @@
 import type { Metadata } from 'next'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-plus-jakarta',
+})
 
 export const metadata: Metadata = {
   title: {
@@ -21,7 +28,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-gray-50">
+      <body className={`min-h-full flex flex-col bg-gray-50 ${plusJakartaSans.variable}`}>
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
