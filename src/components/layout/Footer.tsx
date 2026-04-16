@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 
 const EXPLORE_LINKS = [
   { label: 'Events',      href: '/events' },
@@ -12,7 +13,17 @@ const COMPANY_LINKS = [
   { label: 'Contact Us',  href: '/contact' },
 ]
 
-export default function Footer() {
+export default async function Footer() {
+  const supabase = await createClient()
+  const { data: settings } = await supabase
+    .from('platform_settings')
+    .select('footer_tagline')
+    .eq('id', 'default')
+    .single()
+
+  const footerTagline = settings?.footer_tagline
+    ?? "Nigeria's home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond."
+
   return (
     <footer className="relative bg-slate-950 text-slate-400 overflow-hidden">
 
@@ -40,7 +51,7 @@ export default function Footer() {
             </Link>
 
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-              Nigeria&apos;s home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond.
+              {footerTagline}
             </p>
 
             {/* Trust badges */}

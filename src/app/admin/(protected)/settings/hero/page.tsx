@@ -14,6 +14,7 @@ const DEFAULTS = {
   hero_popular_searches:  'Worship,Lagos,Conference,Prayer,Youth',
   hero_cta_primary:       'Explore Events',
   hero_cta_secondary:     'Post an Event',
+  footer_tagline:         "Nigeria's home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond.",
 }
 
 const INPUT_CLS =
@@ -31,7 +32,7 @@ export default async function HeroSettingsPage({
   const { data } = await adminClient
     .from('platform_settings')
     .select(
-      'hero_badge, hero_headline_1, hero_headline_gradient, hero_headline_3, hero_subheadline, hero_popular_searches, hero_cta_primary, hero_cta_secondary',
+      'hero_badge, hero_headline_1, hero_headline_gradient, hero_headline_3, hero_subheadline, hero_popular_searches, hero_cta_primary, hero_cta_secondary, footer_tagline',
     )
     .eq('id', 'default')
     .single()
@@ -45,6 +46,7 @@ export default async function HeroSettingsPage({
     hero_popular_searches:  data?.hero_popular_searches  ?? DEFAULTS.hero_popular_searches,
     hero_cta_primary:       data?.hero_cta_primary       ?? DEFAULTS.hero_cta_primary,
     hero_cta_secondary:     data?.hero_cta_secondary     ?? DEFAULTS.hero_cta_secondary,
+    footer_tagline:         data?.footer_tagline         ?? DEFAULTS.footer_tagline,
   }
 
   const popularTags = s.hero_popular_searches.split(',').map((t: string) => t.trim()).filter(Boolean)
@@ -177,6 +179,24 @@ export default async function HeroSettingsPage({
             <p className="text-xs text-gray-600 mt-1.5">
               These appear as quick-search pills below the search bar
             </p>
+          </div>
+        </div>
+
+        {/* Footer Brand */}
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-white">Footer Brand Text</h2>
+            <p className="text-xs text-gray-500 mt-0.5">The description shown in the bottom-left of the footer</p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Footer Tagline</label>
+            <textarea
+              name="footer_tagline"
+              rows={3}
+              defaultValue={s.footer_tagline}
+              className={INPUT_CLS}
+              placeholder="Nigeria's home for Christian events..."
+            />
           </div>
         </div>
 
