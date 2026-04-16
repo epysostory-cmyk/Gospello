@@ -27,14 +27,44 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const supabase = await createClient()
   const { data } = await supabase
     .from('events')
-    .select('title, description, banner_url')
+    .select('title, description, banner_url, start_date, city')
     .eq('slug', slug)
     .single()
   if (!data) return {}
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
+  const pageUrl = `${siteUrl}/events/${slug}`
+  const description = data.description?.substring(0, 160) ?? ''
+
+  const ogImages = data.banner_url
+    ? [
+        {
+          url: data.banner_url,
+          width: 1200,
+          height: 630,
+          alt: data.title,
+          type: 'image/jpeg',
+        },
+      ]
+    : []
+
   return {
-    title: `${data.title} | Gospello`,
-    description: data.description?.substring(0, 160),
-    openGraph: { images: data.banner_url ? [data.banner_url] : [] },
+    // Use just the title — root layout template appends "| Gospello"
+    title: data.title,
+    description,
+    openGraph: {
+      title: data.title,
+      description,
+      url: pageUrl,
+      type: 'article',
+      images: ogImages,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: data.title,
+      description,
+      images: data.banner_url ? [data.banner_url] : [],
+    },
   }
 }
 
