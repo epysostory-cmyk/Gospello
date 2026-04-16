@@ -1,11 +1,11 @@
 export const dynamic = 'force-dynamic'
 
-import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
 import { CATEGORY_LABELS, NIGERIAN_STATES } from '@/lib/utils'
 import type { Event, EventCategory } from '@/types/database'
-import { Search, SlidersHorizontal, LayoutGrid, List } from 'lucide-react'
+import { Search, MapPin, X, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
 
 export const revalidate = 60
@@ -14,37 +14,42 @@ interface SearchParams {
   q?: string
   city?: string
   category?: EventCategory
-  timeframe?: 'week' | 'weekend'
-  featured?: string
-  view?: 'grid' | 'list'
+  timeframe?: 'today' | 'week' | 'weekend'
   page?: string
 }
 
 const PAGE_SIZE = 12
 
+const CATEGORY_OPTIONS = [
+  { value: 'worship',    label: 'Worship',    emoji: '🙏' },
+  { value: 'prayer',     label: 'Prayer',     emoji: '✨' },
+  { value: 'conference', label: 'Conference', emoji: '🎤' },
+  { value: 'youth',      label: 'Youth',      emoji: '🌟' },
+  { value: 'training',   label: 'Training',   emoji: '📖' },
+  { value: 'other',      label: 'Other',      emoji: '⭐' },
+] as const
+
+const TIMEFRAME_OPTIONS = [
+  { value: 'today',   label: 'Today' },
+  { value: 'week',    label: 'This Week' },
+  { value: 'weekend', label: 'This Weekend' },
+] as const
+
 function scoreEvent(event: Event, now: Date): number {
   let score = 0
   const daysUntil = (new Date(event.start_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-
-  // Urgency: events in next 7 days get big boost
   if (daysUntil <= 7) score += 50
   else if (daysUntil <= 14) score += 30
   else if (daysUntil <= 30) score += 15
-
-  // Engagement
-  score += Math.min((event.views_count ?? 0) / 10, 20) // max 20 points from views
-
-  // Featured boost
+  score += Math.min((event.views_count ?? 0) / 10, 20)
   if (event.is_featured) score += 40
-
-  // Penalize if ended
   if (daysUntil < 0) score -= 100
-
   return score
 }
 
 async function getEvents(params: SearchParams) {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const page = parseInt(params.page ?? '1', 10)
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
@@ -67,8 +72,10 @@ async function getEvents(params: SearchParams) {
   if (params.category) {
     query = query.eq('category', params.category)
   }
-  if (params.featured === 'true') {
-    query = query.eq('is_featured', true)
+  if (params.timeframe === 'today') {
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+    const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999)
+    query = query.gte('start_date', todayStart.toISOString()).lte('start_date', todayEnd.toISOString())
   }
   if (params.timeframe === 'weekend') {
     const now = new Date()
@@ -84,12 +91,28 @@ async function getEvents(params: SearchParams) {
 
   const { data, count } = await query
   const now = new Date()
-  const sorted = ((data ?? []) as Event[]).sort((a, b) => scoreEvent(b, now) - scoreEvent(a, now))
-  return { events: sorted, total: count ?? 0, page, pages: Math.ceil((count ?? 0) / PAGE_SIZE) }
-}
+  const events = ((data ?? []) as Event[]).sort((a, b) => scoreEvent(b, now) - scoreEvent(a, now))
 
-const CATEGORIES = ['worship', 'prayer', 'conference', 'youth', 'training', 'other'] as const
-const CITIES = NIGERIAN_STATES
+  // Batch fetch attendance counts
+  let attendanceCountMap: Record<string, number> = {}
+  if (events.length > 0) {
+    const { data: attendanceRows } = await adminClient
+      .from('attendances')
+      .select('event_id')
+      .in('event_id', events.map(e => e.id))
+    for (const row of attendanceRows ?? []) {
+      attendanceCountMap[row.event_id] = (attendanceCountMap[row.event_id] ?? 0) + 1
+    }
+  }
+
+  return {
+    events,
+    total: count ?? 0,
+    page,
+    pages: Math.ceil((count ?? 0) / PAGE_SIZE),
+    attendanceCountMap,
+  }
+}
 
 export default async function EventsPage({
   searchParams,
@@ -97,8 +120,7 @@ export default async function EventsPage({
   searchParams: Promise<SearchParams>
 }) {
   const params = await searchParams
-  const { events, total, page, pages } = await getEvents(params)
-  const view = params.view ?? 'grid'
+  const { events, total, page, pages, attendanceCountMap } = await getEvents(params)
 
   function buildUrl(overrides: Partial<SearchParams>) {
     const merged = { ...params, ...overrides }
@@ -107,208 +129,250 @@ export default async function EventsPage({
     return `/events?${qs.toString()}`
   }
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Page header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          {params.category ? `${CATEGORY_LABELS[params.category]} Events` : 'Explore Events'}
-        </h1>
-        <p className="text-gray-500 mt-1">
-          {total > 0 ? `${total} event${total !== 1 ? 's' : ''} found` : 'No events found'}
-          {params.category ? ` in ${CATEGORY_LABELS[params.category]}` : ''}
-          {params.city ? ` · ${params.city}` : ''}
-          {params.q ? ` · "${params.q}"` : ''}
-        </p>
-      </div>
+  const hasFilters = !!(params.q || params.city || params.category || params.timeframe)
+  const activeCategoryLabel = params.category
+    ? CATEGORY_OPTIONS.find(c => c.value === params.category)?.label
+    : null
 
-      {/* Search + Filters */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
-        <form method="GET" action="/events" className="flex flex-wrap gap-3">
-          {/* Search input */}
-          <div className="flex-1 min-w-52 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              name="q"
-              defaultValue={params.q}
-              placeholder="Search events..."
-              className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+  return (
+    <div className="min-h-screen bg-gray-50">
+
+      {/* ── DARK HERO WITH SEARCH ─────────────────────────────── */}
+      <section className="relative bg-slate-950 text-white overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-[80px]" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-700/15 rounded-full blur-[80px]" />
+          <div
+            className="absolute inset-0 opacity-[0.035]"
+            style={{
+              backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+              backgroundSize: '28px 28px',
+            }}
+          />
+        </div>
+
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-10 sm:pt-16 sm:pb-14">
+          {/* Heading */}
+          <div className="mb-7 text-center sm:text-left">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
+              {params.category && activeCategoryLabel ? (
+                <>
+                  <span className="text-white">{activeCategoryLabel} </span>
+                  <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">Events</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-white">Explore </span>
+                  <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">Gospel Events</span>
+                </>
+              )}
+            </h1>
+            {total > 0 && (
+              <p className="text-slate-400 mt-1.5 text-sm">
+                {total} event{total !== 1 ? 's' : ''} found
+                {params.city ? ` in ${params.city}` : ''}
+                {params.q ? ` for "${params.q}"` : ''}
+              </p>
+            )}
           </div>
 
-          {/* City */}
-          <select
-            name="city"
-            defaultValue={params.city ?? 'Lagos'}
-            className="px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-          >
-            <option value="">All Cities</option>
-            {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+          {/* Search bar */}
+          <form method="GET" action="/events" className="flex gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                name="q"
+                defaultValue={params.q}
+                placeholder="Search events, churches, cities..."
+                className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white/15 transition-colors"
+              />
+              {params.category && <input type="hidden" name="category" value={params.category} />}
+              {params.city && <input type="hidden" name="city" value={params.city} />}
+              {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
+            </div>
+            <button
+              type="submit"
+              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-3.5 rounded-2xl transition-colors text-sm"
+            >
+              Search
+            </button>
+          </form>
 
-          {/* Category */}
-          <select
-            name="category"
-            defaultValue={params.category ?? ''}
-            className="px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          {/* Category pills */}
+          <div
+            className="flex gap-2 mt-5 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap"
+            style={{ scrollbarWidth: 'none' }}
           >
-            <option value="">All Categories</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+            <Link
+              href={buildUrl({ category: undefined, page: undefined })}
+              className={`flex-shrink-0 flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-all ${
+                !params.category
+                  ? 'bg-white text-gray-900 shadow-md'
+                  : 'bg-white/10 text-slate-300 hover:bg-white/15 border border-white/10'
+              }`}
+            >
+              All
+            </Link>
+            {CATEGORY_OPTIONS.map((cat) => (
+              <Link
+                key={cat.value}
+                href={buildUrl({ category: cat.value as EventCategory, page: undefined })}
+                className={`flex-shrink-0 flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-all ${
+                  params.category === cat.value
+                    ? 'bg-white text-gray-900 shadow-md'
+                    : 'bg-white/10 text-slate-300 hover:bg-white/15 border border-white/10'
+                }`}
+              >
+                <span>{cat.emoji}</span>
+                {cat.label}
+              </Link>
             ))}
-          </select>
+          </div>
+        </div>
+      </section>
 
-          {/* Timeframe */}
-          <select
-            name="timeframe"
-            defaultValue={params.timeframe ?? ''}
-            className="px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-          >
-            <option value="">Any time</option>
-            <option value="week">This week</option>
-            <option value="weekend">This weekend</option>
-          </select>
+      {/* ── FILTERS & RESULTS ────────────────────────────────────── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-          <button
-            type="submit"
-            className="bg-indigo-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Filter
-          </button>
+        {/* Secondary filter bar */}
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          {/* Timeframe pills */}
+          <div className="flex items-center gap-1.5 bg-white rounded-xl border border-gray-200 p-1">
+            <Link
+              href={buildUrl({ timeframe: undefined, page: undefined })}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                !params.timeframe ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Any time
+            </Link>
+            {TIMEFRAME_OPTIONS.map((tf) => (
+              <Link
+                key={tf.value}
+                href={buildUrl({ timeframe: tf.value, page: undefined })}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                  params.timeframe === tf.value ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tf.label}
+              </Link>
+            ))}
+          </div>
 
-          {/* Clear */}
-          {(params.q || params.city || params.category || params.timeframe) && (
+          {/* City filter */}
+          <form method="GET" action="/events" className="flex items-center gap-1">
+            {params.q && <input type="hidden" name="q" value={params.q} />}
+            {params.category && <input type="hidden" name="category" value={params.category} />}
+            {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
+            <div className="relative flex items-center bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
+              <select
+                name="city"
+                defaultValue={params.city ?? ''}
+                className="pl-8 pr-3 py-2 text-xs font-semibold text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="">All Cities</option>
+                {NIGERIAN_STATES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <button type="submit" className="px-3 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors">Go</button>
+          </form>
+
+          {/* Clear all filters */}
+          {hasFilters && (
             <Link
               href="/events"
-              className="text-sm text-gray-500 hover:text-gray-700 py-2.5 px-2"
+              className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-500 bg-white rounded-xl border border-gray-200 px-3 py-2 transition-colors"
             >
-              Clear
+              <X className="w-3 h-3" /> Clear filters
             </Link>
           )}
-        </form>
 
-        {/* Active filters */}
-        {(params.category || params.featured) && (
-          <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
-            {params.category && (
-              <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs font-medium px-3 py-1 rounded-full">
-                {CATEGORY_LABELS[params.category]}
-                <Link href={buildUrl({ category: undefined })} className="ml-1 hover:text-indigo-900">×</Link>
-              </span>
+          {/* Active filter chips */}
+          {params.q && (
+            <span className="flex items-center gap-1 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-full">
+              &quot;{params.q}&quot;
+              <Link href={buildUrl({ q: undefined })} className="hover:text-indigo-900 ml-0.5">×</Link>
+            </span>
+          )}
+          {params.city && (
+            <span className="flex items-center gap-1 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 px-3 py-1.5 rounded-full">
+              📍 {params.city}
+              <Link href={buildUrl({ city: undefined })} className="hover:text-rose-900 ml-0.5">×</Link>
+            </span>
+          )}
+        </div>
+
+        {/* Events grid */}
+        {events.length === 0 ? (
+          <div className="text-center py-24">
+            <div className="text-6xl mb-5">🔍</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {params.category ? `No ${activeCategoryLabel} events found` : 'No events found'}
+            </h3>
+            <p className="text-gray-500 mb-6 text-sm max-w-xs mx-auto">
+              {hasFilters
+                ? 'Try adjusting your filters or search terms'
+                : 'Check back soon — new events are added regularly'}
+            </p>
+            {hasFilters && (
+              <Link
+                href="/events"
+                className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors"
+              >
+                Browse all events
+              </Link>
             )}
-            {params.featured === 'true' && (
-              <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-medium px-3 py-1 rounded-full">
-                Featured
-                <Link href={buildUrl({ featured: undefined })} className="ml-1 hover:text-amber-900">×</Link>
-              </span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {events.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                attendanceCount={attendanceCountMap[event.id]}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pages > 1 && (
+          <div className="flex justify-center gap-2 mt-12">
+            {page > 1 && (
+              <Link
+                href={buildUrl({ page: String(page - 1) })}
+                className="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                ← Previous
+              </Link>
+            )}
+            {Array.from({ length: Math.min(pages, 5) }, (_, i) => i + 1).map((p) => (
+              <Link
+                key={p}
+                href={buildUrl({ page: String(p) })}
+                className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors ${
+                  p === page
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                    : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {p}
+              </Link>
+            ))}
+            {page < pages && (
+              <Link
+                href={buildUrl({ page: String(page + 1) })}
+                className="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Next →
+              </Link>
             )}
           </div>
         )}
       </div>
-
-      {/* Category tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-6">
-        <Link
-          href={buildUrl({ category: undefined, page: undefined })}
-          className={`flex-shrink-0 text-sm font-medium px-4 py-2 rounded-full transition-colors ${!params.category ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-        >
-          All
-        </Link>
-        {CATEGORIES.map((cat) => (
-          <Link
-            key={cat}
-            href={buildUrl({ category: cat, page: undefined })}
-            className={`flex-shrink-0 text-sm font-medium px-4 py-2 rounded-full transition-colors ${params.category === cat ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-          >
-            {CATEGORY_LABELS[cat]}
-          </Link>
-        ))}
-      </div>
-
-      {/* View toggle + count */}
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-500">{total} result{total !== 1 ? 's' : ''}</p>
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-          <Link
-            href={buildUrl({ view: 'grid' })}
-            className={`p-1.5 rounded ${view === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-            aria-label="Grid view"
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </Link>
-          <Link
-            href={buildUrl({ view: 'list' })}
-            className={`p-1.5 rounded ${view === 'list' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-            aria-label="List view"
-          >
-            <List className="w-4 h-4" />
-          </Link>
-        </div>
-      </div>
-
-      {/* Events grid/list */}
-      {events.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="text-5xl mb-4">🔍</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {params.category
-              ? `No ${CATEGORY_LABELS[params.category]} events in the next 60 days`
-              : 'No events found'}
-          </h3>
-          <p className="text-gray-500 mb-6">
-            {params.category
-              ? 'Check back soon — new events are added regularly'
-              : 'Try adjusting your filters or search terms'}
-          </p>
-          <Link href="/events" className="text-indigo-600 font-medium hover:text-indigo-700">
-            Browse all events
-          </Link>
-        </div>
-      ) : view === 'list' ? (
-        <div className="space-y-3">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} variant="compact" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {pages > 1 && (
-        <div className="flex justify-center gap-2 mt-10">
-          {page > 1 && (
-            <Link
-              href={buildUrl({ page: String(page - 1) })}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-            >
-              Previous
-            </Link>
-          )}
-          {Array.from({ length: Math.min(pages, 5) }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={buildUrl({ page: String(p) })}
-              className={`px-4 py-2 text-sm font-medium rounded-lg ${p === page ? 'bg-indigo-600 text-white' : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50'}`}
-            >
-              {p}
-            </Link>
-          ))}
-          {page < pages && (
-            <Link
-              href={buildUrl({ page: String(page + 1) })}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-            >
-              Next
-            </Link>
-          )}
-        </div>
-      )}
     </div>
   )
 }

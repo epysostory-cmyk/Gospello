@@ -16,6 +16,7 @@ import CountdownTimer from '@/components/ui/CountdownTimer'
 import ShareButton from '@/components/ui/ShareButton'
 import SaveButton from '@/components/ui/SaveButton'
 import EventQuickActions from './_components/EventQuickActions'
+import DownloadFlyerButton from './_components/DownloadFlyerButton'
 import { checkEventSaved } from '@/app/actions/saved-events'
 import { checkUserAttended } from '@/app/actions/attendance'
 
@@ -124,21 +125,33 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     <div className="min-h-screen bg-gray-50">
 
       {/* ── FULL-WIDTH HERO ──────────────────────────────────── */}
-      <div className="relative w-full h-[55vw] min-h-[300px] max-h-[520px] overflow-hidden bg-gray-900">
+      <div className="relative w-full min-h-[300px] max-h-[640px] overflow-hidden bg-slate-900" style={{ aspectRatio: 'auto' }}>
         {e.banner_url ? (
-          <Image
-            src={e.banner_url}
-            alt={e.title}
-            fill
-            className="object-cover"
-            priority
-          />
+          <>
+            {/* Blurred background fill — covers side/top gaps from portrait flyers */}
+            <Image
+              src={e.banner_url}
+              alt=""
+              fill
+              className="object-cover scale-110 blur-2xl opacity-25 pointer-events-none select-none"
+              aria-hidden
+              priority
+            />
+            {/* Full flyer — object-contain shows the entire image without cropping */}
+            <Image
+              src={e.banner_url}
+              alt={e.title}
+              fill
+              className="object-contain"
+              priority
+            />
+          </>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900" />
         )}
 
         {/* Gradient overlay — strong at bottom, subtle at top */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10" />
 
         {/* Back button — top left */}
         <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
@@ -526,6 +539,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
               {/* Save */}
               <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} />
+
+              {/* Download flyer */}
+              {e.banner_url && (
+                <DownloadFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
+              )}
 
             </div>
           </div>
