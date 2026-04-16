@@ -24,6 +24,7 @@ async function getChurches(params: SearchParams) {
   let query = supabase
     .from('churches')
     .select('*', { count: 'exact' })
+    .neq('is_hidden', true)
     .order('is_featured', { ascending: false })
     .order('name', { ascending: true })
     .range(from, to)
