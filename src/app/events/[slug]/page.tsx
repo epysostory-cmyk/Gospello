@@ -412,8 +412,15 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   This event has ended
                 </div>
               )}
-              <div className="mt-3">
-                <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} />
+              <div className="mt-3 flex gap-2">
+                <div className="flex-1">
+                  <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} />
+                </div>
+                {e.banner_url && (
+                  <div className="flex-1">
+                    <DownloadFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
+                  </div>
+                )}
               </div>
             </div>
 

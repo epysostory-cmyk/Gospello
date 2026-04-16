@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Menu, X, Search, Shield, ChevronRight } from 'lucide-react'
+import { Menu, X, Search, Shield, ChevronRight, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { usePathname } from 'next/navigation'
@@ -124,8 +124,9 @@ export default function Navbar() {
                   </Link>
                   <button
                     onClick={handleSignOut}
-                    className="text-sm font-medium text-gray-400 hover:text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-red-500 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
                   >
+                    <LogOut className="w-4 h-4" />
                     Sign out
                   </button>
                 </div>
@@ -219,8 +220,9 @@ export default function Navbar() {
                   </Link>
                   <button
                     onClick={handleSignOut}
-                    className="w-full text-left px-4 py-3 text-sm text-gray-400 hover:text-gray-700"
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors"
                   >
+                    <LogOut className="w-4 h-4" />
                     Sign out
                   </button>
                 </>

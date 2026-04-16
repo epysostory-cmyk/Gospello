@@ -5,7 +5,6 @@ import { Loader2, CheckCircle2, UserPlus, UserMinus, UserCheck, Ticket, Download
 import { createClient } from '@/lib/supabase/client'
 import { instantAttend, unattend } from '@/app/actions/attendance'
 import { registerForEvent, confirmPayment } from '@/app/actions/registrations'
-import AuthModal from './AuthModal'
 import type { User } from '@supabase/supabase-js'
 
 interface Props {
@@ -37,7 +36,6 @@ export default function AttendButton({
   const [user, setUser] = useState<User | null>(null)
   // If we got server-side user data, skip the loading state entirely
   const [loadingUser, setLoadingUser] = useState(!serverUserId && serverUserId !== null ? true : serverUserId === undefined)
-  const [showAuthModal, setShowAuthModal] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [attended, setAttended] = useState(initialAttended)
   const [count, setCount] = useState(initialCount)
@@ -102,12 +100,11 @@ export default function AttendButton({
   }
 
   const handleClick = () => {
-    if (mode === 'instant') {
-      // One-tap attend uses the user's profile — requires auth
-      if (!user) { setShowAuthModal(true); return }
+    if (mode === 'instant' && user) {
+      // Signed-in user on free event: one-tap attend
       doInstantAttend()
     } else {
-      // rsvp and paid: "No password. No full account needed" — show form directly
+      // Guest (any mode) or rsvp/paid: show name+email form — no account needed
       setShowForm(true)
     }
   }
@@ -122,29 +119,12 @@ export default function AttendButton({
     setBusy(false)
   }
 
-  const handleAuthSuccess = () => {
-    setShowAuthModal(false)
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUser(data.user)
-        if (!name) setName(data.user.user_metadata?.display_name ?? '')
-        if (!email) setEmail(data.user.email ?? '')
-      }
-      if (mode === 'instant') {
-        doInstantAttend()
-      } else {
-        setShowForm(true)
-      }
-    })
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
     setError('')
 
-    const regType = mode === 'paid' ? 'paid' : 'free_registration'
+    const regType = mode === 'paid' ? 'paid' : mode === 'instant' ? 'free_no_registration' : 'free_registration'
     const result = await registerForEvent(eventId, name, email, regType)
 
     if (result.alreadyRegistered) {
@@ -219,14 +199,16 @@ export default function AttendButton({
           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
           You&apos;re going! 🎉
         </div>
-        <button
-          onClick={handleUnattend}
-          disabled={busy}
-          className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-red-500 py-2 transition-colors"
-        >
-          {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserMinus className="w-3 h-3" />}
-          Can&apos;t make it anymore
-        </button>
+        {user && (
+          <button
+            onClick={handleUnattend}
+            disabled={busy}
+            className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-red-500 py-2 transition-colors"
+          >
+            {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserMinus className="w-3 h-3" />}
+            Can&apos;t make it anymore
+          </button>
+        )}
       </div>
     )
   }
@@ -420,19 +402,6 @@ export default function AttendButton({
         </form>
       )}
 
-      {/* Auth gate */}
-      {showAuthModal && (
-        <AuthModal
-          onClose={() => setShowAuthModal(false)}
-          onSuccess={handleAuthSuccess}
-          title={
-            mode === 'paid' ? 'Sign in to get tickets'
-            : mode === 'rsvp' ? 'Sign in to register'
-            : 'Sign in to attend'
-          }
-          subtitle={`Sign in or create a free account to attend "${eventTitle}"`}
-        />
-      )}
     </>
   )
 }

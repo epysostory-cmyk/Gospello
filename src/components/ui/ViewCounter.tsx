@@ -12,31 +12,13 @@ export default function ViewCounter({ eventId, initialCount }: Props) {
   const [count, setCount] = useState(initialCount)
 
   useEffect(() => {
-    const key = `gospello_viewed_${eventId}`
-    try {
-      const stored = localStorage.getItem(key)
-      const now = Date.now()
-      // Existing entry that hasn't expired
-      if (stored && now < parseInt(stored, 10)) return
-
-      // Optimistic +1
-      setCount((c) => c + 1)
-      // 24-hour expiry stored as unix ms
-      localStorage.setItem(key, String(now + 24 * 60 * 60 * 1000))
-
-      fetch('/api/events/view', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId }),
-      }).catch(() => {})
-    } catch {
-      // localStorage unavailable (private mode etc.) — just fire the view
-      fetch('/api/events/view', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId }),
-      }).catch(() => {})
-    }
+    // Count every page load — no deduplication
+    setCount((c) => c + 1)
+    fetch('/api/events/view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventId }),
+    }).catch(() => {})
   }, [eventId])
 
   return (
