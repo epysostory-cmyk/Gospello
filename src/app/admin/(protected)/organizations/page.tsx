@@ -8,17 +8,14 @@ import {
   Users,
   Search,
   Globe,
-  ShieldOff,
-  ShieldCheck,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react'
-import OrgActions from './OrgActions'
 
 interface SearchParams {
   q?: string
   type?: string
-  status?: string
   city?: string
   page?: string
 }
@@ -32,12 +29,9 @@ type OrgRow = {
   display_name: string | null
   avatar_url: string | null
   created_at: string
-  status: string | null
-  // resolved from churches join
   church_name: string | null
   church_city: string | null
   church_slug: string | null
-  // resolved from events aggregate
   event_count: number
 }
 
@@ -51,19 +45,18 @@ export default async function AdminOrganizationsPage({
 
   const q = params.q?.trim() ?? ''
   const typeFilter = params.type ?? 'all'
-  const statusFilter = params.status ?? 'all'
   const cityFilter = params.city?.trim() ?? ''
   const page = Math.max(1, parseInt(params.page ?? '1', 10))
   const offset = (page - 1) * PAGE_SIZE
 
-  // ── 1. Fetch all profiles that are orgs/churches ───────────────────────────
+  // ── 1. Fetch profiles that are orgs/churches ───────────────────────────────
   let profileQuery = supabase
     .from('profiles')
-    .select('id, email, account_type, display_name, avatar_url, created_at, status')
+    .select('id, email, account_type, display_name, avatar_url, created_at')
     .in('account_type', ['church', 'organizer'])
     .order('created_at', { ascending: false })
 
-  if (typeFilter === 'churches') profileQuery = profileQuery.eq('account_type', 'church')
+  if (typeFilter === 'churches')   profileQuery = profileQuery.eq('account_type', 'church')
   if (typeFilter === 'organisers') profileQuery = profileQuery.eq('account_type', 'organizer')
 
   const { data: profiles } = await profileQuery
@@ -77,7 +70,7 @@ export default async function AdminOrganizationsPage({
     (churches ?? []).map((c) => [c.profile_id, c]),
   )
 
-  // ── 3. Fetch event counts per organizer_id ────────────────────────────────
+  // ── 3. Fetch event counts per organizer_id ─────────────────────────────────
   const { data: eventRows } = await supabase
     .from('events')
     .select('organizer_id')
@@ -89,7 +82,7 @@ export default async function AdminOrganizationsPage({
     }
   }
 
-  // ── 4. Merge into OrgRow array ────────────────────────────────────────────
+  // ── 4. Merge into OrgRow array ─────────────────────────────────────────────
   let rows: OrgRow[] = (profiles ?? []).map((p) => {
     const church = churchByProfile.get(p.id)
     return {
@@ -99,15 +92,14 @@ export default async function AdminOrganizationsPage({
       display_name: p.display_name,
       avatar_url: p.avatar_url,
       created_at: p.created_at,
-      status: (p as Record<string, unknown>).status as string | null ?? null,
       church_name: church?.name ?? null,
       church_city: church?.city ?? null,
       church_slug: church?.slug ?? null,
-      event_count: eventCountMap.get(p.id) ?? 0, // p.id === organizer_id
+      event_count: eventCountMap.get(p.id) ?? 0,
     }
   })
 
-  // ── 5. Client-side filters (search + city + status) ───────────────────────
+  // ── 5. Client-side filters (search + city) ─────────────────────────────────
   if (q) {
     const lower = q.toLowerCase()
     rows = rows.filter(
@@ -124,30 +116,23 @@ export default async function AdminOrganizationsPage({
     rows = rows.filter((r) => (r.church_city ?? '').toLowerCase().includes(lower))
   }
 
-  if (statusFilter === 'active') {
-    rows = rows.filter((r) => !r.status || r.status === 'active')
-  } else if (statusFilter === 'suspended') {
-    rows = rows.filter((r) => r.status === 'suspended')
-  }
-
-  // ── 6. Pagination ─────────────────────────────────────────────────────────
+  // ── 6. Pagination ──────────────────────────────────────────────────────────
   const total = rows.length
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const pageRows = rows.slice(offset, offset + PAGE_SIZE)
 
-  // ── 7. Stats ──────────────────────────────────────────────────────────────
-  const totalChurches = (profiles ?? []).filter((p) => p.account_type === 'church').length
-  const totalOrganizers = (profiles ?? []).filter((p) => p.account_type === 'organizer').length
-  const totalSuspended = rows.filter((r) => r.status === 'suspended').length
+  // ── 7. Stats ───────────────────────────────────────────────────────────────
+  const allProfiles = profiles ?? []
+  const totalChurches   = allProfiles.filter((p) => p.account_type === 'church').length
+  const totalOrganizers = allProfiles.filter((p) => p.account_type === 'organizer').length
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────────────────
   function buildUrl(overrides: Partial<SearchParams>) {
     const next: Record<string, string> = {}
-    if (overrides.q !== undefined ? overrides.q : q) next.q = overrides.q !== undefined ? overrides.q : q
+    const qVal = overrides.q !== undefined ? overrides.q : q
+    if (qVal) next.q = qVal
     const t = overrides.type !== undefined ? overrides.type : typeFilter
     if (t && t !== 'all') next.type = t
-    const s = overrides.status !== undefined ? overrides.status : statusFilter
-    if (s && s !== 'all') next.status = s
     const c = overrides.city !== undefined ? overrides.city : cityFilter
     if (c) next.city = c
     const pg = overrides.page !== undefined ? overrides.page : String(page)
@@ -160,34 +145,25 @@ export default async function AdminOrganizationsPage({
     return row.church_name ?? row.display_name ?? row.email
   }
 
-  function cityOf(row: OrgRow): string {
-    return row.church_city ?? '—'
-  }
-
-  function isSuspended(row: OrgRow): boolean {
-    return row.status === 'suspended'
-  }
-
   return (
     <div className="space-y-6 max-w-7xl">
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white">Organisations</h1>
-        <p className="text-gray-400 mt-1 text-sm">Manage churches and event organisers on the platform</p>
+        <p className="text-gray-400 mt-1 text-sm">
+          All churches and event organisers registered on the platform
+        </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Total Orgs', value: (profiles ?? []).length, icon: Users, color: '#6366f1' },
-          { label: 'Churches', value: totalChurches, icon: Building2, color: '#a855f7' },
-          { label: 'Organisers', value: totalOrganizers, icon: Users, color: '#3b82f6' },
-          { label: 'Suspended', value: totalSuspended, icon: ShieldOff, color: totalSuspended > 0 ? '#ef4444' : '#6b7280' },
+          { label: 'Total',       value: allProfiles.length, icon: Users,     color: '#6366f1' },
+          { label: 'Churches',    value: totalChurches,      icon: Building2, color: '#a855f7' },
+          { label: 'Organisers',  value: totalOrganizers,    icon: Users,     color: '#3b82f6' },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div
-            key={label}
-            className="rounded-2xl border border-white/10 bg-white/5 p-4"
-          >
+          <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
               style={{ background: color + '20' }}
@@ -209,7 +185,7 @@ export default async function AdminOrganizationsPage({
             type="text"
             name="q"
             defaultValue={q}
-            placeholder="Search name or city…"
+            placeholder="Search name, email or city…"
             className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30"
           />
         </div>
@@ -220,20 +196,9 @@ export default async function AdminOrganizationsPage({
           defaultValue={typeFilter}
           className="py-2 px-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 appearance-none cursor-pointer"
         >
-          <option value="all" className="bg-[#0D0D14]">All Types</option>
-          <option value="churches" className="bg-[#0D0D14]">Churches</option>
+          <option value="all"        className="bg-[#0D0D14]">All Types</option>
+          <option value="churches"   className="bg-[#0D0D14]">Churches</option>
           <option value="organisers" className="bg-[#0D0D14]">Organisers</option>
-        </select>
-
-        {/* Status */}
-        <select
-          name="status"
-          defaultValue={statusFilter}
-          className="py-2 px-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 appearance-none cursor-pointer"
-        >
-          <option value="all" className="bg-[#0D0D14]">All Statuses</option>
-          <option value="active" className="bg-[#0D0D14]">Active</option>
-          <option value="suspended" className="bg-[#0D0D14]">Suspended</option>
         </select>
 
         {/* City */}
@@ -252,7 +217,7 @@ export default async function AdminOrganizationsPage({
           Filter
         </button>
 
-        {(q || typeFilter !== 'all' || statusFilter !== 'all' || cityFilter) && (
+        {(q || typeFilter !== 'all' || cityFilter) && (
           <Link
             href="/admin/organizations"
             className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 text-sm transition-colors"
@@ -266,8 +231,8 @@ export default async function AdminOrganizationsPage({
       {pageRows.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-16 text-center">
           <Building2 className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400">No organisations found</p>
-          {(q || typeFilter !== 'all' || statusFilter !== 'all' || cityFilter) && (
+          <p className="text-gray-400 font-medium">No organisations found</p>
+          {(q || typeFilter !== 'all' || cityFilter) && (
             <Link
               href="/admin/organizations"
               className="mt-3 inline-block text-sm text-indigo-400 hover:text-indigo-300"
@@ -282,41 +247,26 @@ export default async function AdminOrganizationsPage({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10 text-left">
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Organisation
-                  </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    City
-                  </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">
-                    Events
-                  </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Joined
-                  </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
-                    Actions
-                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Organisation</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">City</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Events</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {pageRows.map((row) => {
-                  const suspended = isSuspended(row)
                   const name = displayName(row)
                   const initials = name.slice(0, 2).toUpperCase()
                   const publicHref =
                     row.account_type === 'church' && row.church_slug
                       ? `/churches/${row.church_slug}`
-                      : null
+                      : `/organizers/${row.id}`
 
                   return (
                     <tr key={row.id} className="hover:bg-white/[0.03] transition-colors">
+
                       {/* Profile */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -333,8 +283,8 @@ export default async function AdminOrganizationsPage({
                             </div>
                           )}
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-white truncate max-w-[180px]">{name}</p>
-                            <p className="text-xs text-gray-500 truncate max-w-[180px]">{row.email}</p>
+                            <p className="text-sm font-medium text-white truncate max-w-[200px]">{name}</p>
+                            <p className="text-xs text-gray-500 truncate max-w-[200px]">{row.email}</p>
                           </div>
                         </div>
                       </td>
@@ -348,18 +298,14 @@ export default async function AdminOrganizationsPage({
                               : 'bg-blue-500/15 text-blue-300 border border-blue-500/20'
                           }`}
                         >
-                          {row.account_type === 'church' ? (
-                            <Building2 className="w-3 h-3" />
-                          ) : (
-                            <Users className="w-3 h-3" />
-                          )}
+                          {row.account_type === 'church' ? <Building2 className="w-3 h-3" /> : <Users className="w-3 h-3" />}
                           {row.account_type === 'church' ? 'Church' : 'Organiser'}
                         </span>
                       </td>
 
                       {/* City */}
                       <td className="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">
-                        {cityOf(row)}
+                        {row.church_city ?? '—'}
                       </td>
 
                       {/* Event count */}
@@ -372,42 +318,22 @@ export default async function AdminOrganizationsPage({
                         {formatDate(row.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
 
-                      {/* Status badge */}
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
-                            suspended
-                              ? 'bg-red-500/15 text-red-400 border border-red-500/20'
-                              : 'bg-green-500/15 text-green-400 border border-green-500/20'
-                          }`}
-                        >
-                          {suspended ? (
-                            <ShieldOff className="w-3 h-3" />
-                          ) : (
-                            <ShieldCheck className="w-3 h-3" />
-                          )}
-                          {suspended ? 'Suspended' : 'Active'}
-                        </span>
-                      </td>
-
                       {/* Actions */}
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-2">
-                          {publicHref && (
-                            <Link
-                              href={publicHref}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="View public page"
-                              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-colors"
-                            >
-                              <Globe className="w-3.5 h-3.5" />
-                            </Link>
-                          )}
-
-                          <OrgActions profileId={row.id} suspended={isSuspended(row)} />
+                        <div className="flex items-center justify-end">
+                          <Link
+                            href={publicHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="View public page"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-colors text-xs"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            View
+                          </Link>
                         </div>
                       </td>
+
                     </tr>
                   )
                 })}
@@ -424,10 +350,7 @@ export default async function AdminOrganizationsPage({
             </p>
             <div className="flex items-center gap-2">
               {page > 1 ? (
-                <Link
-                  href={buildUrl({ page: String(page - 1) })}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-colors"
-                >
+                <Link href={buildUrl({ page: String(page - 1) })} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-colors">
                   <ChevronLeft className="w-4 h-4" />
                 </Link>
               ) : (
@@ -435,16 +358,9 @@ export default async function AdminOrganizationsPage({
                   <ChevronLeft className="w-4 h-4" />
                 </span>
               )}
-
-              <span className="text-xs text-gray-400 px-1">
-                {page} / {totalPages}
-              </span>
-
+              <span className="text-xs text-gray-400 px-1">{page} / {totalPages}</span>
               {page < totalPages ? (
-                <Link
-                  href={buildUrl({ page: String(page + 1) })}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-colors"
-                >
+                <Link href={buildUrl({ page: String(page + 1) })} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-colors">
                   <ChevronRight className="w-4 h-4" />
                 </Link>
               ) : (
