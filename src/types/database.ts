@@ -1,3 +1,5 @@
+export type RegistrationType = 'free_no_registration' | 'free_registration' | 'paid'
+
 export type AccountType = 'church' | 'organizer'
 export type AdminRole = 'super_admin' | 'admin' | 'moderator'
 export type EventStatus = 'pending' | 'approved' | 'rejected'
@@ -77,6 +79,8 @@ export interface Event {
   tags: string[]
   visibility: string
   gallery_urls: string[]
+  // Registration type (drives is_free + rsvp_required)
+  registration_type: RegistrationType
   // admin fields
   rejection_reason: string | null
   approved_at: string | null
@@ -87,6 +91,17 @@ export interface Event {
   profiles?: Profile
   churches?: Church | null
   attendances?: Attendance[]
+}
+
+export interface Registration {
+  id: string
+  event_id: string
+  full_name: string
+  email: string
+  ticket_number: number
+  registration_type: RegistrationType
+  paid_confirmed: boolean
+  created_at: string
 }
 
 export interface Attendance {

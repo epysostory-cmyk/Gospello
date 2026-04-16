@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, CheckCircle2, UserPlus, UserMinus, UserCheck, Ticket } from 'lucide-react'
+import { Loader2, CheckCircle2, UserPlus, UserMinus, UserCheck, Ticket, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { attendEvent, instantAttend, unattend } from '@/app/actions/attendance'
+import { instantAttend, unattend } from '@/app/actions/attendance'
+import { registerForEvent, confirmPayment } from '@/app/actions/registrations'
 import AuthModal from './AuthModal'
 import type { User } from '@supabase/supabase-js'
 
@@ -41,6 +42,14 @@ export default function AttendButton({
   const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // Post-registration state
+  const [registrationId, setRegistrationId] = useState<string | null>(null)
+  const [ticketPdfBase64, setTicketPdfBase64] = useState<string | null>(null)
+  const [ticketNumber, setTicketNumber] = useState<number | null>(null)
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false)
+  const [confirmingPayment, setConfirmingPayment] = useState(false)
+  const [ticketConfirmed, setTicketConfirmed] = useState(false)
+
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
@@ -55,8 +64,8 @@ export default function AttendButton({
 
   // Determine which attendance mode applies:
   // • instant — free, no registration required → one-tap attend
-  // • rsvp    — free but registration required → fill form
-  // • paid    — paid event (always requires registration → fill form + payment redirect)
+  // • rsvp    — free but registration required → fill form + instant ticket
+  // • paid    — paid event → fill form + payment redirect + confirm
   const mode = !isFree ? 'paid' : rsvpRequired ? 'rsvp' : 'instant'
 
   const doInstantAttend = async () => {
@@ -114,19 +123,64 @@ export default function AttendButton({
     e.preventDefault()
     setSubmitting(true)
     setError('')
-    const result = await attendEvent(eventId, name, email, phone || null)
-    if (result.alreadyRegistered || result.success) {
+
+    const regType = mode === 'paid' ? 'paid' : 'free_registration'
+    const result = await registerForEvent(eventId, name, email, regType)
+
+    if (result.alreadyRegistered) {
       setAttended(true)
-      if (result.success) setCount(c => c + 1)
       setShowForm(false)
-      // For paid events with a payment link, redirect after a short delay
-      if (!isFree && paymentLink && result.success) {
-        setTimeout(() => window.open(paymentLink, '_blank'), 500)
+      setSubmitting(false)
+      return
+    }
+
+    if (result.success) {
+      setAttended(true)
+      setCount(c => c + 1)
+      setShowForm(false)
+      setRegistrationId(result.registrationId ?? null)
+      setTicketNumber(result.ticketNumber ?? null)
+
+      if (mode === 'rsvp') {
+        // Free registration — ticket is ready now
+        setTicketPdfBase64(result.ticketPdfBase64 ?? null)
+      } else if (mode === 'paid') {
+        // Paid — open payment link, then show confirmation step
+        if (paymentLink) {
+          setTimeout(() => window.open(paymentLink, '_blank'), 400)
+        }
+        setShowPaymentConfirm(true)
       }
     } else {
       setError(result.error ?? 'Failed to register. Please try again.')
     }
+
     setSubmitting(false)
+  }
+
+  const handleConfirmPayment = async () => {
+    if (!registrationId) return
+    setConfirmingPayment(true)
+    setError('')
+    const result = await confirmPayment(registrationId)
+    if (result.success) {
+      setTicketPdfBase64(result.ticketPdfBase64 ?? null)
+      setTicketNumber(result.ticketNumber ?? null)
+      setShowPaymentConfirm(false)
+      setTicketConfirmed(true)
+    } else {
+      setError(result.error ?? 'Could not confirm payment. Please try again.')
+    }
+    setConfirmingPayment(false)
+  }
+
+  const downloadTicket = () => {
+    if (!ticketPdfBase64) return
+    const ticketStr = String(ticketNumber ?? 1).padStart(4, '0')
+    const link = document.createElement('a')
+    link.href = `data:application/pdf;base64,${ticketPdfBase64}`
+    link.download = `gospello-ticket-${ticketStr}.pdf`
+    link.click()
   }
 
   if (loadingUser) {
@@ -150,22 +204,104 @@ export default function AttendButton({
           disabled={busy}
           className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-red-500 py-2 transition-colors"
         >
-          {busy
-            ? <Loader2 className="w-3 h-3 animate-spin" />
-            : <UserMinus className="w-3 h-3" />
-          }
+          {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserMinus className="w-3 h-3" />}
           Can&apos;t make it anymore
         </button>
       </div>
     )
   }
 
-  // ── Registered state (rsvp / paid) ─────────────────────────
-  if (attended) {
+  // ── Registered state — rsvp with ticket ready ───────────────
+  if (attended && mode === 'rsvp' && ticketPdfBase64) {
+    return (
+      <div className="space-y-2">
+        <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
+          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          You&apos;re registered! 🎉
+        </div>
+        <p className="text-center text-xs text-gray-500">Your ticket has been emailed to you.</p>
+        <button
+          onClick={downloadTicket}
+          className="w-full flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 font-medium py-2.5 rounded-xl hover:bg-indigo-50 transition-colors text-sm"
+        >
+          <Download className="w-4 h-4" />
+          Download Ticket {ticketNumber ? `#${String(ticketNumber).padStart(4, '0')}` : ''}
+        </button>
+      </div>
+    )
+  }
+
+  // ── Registered state — rsvp, no ticket yet (fallback) ───────
+  if (attended && mode === 'rsvp') {
     return (
       <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
         <CheckCircle2 className="w-5 h-5 text-emerald-500" />
         You&apos;re registered!
+      </div>
+    )
+  }
+
+  // ── Paid: ticket confirmed ───────────────────────────────────
+  if (attended && mode === 'paid' && ticketConfirmed && ticketPdfBase64) {
+    return (
+      <div className="space-y-2">
+        <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
+          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          Payment confirmed! Ticket issued 🎟
+        </div>
+        <p className="text-center text-xs text-gray-500">Your ticket has been emailed to you.</p>
+        <button
+          onClick={downloadTicket}
+          className="w-full flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 font-medium py-2.5 rounded-xl hover:bg-indigo-50 transition-colors text-sm"
+        >
+          <Download className="w-4 h-4" />
+          Download Ticket {ticketNumber ? `#${String(ticketNumber).padStart(4, '0')}` : ''}
+        </button>
+      </div>
+    )
+  }
+
+  // ── Paid: awaiting payment confirmation ──────────────────────
+  if (attended && mode === 'paid' && showPaymentConfirm) {
+    return (
+      <div className="space-y-3">
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <p className="text-sm font-semibold text-amber-800 mb-1">Complete your payment 💳</p>
+          <p className="text-xs text-amber-700">
+            You&apos;ve been registered. After completing payment on the payment page,
+            tap the button below to receive your ticket.
+          </p>
+        </div>
+        {paymentLink && (
+          <a
+            href={paymentLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+          >
+            <Ticket className="w-4 h-4" />
+            Go to Payment Page →
+          </a>
+        )}
+        <button
+          onClick={handleConfirmPayment}
+          disabled={confirmingPayment}
+          className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+        >
+          {confirmingPayment && <Loader2 className="w-4 h-4 animate-spin" />}
+          {confirmingPayment ? 'Confirming...' : "I've completed payment — get my ticket"}
+        </button>
+        {error && <p className="text-red-600 text-xs text-center">{error}</p>}
+      </div>
+    )
+  }
+
+  // ── Paid: registered, awaiting (no payment confirm panel) ────
+  if (attended && mode === 'paid') {
+    return (
+      <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
+        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+        Registered — awaiting payment
       </div>
     )
   }
@@ -207,6 +343,12 @@ export default function AttendButton({
           {mode === 'paid' && paymentLink && (
             <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-100">
               After registering you&apos;ll be redirected to the payment page.
+            </p>
+          )}
+
+          {mode === 'rsvp' && (
+            <p className="text-xs text-indigo-700 bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100">
+              Your ticket will be emailed to you after registration.
             </p>
           )}
 

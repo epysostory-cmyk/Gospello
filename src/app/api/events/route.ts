@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
       price: body.price || null,
       currency: body.currency || 'NGN',
       payment_link: body.payment_link || null,
+      registration_type: body.registration_type || 'free_no_registration',
       rsvp_required: body.rsvp_required || false,
       capacity: body.capacity || null,
       tags: body.tags || [],

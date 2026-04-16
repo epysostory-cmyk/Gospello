@@ -1,7 +1,5 @@
 'use client'
 
-import { Lock } from 'lucide-react'
-
 interface StepProps {
   formData: any
   updateForm: (field: string, value: any) => void
@@ -10,58 +8,115 @@ interface StepProps {
 
 const CURRENCIES = ['NGN', 'USD', 'GBP', 'EUR', 'CAD', 'AUD']
 
+type RegistrationType = 'free_no_registration' | 'free_registration' | 'paid'
+
+const REGISTRATION_OPTIONS: {
+  value: RegistrationType
+  emoji: string
+  label: string
+  sub: string
+  accent: string
+  activeBg: string
+  activeBorder: string
+  activeText: string
+}[] = [
+  {
+    value: 'free_no_registration',
+    emoji: '🎁',
+    label: 'Free — No Registration',
+    sub: 'Anyone taps once to mark themselves attending. No form needed.',
+    accent: 'emerald',
+    activeBg: 'bg-emerald-50',
+    activeBorder: 'border-emerald-500',
+    activeText: 'text-emerald-800',
+  },
+  {
+    value: 'free_registration',
+    emoji: '✏️',
+    label: 'Free — Register to Attend',
+    sub: 'Free event but attendees fill a short form. Ticket emailed automatically.',
+    accent: 'indigo',
+    activeBg: 'bg-indigo-50',
+    activeBorder: 'border-indigo-500',
+    activeText: 'text-indigo-800',
+  },
+  {
+    value: 'paid',
+    emoji: '💳',
+    label: 'Paid Event',
+    sub: 'Attendees register then complete payment via your link. Ticket sent after confirmation.',
+    accent: 'amber',
+    activeBg: 'bg-amber-50',
+    activeBorder: 'border-amber-500',
+    activeText: 'text-amber-800',
+  },
+]
+
 export default function Step5Entry({ formData, updateForm, errors }: StepProps) {
   const inputCls = 'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white'
   const labelCls = 'block text-sm font-medium text-gray-700 mb-2'
   const errorCls = 'text-red-600 text-xs mt-1'
 
-  const setFree = () => {
-    updateForm('is_free', true)
-    // Don't force-reset rsvp_required — let user choose
-  }
+  const currentType: RegistrationType = formData.registration_type ?? 'free_no_registration'
 
-  const setPaid = () => {
-    updateForm('is_free', false)
-    // Paid events ALWAYS require registration
-    updateForm('rsvp_required', true)
+  const selectType = (type: RegistrationType) => {
+    updateForm('registration_type', type)
+    // Keep is_free + rsvp_required in sync for backward compatibility
+    if (type === 'free_no_registration') {
+      updateForm('is_free', true)
+      updateForm('rsvp_required', false)
+    } else if (type === 'free_registration') {
+      updateForm('is_free', true)
+      updateForm('rsvp_required', true)
+    } else {
+      updateForm('is_free', false)
+      updateForm('rsvp_required', true)
+    }
   }
 
   return (
     <div className="bg-white rounded-2xl p-6 space-y-5">
       <h3 className="text-lg font-semibold text-gray-900">Entry & Registration</h3>
 
-      {/* Free / Paid Toggle */}
-      <div>
-        <label className={labelCls}>Ticket Type</label>
-        <div className="flex gap-3 p-4 bg-gray-50 rounded-xl">
-          <button
-            type="button"
-            onClick={setFree}
-            className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${
-              formData.is_free
-                ? 'bg-green-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-200'
-            }`}
-          >
-            🎁 Free
-          </button>
-          <button
-            type="button"
-            onClick={setPaid}
-            className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${
-              !formData.is_free
-                ? 'bg-amber-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-200'
-            }`}
-          >
-            💳 Paid
-          </button>
-        </div>
+      {/* Registration type — 3 options */}
+      <div className="space-y-3">
+        <label className={labelCls}>How will people attend?</label>
+        {REGISTRATION_OPTIONS.map((opt) => {
+          const active = currentType === opt.value
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => selectType(opt.value)}
+              className={`w-full text-left flex items-start gap-3 p-4 rounded-xl border-2 transition-all ${
+                active
+                  ? `${opt.activeBg} ${opt.activeBorder}`
+                  : 'bg-white border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {/* Radio dot */}
+              <span className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                active ? `border-${opt.accent}-500` : 'border-gray-300'
+              }`}>
+                {active && (
+                  <span className={`w-2 h-2 rounded-full bg-${opt.accent}-500`} />
+                )}
+              </span>
+
+              <span className="flex-1">
+                <span className={`font-semibold text-sm ${active ? opt.activeText : 'text-gray-800'}`}>
+                  {opt.emoji} {opt.label}
+                </span>
+                <span className="block text-xs text-gray-500 mt-0.5">{opt.sub}</span>
+              </span>
+            </button>
+          )
+        })}
       </div>
 
-      {/* Paid Event Fields */}
-      {!formData.is_free && (
-        <div className="space-y-4">
+      {/* Paid event fields */}
+      {currentType === 'paid' && (
+        <div className="space-y-4 pt-1">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>Price *</label>
@@ -105,57 +160,8 @@ export default function Step5Entry({ formData, updateForm, errors }: StepProps) 
         </div>
       )}
 
-      {/* Registration / RSVP */}
-      <div>
-        <label className={labelCls}>Registration</label>
-
-        {!formData.is_free ? (
-          /* Paid: registration is mandatory */
-          <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-            <Lock className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <p className="text-sm text-amber-800 font-medium">
-              Registration is required for paid events — attendees must register to complete payment.
-            </p>
-          </div>
-        ) : (
-          /* Free: optional toggle */
-          <div className="flex gap-3 p-4 bg-gray-50 rounded-xl">
-            <button
-              type="button"
-              onClick={() => updateForm('rsvp_required', false)}
-              className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${
-                !formData.rsvp_required
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-200'
-              }`}
-            >
-              No Registration
-            </button>
-            <button
-              type="button"
-              onClick={() => updateForm('rsvp_required', true)}
-              className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${
-                formData.rsvp_required
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-200'
-              }`}
-            >
-              RSVP Required
-            </button>
-          </div>
-        )}
-
-        <p className="text-xs text-gray-500 mt-2">
-          {!formData.is_free
-            ? 'Attendees click "Get Tickets", fill the form, then complete payment via your link.'
-            : formData.rsvp_required
-            ? 'Attendees must fill a short form to confirm their attendance.'
-            : 'Anyone can mark themselves as attending with one tap — no form needed.'}
-        </p>
-      </div>
-
-      {/* Capacity — shown when RSVP or Paid */}
-      {(formData.rsvp_required || !formData.is_free) && (
+      {/* Capacity — shown for registration or paid */}
+      {(currentType === 'free_registration' || currentType === 'paid') && (
         <div>
           <label className={labelCls}>
             Attendee Capacity <span className="text-gray-400 font-normal">(optional)</span>

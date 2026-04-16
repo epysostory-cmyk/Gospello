@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Plus, Calendar, CheckCircle, Clock, XCircle, Pencil } from 'lucide-react'
+import { Plus, Calendar, CheckCircle, Clock, XCircle, Pencil, Users } from 'lucide-react'
 import { formatDate, CATEGORY_LABELS } from '@/lib/utils'
 import type { Event } from '@/types/database'
 
@@ -95,6 +95,13 @@ export default async function MyEventsPage() {
                           title="Edit"
                         >
                           <Pencil className="w-4 h-4" />
+                        </Link>
+                        <Link
+                          href={`/dashboard/events/${event.id}/registrations`}
+                          className="text-purple-600 hover:text-purple-700"
+                          title="Registrations"
+                        >
+                          <Users className="w-4 h-4" />
                         </Link>
                         {event.status === 'approved' && (
                           <Link
