@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { Upload, X, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 interface StepProps {
   formData: any
@@ -11,20 +10,24 @@ interface StepProps {
   errors: Record<string, string>
 }
 
+async function uploadFile(file: File, folder: string): Promise<string> {
+  const body = new FormData()
+  body.append('file', file)
+  body.append('bucket', 'event-banners')
+  body.append('folder', folder)
+
+  const res = await fetch('/api/upload', { method: 'POST', body })
+  const json = await res.json()
+
+  if (!res.ok) throw new Error(json.error ?? 'Upload failed')
+  return json.url as string
+}
+
 export default function Step4Media({ formData, updateForm, errors }: StepProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const bannerInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
-
-  const ensureBucket = async () => {
-    try {
-      await fetch('/api/setup/storage', { method: 'POST' })
-    } catch {
-      // Non-blocking — if this fails, the upload attempt will show its own error
-    }
-  }
 
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -34,24 +37,8 @@ export default function Step4Media({ formData, updateForm, errors }: StepProps) 
     setUploadError('')
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
-      // Ensure bucket exists (no-op if already created)
-      await ensureBucket()
-
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}.${fileExt}`
-      const filePath = `event-banners/${user.id}/${fileName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('event-banners')
-        .upload(filePath, file, { upsert: true })
-
-      if (uploadError) throw uploadError
-
-      const { data } = supabase.storage.from('event-banners').getPublicUrl(filePath)
-      updateForm('banner_url', data.publicUrl)
+      const url = await uploadFile(file, 'event-banners')
+      updateForm('banner_url', url)
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
@@ -73,28 +60,9 @@ export default function Step4Media({ formData, updateForm, errors }: StepProps) 
     setUploadError('')
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
-      await ensureBucket()
-
-      const newUrls: string[] = []
-
-      for (const file of files) {
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
-        const filePath = `event-banners/${user.id}/gallery/${fileName}`
-
-        const { error: uploadError } = await supabase.storage
-          .from('event-banners')
-          .upload(filePath, file, { upsert: true })
-
-        if (uploadError) throw uploadError
-
-        const { data } = supabase.storage.from('event-banners').getPublicUrl(filePath)
-        newUrls.push(data.publicUrl)
-      }
-
+      const newUrls = await Promise.all(
+        files.map((f) => uploadFile(f, 'event-banners/gallery'))
+      )
       updateForm('gallery_urls', [...formData.gallery_urls, ...newUrls])
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed')
@@ -127,6 +95,7 @@ export default function Step4Media({ formData, updateForm, errors }: StepProps) 
               />
             </div>
             <button
+              type="button"
               onClick={() => {
                 updateForm('banner_url', '')
                 if (bannerInputRef.current) bannerInputRef.current.value = ''
@@ -147,17 +116,21 @@ export default function Step4Media({ formData, updateForm, errors }: StepProps) 
               className="hidden"
             />
             <button
+              type="button"
               onClick={() => bannerInputRef.current?.click()}
               disabled={uploading}
-              className="w-full py-8 px-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 transition-colors flex flex-col items-center justify-center gap-2"
+              className="w-full py-8 px-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-60"
             >
               {uploading ? (
-                <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                <>
+                  <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                  <span className="text-sm text-indigo-600 font-medium">Uploading…</span>
+                </>
               ) : (
                 <>
                   <Upload className="w-6 h-6 text-gray-400" />
                   <span className="text-sm font-medium text-gray-700">Click to upload banner</span>
-                  <span className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</span>
+                  <span className="text-xs text-gray-500">PNG, JPG, GIF, WebP · max 10 MB</span>
                 </>
               )}
             </button>
@@ -174,24 +147,18 @@ export default function Step4Media({ formData, updateForm, errors }: StepProps) 
 
         {formData.gallery_urls.length > 0 && (
           <div className="mb-4 grid grid-cols-3 gap-2">
-            {formData.gallery_urls.map((url: string, i: number) => {
-              return (
+            {formData.gallery_urls.map((url: string, i: number) => (
               <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
-                <Image
-                  src={url}
-                  alt={`Gallery ${i + 1}`}
-                  fill
-                  className="object-cover"
-                />
+                <Image src={url} alt={`Gallery ${i + 1}`} fill className="object-cover" />
                 <button
+                  type="button"
                   onClick={() => removeGalleryImage(i)}
                   className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                 >
                   <X className="w-5 h-5 text-white" />
                 </button>
               </div>
-            )
-            })}
+            ))}
           </div>
         )}
 
@@ -207,12 +174,16 @@ export default function Step4Media({ formData, updateForm, errors }: StepProps) 
               className="hidden"
             />
             <button
+              type="button"
               onClick={() => galleryInputRef.current?.click()}
               disabled={uploading || formData.gallery_urls.length >= 5}
               className="w-full py-6 px-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {uploading ? (
-                <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                <>
+                  <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                  <span className="text-sm text-indigo-600 font-medium">Uploading…</span>
+                </>
               ) : (
                 <>
                   <Upload className="w-6 h-6 text-gray-400" />
