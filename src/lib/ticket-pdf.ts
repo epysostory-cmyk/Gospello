@@ -80,7 +80,7 @@ export async function generateTicketPdf(data: TicketData): Promise<Uint8Array> {
   })
 
   // gospello.ng at bottom of left panel
-  page.drawText('gospello.ng', {
+  page.drawText('gospello.com', {
     x: 18, y: 18,
     size: 8,
     font: fontRegular,

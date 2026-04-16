@@ -181,7 +181,7 @@ export default async function HomePage() {
             {/* Search card */}
             <div className="mt-10 max-w-2xl">
               <form
-                action="/events"
+                action="/search"
                 method="GET"
                 className="flex items-center gap-2 bg-white rounded-2xl p-2 shadow-[0_0_60px_rgba(99,102,241,0.3)]"
               >
@@ -217,7 +217,7 @@ export default async function HomePage() {
                 {popularSearches.map((tag) => (
                   <Link
                     key={tag}
-                    href={`/events?q=${tag}`}
+                    href={`/search?q=${tag}`}
                     className="text-xs text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1 rounded-full transition-colors border border-white/10"
                   >
                     {tag}
