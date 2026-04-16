@@ -83,6 +83,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   const e = event as Event
 
+  // Get current user server-side (passed to AttendButton to skip client-side auth fetch)
+  const { data: { user: currentUser } } = await supabase.auth.getUser()
+
   // Parallel data fetches
   const adminClient = createAdminClient()
   const [
@@ -556,6 +559,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     paymentLink={e.payment_link}
                     initialCount={safeAttendance}
                     initialAttended={initialAttended}
+                    serverUserId={currentUser?.id ?? null}
+                    serverUserName={currentUser?.user_metadata?.display_name ?? null}
+                    serverUserEmail={currentUser?.email ?? null}
                   />
                 ) : (
                   <div className="w-full text-center text-sm text-gray-400 py-3.5 bg-gray-50 rounded-2xl border border-gray-100">

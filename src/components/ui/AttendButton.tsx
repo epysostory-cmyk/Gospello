@@ -16,6 +16,10 @@ interface Props {
   paymentLink?: string | null
   initialCount?: number
   initialAttended?: boolean
+  /** Server-side user info — skips the client-side auth fetch so button renders immediately */
+  serverUserId?: string | null
+  serverUserName?: string | null
+  serverUserEmail?: string | null
 }
 
 export default function AttendButton({
@@ -26,9 +30,13 @@ export default function AttendButton({
   paymentLink,
   initialCount = 0,
   initialAttended = false,
+  serverUserId,
+  serverUserName,
+  serverUserEmail,
 }: Props) {
   const [user, setUser] = useState<User | null>(null)
-  const [loadingUser, setLoadingUser] = useState(true)
+  // If we got server-side user data, skip the loading state entirely
+  const [loadingUser, setLoadingUser] = useState(!serverUserId && serverUserId !== null ? true : serverUserId === undefined)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [attended, setAttended] = useState(initialAttended)
@@ -36,9 +44,9 @@ export default function AttendButton({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  // Registration form state
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  // Registration form state — pre-filled from server props when available
+  const [name, setName] = useState(serverUserName ?? '')
+  const [email, setEmail] = useState(serverUserEmail ?? '')
   const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -51,6 +59,16 @@ export default function AttendButton({
   const [ticketConfirmed, setTicketConfirmed] = useState(false)
 
   useEffect(() => {
+    // Skip the auth fetch if the server already told us the user state
+    if (serverUserId !== undefined) {
+      // serverUserId = string means logged in; null means logged out
+      if (serverUserId) {
+        setUser({ id: serverUserId } as User)
+      }
+      setLoadingUser(false)
+      return
+    }
+    // Fallback: fetch client-side (e.g. when used outside the event page)
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user)
@@ -106,10 +124,10 @@ export default function AttendButton({
     setShowAuthModal(false)
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
       if (data.user) {
-        setName(data.user.user_metadata?.display_name ?? '')
-        setEmail(data.user.email ?? '')
+        setUser(data.user)
+        if (!name) setName(data.user.user_metadata?.display_name ?? '')
+        if (!email) setEmail(data.user.email ?? '')
       }
       if (mode === 'instant') {
         doInstantAttend()
