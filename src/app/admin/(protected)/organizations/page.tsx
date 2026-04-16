@@ -265,7 +265,7 @@ export default async function AdminOrganizationsPage({
                             <div className="flex items-center gap-1.5">
                               <p className="text-sm font-medium text-white truncate max-w-[160px]">{name}</p>
                               {(row.is_hidden || row.church_is_hidden) && (
-                                <EyeOff className="w-3 h-3 text-gray-500 flex-shrink-0" title="Hidden from public" />
+                                <EyeOff className="w-3 h-3 text-gray-500 flex-shrink-0" />
                               )}
                             </div>
                             <p className="text-xs text-gray-500 truncate max-w-[160px]">{row.email}</p>
