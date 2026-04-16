@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
-import { Settings, Bell, Shield, Layout } from 'lucide-react'
+import { Settings, Bell, Shield, Layout, Heart, MessageSquare } from 'lucide-react'
 import { saveGeneralSettings, saveNotificationSettings, saveSecuritySettings } from './actions'
 
 export default async function AdminSettingsPage({
@@ -121,6 +121,30 @@ export default async function AdminSettingsPage({
             <div>
               <h2 className="font-semibold text-white text-sm">Hero Section</h2>
               <p className="text-xs text-gray-500 mt-0.5">Customize homepage headline, badge, CTAs and search tags</p>
+            </div>
+          </div>
+          <span className="text-gray-500 group-hover:text-gray-300 text-sm transition-colors">Edit →</span>
+        </Link>
+
+        {/* About Page */}
+        <Link href="/admin/settings/about" className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between hover:bg-white/8 transition-colors group">
+          <div className="flex items-center gap-3">
+            <Heart className="w-5 h-5 text-rose-400" />
+            <div>
+              <h2 className="font-semibold text-white text-sm">About Page</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Customize hero text, mission statement, story paragraphs and CTA</p>
+            </div>
+          </div>
+          <span className="text-gray-500 group-hover:text-gray-300 text-sm transition-colors">Edit →</span>
+        </Link>
+
+        {/* Contact Page */}
+        <Link href="/admin/settings/contact" className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between hover:bg-white/8 transition-colors group">
+          <div className="flex items-center gap-3">
+            <MessageSquare className="w-5 h-5 text-emerald-400" />
+            <div>
+              <h2 className="font-semibold text-white text-sm">Contact Page</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Update email, WhatsApp number, location, hours and partnership details</p>
             </div>
           </div>
           <span className="text-gray-500 group-hover:text-gray-300 text-sm transition-colors">Edit →</span>

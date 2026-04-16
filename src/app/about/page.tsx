@@ -1,9 +1,12 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { ArrowRight, Heart, Globe, Users, Zap, Shield, MapPin } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata = {
   title: 'About Us',
-  description: 'Learn about Gospello — Nigeria\'s home for Christian events and churches.',
+  description: "Learn about Gospello — Nigeria's home for Christian events and churches.",
 }
 
 const VALUES = [
@@ -33,13 +36,72 @@ const VALUES = [
   },
 ]
 
-const STATS = [
-  { value: '36', label: 'Nigerian States', sub: 'Coverage' },
-  { value: '100%', label: 'Free to Use', sub: 'For attendees' },
-  { value: '2025', label: 'Founded', sub: 'Est. Nigeria' },
-]
+const DEFAULTS = {
+  about_hero_headline_1:        'Built for the',
+  about_hero_headline_gradient: 'Body of Christ',
+  about_hero_subheadline:       "Gospello is Nigeria's central platform for discovering Christian events and churches — helping believers find what God is doing around them, one event at a time.",
+  about_mission_quote:          "To connect every believer in Nigeria with the gospel events and churches that will transform their faith.",
+  about_stat_1_value:           '36',
+  about_stat_1_label:           'Nigerian States',
+  about_stat_1_sub:             'Coverage',
+  about_stat_2_value:           '100%',
+  about_stat_2_label:           'Free to Use',
+  about_stat_2_sub:             'For attendees',
+  about_stat_3_value:           '2025',
+  about_stat_3_label:           'Founded',
+  about_stat_3_sub:             'Est. Nigeria',
+  about_story_headline:         'Born out of a simple question',
+  about_story_p1:               '"Where are the gospel events happening near me?" — that question had no great answer for Nigerian believers. Event posters floated across WhatsApp groups. Church programs were hidden in bulletins. Great gatherings went unattended simply because no one knew.',
+  about_story_p2:               'Gospello was built to change that. A single, trusted platform where churches post their events, organizers reach their audience, and every believer can discover what God is doing in their city — for free.',
+  about_story_p3:               'We launched in 2025 with a vision to reach every state in Nigeria and beyond, powered by the belief that the gospel deserves the best technology.',
+  about_location:               'Lagos, Nigeria — and growing',
+  about_cta_headline_1:         'Ready to',
+  about_cta_headline_gradient:  'get involved?',
+  about_cta_subtitle:           'Discover events happening near you, or post your own for thousands of believers to find.',
+}
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('platform_settings')
+    .select(
+      'about_hero_headline_1, about_hero_headline_gradient, about_hero_subheadline, about_mission_quote, about_stat_1_value, about_stat_1_label, about_stat_1_sub, about_stat_2_value, about_stat_2_label, about_stat_2_sub, about_stat_3_value, about_stat_3_label, about_stat_3_sub, about_story_headline, about_story_p1, about_story_p2, about_story_p3, about_location, about_cta_headline_1, about_cta_headline_gradient, about_cta_subtitle',
+    )
+    .eq('id', 'default')
+    .single()
+
+  const d = data as Record<string, string> | null
+
+  const s = {
+    about_hero_headline_1:        d?.about_hero_headline_1        ?? DEFAULTS.about_hero_headline_1,
+    about_hero_headline_gradient: d?.about_hero_headline_gradient ?? DEFAULTS.about_hero_headline_gradient,
+    about_hero_subheadline:       d?.about_hero_subheadline       ?? DEFAULTS.about_hero_subheadline,
+    about_mission_quote:          d?.about_mission_quote          ?? DEFAULTS.about_mission_quote,
+    about_stat_1_value:           d?.about_stat_1_value           ?? DEFAULTS.about_stat_1_value,
+    about_stat_1_label:           d?.about_stat_1_label           ?? DEFAULTS.about_stat_1_label,
+    about_stat_1_sub:             d?.about_stat_1_sub             ?? DEFAULTS.about_stat_1_sub,
+    about_stat_2_value:           d?.about_stat_2_value           ?? DEFAULTS.about_stat_2_value,
+    about_stat_2_label:           d?.about_stat_2_label           ?? DEFAULTS.about_stat_2_label,
+    about_stat_2_sub:             d?.about_stat_2_sub             ?? DEFAULTS.about_stat_2_sub,
+    about_stat_3_value:           d?.about_stat_3_value           ?? DEFAULTS.about_stat_3_value,
+    about_stat_3_label:           d?.about_stat_3_label           ?? DEFAULTS.about_stat_3_label,
+    about_stat_3_sub:             d?.about_stat_3_sub             ?? DEFAULTS.about_stat_3_sub,
+    about_story_headline:         d?.about_story_headline         ?? DEFAULTS.about_story_headline,
+    about_story_p1:               d?.about_story_p1               ?? DEFAULTS.about_story_p1,
+    about_story_p2:               d?.about_story_p2               ?? DEFAULTS.about_story_p2,
+    about_story_p3:               d?.about_story_p3               ?? DEFAULTS.about_story_p3,
+    about_location:               d?.about_location               ?? DEFAULTS.about_location,
+    about_cta_headline_1:         d?.about_cta_headline_1         ?? DEFAULTS.about_cta_headline_1,
+    about_cta_headline_gradient:  d?.about_cta_headline_gradient  ?? DEFAULTS.about_cta_headline_gradient,
+    about_cta_subtitle:           d?.about_cta_subtitle           ?? DEFAULTS.about_cta_subtitle,
+  }
+
+  const STATS = [
+    { value: s.about_stat_1_value, label: s.about_stat_1_label, sub: s.about_stat_1_sub },
+    { value: s.about_stat_2_value, label: s.about_stat_2_label, sub: s.about_stat_2_sub },
+    { value: s.about_stat_3_value, label: s.about_stat_3_label, sub: s.about_stat_3_sub },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50">
 
@@ -63,13 +125,13 @@ export default function AboutPage() {
             Our Story
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.05] mb-6">
-            <span className="text-white">Built for the </span>
+            <span className="text-white">{s.about_hero_headline_1} </span>
             <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">
-              Body of Christ
+              {s.about_hero_headline_gradient}
             </span>
           </h1>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Gospello is Nigeria&apos;s central platform for discovering Christian events and churches — helping believers find what God is doing around them, one event at a time.
+            {s.about_hero_subheadline}
           </p>
         </div>
       </section>
@@ -79,7 +141,7 @@ export default function AboutPage() {
         <div className="bg-white rounded-3xl border border-gray-100 p-8 sm:p-12 shadow-sm text-center">
           <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-4">Our Mission</p>
           <blockquote className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight max-w-2xl mx-auto">
-            &ldquo;To connect every believer in Nigeria with the gospel events and churches that will transform their faith.&rdquo;
+            &ldquo;{s.about_mission_quote}&rdquo;
           </blockquote>
           <div className="mt-8 flex flex-wrap justify-center gap-6">
             {STATS.map((stat) => (
@@ -99,18 +161,12 @@ export default function AboutPage() {
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-3">Our Story</p>
             <h2 className="text-3xl font-black text-gray-900 mb-5 leading-tight">
-              Born out of a simple question
+              {s.about_story_headline}
             </h2>
             <div className="space-y-4 text-gray-600 leading-relaxed text-sm sm:text-base">
-              <p>
-                &ldquo;Where are the gospel events happening near me?&rdquo; — that question had no great answer for Nigerian believers. Event posters floated across WhatsApp groups. Church programs were hidden in bulletins. Great gatherings went unattended simply because no one knew.
-              </p>
-              <p>
-                Gospello was built to change that. A single, trusted platform where churches post their events, organizers reach their audience, and every believer can discover what God is doing in their city — for free.
-              </p>
-              <p>
-                We launched in 2025 with a vision to reach every state in Nigeria and beyond, powered by the belief that the gospel deserves the best technology.
-              </p>
+              <p>{s.about_story_p1}</p>
+              <p>{s.about_story_p2}</p>
+              <p>{s.about_story_p3}</p>
             </div>
           </div>
           <div className="relative">
@@ -125,11 +181,11 @@ export default function AboutPage() {
               <div className="relative space-y-4">
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-amber-300 flex-shrink-0" />
-                  <p className="font-semibold">Lagos, Nigeria — and growing</p>
+                  <p className="font-semibold">{s.about_location}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <Users className="w-5 h-5 text-amber-300 flex-shrink-0" />
-                  <p className="font-semibold">Serving churches, organizers & believers</p>
+                  <p className="font-semibold">Serving churches, organizers &amp; believers</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <Globe className="w-5 h-5 text-amber-300 flex-shrink-0" />
@@ -176,14 +232,12 @@ export default function AboutPage() {
         </div>
         <div className="relative max-w-2xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-black mb-4">
-            Ready to{' '}
+            {s.about_cta_headline_1}{' '}
             <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">
-              get involved?
+              {s.about_cta_headline_gradient}
             </span>
           </h2>
-          <p className="text-slate-400 mb-8">
-            Discover events happening near you, or post your own for thousands of believers to find.
-          </p>
+          <p className="text-slate-400 mb-8">{s.about_cta_subtitle}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/events"
@@ -193,7 +247,7 @@ export default function AboutPage() {
             </Link>
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 bg-white/8 hover:bg-white/12 text-white font-semibold px-7 py-3.5 rounded-xl transition-colors border border-white/10"
+              className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white font-semibold px-7 py-3.5 rounded-xl transition-colors border border-white/10"
             >
               Contact Us
             </Link>

@@ -1,47 +1,88 @@
-import { Mail, MessageSquare, MapPin, Clock, ArrowRight } from 'lucide-react'
+export const dynamic = 'force-dynamic'
+
+import { Mail, MessageSquare, MapPin, Clock, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { submitContactForm } from './actions'
 
 export const metadata = {
   title: 'Contact Us',
-  description: 'Get in touch with the Gospello team. We\'d love to hear from you.',
+  description: "Get in touch with the Gospello team. We'd love to hear from you.",
 }
 
-const CONTACT_ITEMS = [
-  {
-    icon: Mail,
-    title: 'Email Us',
-    value: 'hello@gospello.com',
-    sub: 'We reply within 24 hours',
-    href: 'mailto:hello@gospello.com',
-    color: 'bg-indigo-50 text-indigo-500',
-  },
-  {
-    icon: MessageSquare,
-    title: 'WhatsApp',
-    value: 'Chat with us',
-    sub: 'Quick responses on WhatsApp',
-    href: 'https://wa.me/234XXXXXXXXXX',
-    color: 'bg-emerald-50 text-emerald-500',
-  },
-  {
-    icon: MapPin,
-    title: 'Based In',
-    value: 'Lagos, Nigeria',
-    sub: 'Serving all 36 states',
-    href: null,
-    color: 'bg-rose-50 text-rose-500',
-  },
-  {
-    icon: Clock,
-    title: 'Support Hours',
-    value: 'Mon – Fri',
-    sub: '9am – 6pm WAT',
-    href: null,
-    color: 'bg-amber-50 text-amber-500',
-  },
-]
+const DEFAULTS = {
+  contact_email:             'hello@gospello.com',
+  contact_whatsapp:          '2348000000000',
+  contact_location:          'Lagos, Nigeria',
+  contact_hours:             'Mon – Fri, 9am – 6pm WAT',
+  contact_partnership_email: 'partnerships@gospello.com',
+  contact_hero_subheadline:  'Questions, feedback, partnership enquiries — our team is ready to help.',
+}
 
-export default function ContactPage() {
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const params = await searchParams
+  const sent  = params.sent  === '1'
+  const error = params.error as string | undefined
+
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('platform_settings')
+    .select(
+      'contact_email, contact_whatsapp, contact_location, contact_hours, contact_partnership_email, contact_hero_subheadline',
+    )
+    .eq('id', 'default')
+    .single()
+
+  const d = data as Record<string, string> | null
+
+  const s = {
+    contact_email:             d?.contact_email             ?? DEFAULTS.contact_email,
+    contact_whatsapp:          d?.contact_whatsapp          ?? DEFAULTS.contact_whatsapp,
+    contact_location:          d?.contact_location          ?? DEFAULTS.contact_location,
+    contact_hours:             d?.contact_hours             ?? DEFAULTS.contact_hours,
+    contact_partnership_email: d?.contact_partnership_email ?? DEFAULTS.contact_partnership_email,
+    contact_hero_subheadline:  d?.contact_hero_subheadline  ?? DEFAULTS.contact_hero_subheadline,
+  }
+
+  const CONTACT_ITEMS = [
+    {
+      icon: Mail,
+      title: 'Email Us',
+      value: s.contact_email,
+      sub: 'We reply within 24 hours',
+      href: `mailto:${s.contact_email}`,
+      color: 'bg-indigo-50 text-indigo-500',
+    },
+    {
+      icon: MessageSquare,
+      title: 'WhatsApp',
+      value: 'Chat with us',
+      sub: 'Quick responses on WhatsApp',
+      href: `https://wa.me/${s.contact_whatsapp}`,
+      color: 'bg-emerald-50 text-emerald-500',
+    },
+    {
+      icon: MapPin,
+      title: 'Based In',
+      value: s.contact_location,
+      sub: 'Serving all 36 states',
+      href: null as string | null,
+      color: 'bg-rose-50 text-rose-500',
+    },
+    {
+      icon: Clock,
+      title: 'Support Hours',
+      value: s.contact_hours,
+      sub: 'Nigerian time (WAT)',
+      href: null as string | null,
+      color: 'bg-amber-50 text-amber-500',
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50">
 
@@ -69,7 +110,7 @@ export default function ContactPage() {
             <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">Touch</span>
           </h1>
           <p className="text-lg text-slate-400 max-w-xl mx-auto">
-            Questions, feedback, partnership enquiries — our team is ready to help.
+            {s.contact_hero_subheadline}
           </p>
         </div>
       </section>
@@ -84,67 +125,108 @@ export default function ContactPage() {
               <h2 className="text-xl font-black text-gray-900 mb-1">Send us a message</h2>
               <p className="text-sm text-gray-500 mb-6">Fill in the form and we&apos;ll get back to you shortly.</p>
 
-              <form className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Your name"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                    />
+              {/* SUCCESS STATE */}
+              {sent ? (
+                <div className="flex flex-col items-center text-center py-8 gap-4">
+                  <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-8 h-8 text-green-500" />
                   </div>
                   <div>
+                    <h3 className="font-black text-gray-900 text-lg">Message Sent!</h3>
+                    <p className="text-sm text-gray-500 mt-1 max-w-xs">
+                      Thank you for reaching out. We typically respond within 24 hours on business days.
+                    </p>
+                  </div>
+                  <Link
+                    href="/contact"
+                    className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                  >
+                    Send another message →
+                  </Link>
+                </div>
+              ) : (
+                /* FORM */
+                <form action={submitContactForm} className="space-y-4">
+                  {error && (
+                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      {error === 'missing_fields'
+                        ? 'Please fill in all fields before submitting.'
+                        : 'Something went wrong. Please try again.'}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        required
+                        placeholder="Your name"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        required
+                        placeholder="you@example.com"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
                     <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
-                      Email Address
+                      Subject
                     </label>
-                    <input
-                      type="email"
-                      placeholder="you@example.com"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    <select
+                      name="subject"
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white appearance-none cursor-pointer"
+                    >
+                      <option value="">Select a topic...</option>
+                      <option value="general">General Enquiry</option>
+                      <option value="event">Event Question</option>
+                      <option value="church">Church Registration</option>
+                      <option value="partnership">Partnership</option>
+                      <option value="report">Report an Issue</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
+                      Message
+                    </label>
+                    <textarea
+                      name="message"
+                      rows={5}
+                      required
+                      placeholder="Tell us how we can help..."
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
-                    Subject
-                  </label>
-                  <select className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white appearance-none cursor-pointer">
-                    <option value="">Select a topic...</option>
-                    <option value="general">General Enquiry</option>
-                    <option value="event">Event Question</option>
-                    <option value="church">Church Registration</option>
-                    <option value="partnership">Partnership</option>
-                    <option value="report">Report an Issue</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
+                  <button
+                    type="submit"
+                    className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all hover:-translate-y-0.5 shadow-lg shadow-indigo-500/20 text-sm"
+                  >
+                    Send Message <ArrowRight className="w-4 h-4" />
+                  </button>
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
-                    Message
-                  </label>
-                  <textarea
-                    rows={5}
-                    placeholder="Tell us how we can help..."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all hover:-translate-y-0.5 shadow-lg shadow-indigo-500/20 text-sm"
-                >
-                  Send Message <ArrowRight className="w-4 h-4" />
-                </button>
-
-                <p className="text-xs text-gray-400 text-center">
-                  We typically respond within 24 hours on business days.
-                </p>
-              </form>
+                  <p className="text-xs text-gray-400 text-center">
+                    We typically respond within 24 hours on business days.
+                  </p>
+                </form>
+              )}
             </div>
           </div>
 
@@ -199,13 +281,15 @@ export default function ContactPage() {
               />
               <div className="relative">
                 <p className="font-bold text-sm mb-1">Want to partner with us?</p>
-                <p className="text-xs text-indigo-200 mb-3">Churches, ministries, and Christian organisations — let&apos;s work together.</p>
-                <Link
-                  href="mailto:partnerships@gospello.com"
+                <p className="text-xs text-indigo-200 mb-3">
+                  Churches, ministries, and Christian organisations — let&apos;s work together.
+                </p>
+                <a
+                  href={`mailto:${s.contact_partnership_email}`}
                   className="inline-flex items-center gap-1.5 text-xs font-bold bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg transition-colors"
                 >
-                  <Mail className="w-3 h-3" /> partnerships@gospello.com
-                </Link>
+                  <Mail className="w-3 h-3" /> {s.contact_partnership_email}
+                </a>
               </div>
             </div>
           </div>

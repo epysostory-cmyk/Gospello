@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Building2, Users, Star,
-  Tag, Shield, BarChart2, Lock, Settings, ExternalLink, LogOut, Bell,
+  Tag, Shield, BarChart2, Lock, Settings, ExternalLink, LogOut, Bell, MessageSquare,
 } from 'lucide-react'
 
 interface AdminUser { id: string; email: string; role: string }
@@ -17,10 +17,11 @@ const NAV = [
   { href: '/admin/users',         label: 'Users',             icon: Users,                        roles: ['super_admin','admin'] },
   { href: '/admin/featured',      label: 'Featured Events',   icon: Star,                         roles: ['super_admin','admin'] },
   { href: '/admin/categories',    label: 'Categories',        icon: Tag,                          roles: ['super_admin'] },
-  { href: '/admin/moderation',    label: 'Moderation',        icon: Shield,                       roles: ['super_admin','admin','moderator'] },
-  { href: '/admin/analytics',     label: 'Analytics',         icon: BarChart2,                    roles: ['super_admin','admin'] },
-  { href: '/admin/team',          label: 'Admin Management',  icon: Lock,                         roles: ['super_admin'] },
-  { href: '/admin/settings',      label: 'Settings',          icon: Settings,                     roles: ['super_admin'] },
+  { href: '/admin/moderation',          label: 'Moderation',          icon: Shield,         roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/contact-submissions', label: 'Contact Submissions', icon: MessageSquare,  roles: ['super_admin','admin'] },
+  { href: '/admin/analytics',           label: 'Analytics',           icon: BarChart2,      roles: ['super_admin','admin'] },
+  { href: '/admin/team',                label: 'Admin Management',    icon: Lock,           roles: ['super_admin'] },
+  { href: '/admin/settings',            label: 'Settings',            icon: Settings,       roles: ['super_admin'] },
 ]
 
 export default function AdminSidebar({ adminUser, pendingCount }: Props) {
