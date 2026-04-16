@@ -14,12 +14,29 @@ export async function deleteUserAction(userId: string) {
   revalidatePath('/churches')
 }
 
-/** Suspend or reactivate a user */
+/**
+ * Suspend → also hides the profile AND their church from public.
+ * Reactivate → also un-hides both.
+ */
 export async function setUserStatusAction(userId: string, status: 'active' | 'suspended') {
   const admin = createAdminClient()
-  await admin.from('profiles').update({ status }).eq('id', userId)
+  const hidden = status === 'suspended'
+
+  await admin
+    .from('profiles')
+    .update({ status, is_hidden: hidden })
+    .eq('id', userId)
+
+  // Cascade to church record if this user owns one
+  await admin
+    .from('churches')
+    .update({ is_hidden: hidden })
+    .eq('profile_id', userId)
+
   revalidatePath('/admin/users')
   revalidatePath('/admin/organizations')
+  revalidatePath('/organizers')
+  revalidatePath('/churches')
 }
 
 /** Hide or show a user from public listings */

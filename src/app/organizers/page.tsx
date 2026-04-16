@@ -38,7 +38,7 @@ async function getOrganizers(params: SearchParams) {
     .from('profiles')
     .select('*', { count: 'exact' })
     .eq('account_type', 'organizer')
-    .neq('is_hidden', true)
+    .eq('is_hidden', false)
     .order('display_name', { ascending: true })
     .range(from, to)
 

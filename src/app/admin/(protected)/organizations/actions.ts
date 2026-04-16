@@ -14,12 +14,30 @@ export async function deleteProfileAction(profileId: string) {
   revalidatePath('/churches')
 }
 
-/** Suspend or reactivate a profile */
+/**
+ * Suspend → also hides the profile from public organizers list AND hides their church.
+ * Reactivate → also un-hides both.
+ */
 export async function setProfileStatusAction(profileId: string, status: 'active' | 'suspended') {
   const admin = createAdminClient()
-  await admin.from('profiles').update({ status }).eq('id', profileId)
+  const hidden = status === 'suspended'
+
+  // Update profile: status + is_hidden together
+  await admin
+    .from('profiles')
+    .update({ status, is_hidden: hidden })
+    .eq('id', profileId)
+
+  // Cascade to church record if this profile owns one
+  await admin
+    .from('churches')
+    .update({ is_hidden: hidden })
+    .eq('profile_id', profileId)
+
   revalidatePath('/admin/organizations')
   revalidatePath('/admin/users')
+  revalidatePath('/organizers')
+  revalidatePath('/churches')
 }
 
 /** Hide or show a profile from the public organizers listing */
