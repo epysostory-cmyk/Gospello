@@ -47,7 +47,8 @@ export async function generateTicketPdf(data: TicketData): Promise<Uint8Array> {
     start: { x: 18, y: height - 55 },
     end:   { x: panelW - 18, y: height - 55 },
     thickness: 0.5,
-    color: rgb(1, 1, 1, 0.3),
+    color: rgb(1, 1, 1),
+    opacity: 0.3,
   })
 
   // "TICKET" label
