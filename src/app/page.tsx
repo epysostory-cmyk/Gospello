@@ -244,7 +244,7 @@ export default async function HomePage() {
             </div>
 
             {/* Stats */}
-            <div className="mt-16 pt-8 border-t border-white/10 grid grid-cols-3 gap-6 max-w-sm sm:max-w-none sm:flex sm:gap-12">
+            <div className="mt-16 pt-8 border-t border-white/10 grid grid-cols-2 gap-x-6 gap-y-5 sm:flex sm:gap-12">
               {[
                 { value: stats.events > 0 ? `${stats.events}+` : '—',   label: 'Events listed' },
                 { value: stats.churches > 0 ? `${stats.churches}+` : '—', label: 'Churches' },

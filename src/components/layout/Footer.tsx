@@ -28,10 +28,10 @@ export default function Footer() {
           <div className="sm:col-span-2">
             {/* Logo */}
             <Link href="/" className="inline-flex items-center gap-2.5 mb-5 group">
-              <div className="w-9 h-9 bg-indigo-600 group-hover:bg-indigo-500 rounded-xl flex items-center justify-center transition-colors shadow-lg shadow-indigo-900/40">
-                <span className="text-white font-black text-base">G</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-700 group-hover:from-indigo-400 group-hover:to-indigo-600 rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-900/50">
+                <span className="text-white font-black text-base tracking-tight">G</span>
               </div>
-              <span className="text-xl font-black text-white">Gospello</span>
+              <span className="text-xl font-black text-white tracking-tight">Gospello</span>
               {/* Live indicator */}
               <span className="relative flex h-2 w-2 ml-0.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
@@ -39,11 +39,16 @@ export default function Footer() {
               </span>
             </Link>
 
-            <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
+            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
               Nigeria&apos;s home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond.
             </p>
 
-            <p className="text-xs text-slate-600 mt-3">Nigeria · Est. 2025</p>
+            {/* Trust badges */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              <span className="text-xs text-slate-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">🇳🇬 Nigeria</span>
+              <span className="text-xs text-slate-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">⛪ Churches</span>
+              <span className="text-xs text-slate-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">🙏 Est. 2025</span>
+            </div>
 
             {/* CTA */}
             <Link
