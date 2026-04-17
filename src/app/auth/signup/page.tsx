@@ -116,14 +116,12 @@ function SignUpForm() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     const name = accountType === 'church' ? churchName.trim() : fullName.trim()
-    if (!name) { setError('Please enter your name'); triggerShake(); return }
+    if (!name) { setError(accountType === 'church' ? 'Please enter your church name' : 'Please enter your name'); triggerShake(); return }
     if (password.length < 6) { setError('Password must be at least 6 characters'); triggerShake(); return }
     setLoading(true)
     setError('')
 
-    const displayName = accountType === 'church' && churchName.trim()
-      ? `${fullName.trim()} (${churchName.trim()})`
-      : fullName.trim()
+    const displayName = accountType === 'church' ? churchName.trim() : fullName.trim()
 
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -254,13 +252,22 @@ function SignUpForm() {
       {/* Form fields */}
       <form onSubmit={handleSignUp} className="space-y-4">
 
-        <Field
-          id="fullName" label="Full Name" value={fullName}
-          onChange={setFullName} placeholder="Enter your full name"
-          required autoComplete="name" shake={shake}
-        />
+        {/* Full Name — only for organizer */}
+        <div
+          className="overflow-hidden transition-all duration-200 ease-in-out"
+          style={{
+            maxHeight: accountType === 'organizer' ? '80px' : '0',
+            opacity:   accountType === 'organizer' ? 1 : 0,
+          }}
+        >
+          <Field
+            id="fullName" label="Full Name" value={fullName}
+            onChange={setFullName} placeholder="Enter your full name"
+            autoComplete="name" shake={shake}
+          />
+        </div>
 
-        {/* Church name — slides in when church selected */}
+        {/* Church name — only for church */}
         <div
           className="overflow-hidden transition-all duration-200 ease-in-out"
           style={{
