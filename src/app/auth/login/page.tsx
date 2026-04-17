@@ -52,7 +52,16 @@ function LoginPage() {
     setLoading(true)
     setError('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false); return }
+    if (error) {
+      const msg = error.message.toLowerCase()
+      if (msg.includes('invalid login credentials') || msg.includes('invalid credentials') || msg.includes('user not found')) {
+        setError('No account found with these details. It may have been removed. Contact support@gospello.com if you need help.')
+      } else {
+        setError(error.message)
+      }
+      setLoading(false)
+      return
+    }
     router.push('/dashboard')
     router.refresh()
   }
