@@ -212,7 +212,7 @@ export function emailApproved(title: string, slug: string, organizerName?: strin
           <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;">Reach more people</p>
           <table>
             ${benefitRow('💬', 'Share in your WhatsApp groups')}
-            ${benefitRow('📸', 'Post on your church's Instagram')}
+            ${benefitRow('📸', 'Post on your church&apos;s Instagram')}
             ${benefitRow('📋', 'Add to your church bulletin')}
           </table>
         </td></tr>
