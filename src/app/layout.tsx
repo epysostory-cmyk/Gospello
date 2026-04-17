@@ -11,7 +11,10 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   variable: '--font-plus-jakarta',
 })
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: 'Gospello — Discover Christian Events Near You',
     template: '%s | Gospello',
@@ -23,6 +26,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_NG',
     siteName: 'Gospello',
+    url: siteUrl,
   },
 }
 

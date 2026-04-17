@@ -44,15 +44,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description,
       url: pageUrl,
       type: 'article',
+      siteName: 'Gospello',
       images: data.banner_url
-        ? [{ url: data.banner_url, width: 1200, height: 630, alt: data.title }]
+        ? [{ url: data.banner_url, width: 1200, height: 630, alt: data.title, type: 'image/jpeg' }]
         : [],
     },
     twitter: {
       card: 'summary_large_image',
+      site: '@gospello',
       title: data.title,
       description,
-      images: data.banner_url ? [data.banner_url] : [],
+      images: data.banner_url ? [{ url: data.banner_url, alt: data.title }] : [],
     },
   }
 }
