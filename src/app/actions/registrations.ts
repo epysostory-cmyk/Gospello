@@ -117,7 +117,14 @@ export async function registerForEvent(
         confirmationCode: code,
       })
 
-      await sendEmail({ to: email.trim().toLowerCase(), subject, html })
+      const emailSent = await sendEmail({ to: email.trim().toLowerCase(), subject, html })
+
+      if (!emailSent) {
+        // Email failed — delete the registration so user can retry
+        await admin.from('registrations').delete().eq('id', reg.id)
+        await admin.from('attendances').delete().eq('event_id', eventId).eq('email', email.trim().toLowerCase())
+        return { success: false, error: 'We could not send a confirmation email to that address. Please check your email and try again.' }
+      }
 
       return { success: true, registrationId: reg.id, ticketNumber, needsEmailConfirmation: true }
     }

@@ -129,12 +129,31 @@ export default function AttendButton({
     setSubmitting(true)
     setError('')
 
+    // Client-side name validation
+    const trimmedName = name.trim()
+    if (trimmedName.includes('@')) {
+      setError('Please enter your real name, not an email address.')
+      setSubmitting(false)
+      return
+    }
+    if (trimmedName.length < 2) {
+      setError('Please enter your full name.')
+      setSubmitting(false)
+      return
+    }
+    if (/^[0-9\s]+$/.test(trimmedName)) {
+      setError('Please enter a valid name.')
+      setSubmitting(false)
+      return
+    }
+
     const regType = mode === 'paid' ? 'paid' : mode === 'instant' ? 'free_no_registration' : 'free_registration'
     const result = await registerForEvent(eventId, name, email, regType)
 
     if (result.alreadyRegistered) {
       setAttended(true)
       setShowForm(false)
+      setError('You already registered with this email. Check your inbox for your ticket.')
       setSubmitting(false)
       return
     }
@@ -417,6 +436,10 @@ export default function AttendButton({
         }
         {busy ? 'Please wait...' : btnConfig.label}
       </button>
+
+      {error && !showForm && (
+        <p className="text-amber-700 text-xs bg-amber-50 border border-amber-100 px-3 py-2 rounded-lg mt-2 text-center">{error}</p>
+      )}
 
       {error && <p className="text-red-500 text-xs text-center mt-1">{error}</p>}
 

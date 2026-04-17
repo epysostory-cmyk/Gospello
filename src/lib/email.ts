@@ -14,7 +14,10 @@ interface EmailOptions {
 }
 
 export async function sendEmail({ to, subject, html, attachments }: EmailOptions): Promise<boolean> {
-  if (!RESEND_API_KEY) return false
+  if (!RESEND_API_KEY) {
+    console.error('[sendEmail] RESEND_API_KEY is not set — email not sent to', to)
+    return false
+  }
   try {
     const body: Record<string, unknown> = { from: FROM, to, subject, html }
     if (attachments?.length) body.attachments = attachments
@@ -23,8 +26,16 @@ export async function sendEmail({ to, subject, html, attachments }: EmailOptions
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${RESEND_API_KEY}` },
       body: JSON.stringify(body),
     })
-    return res.ok
-  } catch { return false }
+    if (!res.ok) {
+      const errBody = await res.text()
+      console.error(`[sendEmail] Resend API error ${res.status} sending to ${to}:`, errBody)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('[sendEmail] Network error sending to', to, err)
+    return false
+  }
 }
 
 /* ─── Shared layout ─────────────────────────────────────────────────── */
