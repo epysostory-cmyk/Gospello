@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Search, ArrowRight, MapPin } from 'lucide-react'
+import { Search, ArrowRight, MapPin, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
@@ -58,7 +58,8 @@ async function getHomepageData() {
         .from('categories')
         .select('id, name, slug, icon, color')
         .eq('is_visible', true)
-        .order('sort_order', { ascending: true }),
+        .order('sort_order', { ascending: true })
+        .limit(6),
     ])
 
     const upcomingEvents = (upcomingRes.data ?? []) as Event[]
@@ -262,63 +263,100 @@ export default async function HomePage() {
       </section>
 
       {/* ── CATEGORIES ───────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <SectionHeader
-          title="Browse by Category"
-          subtitle="Find events that match your spiritual interests"
-          href="/categories"
-          linkText="View all categories"
-        />
+      <section className="py-16">
+        {/* Header — no "View all" link; button below handles navigation */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Browse by Category</h2>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Find events that match your spiritual interests</p>
+        </div>
 
-        {/* Mobile: horizontal scroll carousel | Desktop: grid */}
+        {/* ── MOBILE: swipe carousel (2.5 visible) ── */}
         <div
           className="
-            flex gap-3 overflow-x-auto pb-2 -mx-4 px-4
-            sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:pb-0
-            lg:grid-cols-6
+            md:hidden
+            flex gap-3 overflow-x-auto
+            pl-4 pr-4 pb-2
             snap-x snap-mandatory
+            [-webkit-overflow-scrolling:touch]
           "
           style={{ scrollbarWidth: 'none' }}
         >
-          {categories.map((cat) => (
+          {categories.map((cat, i) => (
             <Link
               key={cat.slug}
               href={`/events?category=${cat.slug}`}
-              className="
-                group relative flex-shrink-0 snap-start
-                w-[140px] h-[110px]
-                sm:w-auto sm:h-32
-                rounded-2xl overflow-hidden
-                transition-all duration-300 hover:-translate-y-1 hover:shadow-xl
-              "
+              className="flex-shrink-0 snap-start"
+              style={{
+                width: 'calc(40% - 6px)',
+                animationDelay: `${i * 60}ms`,
+              }}
             >
-              {/* Solid color background from DB */}
               <div
-                className="absolute inset-0 opacity-90 group-hover:opacity-100 transition-opacity"
-                style={{ backgroundColor: cat.color ?? '#6B7280' }}
-              />
-
-              {/* Subtle pattern overlay */}
-              <div
-                className="absolute inset-0 opacity-10"
+                className="
+                  h-[100px] rounded-2xl bg-white border border-gray-100 p-4
+                  flex flex-col items-center justify-center gap-2
+                  active:scale-[0.97] transition-transform duration-150
+                  animate-fadeInUp
+                "
                 style={{
-                  backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-                  backgroundSize: '16px 16px',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                  borderLeft: `3px solid ${cat.color ?? '#6B7280'}`,
                 }}
-              />
-
-              {/* Glow on hover */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-white/10 rounded-2xl" />
-
-              {/* Content */}
-              <div className="relative h-full flex flex-col items-center justify-center gap-2 p-3">
-                <span className="text-3xl sm:text-4xl drop-shadow-sm">{cat.icon}</span>
-                <span className="text-white font-bold text-xs sm:text-sm text-center leading-tight drop-shadow-sm">
+              >
+                <span className="text-3xl leading-none">{cat.icon}</span>
+                <span className="text-[13px] font-semibold text-gray-900 text-center leading-tight line-clamp-1 w-full">
                   {cat.name}
                 </span>
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* ── DESKTOP: 6-column static grid ── */}
+        <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {categories.map((cat, i) => (
+            <Link
+              key={cat.slug}
+              href={`/events?category=${cat.slug}`}
+              className="group animate-fadeInUp"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <div
+                className="
+                  h-[120px] rounded-2xl bg-white border border-gray-100 p-5
+                  flex flex-col items-center justify-center gap-2.5
+                  hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200
+                "
+                style={{
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                  borderLeft: `3px solid ${cat.color ?? '#6B7280'}`,
+                }}
+              >
+                <span className="text-4xl leading-none">{cat.icon}</span>
+                <span className="text-sm font-semibold text-gray-900 text-center leading-tight line-clamp-2 w-full">
+                  {cat.name}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* See More button — below carousel on all sizes */}
+        <div className="flex justify-center mt-6 px-4 md:px-0">
+          <Link
+            href="/categories"
+            className="
+              w-full md:w-auto
+              flex items-center justify-center gap-2
+              h-12 px-8 rounded-xl
+              bg-white border-[1.5px] border-gray-200
+              text-sm font-semibold text-gray-700
+              hover:bg-gray-50 hover:border-gray-300 transition-colors
+            "
+          >
+            See all categories
+            <ChevronRight className="w-4 h-4 text-gray-500" />
+          </Link>
         </div>
       </section>
 
