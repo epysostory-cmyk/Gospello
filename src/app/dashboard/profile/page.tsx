@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, Camera, CheckCircle, AlertCircle, User } from 'lucide-react'
+import { Loader2, Camera, CheckCircle, AlertCircle, User, LogOut } from 'lucide-react'
 import Image from 'next/image'
 import type { AccountType } from '@/types/database'
 
@@ -454,6 +454,27 @@ export default function ProfilePage() {
           </button>
         </div>
       </form>
+
+      {/* Sign out — visible on mobile only (sidebar handles desktop) */}
+      <div className="md:hidden bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="px-6 py-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-gray-900">Sign out</p>
+            <p className="text-xs text-gray-500 mt-0.5">Sign out of your Gospello account</p>
+          </div>
+          <button
+            type="button"
+            className="flex items-center gap-2 flex-shrink-0 text-sm font-medium text-red-500 border border-red-200 hover:bg-red-50 px-4 py-2 rounded-xl transition-colors"
+            onClick={async () => {
+              await supabase.auth.signOut()
+              window.location.href = '/'
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </button>
+        </div>
+      </div>
 
       {/* Danger zone */}
       <div className="bg-white rounded-2xl border border-red-100 overflow-hidden">
