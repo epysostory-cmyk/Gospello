@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
 import ChurchCard from '@/components/ui/ChurchCard'
 import SectionHeader from '@/components/ui/SectionHeader'
+import LocationAwareEvents from './_components/LocationAwareEvents'
 import type { Event, Church } from '@/types/database'
 
 export const revalidate = 60
@@ -382,33 +383,12 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ── UPCOMING EVENTS ────────────────────────────────────── */}
+        {/* ── UPCOMING EVENTS (location-aware) ──────────────────── */}
         {upcomingEvents.length > 0 && (
-          <section>
-            <SectionHeader
-              title="Upcoming Events"
-              subtitle="Gospel events happening in the next 3 months"
-              href="/events"
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {upcomingEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  attendanceCount={attendanceCountMap[event.id]}
-                />
-              ))}
-            </div>
-            <div className="text-center mt-8">
-              <Link
-                href="/events"
-                className="inline-flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-700 transition-colors"
-              >
-                See all events
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </section>
+          <LocationAwareEvents
+            allEvents={upcomingEvents}
+            attendanceCountMap={attendanceCountMap}
+          />
         )}
 
         {/* Empty state */}

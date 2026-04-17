@@ -469,3 +469,42 @@ export function emailRestored(name: string) {
     ),
   }
 }
+
+/* ─── EMAIL 11: Confirm email to get ticket ─────────────────────────── */
+export function emailConfirmCode({
+  attendeeName,
+  eventTitle,
+  confirmationCode,
+}: {
+  attendeeName: string
+  eventTitle: string
+  confirmationCode: string
+}) {
+  return {
+    subject: `Your confirmation code for ${eventTitle} 🎟`,
+    html: layout(
+      '#4F46E5',
+      logoHeader(),
+      `<h2 style="margin:0 0 12px;font-size:22px;color:#111827;">Hi ${attendeeName}! 🙏</h2>
+      <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">
+        You&apos;re one step away from getting your ticket for <strong>${eventTitle}</strong>.
+        Enter the code below in the registration form to confirm your email and receive your ticket.
+      </p>
+      <!-- Code block -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+        <tr><td align="center">
+          <div style="display:inline-block;background:#EEF2FF;border:2px solid #C7D2FE;border-radius:12px;padding:20px 40px;">
+            <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#6366F1;text-transform:uppercase;letter-spacing:1px;">Confirmation Code</p>
+            <p style="margin:0;font-size:36px;font-weight:900;color:#1E1B4B;letter-spacing:8px;font-family:monospace;">${confirmationCode}</p>
+          </div>
+        </td></tr>
+      </table>
+      <p style="margin:0 0 8px;font-size:14px;color:#374151;">
+        Enter this code on the event registration page to complete your registration and download your ticket.
+      </p>
+      <p style="margin:0 0 20px;font-size:13px;color:#9CA3AF;">
+        This code expires in 30 minutes. If you didn&apos;t register for this event, you can safely ignore this email.
+      </p>`
+    ),
+  }
+}

@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Users, CheckCircle2, Clock, Ticket } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import ExportCSVButton from './_components/ExportCSVButton'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -29,7 +30,7 @@ export default async function EventRegistrationsPage({ params }: Props) {
   // Verify the event belongs to this organizer
   const { data: event } = await admin
     .from('events')
-    .select('id, title, organizer_id, start_date, city, state')
+    .select('id, title, slug, organizer_id, start_date, city, state')
     .eq('id', id)
     .single()
 
@@ -60,11 +61,18 @@ export default async function EventRegistrationsPage({ params }: Props) {
           <ArrowLeft className="w-4 h-4" />
           Back to My Events
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">{event.title}</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-          {event.city ? ` · ${event.city}` : ''}
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{event.title}</h1>
+            <p className="text-gray-500 text-sm mt-1">
+              {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+              {event.city ? ` · ${event.city}` : ''}
+            </p>
+          </div>
+          {regs.length > 0 && (
+            <ExportCSVButton registrations={regs} eventSlug={event.slug ?? id} />
+          )}
+        </div>
       </div>
 
       {/* Stats */}

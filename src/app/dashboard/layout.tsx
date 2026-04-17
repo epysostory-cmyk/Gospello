@@ -15,10 +15,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     supabase.auth.getUser(),
   ])
 
-  // Session exists but user doesn't → account was deleted by admin
   if (session && !user) redirect('/auth/login?reason=deleted')
-
   if (!user) redirect('/auth/login')
+
+  // Block unverified email accounts
+  if (!user.email_confirmed_at) redirect('/auth/link-expired')
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -26,8 +27,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
-  // Block dashboard until profile is complete (catches Google OAuth users)
-  if (!profile?.profile_completed) redirect('/onboarding/complete-profile')
+  if (!profile?.profile_completed) {
+    if (profile?.account_type === 'church') redirect('/dashboard/church/setup')
+    if (profile?.account_type === 'organizer') redirect('/dashboard/organizer/setup')
+    redirect('/onboarding/complete-profile')
+  }
 
   const isChurch = profile?.account_type === 'church'
 

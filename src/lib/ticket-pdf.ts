@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib'
 
 export interface TicketData {
   eventTitle: string
@@ -8,6 +8,11 @@ export interface TicketData {
   attendeeEmail: string
   ticketNumber: number
   registrationType: 'free_registration' | 'paid'
+  /**
+   * For paid tickets: true when organizer has manually verified payment.
+   * When false (default), a "PAYMENT UNVERIFIED" watermark is shown.
+   */
+  paymentVerified?: boolean
 }
 
 /**
@@ -183,6 +188,19 @@ export async function generateTicketPdf(data: TicketData): Promise<Uint8Array> {
     size: 7.5, font: fontRegular,
     color: rgb(0.55, 0.55, 0.65),
   })
+
+  // ── Watermark for unverified paid tickets ─────────────────
+  if (data.registrationType === 'paid' && !data.paymentVerified) {
+    page.drawText('PAYMENT UNVERIFIED', {
+      x: width / 2 - 90,
+      y: height / 2 - 14,
+      size: 28,
+      font: fontBold,
+      color: rgb(0.95, 0.3, 0.2),
+      opacity: 0.12,
+      rotate: degrees(-30),
+    })
+  }
 
   return doc.save()
 }

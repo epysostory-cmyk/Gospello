@@ -3,7 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { generateTicketPdf } from '@/lib/ticket-pdf'
-import { sendEmail, emailTicket } from '@/lib/email'
+import { sendEmail, emailTicket, emailConfirmCode } from '@/lib/email'
 import { formatDate } from '@/lib/utils'
 import type { RegistrationType } from '@/types/database'
 
@@ -12,9 +12,11 @@ interface RegisterResult {
   error?: string
   alreadyRegistered?: boolean
   registrationId?: string
-  /** Base64-encoded PDF — present for free_registration type only */
+  /** Base64-encoded PDF — present for free_registration type only (after code confirmed) */
   ticketPdfBase64?: string
   ticketNumber?: number
+  /** True when email confirmation is required before ticket is issued */
+  needsEmailConfirmation?: boolean
 }
 
 /**
@@ -99,37 +101,25 @@ export async function registerForEvent(
       ? 'Online Event'
       : [event?.location_name, event?.city].filter(Boolean).join(', ') || 'TBD'
 
-    // ── For free_registration: generate + send ticket now ────
+    // ── For free_registration: send email confirmation code ──
     if (registrationType === 'free_registration') {
-      const pdfBytes = await generateTicketPdf({
-        eventTitle,
-        eventDate,
-        eventLocation,
+      const code = String(Math.floor(100000 + Math.random() * 900000))
+      const codeExpiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+
+      await admin
+        .from('registrations')
+        .update({ confirmation_code: code, code_expires_at: codeExpiresAt })
+        .eq('id', reg.id)
+
+      const { subject, html } = emailConfirmCode({
         attendeeName: fullName.trim(),
-        attendeeEmail: email.trim().toLowerCase(),
-        ticketNumber,
-        registrationType,
-      })
-
-      const pdfBase64 = Buffer.from(pdfBytes).toString('base64')
-
-      const { subject, html } = emailTicket({
         eventTitle,
-        attendeeName: fullName.trim(),
-        ticketNumber,
-        eventDate,
-        eventLocation,
-        isPaid: false,
+        confirmationCode: code,
       })
 
-      await sendEmail({
-        to: email.trim().toLowerCase(),
-        subject,
-        html,
-        attachments: [{ filename: `ticket-${String(ticketNumber).padStart(4, '0')}.pdf`, content: pdfBase64 }],
-      })
+      await sendEmail({ to: email.trim().toLowerCase(), subject, html })
 
-      return { success: true, registrationId: reg.id, ticketPdfBase64: pdfBase64, ticketNumber }
+      return { success: true, registrationId: reg.id, ticketNumber, needsEmailConfirmation: true }
     }
 
     // ── For paid: return id only, ticket deferred to payment confirmation ──
@@ -221,6 +211,99 @@ export async function confirmPayment(registrationId: string): Promise<ConfirmRes
     return { success: true, ticketPdfBase64: pdfBase64, ticketNumber: reg.ticket_number }
   } catch (err) {
     console.error('confirmPayment error:', err)
+    return { success: false, error: 'Something went wrong. Please try again.' }
+  }
+}
+
+interface ConfirmCodeResult {
+  success: boolean
+  error?: string
+  ticketPdfBase64?: string
+  ticketNumber?: number
+}
+
+/**
+ * Called after a free_registration attendee enters their 6-digit email code.
+ * Validates the code, generates + emails the PDF ticket.
+ */
+export async function confirmEmailCode(
+  registrationId: string,
+  code: string,
+): Promise<ConfirmCodeResult> {
+  try {
+    const admin = createAdminClient()
+
+    const { data: reg, error: fetchErr } = await admin
+      .from('registrations')
+      .select('id, event_id, full_name, email, ticket_number, confirmation_code, code_expires_at, email_confirmed')
+      .eq('id', registrationId)
+      .single()
+
+    if (fetchErr || !reg) return { success: false, error: 'Registration not found.' }
+
+    if (reg.email_confirmed) {
+      // Already confirmed — idempotent: re-generate the ticket
+    } else {
+      if (!reg.confirmation_code || reg.confirmation_code !== code.trim()) {
+        return { success: false, error: 'Incorrect code. Please check your email and try again.' }
+      }
+      if (reg.code_expires_at && new Date(reg.code_expires_at) < new Date()) {
+        return { success: false, error: 'This code has expired. Please re-register to get a new code.' }
+      }
+    }
+
+    // Mark email confirmed
+    await admin
+      .from('registrations')
+      .update({ email_confirmed: true, confirmation_code: null })
+      .eq('id', registrationId)
+
+    // Fetch event details
+    const { data: event } = await admin
+      .from('events')
+      .select('title, start_date, location_name, city, state, is_online')
+      .eq('id', reg.event_id)
+      .single()
+
+    const eventTitle = event?.title ?? 'Event'
+    const eventDate = event?.start_date
+      ? formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+      : 'TBD'
+    const eventLocation = event?.is_online
+      ? 'Online Event'
+      : [event?.location_name, event?.city].filter(Boolean).join(', ') || 'TBD'
+
+    const pdfBytes = await generateTicketPdf({
+      eventTitle,
+      eventDate,
+      eventLocation,
+      attendeeName: reg.full_name,
+      attendeeEmail: reg.email,
+      ticketNumber: reg.ticket_number,
+      registrationType: 'free_registration',
+    })
+
+    const pdfBase64 = Buffer.from(pdfBytes).toString('base64')
+
+    const { subject, html } = emailTicket({
+      eventTitle,
+      attendeeName: reg.full_name,
+      ticketNumber: reg.ticket_number,
+      eventDate,
+      eventLocation,
+      isPaid: false,
+    })
+
+    await sendEmail({
+      to: reg.email,
+      subject,
+      html,
+      attachments: [{ filename: `ticket-${String(reg.ticket_number).padStart(4, '0')}.pdf`, content: pdfBase64 }],
+    })
+
+    return { success: true, ticketPdfBase64: pdfBase64, ticketNumber: reg.ticket_number }
+  } catch (err) {
+    console.error('confirmEmailCode error:', err)
     return { success: false, error: 'Something went wrong. Please try again.' }
   }
 }

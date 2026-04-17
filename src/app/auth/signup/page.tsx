@@ -159,6 +159,19 @@ function SignUpForm() {
     setLoading(true)
     setError('')
 
+    const emailCheckRes = await fetch('/api/auth/check-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    const { exists } = await emailCheckRes.json()
+    if (exists) {
+      setError('An account with this email already exists. Sign in instead?')
+      setLoading(false)
+      triggerShake()
+      return
+    }
+
     const displayName = accountType === 'church' ? churchName.trim() : fullName.trim()
 
     const { data, error: signUpError } = await supabase.auth.signUp({
@@ -241,7 +254,11 @@ function SignUpForm() {
       {/* Error banner */}
       {error && (
         <div className="mb-4 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
-          {error}
+          {error.includes('Sign in instead') ? (
+            <span>An account with this email already exists.{' '}
+              <a href="/auth/login" className="font-semibold underline text-red-800">Sign in instead?</a>
+            </span>
+          ) : error}
         </div>
       )}
 

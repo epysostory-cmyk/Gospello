@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, CheckCircle2, UserPlus, UserMinus, UserCheck, Ticket, Download } from 'lucide-react'
+import { Loader2, CheckCircle2, UserPlus, UserMinus, UserCheck, Ticket, Download, KeyRound, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { instantAttend, unattend } from '@/app/actions/attendance'
-import { registerForEvent, confirmPayment } from '@/app/actions/registrations'
+import { registerForEvent, confirmPayment, confirmEmailCode } from '@/app/actions/registrations'
 import type { User } from '@supabase/supabase-js'
 
 interface Props {
@@ -55,6 +55,11 @@ export default function AttendButton({
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false)
   const [confirmingPayment, setConfirmingPayment] = useState(false)
   const [ticketConfirmed, setTicketConfirmed] = useState(false)
+
+  // Email confirmation code flow (free_registration)
+  const [showCodeEntry, setShowCodeEntry] = useState(false)
+  const [confirmCode, setConfirmCode] = useState('')
+  const [confirmingCode, setConfirmingCode] = useState(false)
 
   useEffect(() => {
     // Skip the auth fetch if the server already told us the user state
@@ -141,8 +146,11 @@ export default function AttendButton({
       setRegistrationId(result.registrationId ?? null)
       setTicketNumber(result.ticketNumber ?? null)
 
-      if (mode === 'rsvp') {
-        // Free registration — ticket is ready now
+      if (mode === 'rsvp' && result.needsEmailConfirmation) {
+        // Free registration — needs email code confirmation before ticket
+        setShowCodeEntry(true)
+      } else if (mode === 'rsvp') {
+        // Fallback: ticket ready (shouldn't happen with new flow but kept for safety)
         setTicketPdfBase64(result.ticketPdfBase64 ?? null)
       } else if (mode === 'paid') {
         // Paid — open payment link, then show confirmation step
@@ -156,6 +164,23 @@ export default function AttendButton({
     }
 
     setSubmitting(false)
+  }
+
+  const handleConfirmCode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!registrationId || !confirmCode.trim()) return
+    setConfirmingCode(true)
+    setError('')
+    const result = await confirmEmailCode(registrationId, confirmCode.trim())
+    if (result.success) {
+      setTicketPdfBase64(result.ticketPdfBase64 ?? null)
+      setTicketNumber(result.ticketNumber ?? null)
+      setShowCodeEntry(false)
+      setTicketConfirmed(true)
+    } else {
+      setError(result.error ?? 'Invalid code. Please try again.')
+    }
+    setConfirmingCode(false)
   }
 
   const handleConfirmPayment = async () => {
@@ -220,6 +245,66 @@ export default function AttendButton({
         <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
           You&apos;re registered! 🎉
+        </div>
+        <p className="text-center text-xs text-gray-500">Your ticket has been emailed to you.</p>
+        <button
+          onClick={downloadTicket}
+          className="w-full flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 font-medium py-2.5 rounded-xl hover:bg-indigo-50 transition-colors text-sm"
+        >
+          <Download className="w-4 h-4" />
+          Download Ticket {ticketNumber ? `#${String(ticketNumber).padStart(4, '0')}` : ''}
+        </button>
+      </div>
+    )
+  }
+
+  // ── Registered state — rsvp, awaiting email code ────────────
+  if (attended && mode === 'rsvp' && showCodeEntry) {
+    return (
+      <div className="space-y-3">
+        <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Mail className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+            <p className="text-sm font-semibold text-indigo-800">Check your email 📧</p>
+          </div>
+          <p className="text-xs text-indigo-700 leading-relaxed">
+            We sent a 6-digit code to your email address. Enter it below to confirm and get your ticket.
+          </p>
+        </div>
+        <form onSubmit={handleConfirmCode} className="space-y-2">
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            placeholder="Enter 6-digit code"
+            value={confirmCode}
+            onChange={e => setConfirmCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            required
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-xl font-bold tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900"
+          />
+          {error && <p className="text-red-600 text-xs bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+          <button
+            type="submit"
+            disabled={confirmingCode || confirmCode.length !== 6}
+            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+          >
+            {confirmingCode && <Loader2 className="w-4 h-4 animate-spin" />}
+            <KeyRound className="w-4 h-4" />
+            {confirmingCode ? 'Verifying...' : 'Confirm & Get Ticket'}
+          </button>
+        </form>
+      </div>
+    )
+  }
+
+  // ── Registered state — rsvp ticket confirmed ─────────────────
+  if (attended && mode === 'rsvp' && ticketConfirmed && ticketPdfBase64) {
+    return (
+      <div className="space-y-2">
+        <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
+          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          Email confirmed! 🎉
         </div>
         <p className="text-center text-xs text-gray-500">Your ticket has been emailed to you.</p>
         <button
@@ -350,7 +435,7 @@ export default function AttendButton({
 
           {mode === 'rsvp' && (
             <p className="text-xs text-indigo-700 bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100">
-              Your ticket will be emailed to you after registration.
+              We&apos;ll email you a 6-digit code to confirm your email, then your ticket will be sent.
             </p>
           )}
 
