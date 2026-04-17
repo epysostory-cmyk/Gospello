@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Eye, EyeOff, Loader2, Check } from 'lucide-react'
 import type { AccountType } from '@/types/database'
@@ -89,7 +89,15 @@ export default function SignUpPage() {
 
 function SignUpForm() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const supabase = createClient()
+
+  // If already signed in, skip signup
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace('/dashboard')
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [accountType, setAccountType] = useState<AccountType>(
     (searchParams.get('type') as AccountType) ?? 'organizer'
