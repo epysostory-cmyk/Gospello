@@ -37,13 +37,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className="h-full antialiased">
       <head>
-        {/* Dynamic favicon — overrides the static favicon.ico when set in admin */}
-        {settings.site_favicon_url && (
-          <>
-            <link rel="icon" href={settings.site_favicon_url} sizes="any" />
-            <link rel="apple-touch-icon" href={settings.site_favicon_url} />
-          </>
-        )}
+        {/* Dynamic favicon — uses DB value when set, otherwise falls back to /favicon.ico */}
+        <link rel="icon" href={settings.site_favicon_url ?? '/favicon.ico'} sizes="any" />
+        <link rel="apple-touch-icon" href={settings.site_favicon_url ?? '/favicon.ico'} />
       </head>
       <body className={`min-h-full flex flex-col bg-gray-50 ${plusJakartaSans.variable}`}>
         <ScrollToTop />
