@@ -56,7 +56,7 @@ async function getEvents(params: SearchParams) {
   const to = from + PAGE_SIZE - 1
 
   // When searching, don't cap by date — show all future + recent matching events
-  const sixtyDaysOut = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+  const ninetyDaysOut = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
 
   let query = supabase
     .from('events')
@@ -68,7 +68,7 @@ async function getEvents(params: SearchParams) {
 
   // Only apply 90-day cap when not searching
   if (!params.q) {
-    query = query.lte('start_date', sixtyDaysOut)
+    query = query.lte('start_date', ninetyDaysOut)
   }
 
   if (params.q) {

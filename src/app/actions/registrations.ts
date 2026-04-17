@@ -101,32 +101,38 @@ export async function registerForEvent(
       ? 'Online Event'
       : [event?.location_name, event?.city].filter(Boolean).join(', ') || 'TBD'
 
-    // ── For free_registration: send email confirmation code ──
+    // ── For free_registration: generate ticket immediately + email it ──
     if (registrationType === 'free_registration') {
-      const code = String(Math.floor(100000 + Math.random() * 900000))
-      const codeExpiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString()
-
-      await admin
-        .from('registrations')
-        .update({ confirmation_code: code, code_expires_at: codeExpiresAt })
-        .eq('id', reg.id)
-
-      const { subject, html } = emailConfirmCode({
-        attendeeName: fullName.trim(),
+      const pdfBytes = await generateTicketPdf({
         eventTitle,
-        confirmationCode: code,
+        eventDate,
+        eventLocation,
+        attendeeName: fullName.trim(),
+        attendeeEmail: email.trim().toLowerCase(),
+        ticketNumber,
+        registrationType,
       })
 
-      const emailSent = await sendEmail({ to: email.trim().toLowerCase(), subject, html })
+      const pdfBase64 = Buffer.from(pdfBytes).toString('base64')
 
-      if (!emailSent) {
-        // Email failed — delete the registration so user can retry
-        await admin.from('registrations').delete().eq('id', reg.id)
-        await admin.from('attendances').delete().eq('event_id', eventId).eq('email', email.trim().toLowerCase())
-        return { success: false, error: 'We could not send a confirmation email to that address. Please check your email and try again.' }
-      }
+      const { subject, html } = emailTicket({
+        eventTitle,
+        attendeeName: fullName.trim(),
+        ticketNumber,
+        eventDate,
+        eventLocation,
+        isPaid: false,
+      })
 
-      return { success: true, registrationId: reg.id, ticketNumber, needsEmailConfirmation: true }
+      // Best-effort email — don't block ticket download if email fails
+      void sendEmail({
+        to: email.trim().toLowerCase(),
+        subject,
+        html,
+        attachments: [{ filename: `ticket-${String(ticketNumber).padStart(4, '0')}.pdf`, content: pdfBase64 }],
+      })
+
+      return { success: true, registrationId: reg.id, ticketPdfBase64: pdfBase64, ticketNumber }
     }
 
     // ── For paid: return id only, ticket deferred to payment confirmation ──

@@ -160,6 +160,28 @@ export async function instantAttend(
   }
 }
 
+/** Anonymous one-tap attend for free_no_registration events. No auth, no form. */
+export async function anonymousAttend(
+  eventId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const adminClient = createAdminClient()
+    // Use a unique per-tap identifier so no unique-constraint blocks repeat guests
+    const anonId = `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+    const { error } = await adminClient.from('attendances').insert({
+      event_id: eventId,
+      user_id: null,
+      name: 'Guest',
+      email: `${anonId}@anon.gospello.local`,
+      phone: null,
+    })
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch {
+    return { success: false, error: 'Something went wrong.' }
+  }
+}
+
 /** Remove an instant attendance record */
 export async function unattend(
   eventId: string

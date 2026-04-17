@@ -36,16 +36,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const pageUrl = `${siteUrl}/events/${slug}`
   const description = data.description?.substring(0, 155) ?? ''
 
-  // Derive MIME type from URL extension so OG validators don't reject it
-  const bannerExt = data.banner_url?.split('?')[0].split('.').pop()?.toLowerCase() ?? ''
+  // Strip query params — Supabase signed-URL tokens break social media scrapers
+  const cleanBannerUrl = data.banner_url ? data.banner_url.split('?')[0] : null
+
+  // Derive MIME type from clean URL extension
+  const bannerExt = cleanBannerUrl?.split('.').pop()?.toLowerCase() ?? ''
   const mimeMap: Record<string, string> = {
     jpg: 'image/jpeg', jpeg: 'image/jpeg',
     png: 'image/png', webp: 'image/webp', gif: 'image/gif',
   }
   const bannerMime = mimeMap[bannerExt] ?? 'image/jpeg'
 
-  const ogImages = data.banner_url
-    ? [{ url: data.banner_url, width: 1200, height: 630, alt: data.title, type: bannerMime }]
+  const ogImages = cleanBannerUrl
+    ? [{ url: cleanBannerUrl, width: 1200, height: 630, alt: data.title, type: bannerMime }]
     : []
 
   return {
@@ -64,7 +67,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       site: '@gospello',
       title: data.title,
       description,
-      images: data.banner_url ? [{ url: data.banner_url, width: 1200, height: 630, alt: data.title }] : [],
+      images: cleanBannerUrl ? [{ url: cleanBannerUrl, width: 1200, height: 630, alt: data.title }] : [],
     },
   }
 }
@@ -408,6 +411,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   eventTitle={e.title}
                   isFree={e.is_free}
                   rsvpRequired={e.rsvp_required}
+                  registrationType={e.registration_type}
                   paymentLink={e.payment_link}
                   initialCount={safeAttendance}
                   initialAttended={initialAttended}
@@ -670,6 +674,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     eventTitle={e.title}
                     isFree={e.is_free}
                     rsvpRequired={e.rsvp_required}
+                    registrationType={e.registration_type}
                     paymentLink={e.payment_link}
                     initialCount={safeAttendance}
                     initialAttended={initialAttended}
