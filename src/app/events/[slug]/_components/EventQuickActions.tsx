@@ -1,11 +1,7 @@
 'use client'
 
-import { Share2, Heart, Loader2, UserPlus, UserCheck, Ticket } from 'lucide-react'
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { toggleSaveEvent } from '@/app/actions/saved-events'
-import AuthModal from '@/components/ui/AuthModal'
-import type { User } from '@supabase/supabase-js'
+import { Share2, UserPlus, UserCheck, Ticket } from 'lucide-react'
+import { useState } from 'react'
 import type { RegistrationType } from '@/types/database'
 
 interface Props {
@@ -13,7 +9,6 @@ interface Props {
   eventTitle: string
   eventDate: string
   eventUrl: string
-  initialSaved?: boolean
   isFree: boolean
   rsvpRequired: boolean
   lifecycle: 'upcoming' | 'ongoing' | 'ended'
@@ -22,11 +17,9 @@ interface Props {
 }
 
 export default function EventQuickActions({
-  eventId,
   eventTitle,
   eventDate,
   eventUrl,
-  initialSaved = false,
   isFree,
   rsvpRequired,
   lifecycle,
@@ -34,37 +27,16 @@ export default function EventQuickActions({
   registrationType,
 }: Props) {
   const [showShareMenu, setShowShareMenu] = useState(false)
-  const [isSaved, setIsSaved] = useState(initialSaved)
-  const [savingEvent, setSavingEvent] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
-  const [showAuthModal, setShowAuthModal] = useState(false)
 
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
-  }, [])
-
-  const handleSave = async () => {
-    if (!user) { setShowAuthModal(true); return }
-    setSavingEvent(true)
-    const result = await toggleSaveEvent(eventId)
-    if (result.success) setIsSaved(result.isSaved)
-    setSavingEvent(false)
-  }
-
-  // Scroll to the AttendButton on the page
   const handleRsvpClick = () => {
     const el = document.getElementById('attend')
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   const waMessage = encodeURIComponent(
     `Hey 👋 I found this gospel event on Gospello!\n\n🎵 ${eventTitle}\n📅 ${eventDate}\n\nCheck it out 👉 ${eventUrl}`
   )
 
-  // Determine mode for button label
   const mode = !isFree ? 'paid' : rsvpRequired ? 'rsvp' : 'instant'
 
   const rsvpConfig = {
@@ -73,7 +45,6 @@ export default function EventQuickActions({
     paid:    { label: 'GET TICKETS', Icon: Ticket,   cls: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' },
   }[mode]
 
-  // Price/type label for mobile bar
   let priceBadgeLabel: string
   let priceBadgeCls: string
   if (registrationType === 'free_no_registration' || (isFree && !rsvpRequired)) {
@@ -119,25 +90,8 @@ export default function EventQuickActions({
             </span>
           </div>
 
-          {/* RSVP / Get Ticket CTA (takes most space) */}
+          {/* RSVP / Get Ticket CTA */}
           {rsvpButton}
-
-          {/* Save */}
-          <button
-            onClick={handleSave}
-            disabled={savingEvent}
-            className={`w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-2xl transition-all ${
-              isSaved
-                ? 'bg-red-50 border border-red-200'
-                : 'bg-gray-100 hover:bg-gray-200'
-            }`}
-            title={isSaved ? 'Unsave' : 'Save event'}
-          >
-            {savingEvent
-              ? <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-              : <Heart className={`w-5 h-5 ${isSaved ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
-            }
-          </button>
 
           {/* Share */}
           <div className="relative flex-shrink-0">
@@ -192,20 +146,6 @@ export default function EventQuickActions({
 
       {/* Spacer so page content isn't hidden behind sticky bar */}
       <div className="h-[72px] md:hidden" />
-
-      {/* Auth modal (for save) */}
-      {showAuthModal && (
-        <AuthModal
-          onClose={() => setShowAuthModal(false)}
-          onSuccess={() => {
-            setShowAuthModal(false)
-            const supabase = createClient()
-            supabase.auth.getUser().then(({ data }) => setUser(data.user))
-          }}
-          title="Save Event"
-          subtitle={`Sign in to save "${eventTitle}" to your list`}
-        />
-      )}
     </>
   )
 }

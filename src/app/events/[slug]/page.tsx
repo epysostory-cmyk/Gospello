@@ -13,11 +13,9 @@ import { getEventLifecycle } from '@/types/database'
 import AttendButton from '@/components/ui/AttendButton'
 import ViewCounter from '@/components/ui/ViewCounter'
 import ShareButton from '@/components/ui/ShareButton'
-import SaveButton from '@/components/ui/SaveButton'
 import EventQuickActions from './_components/EventQuickActions'
 import DownloadFlyerButton from './_components/DownloadFlyerButton'
 import ReadMoreText from './_components/ReadMoreText'
-import { checkEventSaved } from '@/app/actions/saved-events'
 import { checkUserAttended } from '@/app/actions/attendance'
 
 export const dynamic = 'force-dynamic'
@@ -81,7 +79,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const adminClient = createAdminClient()
   const [
     { count: attendanceCount },
-    isEventSaved,
     initialAttended,
     { data: relatedCat },
     { data: relatedCity },
@@ -91,7 +88,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       .from('attendances')
       .select('id', { count: 'exact', head: true })
       .eq('event_id', e.id),
-    checkEventSaved(e.id),
     checkUserAttended(e.id),
     supabase
       .from('events')
@@ -412,16 +408,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   This event has ended
                 </div>
               )}
-              <div className="mt-3 flex gap-2">
-                <div className="flex-1">
-                  <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} serverUserId={currentUser?.id ?? null} />
+              {e.banner_url && (
+                <div className="mt-3">
+                  <DownloadFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
                 </div>
-                {e.banner_url && (
-                  <div className="flex-1">
-                    <DownloadFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
-                  </div>
-                )}
-              </div>
+              )}
             </div>
 
             <hr className="border-gray-100 my-5" />
@@ -681,9 +672,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 )}
               </div>
 
-              {/* Save button */}
-              <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} serverUserId={currentUser?.id ?? null} />
-
               <hr className="border-gray-100" />
 
               {/* Share — desktop only */}
@@ -710,7 +698,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         eventTitle={e.title}
         eventDate={formatDate(e.start_date, { month: 'short', day: 'numeric' })}
         eventUrl={eventUrl}
-        initialSaved={isEventSaved}
         isFree={e.is_free}
         rsvpRequired={e.rsvp_required}
         lifecycle={lifecycle}
