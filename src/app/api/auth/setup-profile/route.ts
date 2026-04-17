@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
           email,
           account_type: accountType,
           display_name: displayName || email.split('@')[0],
+          profile_completed: true, // email signup users provide all info upfront
         },
         { onConflict: 'id', ignoreDuplicates: false }
       )

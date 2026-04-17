@@ -17,6 +17,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
+  // Block dashboard until profile is complete (catches Google OAuth users)
+  if (!profile?.profile_completed) redirect('/onboarding/complete-profile')
+
   const isChurch = profile?.account_type === 'church'
 
   // Build nav based on account type

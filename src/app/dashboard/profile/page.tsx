@@ -6,10 +6,22 @@ import { Loader2, Camera, CheckCircle, AlertCircle, User } from 'lucide-react'
 import Image from 'next/image'
 import type { AccountType } from '@/types/database'
 
+const NIGERIAN_STATES = [
+  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
+  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT (Abuja)','Gombe',
+  'Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos',
+  'Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto',
+  'Taraba','Yobe','Zamfara',
+]
+
 interface ProfileForm {
   display_name: string
   email: string
   account_type: AccountType
+  church_name: string
+  bio: string
+  state: string
+  website: string
 }
 
 export default function ProfilePage() {
@@ -21,6 +33,10 @@ export default function ProfilePage() {
     display_name: '',
     email: '',
     account_type: 'organizer',
+    church_name: '',
+    bio: '',
+    state: '',
+    website: '',
   })
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -53,9 +69,13 @@ export default function ProfilePage() {
 
       if (profile) {
         setForm({
-          display_name: profile.display_name,
-          email: profile.email,
-          account_type: profile.account_type,
+          display_name: profile.display_name ?? '',
+          email: profile.email ?? '',
+          account_type: profile.account_type ?? 'organizer',
+          church_name: (profile as any).church_name ?? '',
+          bio: (profile as any).bio ?? '',
+          state: (profile as any).state ?? '',
+          website: (profile as any).website ?? '',
         })
         setAvatarUrl(profile.avatar_url)
       }
@@ -125,6 +145,10 @@ export default function ProfilePage() {
       .from('profiles')
       .update({
         display_name: form.display_name.trim(),
+        church_name: form.account_type === 'church' ? form.church_name.trim() || null : null,
+        bio: form.bio.trim() || null,
+        state: form.state || null,
+        website: form.website.trim() || null,
         avatar_url: newAvatarUrl,
         updated_at: new Date().toISOString(),
       })
@@ -264,6 +288,60 @@ export default function ProfilePage() {
             <p className="text-xs text-gray-400 mt-1">
               This is the name shown on your events and public profile
             </p>
+          </div>
+
+          {/* Church name — church accounts only */}
+          {form.account_type === 'church' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Church Name</label>
+              <input
+                type="text"
+                value={form.church_name}
+                onChange={e => setForm(f => ({ ...f, church_name: e.target.value }))}
+                placeholder="e.g. Grace Community Church"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                maxLength={100}
+              />
+            </div>
+          )}
+
+          {/* Bio */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Bio <span className="text-gray-400 font-normal">(optional)</span></label>
+            <textarea
+              value={form.bio}
+              onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
+              placeholder="Tell the community about yourself or your ministry"
+              rows={3}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+              maxLength={300}
+            />
+            <p className="text-xs text-gray-400 mt-1">{form.bio.length}/300</p>
+          </div>
+
+          {/* State */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">State</label>
+            <select
+              value={form.state}
+              onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+            >
+              <option value="">Select your state</option>
+              {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+
+          {/* Website */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Website / Social link <span className="text-gray-400 font-normal">(optional)</span></label>
+            <input
+              type="url"
+              value={form.website}
+              onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
+              placeholder="https://yourwebsite.com"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
           </div>
 
           {/* Email (read-only) */}

@@ -12,6 +12,13 @@ export interface Profile {
   account_type: AccountType
   display_name: string
   avatar_url: string | null
+  profile_completed: boolean
+  state: string | null
+  church_name: string | null
+  bio: string | null
+  website: string | null
+  status: string
+  is_hidden: boolean
   created_at: string
   updated_at: string
 }
