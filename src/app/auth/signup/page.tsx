@@ -7,6 +7,31 @@ import { createClient } from '@/lib/supabase/client'
 import { Eye, EyeOff, Loader2, Check } from 'lucide-react'
 import type { AccountType } from '@/types/database'
 
+/* ─── Name validation ───────────────────────────────────────── */
+function validateFullName(name: string): string | null {
+  const trimmed = name.trim()
+  if (!trimmed) return 'Please enter your full name'
+  if (/[0-9]/.test(trimmed)) return 'Your name should not contain numbers'
+  if (/[^a-zA-ZÀ-ÖØ-öø-ÿ\s'\-.]/.test(trimmed)) return 'Your name contains invalid characters'
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 2) return 'Please enter your first and last name'
+  if (words.some(w => w.length < 2)) return 'Each part of your name must be at least 2 characters'
+  if (trimmed.length > 60) return 'Name is too long'
+  return null
+}
+
+function validateChurchName(name: string): string | null {
+  const trimmed = name.trim()
+  if (!trimmed) return 'Please enter your church name'
+  if (/^[0-9]/.test(trimmed)) return 'Church name should not start with a number'
+  if (/[^a-zA-ZÀ-ÖØ-öø-ÿ0-9\s'\-.,&()]/.test(trimmed)) return 'Church name contains invalid characters'
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 2) return 'Please enter the full church name (e.g. "Grace Bible Church")'
+  if (trimmed.length < 5) return 'Church name is too short'
+  if (trimmed.length > 80) return 'Church name is too long'
+  return null
+}
+
 /* ─── Password strength ─────────────────────────────────────── */
 function getStrength(pw: string): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: '', color: '' }
@@ -123,8 +148,13 @@ function SignUpForm() {
   /* ── Email sign-up ── */
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    const name = accountType === 'church' ? churchName.trim() : fullName.trim()
-    if (!name) { setError(accountType === 'church' ? 'Please enter your church name' : 'Please enter your name'); triggerShake(); return }
+
+    // Name validation
+    const nameError = accountType === 'church'
+      ? validateChurchName(churchName)
+      : validateFullName(fullName)
+    if (nameError) { setError(nameError); triggerShake(); return }
+
     if (password.length < 6) { setError('Password must be at least 6 characters'); triggerShake(); return }
     setLoading(true)
     setError('')
@@ -270,9 +300,10 @@ function SignUpForm() {
         >
           <Field
             id="fullName" label="Full Name" value={fullName}
-            onChange={setFullName} placeholder="Enter your full name"
+            onChange={setFullName} placeholder="e.g. Tunde Bello"
             autoComplete="name" shake={shake}
           />
+          <p className="text-[11px] text-gray-400 mt-1.5 px-1">Enter your first and last name — no numbers or symbols</p>
         </div>
 
         {/* Church name — only for church */}
@@ -286,9 +317,10 @@ function SignUpForm() {
           <Field
             id="churchName" label="Church Name" value={churchName}
             onChange={setChurchName}
-            placeholder="e.g. Redeemed Christian Church"
+            placeholder="e.g. Redeemed Christian Church Lagos"
             autoComplete="organization" shake={shake}
           />
+          <p className="text-[11px] text-gray-400 mt-1.5 px-1">Enter the full official name of your church (at least 2 words)</p>
         </div>
 
         <Field
