@@ -12,6 +12,7 @@ import Step5Entry from './steps/Step5Entry'
 import Step6Review from './steps/Step6Review'
 import { createClient } from '@/lib/supabase/client'
 import type { Event } from '@/types/database'
+import { getVisibleCategories, type CategoryRow } from '@/app/actions/categories'
 
 const TOTAL_STEPS = 6
 const AUTO_SAVE_DELAY = 2000 // 2 seconds debounce
@@ -92,6 +93,7 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormState>(INITIAL_FORM_STATE)
+  const [categories, setCategories] = useState<CategoryRow[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
@@ -152,6 +154,11 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
       }
     }
   }, [isEditMode, initialEvent])
+
+  // Load categories from DB
+  useEffect(() => {
+    getVisibleCategories().then(setCategories)
+  }, [])
 
   // Fix 5: Warn user before leaving with unsaved form data
   useEffect(() => {
@@ -340,7 +347,7 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
     const props = { formData, updateForm, errors }
 
     switch (currentStep) {
-      case 1: return <Step1Basics {...props} />
+      case 1: return <Step1Basics {...props} categories={categories} />
       case 2: return <Step2DateTime {...props} />
       case 3: return <Step3Location {...props} />
       case 4: return <Step4Media {...props} />

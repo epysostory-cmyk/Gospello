@@ -3,7 +3,7 @@ export type RegistrationType = 'free_no_registration' | 'free_registration' | 'p
 export type AccountType = 'church' | 'organizer'
 export type AdminRole = 'super_admin' | 'admin' | 'moderator'
 export type EventStatus = 'pending' | 'approved' | 'rejected'
-export type EventCategory = 'worship' | 'prayer' | 'conference' | 'youth' | 'training' | 'other'
+export type EventCategory = string
 export type EventLifecycle = 'upcoming' | 'ongoing' | 'ended'
 
 export interface Profile {

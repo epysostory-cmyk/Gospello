@@ -47,7 +47,8 @@
       "WebFetch(domain:atrdstihzvnvbgxveplm.supabase.co)",
       "Bash(npx supabase:*)",
       "Bash(git -C /c/Users/Hi/Desktop/Gospello/.claude/worktrees/agent-a5770de0 log --oneline -5)",
-      "Bash(git -C /c/Users/Hi/Desktop/Gospello/.claude/worktrees/agent-a5770de0 status --short)"
+      "Bash(git -C /c/Users/Hi/Desktop/Gospello/.claude/worktrees/agent-a5770de0 status --short)",
+      "Bash(del \"C:\\\\Users\\\\Hi\\\\Desktop\\\\Gospello\\\\src\\\\app\\\\admin\\\\\\(protected\\)\\\\categories\\\\DeleteCategoryButton.tsx\")"
     ]
   }
 }

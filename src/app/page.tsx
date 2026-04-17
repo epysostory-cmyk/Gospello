@@ -11,15 +11,6 @@ export const revalidate = 60
 
 const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000
 
-const CATEGORIES = [
-  { label: 'Concerts',       value: 'worship',    emoji: '🎵', gradient: 'from-violet-600 to-indigo-700' },
-  { label: 'Conferences',    value: 'conference', emoji: '🎤', gradient: 'from-blue-600 to-cyan-700' },
-  { label: 'Worship Nights', value: 'worship',    emoji: '🙏', gradient: 'from-indigo-600 to-purple-700' },
-  { label: 'Trainings',      value: 'training',   emoji: '📖', gradient: 'from-emerald-600 to-teal-700' },
-  { label: 'Prayer Events',  value: 'prayer',     emoji: '✨', gradient: 'from-amber-500 to-orange-600' },
-  { label: 'Youth Programs', value: 'youth',      emoji: '🌟', gradient: 'from-pink-600 to-rose-700' },
-]
-
 async function getHomepageData() {
   try {
     const supabase = await createClient()
@@ -35,6 +26,7 @@ async function getHomepageData() {
       statsEventsRes,
       statsChurchesRes,
       statsUsersRes,
+      categoriesRes,
     ] = await Promise.all([
       supabase
         .from('platform_settings')
@@ -62,6 +54,11 @@ async function getHomepageData() {
       supabase.from('events').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
       supabase.from('churches').select('id', { count: 'exact', head: true }),
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      adminClient
+        .from('categories')
+        .select('id, name, slug, icon, color')
+        .eq('is_visible', true)
+        .order('sort_order', { ascending: true }),
     ])
 
     const upcomingEvents = (upcomingRes.data ?? []) as Event[]
@@ -88,6 +85,7 @@ async function getHomepageData() {
       featuredEvents,
       upcomingEvents,
       featuredChurches: (churchesRes.data ?? []) as Church[],
+      categories: categoriesRes.data ?? [],
       stats: {
         events: statsEventsRes.count ?? 0,
         churches: statsChurchesRes.count ?? 0,
@@ -101,6 +99,7 @@ async function getHomepageData() {
       featuredEvents: [],
       upcomingEvents: [],
       featuredChurches: [],
+      categories: [],
       stats: { events: 0, churches: 0, users: 0 },
       heroSettings: null,
       attendanceCountMap: {} as Record<string, number>,
@@ -113,6 +112,7 @@ export default async function HomePage() {
     featuredEvents,
     upcomingEvents,
     featuredChurches,
+    categories,
     stats,
     heroSettings,
     attendanceCountMap,
@@ -280,10 +280,10 @@ export default async function HomePage() {
           "
           style={{ scrollbarWidth: 'none' }}
         >
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <Link
-              key={cat.label}
-              href={`/events?category=${cat.value}`}
+              key={cat.slug}
+              href={`/events?category=${cat.slug}`}
               className="
                 group relative flex-shrink-0 snap-start
                 w-[140px] h-[110px]
@@ -292,8 +292,11 @@ export default async function HomePage() {
                 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl
               "
             >
-              {/* Gradient background */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-90 group-hover:opacity-100 transition-opacity`} />
+              {/* Solid color background from DB */}
+              <div
+                className="absolute inset-0 opacity-90 group-hover:opacity-100 transition-opacity"
+                style={{ backgroundColor: cat.color ?? '#6B7280' }}
+              />
 
               {/* Subtle pattern overlay */}
               <div
@@ -309,9 +312,9 @@ export default async function HomePage() {
 
               {/* Content */}
               <div className="relative h-full flex flex-col items-center justify-center gap-2 p-3">
-                <span className="text-3xl sm:text-4xl drop-shadow-sm">{cat.emoji}</span>
+                <span className="text-3xl sm:text-4xl drop-shadow-sm">{cat.icon}</span>
                 <span className="text-white font-bold text-xs sm:text-sm text-center leading-tight drop-shadow-sm">
-                  {cat.label}
+                  {cat.name}
                 </span>
               </div>
             </Link>

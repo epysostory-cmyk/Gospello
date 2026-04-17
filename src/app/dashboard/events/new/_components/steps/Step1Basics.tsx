@@ -2,20 +2,26 @@
 
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import type { CategoryRow } from '@/app/actions/categories'
 
 interface StepProps {
   formData: any
   updateForm: (field: string, value: any) => void
   errors: Record<string, string>
+  categories?: CategoryRow[]
 }
 
-const CATEGORIES = [
-  { value: 'worship',    label: 'Worship Service' },
-  { value: 'prayer',     label: 'Prayer Meeting' },
-  { value: 'conference', label: 'Conference' },
-  { value: 'youth',      label: 'Youth Event' },
-  { value: 'training',   label: 'Training' },
-  { value: 'other',      label: 'Other' },
+// Fallback if DB hasn't loaded yet
+const FALLBACK_CATEGORIES = [
+  { id: 'worship',    slug: 'worship',    name: 'Worship Nights', icon: '🙏', color: '#7C3AED' },
+  { id: 'conference', slug: 'conference', name: 'Conference',     icon: '🎤', color: '#2563EB' },
+  { id: 'prayer',     slug: 'prayer',     name: 'Prayer Events',  icon: '✨', color: '#D97706' },
+  { id: 'youth',      slug: 'youth',      name: 'Youth Programs', icon: '🌟', color: '#059669' },
+  { id: 'concerts',   slug: 'concerts',   name: 'Concerts',       icon: '🎵', color: '#DC2626' },
+  { id: 'training',   slug: 'training',   name: 'Training',       icon: '📖', color: '#0891B2' },
+  { id: 'crusades',   slug: 'crusades',   name: 'Crusades',       icon: '🔥', color: '#EA580C' },
+  { id: 'podcasts',   slug: 'podcasts',   name: 'Podcasts',       icon: '🎙️', color: '#7C3AED' },
+  { id: 'other',      slug: 'other',      name: 'Other',          icon: '⛪', color: '#6B7280' },
 ]
 
 const PREDEFINED_TAGS = [
@@ -24,8 +30,9 @@ const PREDEFINED_TAGS = [
   'Entertainment', 'Networking', 'Workshop',
 ]
 
-export default function Step1Basics({ formData, updateForm, errors }: StepProps) {
+export default function Step1Basics({ formData, updateForm, errors, categories }: StepProps) {
   const [showMoreDetails, setShowMoreDetails] = useState(false)
+  const catList = (categories && categories.length > 0) ? categories : FALLBACK_CATEGORIES
 
   const inputCls =
     'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white'
@@ -82,9 +89,9 @@ export default function Step1Basics({ formData, updateForm, errors }: StepProps)
           onChange={(e) => updateForm('category', e.target.value)}
           className={inputCls}
         >
-          {CATEGORIES.map((cat) => (
-            <option key={cat.value} value={cat.value}>
-              {cat.label}
+          {catList.map((cat) => (
+            <option key={cat.slug} value={cat.slug}>
+              {cat.icon} {cat.name}
             </option>
           ))}
         </select>

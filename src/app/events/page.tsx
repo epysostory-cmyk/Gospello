@@ -3,8 +3,8 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
-import { CATEGORY_LABELS, NIGERIAN_STATES } from '@/lib/utils'
-import type { Event, EventCategory } from '@/types/database'
+import { NIGERIAN_STATES } from '@/lib/utils'
+import type { Event } from '@/types/database'
 import { Search, MapPin, X, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
 
@@ -20,14 +20,15 @@ interface SearchParams {
 
 const PAGE_SIZE = 12
 
-const CATEGORY_OPTIONS = [
-  { value: 'worship',    label: 'Worship',    emoji: '🙏' },
-  { value: 'prayer',     label: 'Prayer',     emoji: '✨' },
-  { value: 'conference', label: 'Conference', emoji: '🎤' },
-  { value: 'youth',      label: 'Youth',      emoji: '🌟' },
-  { value: 'training',   label: 'Training',   emoji: '📖' },
-  { value: 'other',      label: 'Other',      emoji: '⭐' },
-] as const
+// Hardcoded fallback — overridden by DB fetch below
+const FALLBACK_CATEGORIES = [
+  { slug: 'worship',    name: 'Worship',    icon: '🙏' },
+  { slug: 'prayer',     name: 'Prayer',     icon: '✨' },
+  { slug: 'conference', name: 'Conference', icon: '🎤' },
+  { slug: 'youth',      name: 'Youth',      icon: '🌟' },
+  { slug: 'training',   name: 'Training',   icon: '📖' },
+  { slug: 'other',      name: 'Other',      icon: '⭐' },
+]
 
 const TIMEFRAME_OPTIONS = [
   { value: 'today',   label: 'Today' },
@@ -127,7 +128,16 @@ export default async function EventsPage({
   searchParams: Promise<SearchParams>
 }) {
   const params = await searchParams
-  const { events, total, page, pages, attendanceCountMap } = await getEvents(params)
+  const adminClient = createAdminClient()
+  const [{ events, total, page, pages, attendanceCountMap }, categoriesRes] = await Promise.all([
+    getEvents(params),
+    adminClient
+      .from('categories')
+      .select('id, name, slug, icon')
+      .eq('is_visible', true)
+      .order('sort_order', { ascending: true }),
+  ])
+  const categoryOptions = categoriesRes.data?.length ? categoriesRes.data : FALLBACK_CATEGORIES
 
   function buildUrl(overrides: Partial<SearchParams>) {
     const merged = { ...params, ...overrides }
@@ -138,7 +148,7 @@ export default async function EventsPage({
 
   const hasFilters = !!(params.q || params.city || params.category || params.timeframe)
   const activeCategoryLabel = params.category
-    ? CATEGORY_OPTIONS.find(c => c.value === params.category)?.label
+    ? categoryOptions.find(c => c.slug === params.category)?.name
     : null
 
   return (
@@ -222,18 +232,18 @@ export default async function EventsPage({
             >
               All
             </Link>
-            {CATEGORY_OPTIONS.map((cat) => (
+            {categoryOptions.map((cat) => (
               <Link
-                key={cat.value}
-                href={buildUrl({ category: cat.value as EventCategory, page: undefined })}
+                key={cat.slug}
+                href={buildUrl({ category: cat.slug, page: undefined })}
                 className={`flex-shrink-0 flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-all ${
-                  params.category === cat.value
+                  params.category === cat.slug
                     ? 'bg-white text-gray-900 shadow-md'
                     : 'bg-white/10 text-slate-300 hover:bg-white/15 border border-white/10'
                 }`}
               >
-                <span>{cat.emoji}</span>
-                {cat.label}
+                <span>{cat.icon}</span>
+                {cat.name}
               </Link>
             ))}
           </div>

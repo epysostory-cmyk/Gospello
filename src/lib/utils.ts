@@ -55,12 +55,15 @@ export function isThisWeek(dateStr: string): boolean {
 }
 
 export const CATEGORY_LABELS: Record<string, string> = {
-  worship: 'Worship',
-  prayer: 'Prayer',
-  conference: 'Conference',
-  youth: 'Youth',
-  training: 'Training',
-  other: 'Other',
+  worship:    'Worship Nights',
+  prayer:     'Prayer Events',
+  conference: 'Conferences',
+  youth:      'Youth Programs',
+  training:   'Training',
+  concerts:   'Concerts',
+  crusades:   'Crusades',
+  podcasts:   'Podcasts',
+  other:      'Other',
 }
 
 export const NIGERIAN_STATES = [
@@ -72,10 +75,13 @@ export const NIGERIAN_STATES = [
 ]
 
 export const CATEGORY_COLORS: Record<string, string> = {
-  worship: 'bg-purple-100 text-purple-800',
-  prayer: 'bg-blue-100 text-blue-800',
+  worship:    'bg-purple-100 text-purple-800',
+  prayer:     'bg-blue-100 text-blue-800',
   conference: 'bg-amber-100 text-amber-800',
-  youth: 'bg-green-100 text-green-800',
-  training: 'bg-orange-100 text-orange-800',
-  other: 'bg-gray-100 text-gray-800',
+  youth:      'bg-green-100 text-green-800',
+  training:   'bg-cyan-100 text-cyan-800',
+  concerts:   'bg-red-100 text-red-800',
+  crusades:   'bg-orange-100 text-orange-800',
+  podcasts:   'bg-violet-100 text-violet-800',
+  other:      'bg-gray-100 text-gray-800',
 }
