@@ -11,11 +11,12 @@ interface Props {
   eventId: string
   eventTitle: string
   initialSaved?: boolean
+  serverUserId?: string | null
 }
 
-export default function SaveButton({ eventId, eventTitle, initialSaved = false }: Props) {
+export default function SaveButton({ eventId, eventTitle, initialSaved = false, serverUserId }: Props) {
   const [user, setUser] = useState<User | null>(null)
-  const [loadingUser, setLoadingUser] = useState(true)
+  const [loadingUser, setLoadingUser] = useState(serverUserId === undefined)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [isSaved, setIsSaved] = useState(initialSaved)
   const [isLoading, setIsLoading] = useState(false)
@@ -23,11 +24,16 @@ export default function SaveButton({ eventId, eventTitle, initialSaved = false }
   const supabase = createClient()
 
   useEffect(() => {
+    if (serverUserId !== undefined) {
+      if (serverUserId) setUser({ id: serverUserId } as User)
+      setLoadingUser(false)
+      return
+    }
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user)
       setLoadingUser(false)
     })
-  }, [supabase.auth])
+  }, [serverUserId])
 
   const handleSaveClick = async () => {
     if (!user) {

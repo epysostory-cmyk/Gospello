@@ -414,7 +414,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               )}
               <div className="mt-3 flex gap-2">
                 <div className="flex-1">
-                  <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} />
+                  <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} serverUserId={currentUser?.id ?? null} />
                 </div>
                 {e.banner_url && (
                   <div className="flex-1">
@@ -682,7 +682,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </div>
 
               {/* Save button */}
-              <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} />
+              <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={isEventSaved} serverUserId={currentUser?.id ?? null} />
 
               <hr className="border-gray-100" />
 
