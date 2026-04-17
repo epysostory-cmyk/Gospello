@@ -32,8 +32,22 @@ export async function GET(request: Request) {
           .eq('id', user.id)
           .maybeSingle()
 
+        // Google OAuth users who haven't set account type yet
         if (needsProfileCompletion(profile)) {
           return NextResponse.redirect(`${origin}/onboarding/complete-profile`)
+        }
+
+        // Church accounts without a church profile → go to setup first
+        if (profile?.account_type === 'church') {
+          const { data: church } = await supabase
+            .from('churches')
+            .select('id')
+            .eq('profile_id', user.id)
+            .maybeSingle()
+
+          if (!church) {
+            return NextResponse.redirect(`${origin}/dashboard/church/setup`)
+          }
         }
       }
 

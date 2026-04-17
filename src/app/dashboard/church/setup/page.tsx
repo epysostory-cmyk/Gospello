@@ -29,31 +29,38 @@ export default function ChurchSetupPage() {
 
   useEffect(() => {
     async function check() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.replace('/auth/login'); return }
+      try {
+        // Use getSession (local cookie, faster) — dashboard layout already verified auth server-side
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) { router.replace('/auth/login'); return }
 
-      // If they already have a church, go to church dashboard
-      const { data: existing } = await supabase
-        .from('churches')
-        .select('id')
-        .eq('profile_id', user.id)
-        .single()
+        const userId = session.user.id
 
-      if (existing) { router.replace('/dashboard/church'); return }
+        // If they already have a church, go to church dashboard
+        const { data: existing } = await supabase
+          .from('churches')
+          .select('id')
+          .eq('profile_id', userId)
+          .maybeSingle()
 
-      // Pre-fill name from profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', user.id)
-        .single()
+        if (existing) { router.replace('/dashboard/church'); return }
 
-      if (profile) {
-        setDefaultName(profile.display_name)
-        setForm((f) => ({ ...f, name: profile.display_name }))
+        // Pre-fill name from profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', userId)
+          .maybeSingle()
+
+        if (profile) {
+          setDefaultName(profile.display_name)
+          setForm((f) => ({ ...f, name: profile.display_name }))
+        }
+      } catch (err) {
+        console.error('[church/setup] check error:', err)
+      } finally {
+        setChecking(false)
       }
-
-      setChecking(false)
     }
     check()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -68,8 +75,9 @@ export default function ChurchSetupPage() {
     setSaving(true)
     setError('')
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setError('Not authenticated'); setSaving(false); return }
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setError('Not authenticated'); setSaving(false); return }
+    const user = session.user
 
     const slug = slugify(form.name)
 
