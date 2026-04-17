@@ -13,7 +13,7 @@ export const revalidate = 60
 interface SearchParams {
   q?: string
   city?: string
-  category?: EventCategory
+  category?: string
   timeframe?: 'today' | 'week' | 'weekend'
   page?: string
 }
