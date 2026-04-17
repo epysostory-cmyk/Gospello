@@ -48,10 +48,8 @@ async function getHomepageData() {
         .from('events')
         .select('*, churches(*)')
         .eq('status', 'approved')
-        .gte('start_date', now)
-        .lte('start_date', in90Days)
-        .order('start_date', { ascending: true })
-        .limit(12),
+        .order('start_date', { ascending: false })
+        .limit(20),
       supabase.from('churches').select('*').eq('is_featured', true).limit(6),
       supabase.from('events').select('id', { count: 'exact', head: true }),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_type', 'church'),
@@ -65,8 +63,17 @@ async function getHomepageData() {
         .limit(6),
     ])
 
-    const upcomingEvents = (upcomingRes.data ?? []) as Event[]
     const featuredEvents = (featuredRes.data ?? []) as Event[]
+
+    // Sort: upcoming events first (soonest first), then ended events (most recently ended first)
+    const nowMs = Date.now()
+    const upcomingEvents = ((upcomingRes.data ?? []) as Event[]).sort((a, b) => {
+      const aEnded = new Date(a.start_date).getTime() < nowMs
+      const bEnded = new Date(b.start_date).getTime() < nowMs
+      if (!aEnded && !bEnded) return new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+      if (aEnded && bEnded) return new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+      return aEnded ? 1 : -1
+    })
 
     // Batch fetch attendance counts for all events shown on homepage
     const allEventIds = [

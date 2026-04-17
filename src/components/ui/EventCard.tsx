@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, MapPin, Users, Zap, Star } from 'lucide-react'
+import { Calendar, MapPin, Zap, Star } from 'lucide-react'
 import { formatDate, formatTime, CATEGORY_LABELS, CATEGORY_COLORS, cn } from '@/lib/utils'
 import type { Event } from '@/types/database'
 
@@ -33,6 +33,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
   const eventStart = new Date(event.start_date)
   const daysUntil = (eventStart.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
   const isHappeningSoon = daysUntil > 0 && daysUntil <= 3
+  const hasEnded = eventStart.getTime() < now.getTime()
 
   // ── COMPACT ─────────────────────────────────────────────────────────────
   if (variant === 'compact') {
@@ -120,8 +121,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
             </span>
           </div>
           {(attendanceCount !== undefined && attendanceCount > 0) && (
-            <div className="flex items-center gap-1.5 mt-2 text-xs text-white/50">
-              <Users className="w-3 h-3" />
+            <div className="mt-2 text-xs text-white/60 font-medium">
               {attendanceCount} attending
             </div>
           )}
@@ -146,12 +146,17 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
             src={event.banner_url}
             alt={event.title}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            className={`object-cover group-hover:scale-105 transition-transform duration-500 ${hasEnded ? 'grayscale opacity-70' : ''}`}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <span className="text-5xl font-black text-indigo-100">{event.title[0]}</span>
           </div>
+        )}
+
+        {/* Ended overlay */}
+        {hasEnded && (
+          <div className="absolute inset-0 bg-gray-900/30" />
         )}
 
         {/* Category - top left */}
@@ -161,14 +166,17 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
 
         {/* Badges - top right */}
         <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
-          {event.is_free
-            ? <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/90 text-white backdrop-blur-sm">Free</span>
-            : <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/90 text-white backdrop-blur-sm">Paid</span>
-          }
-          {isAlmostFull && (
+          {hasEnded ? (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-700/90 text-white backdrop-blur-sm">Ended</span>
+          ) : event.is_free ? (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/90 text-white backdrop-blur-sm">Free</span>
+          ) : (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/90 text-white backdrop-blur-sm">Paid</span>
+          )}
+          {!hasEnded && isAlmostFull && (
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/90 text-white backdrop-blur-sm">Almost Full</span>
           )}
-          {isHappeningSoon && (
+          {!hasEnded && isHappeningSoon && (
             <span className="text-xs font-bold px-2 py-1 rounded-full bg-violet-500/90 text-white backdrop-blur-sm flex items-center gap-1">
               <Zap className="w-2.5 h-2.5 fill-white" /> Soon
             </span>
@@ -201,9 +209,8 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
               : <span />
             }
             {attendanceCount !== undefined && attendanceCount > 0 && (
-              <span className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0 ml-2">
-                <Users className="w-3 h-3" />
-                {attendanceCount}
+              <span className="text-xs font-medium text-gray-400 flex-shrink-0 ml-2">
+                {attendanceCount} attending
               </span>
             )}
           </div>
