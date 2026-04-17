@@ -34,7 +34,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
   const pageUrl = `${siteUrl}/events/${slug}`
-  const description = data.description?.substring(0, 160) ?? ''
+  const description = data.description?.substring(0, 155) ?? ''
+
+  // Derive MIME type from URL extension so OG validators don't reject it
+  const bannerExt = data.banner_url?.split('?')[0].split('.').pop()?.toLowerCase() ?? ''
+  const mimeMap: Record<string, string> = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg',
+    png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+  }
+  const bannerMime = mimeMap[bannerExt] ?? 'image/jpeg'
+
+  const ogImages = data.banner_url
+    ? [{ url: data.banner_url, width: 1200, height: 630, alt: data.title, type: bannerMime }]
+    : []
 
   return {
     title: data.title,
@@ -45,16 +57,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url: pageUrl,
       type: 'article',
       siteName: 'Gospello',
-      images: data.banner_url
-        ? [{ url: data.banner_url, width: 1200, height: 630, alt: data.title, type: 'image/jpeg' }]
-        : [],
+      images: ogImages,
     },
     twitter: {
       card: 'summary_large_image',
       site: '@gospello',
       title: data.title,
       description,
-      images: data.banner_url ? [{ url: data.banner_url, alt: data.title }] : [],
+      images: data.banner_url ? [{ url: data.banner_url, width: 1200, height: 630, alt: data.title }] : [],
     },
   }
 }
