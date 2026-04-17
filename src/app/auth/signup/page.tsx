@@ -196,7 +196,10 @@ function SignUpForm() {
 
     // Supabase silently returns a user-like object for existing confirmed emails
     // instead of an error. Detect this: identities array is empty for existing accounts.
+    // Immediately sign out to wipe the ghost auth token Supabase already wrote to
+    // localStorage — if left in place it causes an infinite /dashboard ↔ /auth/login loop.
     if (data.user && (data.user.identities?.length ?? 1) === 0) {
+      await supabase.auth.signOut()
       setEmailError('exists')
       setLoading(false)
       return
