@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { Menu, X, Search, Shield, ChevronRight, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -13,7 +14,12 @@ const NAV_LINKS = [
   { label: 'Organizers',  href: '/organizers' },
 ]
 
-export default function Navbar() {
+interface NavbarProps {
+  logoUrl?: string | null
+  siteName?: string
+}
+
+export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -71,10 +77,23 @@ export default function Navbar() {
 
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-              <div className="w-8 h-8 bg-indigo-600 group-hover:bg-indigo-700 rounded-lg flex items-center justify-center transition-colors shadow-sm shadow-indigo-200">
-                <span className="text-white font-black text-sm">G</span>
-              </div>
-              <span className="text-lg font-black text-gray-900 tracking-tight">Gospello</span>
+              {logoUrl ? (
+                <Image
+                  src={logoUrl}
+                  alt={siteName}
+                  width={140}
+                  height={40}
+                  className="h-8 w-auto object-contain"
+                  priority
+                />
+              ) : (
+                <>
+                  <div className="w-8 h-8 bg-indigo-600 group-hover:bg-indigo-700 rounded-lg flex items-center justify-center transition-colors shadow-sm shadow-indigo-200">
+                    <span className="text-white font-black text-sm">G</span>
+                  </div>
+                  <span className="text-lg font-black text-gray-900 tracking-tight">{siteName}</span>
+                </>
+              )}
             </Link>
 
             {/* Desktop Nav */}

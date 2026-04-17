@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { Settings, Bell, Shield, Layout, Heart, MessageSquare } from 'lucide-react'
 import { saveGeneralSettings, saveNotificationSettings, saveSecuritySettings } from './actions'
+import { getSiteSettings } from '@/app/actions/site-settings'
+import BrandingSettings from './BrandingSettings'
 
 export default async function AdminSettingsPage({
   searchParams,
@@ -11,6 +13,7 @@ export default async function AdminSettingsPage({
 }) {
   const params = await searchParams
   const saved = params.saved === '1'
+  const siteSettings = await getSiteSettings()
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -27,6 +30,11 @@ export default async function AdminSettingsPage({
 
       {/* Settings Sections */}
       <div className="space-y-4">
+        {/* Branding */}
+        <BrandingSettings
+          initialLogoUrl={siteSettings.site_logo_url}
+          initialFaviconUrl={siteSettings.site_favicon_url}
+        />
         {/* General Settings */}
         <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
           <div className="px-5 py-4 border-b border-white/10 flex items-center gap-3">
