@@ -118,7 +118,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap }: P
   const filtered = activeState
     ? allEvents.filter(e => e.state?.toLowerCase() === activeState.toLowerCase())
     : []
-  const showLocalEvents = filtered.length >= 3
+  const showLocalEvents = filtered.length >= 1
   const displayEvents = showLocalEvents && activeState ? filtered : allEvents
 
   const sectionTitle = showLocalEvents && activeState

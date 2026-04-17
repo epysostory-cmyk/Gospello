@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle, XCircle, ExternalLink } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import ModerationActions from './ModerationActions'
 
@@ -11,7 +11,7 @@ export default async function AdminModerationPage() {
   const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
     adminClient
       .from('events')
-      .select('id, title, status, created_at, start_date, is_free, city, profiles(display_name)')
+      .select('id, title, slug, status, created_at, start_date, is_free, city, profiles(display_name)')
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
       .limit(50),
@@ -119,7 +119,18 @@ export default async function AdminModerationPage() {
                     </div>
 
                     {/* Actions — full width on mobile, auto on desktop */}
-                    <div className="sm:flex-shrink-0">
+                    <div className="sm:flex-shrink-0 flex items-center gap-2">
+                      {event.slug && (
+                        <a
+                          href={`/events/${event.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-gray-400 hover:text-white hover:border-white/20 transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Preview
+                        </a>
+                      )}
                       <ModerationActions eventId={event.id} />
                     </div>
                   </div>

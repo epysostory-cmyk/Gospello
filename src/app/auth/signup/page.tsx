@@ -194,6 +194,14 @@ function SignUpForm() {
       return
     }
 
+    // Supabase silently returns a user-like object for existing confirmed emails
+    // instead of an error. Detect this: identities array is empty for existing accounts.
+    if (data.user && (data.user.identities?.length ?? 1) === 0) {
+      setEmailError('exists')
+      setLoading(false)
+      return
+    }
+
     if (data.user) {
       await fetch('/api/auth/setup-profile', {
         method: 'POST',

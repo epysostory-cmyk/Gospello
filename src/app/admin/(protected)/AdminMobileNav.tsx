@@ -12,12 +12,12 @@ interface Props { adminUser: { email: string; role: string }; pendingCount: numb
 
 const NAV = [
   { href: '/admin',              label: 'Dashboard',        icon: LayoutDashboard, exact: true, roles: ['super_admin','admin','moderator'] },
-  { href: '/admin/events',        label: 'Events',           icon: Calendar,        badge: true,  roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/events',        label: 'Events',           icon: Calendar,                     roles: ['super_admin','admin','moderator'] },
   { href: '/admin/organizations', label: 'Orgs & Churches',  icon: Building2,                    roles: ['super_admin','admin'] },
   { href: '/admin/users',         label: 'Users',            icon: Users,                        roles: ['super_admin','admin'] },
   { href: '/admin/featured',      label: 'Featured',         icon: Star,                         roles: ['super_admin','admin'] },
   { href: '/admin/categories',    label: 'Categories',       icon: Tag,                          roles: ['super_admin'] },
-  { href: '/admin/moderation',    label: 'Moderation',       icon: Shield,                       roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/moderation',    label: 'Moderation',       icon: Shield, badge: true,          roles: ['super_admin','admin','moderator'] },
   { href: '/admin/analytics',     label: 'Analytics',        icon: BarChart2,                    roles: ['super_admin','admin'] },
   { href: '/admin/team',          label: 'Admin Mgmt',       icon: Lock,                         roles: ['super_admin'] },
   { href: '/admin/settings',      label: 'Settings',         icon: Settings,                     roles: ['super_admin'] },
@@ -41,7 +41,7 @@ export default function AdminMobileNav({ adminUser, pendingCount }: Props) {
         </div>
         <div className="flex items-center gap-3">
           {pendingCount > 0 && (
-            <Link href="/admin/events?status=pending" className="relative">
+            <Link href="/admin/moderation" className="relative">
               <Bell className="w-5 h-5 text-gray-400" />
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                 {pendingCount > 9 ? '9+' : pendingCount}

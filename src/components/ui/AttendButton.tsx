@@ -40,12 +40,15 @@ export default function AttendButton({
   // If we got server-side user data, skip the loading state entirely
   const [loadingUser, setLoadingUser] = useState(!serverUserId && serverUserId !== null ? true : serverUserId === undefined)
   const [showForm, setShowForm] = useState(false)
-  // For anonymous guests, initialAttended is always false from the server.
+  // For guests (anonymous or form-registered), initialAttended is always false from the server.
   // Read localStorage immediately so the button shows the right state on mount.
   const [attended, setAttended] = useState(() => {
     if (initialAttended) return true
     if (typeof window !== 'undefined') {
-      return !!localStorage.getItem(`gospello_attended_${eventId}`)
+      return (
+        !!localStorage.getItem(`gospello_attended_${eventId}`) ||
+        !!localStorage.getItem(`gospello_registered_${eventId}`)
+      )
     }
     return false
   })
@@ -210,6 +213,10 @@ export default function AttendButton({
       setShowForm(false)
       setRegistrationId(result.registrationId ?? null)
       setTicketNumber(result.ticketNumber ?? null)
+      // Persist so the button stays in "registered" state after a page refresh
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`gospello_registered_${eventId}`, '1')
+      }
 
       if (mode === 'rsvp') {
         // Free registration — ticket generated immediately

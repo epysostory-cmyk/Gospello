@@ -12,12 +12,12 @@ interface Props { adminUser: AdminUser; pendingCount: number }
 
 const NAV = [
   { href: '/admin',              label: 'Dashboard',         icon: LayoutDashboard, exact: true, roles: ['super_admin','admin','moderator'] },
-  { href: '/admin/events',        label: 'Events',            icon: Calendar,        badge: true,  roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/events',        label: 'Events',            icon: Calendar,                     roles: ['super_admin','admin','moderator'] },
   { href: '/admin/organizations', label: 'Orgs & Churches',   icon: Building2,                    roles: ['super_admin','admin'] },
   { href: '/admin/users',         label: 'Users',             icon: Users,                        roles: ['super_admin','admin'] },
   { href: '/admin/featured',      label: 'Featured Events',   icon: Star,                         roles: ['super_admin','admin'] },
   { href: '/admin/categories',    label: 'Categories',        icon: Tag,                          roles: ['super_admin'] },
-  { href: '/admin/moderation',          label: 'Moderation',          icon: Shield,         roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/moderation',          label: 'Moderation',          icon: Shield, badge: true, roles: ['super_admin','admin','moderator'] },
   { href: '/admin/contact-submissions', label: 'Contact Submissions', icon: MessageSquare,  roles: ['super_admin','admin'] },
   { href: '/admin/analytics',           label: 'Analytics',           icon: BarChart2,      roles: ['super_admin','admin'] },
   { href: '/admin/team',                label: 'Admin Management',    icon: Lock,           roles: ['super_admin'] },
@@ -48,7 +48,7 @@ export default function AdminSidebar({ adminUser, pendingCount }: Props) {
       {/* Pending alert */}
       {pendingCount > 0 && (
         <Link
-          href="/admin/events?status=pending"
+          href="/admin/moderation"
           className="mx-3 mt-4 flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-medium px-3 py-2 rounded-lg hover:bg-amber-500/20 transition-colors"
         >
           <Bell className="w-3.5 h-3.5 flex-shrink-0" />
