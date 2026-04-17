@@ -117,10 +117,29 @@ function SignUpForm() {
   const router = useRouter()
   const supabase = createClient()
 
-  // If already signed in, skip signup
+  // On mount: clean up any ghost/orphaned Supabase auth state.
+  // This covers the "Google back button" case — when a user starts OAuth,
+  // abandons it by pressing back, and Supabase has written a broken partial
+  // session to localStorage. Left in place, it causes an infinite redirect loop.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace('/dashboard')
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        // Valid full session → already logged in, go to dashboard
+        router.replace('/dashboard')
+        return
+      }
+      // No valid session — clear any leftover PKCE / partial OAuth tokens from
+      // localStorage that Supabase may have written during an abandoned OAuth flow.
+      try {
+        const keysToRemove: string[] = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+            keysToRemove.push(key)
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k))
+      } catch { /* localStorage unavailable (e.g. SSR or private mode) */ }
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

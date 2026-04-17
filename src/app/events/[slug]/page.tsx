@@ -15,6 +15,7 @@ import ViewCounter from '@/components/ui/ViewCounter'
 import ShareButton from '@/components/ui/ShareButton'
 import EventQuickActions from './_components/EventQuickActions'
 import DownloadFlyerButton from './_components/DownloadFlyerButton'
+import AddToCalendar from './_components/AddToCalendar'
 import ReadMoreText from './_components/ReadMoreText'
 import { checkUserAttended } from '@/app/actions/attendance'
 
@@ -404,7 +405,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <hr className="border-gray-100 my-5" />
 
             {/* CTA — mobile only (desktop: right sidebar) */}
-            <div id="attend" className="lg:hidden">
+            <div id="attend" className="lg:hidden space-y-2">
               {lifecycle !== 'ended' ? (
                 <AttendButton
                   eventId={e.id}
@@ -424,8 +425,15 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   This event has ended
                 </div>
               )}
+              <AddToCalendar
+                title={e.title}
+                startDate={e.start_date}
+                endDate={e.end_date}
+                location={shareEventLocation}
+                description={e.description}
+              />
               {e.banner_url && (
-                <div className="mt-3">
+                <div className="mt-1">
                   <DownloadFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
                 </div>
               )}
@@ -667,7 +675,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               )}
 
               {/* CTA */}
-              <div>
+              <div className="space-y-2">
                 {lifecycle !== 'ended' ? (
                   <AttendButton
                     eventId={e.id}
@@ -687,6 +695,13 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     This event has ended
                   </div>
                 )}
+                <AddToCalendar
+                  title={e.title}
+                  startDate={e.start_date}
+                  endDate={e.end_date}
+                  location={shareEventLocation}
+                  description={e.description}
+                />
               </div>
 
               <hr className="border-gray-100" />

@@ -26,7 +26,8 @@ async function getHomepageData() {
       churchesRes,
       statsEventsRes,
       statsChurchesRes,
-      statsUsersRes,
+      statsOrganizersRes,
+      statsCitiesRes,
       categoriesRes,
     ] = await Promise.all([
       supabase
@@ -52,9 +53,10 @@ async function getHomepageData() {
         .order('start_date', { ascending: true })
         .limit(12),
       supabase.from('churches').select('*').eq('is_featured', true).limit(6),
-      supabase.from('events').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
-      supabase.from('churches').select('id', { count: 'exact', head: true }),
-      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('events').select('id', { count: 'exact', head: true }),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_type', 'church'),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_type', 'organizer'),
+      adminClient.from('events').select('city').eq('status', 'approved').not('city', 'is', null),
       adminClient
         .from('categories')
         .select('id, name, slug, icon, color')
@@ -83,6 +85,11 @@ async function getHomepageData() {
       }
     }
 
+    // Count distinct cities where approved events are held
+    const uniqueCities = new Set(
+      (statsCitiesRes.data ?? []).map((r: { city: string }) => r.city?.trim().toLowerCase()).filter(Boolean)
+    ).size
+
     return {
       featuredEvents,
       upcomingEvents,
@@ -91,7 +98,8 @@ async function getHomepageData() {
       stats: {
         events: statsEventsRes.count ?? 0,
         churches: statsChurchesRes.count ?? 0,
-        users: statsUsersRes.count ?? 0,
+        organizers: statsOrganizersRes.count ?? 0,
+        cities: uniqueCities,
       },
       heroSettings: heroSettingsRes.data ?? null,
       attendanceCountMap,
@@ -102,7 +110,7 @@ async function getHomepageData() {
       upcomingEvents: [],
       featuredChurches: [],
       categories: [],
-      stats: { events: 0, churches: 0, users: 0 },
+      stats: { events: 0, churches: 0, organizers: 0, cities: 0 },
       heroSettings: null,
       attendanceCountMap: {} as Record<string, number>,
     }
@@ -248,10 +256,10 @@ export default async function HomePage() {
             {/* Stats */}
             <div className="mt-16 pt-8 border-t border-white/10 grid grid-cols-2 gap-x-6 gap-y-5 sm:flex sm:gap-12">
               {[
-                { value: stats.events > 0 ? `${stats.events}+` : '—',   label: 'Events listed' },
+                { value: stats.events > 0 ? `${stats.events}+` : '—',     label: 'Events created' },
                 { value: stats.churches > 0 ? `${stats.churches}+` : '—', label: 'Churches' },
-                { value: '36',                                              label: 'Nigerian states' },
-                { value: stats.users > 0 ? `${stats.users}+` : '—',     label: 'Members' },
+                { value: stats.cities > 0 ? `${stats.cities}+` : '36',    label: 'Cities covered' },
+                { value: stats.organizers > 0 ? `${stats.organizers}+` : '—', label: 'Organizers' },
               ].map((stat) => (
                 <div key={stat.label} className="text-center sm:text-left">
                   <p className="text-3xl font-black text-white tracking-tight">{stat.value}</p>

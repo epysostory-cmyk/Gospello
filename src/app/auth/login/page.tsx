@@ -38,12 +38,23 @@ function LoginPage() {
 
   const reason = searchParams.get('reason')
 
-  // If already signed in, skip the login page entirely
+  // If already signed in, skip the login page entirely.
+  // Also clears any orphaned OAuth state (e.g. after user presses Back from Google).
   useEffect(() => {
-    // Don't redirect if account was deleted — show the message instead
     if (reason === 'deleted') return
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace('/dashboard')
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) { router.replace('/dashboard'); return }
+      // No valid session — wipe any leftover PKCE / partial OAuth tokens
+      try {
+        const keysToRemove: string[] = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+            keysToRemove.push(key)
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k))
+      } catch { /* ignore */ }
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
