@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Eye, EyeOff, Loader2, Check } from 'lucide-react'
 
@@ -17,8 +17,17 @@ function GoogleIcon() {
   )
 }
 
-export default function LoginPage() {
+export default function LoginPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#7C3AED]" /></div>}>
+      <LoginPage />
+    </Suspense>
+  )
+}
+
+function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const [email, setEmail]               = useState('')
   const [password, setPassword]         = useState('')
@@ -27,8 +36,12 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]               = useState('')
 
+  const reason = searchParams.get('reason')
+
   // If already signed in, skip the login page entirely
   useEffect(() => {
+    // Don't redirect if account was deleted — show the message instead
+    if (reason === 'deleted') return
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.replace('/dashboard')
     })
@@ -55,6 +68,12 @@ export default function LoginPage() {
 
   const formContent = (
     <div className="w-full max-w-[420px] mx-auto">
+      {reason === 'deleted' && (
+        <div className="mb-4 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
+          <p className="font-semibold mb-0.5">Your account no longer exists.</p>
+          <p className="text-red-600">If you think this is a mistake, please contact <a href="mailto:support@gospello.com" className="underline font-medium">support@gospello.com</a></p>
+        </div>
+      )}
       {error && (
         <div className="mb-4 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
           {error}

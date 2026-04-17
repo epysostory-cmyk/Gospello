@@ -7,7 +7,16 @@ import DashboardBottomNav from './DashboardBottomNav'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+
+  // getSession() reads local cookie (fast, no network call)
+  // getUser()    verifies with Supabase server (detects deleted accounts)
+  const [{ data: { session } }, { data: { user } }] = await Promise.all([
+    supabase.auth.getSession(),
+    supabase.auth.getUser(),
+  ])
+
+  // Session exists but user doesn't → account was deleted by admin
+  if (session && !user) redirect('/auth/login?reason=deleted')
 
   if (!user) redirect('/auth/login')
 
