@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
+import Navbar from '@/components/layout/Navbar'
+import Footer from '@/components/layout/Footer'
 import ConditionalLayout from '@/components/layout/ConditionalLayout'
 import ScrollToTop from '@/components/ui/ScrollToTop'
 import { getSiteSettings } from '@/app/actions/site-settings'
@@ -42,7 +44,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={`min-h-full flex flex-col bg-gray-50 ${plusJakartaSans.variable}`}>
         <ScrollToTop />
-        <ConditionalLayout logoUrl={settings.site_logo_url} siteName={settings.site_name}>
+        <ConditionalLayout
+          navbar={<Navbar logoUrl={settings.site_logo_url} siteName={settings.site_name} />}
+          footer={<Footer />}
+        >
           {children}
         </ConditionalLayout>
       </body>

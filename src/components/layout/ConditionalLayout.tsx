@@ -1,16 +1,14 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import Navbar from './Navbar'
-import Footer from './Footer'
 
 interface Props {
   children: React.ReactNode
-  logoUrl?: string | null
-  siteName?: string
+  navbar: React.ReactNode
+  footer: React.ReactNode
 }
 
-export default function ConditionalLayout({ children, logoUrl, siteName }: Props) {
+export default function ConditionalLayout({ children, navbar, footer }: Props) {
   const pathname = usePathname()
   const isAuthPage = pathname.startsWith('/auth')
 
@@ -20,9 +18,9 @@ export default function ConditionalLayout({ children, logoUrl, siteName }: Props
 
   return (
     <>
-      <Navbar logoUrl={logoUrl} siteName={siteName} />
+      {navbar}
       <main className="flex-1">{children}</main>
-      <Footer />
+      {footer}
     </>
   )
 }
