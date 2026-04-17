@@ -135,6 +135,7 @@ function SignUpForm() {
   const [loading, setLoading]           = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]               = useState('')
+  const [emailError, setEmailError]     = useState('')
   const [success, setSuccess]           = useState(false)
   const [shake, setShake]               = useState(false)
 
@@ -158,6 +159,7 @@ function SignUpForm() {
     if (password.length < 6) { setError('Password must be at least 6 characters'); triggerShake(); return }
     setLoading(true)
     setError('')
+    setEmailError('')
 
     const emailCheckRes = await fetch('/api/auth/check-email', {
       method: 'POST',
@@ -166,7 +168,7 @@ function SignUpForm() {
     })
     const { exists } = await emailCheckRes.json()
     if (exists) {
-      setError('An account with this email already exists. Sign in instead?')
+      setEmailError('exists')
       setLoading(false)
       triggerShake()
       return
@@ -254,11 +256,7 @@ function SignUpForm() {
       {/* Error banner */}
       {error && (
         <div className="mb-4 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
-          {error.includes('Sign in instead') ? (
-            <span>An account with this email already exists.{' '}
-              <a href="/auth/login" className="font-semibold underline text-red-800">Sign in instead?</a>
-            </span>
-          ) : error}
+          {error}
         </div>
       )}
 
@@ -340,11 +338,20 @@ function SignUpForm() {
           <p className="text-[11px] text-gray-400 mt-1.5 px-1">Enter the full official name of your church (at least 2 words)</p>
         </div>
 
-        <Field
-          id="email" label="Email Address" type="email" value={email}
-          onChange={setEmail} placeholder="Enter your email address"
-          required autoComplete="email" shake={shake}
-        />
+        <div>
+          <Field
+            id="email" label="Email Address" type="email" value={email}
+            onChange={v => { setEmail(v); setEmailError('') }}
+            placeholder="Enter your email address"
+            required autoComplete="email" shake={shake && !!emailError}
+          />
+          {emailError === 'exists' && (
+            <p className="mt-1.5 text-[13px] text-red-600">
+              An account with this email already exists.{' '}
+              <Link href="/auth/login" className="font-semibold underline text-red-700">Sign in instead?</Link>
+            </p>
+          )}
+        </div>
 
         {/* Password with show/hide + strength */}
         <div className={shake ? 'animate-shake' : ''}>

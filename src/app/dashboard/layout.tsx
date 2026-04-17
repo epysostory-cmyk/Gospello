@@ -15,7 +15,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     supabase.auth.getUser(),
   ])
 
-  if (session && !user) redirect('/auth/login?reason=deleted')
+  if (session && !user) {
+    // Broken session — clear it server-side before redirecting
+    await supabase.auth.signOut()
+    redirect('/auth/login?reason=deleted')
+  }
   if (!user) redirect('/auth/login')
 
   // Block unverified email accounts
