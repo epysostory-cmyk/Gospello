@@ -40,7 +40,15 @@ export default function AttendButton({
   // If we got server-side user data, skip the loading state entirely
   const [loadingUser, setLoadingUser] = useState(!serverUserId && serverUserId !== null ? true : serverUserId === undefined)
   const [showForm, setShowForm] = useState(false)
-  const [attended, setAttended] = useState(initialAttended)
+  // For anonymous guests, initialAttended is always false from the server.
+  // Read localStorage immediately so the button shows the right state on mount.
+  const [attended, setAttended] = useState(() => {
+    if (initialAttended) return true
+    if (typeof window !== 'undefined') {
+      return !!localStorage.getItem(`gospello_attended_${eventId}`)
+    }
+    return false
+  })
   const [count, setCount] = useState(initialCount)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -83,7 +91,7 @@ export default function AttendButton({
   }, [])
 
   // Determine which attendance mode applies.
-  // registration_type is the source of truth when present; fall back to legacy is_free/rsvp_required for older events.
+  // registration_type is the source of truth when explicitly set; fall back to is_free/rsvp_required for older events.
   // • instant — free, no registration required → one-tap attend
   // • rsvp    — free but registration required → fill form + instant ticket
   // • paid    — paid event → fill form + payment redirect + confirm
@@ -94,6 +102,10 @@ export default function AttendButton({
     : !isFree ? 'paid'
     : rsvpRequired ? 'rsvp'
     : 'instant'
+
+  // Guest one-tap is ONLY allowed when the organiser explicitly chose "Free — No Registration".
+  // For legacy events (registration_type null) or any rsvp mode, guests always see the form.
+  const guestCanOneTap = registrationType === 'free_no_registration'
 
   const doInstantAttend = async () => {
     setBusy(true)
@@ -133,11 +145,17 @@ export default function AttendButton({
 
   const handleClick = () => {
     if (mode === 'instant') {
-      // Free + no registration: one-tap attend for everyone (user or guest)
-      if (user) doInstantAttend()
-      else doAnonymousAttend()
+      if (user) {
+        doInstantAttend()
+      } else if (guestCanOneTap) {
+        // Explicitly free-no-registration: guest one-tap, no form
+        doAnonymousAttend()
+      } else {
+        // Legacy event without explicit registration_type: show form so guest can enter name+email
+        setShowForm(true)
+      }
     } else {
-      // rsvp or paid: show name+email form — no account needed
+      // rsvp or paid: always show name+email form
       setShowForm(true)
     }
   }
