@@ -30,6 +30,7 @@ export const metadata: Metadata = {
     locale: 'en_NG',
     siteName: 'Gospello',
     url: siteUrl,
+    images: [{ url: `${siteUrl}/og-default.jpg`, width: 1200, height: 630, alt: 'Gospello' }],
   },
 }
 

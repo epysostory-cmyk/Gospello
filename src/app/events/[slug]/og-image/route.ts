@@ -16,29 +16,25 @@ export async function GET(
   const { slug } = await params
   const admin = createAdminClient()
 
-  const { data, error } = await admin
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
+  const defaultOgImage = `${siteUrl}/og-default.jpg`
+
+  const { data } = await admin
     .from('events')
     .select('banner_url')
     .eq('slug', slug)
     .maybeSingle()
 
-  // Temporary debug — remove after confirming it works
-  if (error || !data?.banner_url) {
-    return NextResponse.json({
-      slug,
-      found: !!data,
-      hasBanner: !!data?.banner_url,
-      error: error?.message ?? null,
-    }, { status: 404 })
-  }
-
-  // Strip any Supabase signed-URL tokens — public bucket URLs don't need them
-  const imageUrl = data.banner_url.split('?')[0]
+  // If no banner, redirect to the default branded OG image
+  const imageUrl = data?.banner_url
+    ? data.banner_url.split('?')[0]
+    : defaultOgImage
 
   try {
     const upstream = await fetch(imageUrl)
     if (!upstream.ok) {
-      return new NextResponse('Image unavailable', { status: 502 })
+      // Even the upstream failed — send the default as a hard redirect
+      return NextResponse.redirect(defaultOgImage, { status: 302 })
     }
 
     const buffer = await upstream.arrayBuffer()
@@ -47,12 +43,10 @@ export async function GET(
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': contentType,
-        // Cache for 1 hour on CDN edge, 24 h in browser — WhatsApp re-scrapes
-        // infrequently, so a longer edge TTL is fine.
         'Cache-Control': 'public, max-age=86400, s-maxage=3600',
       },
     })
   } catch {
-    return new NextResponse('Failed to fetch image', { status: 500 })
+    return NextResponse.redirect(defaultOgImage, { status: 302 })
   }
 }

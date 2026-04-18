@@ -37,19 +37,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const pageUrl = `${siteUrl}/events/${slug}`
   const description = data.description?.substring(0, 155) ?? ''
 
-  // Serve the banner through our own proxy route (/events/[slug]/og-image).
-  // Pointing og:image directly at Supabase Storage URLs causes WhatsApp's
-  // scraper (Facebook's facebookexternalhit) to silently fail — it often
-  // cannot fetch images from third-party CDN domains. The proxy route fetches
-  // the image server-side and re-serves it from gospello.com, which the
-  // scraper trusts and which we can cache-control correctly.
-  const ogImageUrl = data.banner_url
-    ? `${siteUrl}/events/${slug}/og-image`
-    : null
+  // Always use the proxy route for og:image — it serves the event banner if
+  // available, or falls back to /og-default.jpg. This keeps all OG images on
+  // the gospello.com domain so WhatsApp's scraper (facebookexternalhit) can
+  // reliably fetch them (it often fails on third-party CDN domains like Supabase).
+  const ogImageUrl = `${siteUrl}/events/${slug}/og-image`
 
-  const ogImages = ogImageUrl
-    ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title, type: 'image/jpeg' }]
-    : []
+  const ogImage = { url: ogImageUrl, width: 1200, height: 630, alt: data.title, type: 'image/jpeg' }
 
   return {
     title: data.title,
@@ -60,14 +54,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url: pageUrl,
       type: 'article',
       siteName: 'Gospello',
-      images: ogImages,
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       site: '@gospello',
       title: data.title,
       description,
-      images: ogImageUrl ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }] : [],
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }],
     },
   }
 }
