@@ -44,7 +44,6 @@ interface FormState {
   capacity: string
   tags: string[]
   banner_url: string
-  gallery_urls: string[]
   visibility: 'draft' | 'public'
   speakers: string
   parking_available: boolean
@@ -76,7 +75,6 @@ const INITIAL_FORM_STATE: FormState = {
   capacity: '',
   tags: [],
   banner_url: '',
-  gallery_urls: [],
   visibility: 'public',
   speakers: '',
   parking_available: false,
@@ -134,7 +132,6 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         capacity: initialEvent.capacity?.toString() || '',
         tags: initialEvent.tags || [],
         banner_url: initialEvent.banner_url || '',
-        gallery_urls: initialEvent.gallery_urls || [],
         visibility: (initialEvent.visibility as 'draft' | 'public') || 'public',
         speakers: initialEvent.speakers || '',
         parking_available: initialEvent.parking_available || false,
@@ -287,7 +284,7 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         capacity: formData.capacity ? parseInt(formData.capacity) : null,
         tags: formData.tags,
         banner_url: formData.banner_url,
-        gallery_urls: formData.gallery_urls,
+        gallery_urls: [],
         visibility: formData.visibility,
         status: 'pending',
         speakers: formData.speakers || null,

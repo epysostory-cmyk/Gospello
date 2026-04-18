@@ -187,22 +187,6 @@ export default function Step6Review({ formData, updateForm, goToStep }: StepProp
         )}
       </div>
 
-      {/* Gallery — Step 4 */}
-      {formData.gallery_urls.length > 0 && (
-        <div className="bg-white rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className={labelCls}>Gallery ({formData.gallery_urls.length} images)</p>
-            <EditBtn step={4} />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {formData.gallery_urls.map((url: string, i: number) => (
-              <div key={i} className="relative aspect-square rounded-xl overflow-hidden">
-                <Image src={url} alt={`Gallery ${i + 1}`} fill className="object-cover" />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Ready to go */}
       <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100">
