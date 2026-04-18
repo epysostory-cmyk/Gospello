@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Loader2, CheckCircle2, UserPlus, UserMinus, UserCheck, Ticket, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { instantAttend, unattend, anonymousAttend } from '@/app/actions/attendance'
-import { registerForEvent, confirmPayment } from '@/app/actions/registrations'
+import { registerForEvent, confirmPayment, regenerateTicket } from '@/app/actions/registrations'
 import type { User } from '@supabase/supabase-js'
 
 interface Props {
@@ -21,6 +21,8 @@ interface Props {
   serverUserId?: string | null
   serverUserName?: string | null
   serverUserEmail?: string | null
+  /** True when the current user is the organizer of this event — hide the button */
+  isOrganizer?: boolean
 }
 
 export default function AttendButton({
@@ -35,23 +37,14 @@ export default function AttendButton({
   serverUserId,
   serverUserName,
   serverUserEmail,
+  isOrganizer = false,
 }: Props) {
   const [user, setUser] = useState<User | null>(null)
   // If we got server-side user data, skip the loading state entirely
   const [loadingUser, setLoadingUser] = useState(!serverUserId && serverUserId !== null ? true : serverUserId === undefined)
   const [showForm, setShowForm] = useState(false)
-  // For guests (anonymous or form-registered), initialAttended is always false from the server.
-  // Read localStorage immediately so the button shows the right state on mount.
-  const [attended, setAttended] = useState(() => {
-    if (initialAttended) return true
-    if (typeof window !== 'undefined') {
-      return (
-        !!localStorage.getItem(`gospello_attended_${eventId}`) ||
-        !!localStorage.getItem(`gospello_registered_${eventId}`)
-      )
-    }
-    return false
-  })
+  // Start with server-authoritative value; useEffect corrects for guests using localStorage
+  const [attended, setAttended] = useState(initialAttended)
   const [count, setCount] = useState(initialCount)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -69,6 +62,7 @@ export default function AttendButton({
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false)
   const [confirmingPayment, setConfirmingPayment] = useState(false)
   const [ticketConfirmed, setTicketConfirmed] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
 
 
   useEffect(() => {
@@ -92,6 +86,21 @@ export default function AttendButton({
       setLoadingUser(false)
     })
   }, [])
+
+  // After hydration, read localStorage to restore guest/form-registered state.
+  // This MUST be a useEffect — useState initialisers run on the server where
+  // window/localStorage don't exist, so SSR always returns false regardless.
+  useEffect(() => {
+    if (initialAttended) return // logged-in user already resolved server-side
+    const attended = localStorage.getItem(`gospello_attended_${eventId}`)
+    const regId    = localStorage.getItem(`gospello_regid_${eventId}`)
+    const ticketNum = localStorage.getItem(`gospello_ticketnum_${eventId}`)
+    if (attended || regId) {
+      setAttended(true)
+      if (regId) setRegistrationId(regId)
+      if (ticketNum) setTicketNumber(Number(ticketNum))
+    }
+  }, [eventId, initialAttended])
 
   // Determine which attendance mode applies.
   // registration_type is the source of truth when explicitly set; fall back to is_free/rsvp_required for older events.
@@ -190,6 +199,12 @@ export default function AttendButton({
       setSubmitting(false)
       return
     }
+    const words = trimmedName.split(/\s+/).filter(Boolean)
+    if (words.length < 2) {
+      setError('Please enter your full name (first and last name).')
+      setSubmitting(false)
+      return
+    }
     if (/^[0-9\s]+$/.test(trimmedName)) {
       setError('Please enter a valid name.')
       setSubmitting(false)
@@ -202,6 +217,11 @@ export default function AttendButton({
     if (result.alreadyRegistered) {
       setAttended(true)
       setShowForm(false)
+      // Restore any saved regId/ticketNumber from localStorage so re-download works
+      const savedRegId = localStorage.getItem(`gospello_regid_${eventId}`)
+      const savedTicketNum = localStorage.getItem(`gospello_ticketnum_${eventId}`)
+      if (savedRegId) setRegistrationId(savedRegId)
+      if (savedTicketNum) setTicketNumber(Number(savedTicketNum))
       setError('You already registered with this email. Check your inbox for your ticket.')
       setSubmitting(false)
       return
@@ -215,7 +235,8 @@ export default function AttendButton({
       setTicketNumber(result.ticketNumber ?? null)
       // Persist so the button stays in "registered" state after a page refresh
       if (typeof window !== 'undefined') {
-        localStorage.setItem(`gospello_registered_${eventId}`, '1')
+        if (result.registrationId) localStorage.setItem(`gospello_regid_${eventId}`, result.registrationId)
+        if (result.ticketNumber)    localStorage.setItem(`gospello_ticketnum_${eventId}`, String(result.ticketNumber))
       }
 
       if (mode === 'rsvp') {
@@ -251,13 +272,39 @@ export default function AttendButton({
     setConfirmingPayment(false)
   }
 
-  const downloadTicket = () => {
-    if (!ticketPdfBase64) return
-    const ticketStr = String(ticketNumber ?? 1).padStart(4, '0')
+  const downloadTicket = (base64?: string | null, num?: number | null) => {
+    const pdf = base64 ?? ticketPdfBase64
+    if (!pdf) return
+    const ticketStr = String(num ?? ticketNumber ?? 1).padStart(4, '0')
     const link = document.createElement('a')
-    link.href = `data:application/pdf;base64,${ticketPdfBase64}`
+    link.href = `data:application/pdf;base64,${pdf}`
     link.download = `gospello-ticket-${ticketStr}.pdf`
     link.click()
+  }
+
+  const handleRedownload = async () => {
+    if (!registrationId) return
+    setRegenerating(true)
+    setError('')
+    const result = await regenerateTicket(registrationId)
+    if (result.success && result.ticketPdfBase64) {
+      setTicketPdfBase64(result.ticketPdfBase64)
+      setTicketNumber(result.ticketNumber ?? ticketNumber)
+      downloadTicket(result.ticketPdfBase64, result.ticketNumber ?? ticketNumber)
+    } else {
+      setError(result.error ?? 'Could not retrieve ticket. Please try again.')
+    }
+    setRegenerating(false)
+  }
+
+  // ── Organizer: cannot attend their own event ──────────────
+  if (isOrganizer) {
+    return (
+      <div className="w-full flex items-center justify-center gap-2 bg-gray-50 text-gray-500 font-medium py-3.5 rounded-2xl border border-gray-200 text-sm">
+        <UserCheck className="w-4 h-4" />
+        You&apos;re organizing this event
+      </div>
+    )
   }
 
   if (loadingUser) {
@@ -300,7 +347,7 @@ export default function AttendButton({
         </div>
         <p className="text-center text-xs text-gray-500">Your ticket has been emailed to you.</p>
         <button
-          onClick={downloadTicket}
+          onClick={() => downloadTicket()}
           className="w-full flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 font-medium py-2.5 rounded-xl hover:bg-indigo-50 transition-colors text-sm"
         >
           <Download className="w-4 h-4" />
@@ -310,12 +357,25 @@ export default function AttendButton({
     )
   }
 
-  // ── Registered state — rsvp, no ticket yet (fallback) ───────
+  // ── Registered state — rsvp, no ticket in memory (refresh fallback) ──
   if (attended && mode === 'rsvp') {
     return (
-      <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
-        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-        You&apos;re registered!
+      <div className="space-y-2">
+        <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
+          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          You&apos;re registered! 🎉
+        </div>
+        {registrationId && (
+          <button
+            onClick={handleRedownload}
+            disabled={regenerating}
+            className="w-full flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 font-medium py-2.5 rounded-xl hover:bg-indigo-50 disabled:opacity-60 transition-colors text-sm"
+          >
+            {regenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {regenerating ? 'Getting ticket...' : `Download Ticket${ticketNumber ? ` #${String(ticketNumber).padStart(4, '0')}` : ''}`}
+          </button>
+        )}
+        {error && <p className="text-red-600 text-xs text-center">{error}</p>}
       </div>
     )
   }
@@ -330,7 +390,7 @@ export default function AttendButton({
         </div>
         <p className="text-center text-xs text-gray-500">Your ticket has been emailed to you.</p>
         <button
-          onClick={downloadTicket}
+          onClick={() => downloadTicket()}
           className="w-full flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 font-medium py-2.5 rounded-xl hover:bg-indigo-50 transition-colors text-sm"
         >
           <Download className="w-4 h-4" />

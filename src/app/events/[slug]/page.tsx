@@ -419,6 +419,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   serverUserId={currentUser?.id ?? null}
                   serverUserName={currentUser?.user_metadata?.display_name ?? null}
                   serverUserEmail={currentUser?.email ?? null}
+                  isOrganizer={!!currentUser && currentUser.id === e.organizer_id}
                 />
               ) : (
                 <div className="w-full text-center text-sm text-gray-400 py-3.5 bg-gray-50 rounded-2xl border border-gray-100">
@@ -689,6 +690,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     serverUserId={currentUser?.id ?? null}
                     serverUserName={currentUser?.user_metadata?.display_name ?? null}
                     serverUserEmail={currentUser?.email ?? null}
+                    isOrganizer={!!currentUser && currentUser.id === e.organizer_id}
                   />
                 ) : (
                   <div className="w-full text-center text-sm text-gray-400 py-3.5 bg-gray-50 rounded-2xl border border-gray-100">
