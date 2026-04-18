@@ -62,7 +62,9 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
   const handleSignOut = async () => {
     if (signingOut) return
     setSigningOut(true)
-    await supabase.auth.signOut()
+    // POST to server-side sign out — clears the auth cookie properly
+    // Client-only signOut() leaves the server cookie alive causing stale sessions
+    await fetch('/api/auth/signout', { method: 'POST' })
     window.location.href = '/'
   }
 
