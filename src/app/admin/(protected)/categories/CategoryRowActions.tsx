@@ -45,6 +45,7 @@ export default function CategoryRowActions({
 
   // edit form state
   const [editName, setEditName] = useState(name)
+  const [editSlug, setEditSlug] = useState(slug)
   const [editDesc, setEditDesc] = useState(description)
   const [editIcon, setEditIcon] = useState(icon)
   const [editColor, setEditColor] = useState(color)
@@ -52,6 +53,7 @@ export default function CategoryRowActions({
 
   const openEdit = () => {
     setEditName(name)
+    setEditSlug(slug)
     setEditDesc(description)
     setEditIcon(icon)
     setEditColor(color)
@@ -59,11 +61,17 @@ export default function CategoryRowActions({
     setShowEdit(true)
   }
 
+  const handleNameChange = (val: string) => {
+    setEditName(val)
+    setEditSlug(val.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))
+  }
+
   const handleSave = () => {
     setEditError('')
     startTransition(async () => {
-      const result = await updateCategory(id, {
+      const result = await updateCategory(id, slug, {
         name: editName,
+        slug: editSlug,
         description: editDesc,
         icon: editIcon,
         color: editColor,
@@ -197,14 +205,26 @@ export default function CategoryRowActions({
                   type="text"
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
+                  placeholder="Category name"
                   className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
-              {/* Slug (read-only) */}
+              {/* Slug */}
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">Slug <span className="text-gray-600">(cannot be changed)</span></label>
-                <code className="block w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-500 text-sm">{slug}</code>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                  Slug *
+                  {editSlug !== slug && (
+                    <span className="ml-2 text-amber-400 text-xs font-normal">⚠ All events in this category will be updated</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  value={editSlug}
+                  onChange={e => setEditSlug(e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))}
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                />
+                <p className="text-xs text-gray-600 mt-1">Lowercase letters, numbers and hyphens only</p>
               </div>
 
               {/* Description */}
