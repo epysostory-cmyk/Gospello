@@ -42,8 +42,8 @@ function LoginPage() {
   // Also clears any orphaned OAuth state (e.g. after user presses Back from Google).
   useEffect(() => {
     if (reason === 'deleted') return
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session) { router.replace('/dashboard'); return }
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) { router.replace('/dashboard'); return }
       // No valid session — wipe any leftover PKCE / partial OAuth tokens
       try {
         const keysToRemove: string[] = []

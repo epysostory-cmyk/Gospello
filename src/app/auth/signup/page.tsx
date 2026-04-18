@@ -122,9 +122,9 @@ function SignUpForm() {
   // abandons it by pressing back, and Supabase has written a broken partial
   // session to localStorage. Left in place, it causes an infinite redirect loop.
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session) {
-        // Valid full session → already logged in, go to dashboard
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        // Valid session → already logged in, go to dashboard
         router.replace('/dashboard')
         return
       }
