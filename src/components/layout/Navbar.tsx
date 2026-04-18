@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { Menu, X, Search, Shield, ChevronRight, LogOut } from 'lucide-react'
+import { Menu, X, Search, Shield, ChevronRight, LogOut, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { usePathname } from 'next/navigation'
@@ -23,6 +23,7 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
   const [menuOpen, setMenuOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const supabase = createClient()
   const pathname = usePathname()
@@ -59,6 +60,8 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
   useEffect(() => { setMenuOpen(false) }, [pathname])
 
   const handleSignOut = async () => {
+    if (signingOut) return
+    setSigningOut(true)
     await supabase.auth.signOut()
     window.location.href = '/'
   }
@@ -143,10 +146,11 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
                   </Link>
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-red-500 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                    disabled={signingOut}
+                    className="flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-red-500 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-60"
                   >
-                    <LogOut className="w-4 h-4" />
-                    Sign out
+                    {signingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+                    {signingOut ? 'Signing out...' : 'Sign out'}
                   </button>
                 </div>
               ) : (
@@ -239,10 +243,11 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
                   </Link>
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors"
+                    disabled={signingOut}
+                    className="w-full flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors disabled:opacity-60 min-h-[52px]"
                   >
-                    <LogOut className="w-4 h-4" />
-                    Sign out
+                    {signingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+                    {signingOut ? 'Signing out...' : 'Sign out'}
                   </button>
                 </>
               ) : (
