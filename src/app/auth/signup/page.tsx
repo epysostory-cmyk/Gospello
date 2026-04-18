@@ -180,19 +180,6 @@ function SignUpForm() {
     setError('')
     setEmailError('')
 
-    const emailCheckRes = await fetch('/api/auth/check-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
-    const { exists } = await emailCheckRes.json()
-    if (exists) {
-      setEmailError('exists')
-      setLoading(false)
-      triggerShake()
-      return
-    }
-
     const displayName = accountType === 'church' ? churchName.trim() : fullName.trim()
 
     const { data, error: signUpError } = await supabase.auth.signUp({
