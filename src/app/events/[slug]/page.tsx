@@ -37,19 +37,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const pageUrl = `${siteUrl}/events/${slug}`
   const description = data.description?.substring(0, 155) ?? ''
 
-  // Strip query params — Supabase signed-URL tokens break social media scrapers
-  const cleanBannerUrl = data.banner_url ? data.banner_url.split('?')[0] : null
+  // Serve the banner through our own proxy route (/events/[slug]/og-image).
+  // Pointing og:image directly at Supabase Storage URLs causes WhatsApp's
+  // scraper (Facebook's facebookexternalhit) to silently fail — it often
+  // cannot fetch images from third-party CDN domains. The proxy route fetches
+  // the image server-side and re-serves it from gospello.com, which the
+  // scraper trusts and which we can cache-control correctly.
+  const ogImageUrl = data.banner_url
+    ? `${siteUrl}/events/${slug}/og-image`
+    : null
 
-  // Derive MIME type from clean URL extension
-  const bannerExt = cleanBannerUrl?.split('.').pop()?.toLowerCase() ?? ''
-  const mimeMap: Record<string, string> = {
-    jpg: 'image/jpeg', jpeg: 'image/jpeg',
-    png: 'image/png', webp: 'image/webp', gif: 'image/gif',
-  }
-  const bannerMime = mimeMap[bannerExt] ?? 'image/jpeg'
-
-  const ogImages = cleanBannerUrl
-    ? [{ url: cleanBannerUrl, width: 1200, height: 630, alt: data.title, type: bannerMime }]
+  const ogImages = ogImageUrl
+    ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title, type: 'image/jpeg' }]
     : []
 
   return {
@@ -68,7 +67,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       site: '@gospello',
       title: data.title,
       description,
-      images: cleanBannerUrl ? [{ url: cleanBannerUrl, width: 1200, height: 630, alt: data.title }] : [],
+      images: ogImageUrl ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }] : [],
     },
   }
 }
