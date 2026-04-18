@@ -16,14 +16,16 @@ export async function GET(
   const { slug } = await params
   const admin = createAdminClient()
 
-  const { data } = await admin
+  // No status filter — any event with a banner should be proxy-able.
+  // The event page's generateMetadata already restricts og:image tags to
+  // approved events; this route just serves whatever image is stored.
+  const { data, error } = await admin
     .from('events')
     .select('banner_url')
     .eq('slug', slug)
-    .eq('status', 'approved')
-    .single()
+    .maybeSingle()
 
-  if (!data?.banner_url) {
+  if (error || !data?.banner_url) {
     return new NextResponse('Not found', { status: 404 })
   }
 
