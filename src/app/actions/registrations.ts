@@ -49,6 +49,24 @@ export async function registerForEvent(
       return { success: false, error: 'You cannot register for your own event.' }
     }
 
+    // ── Guard: capacity check ────────────────────────────────
+    const { data: eventCapacity } = await admin
+      .from('events')
+      .select('capacity')
+      .eq('id', eventId)
+      .single()
+
+    if (eventCapacity?.capacity != null && eventCapacity.capacity > 0) {
+      const { count: currentCount } = await admin
+        .from('attendances')
+        .select('id', { count: 'exact', head: true })
+        .eq('event_id', eventId)
+
+      if ((currentCount ?? 0) >= eventCapacity.capacity) {
+        return { success: false, error: 'Sorry, this event is full. No more spots available.' }
+      }
+    }
+
     // ── Guard: already registered? ──────────────────────────
     const { data: existing } = await admin
       .from('registrations')
