@@ -16,17 +16,20 @@ export async function GET(
   const { slug } = await params
   const admin = createAdminClient()
 
-  // No status filter — any event with a banner should be proxy-able.
-  // The event page's generateMetadata already restricts og:image tags to
-  // approved events; this route just serves whatever image is stored.
   const { data, error } = await admin
     .from('events')
     .select('banner_url')
     .eq('slug', slug)
     .maybeSingle()
 
+  // Temporary debug — remove after confirming it works
   if (error || !data?.banner_url) {
-    return new NextResponse('Not found', { status: 404 })
+    return NextResponse.json({
+      slug,
+      found: !!data,
+      hasBanner: !!data?.banner_url,
+      error: error?.message ?? null,
+    }, { status: 404 })
   }
 
   // Strip any Supabase signed-URL tokens — public bucket URLs don't need them
