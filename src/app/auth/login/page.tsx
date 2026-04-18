@@ -62,7 +62,7 @@ function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       const msg = error.message.toLowerCase()
       if (msg.includes('invalid login credentials') || msg.includes('invalid credentials') || msg.includes('user not found')) {
@@ -73,6 +73,15 @@ function LoginPage() {
       setLoading(false)
       return
     }
+
+    // Block unverified accounts — sign them out immediately and prompt to verify
+    if (data.user && !data.user.email_confirmed_at) {
+      await supabase.auth.signOut()
+      setError('Please verify your email before signing in. Check your inbox for the confirmation link we sent when you signed up.')
+      setLoading(false)
+      return
+    }
+
     router.push('/dashboard')
     router.refresh()
   }
