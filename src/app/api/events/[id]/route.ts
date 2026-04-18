@@ -35,7 +35,7 @@ export async function PUT(
       title: body.title,
       description: body.description,
       category: body.category,
-      status: body.status || 'pending', // Reset to pending on edit
+      status: 'pending', // Always reset to pending on edit — prevents self-approval
       visibility: body.visibility,
       start_date: body.start_date,
       end_date: body.end_date || null,

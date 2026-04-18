@@ -29,7 +29,8 @@ export async function registerForEvent(
   eventId: string,
   fullName: string,
   email: string,
-  registrationType: RegistrationType
+  registrationType: RegistrationType,
+  phone?: string,
 ): Promise<RegisterResult> {
   try {
     const supabase = await createClient()
@@ -78,13 +79,17 @@ export async function registerForEvent(
     }
 
     // ── Also insert attendance (drives count) ────────────────
-    await admin.from('attendances').insert({
+    const { error: attErr } = await admin.from('attendances').insert({
       event_id: eventId,
       user_id: user?.id ?? null,
       name: fullName.trim(),
       email: email.trim().toLowerCase(),
-      phone: null,
+      phone: phone?.trim() || null,
     })
+    // Duplicate attendance is fine (23505); any other error is logged but doesn't block the ticket
+    if (attErr && attErr.code !== '23505') {
+      console.error('registerForEvent attendance insert error:', attErr.message)
+    }
 
     // ── Fetch event details for PDF + email ──────────────────
     const { data: event } = await admin
@@ -154,7 +159,7 @@ interface ConfirmResult {
  * Called after a paid attendee confirms they've completed payment.
  * Sets paid_confirmed = true, generates the PDF ticket, and emails it.
  */
-export async function confirmPayment(registrationId: string): Promise<ConfirmResult> {
+export async function confirmPayment(registrationId: string, registrantEmail: string): Promise<ConfirmResult> {
   try {
     const admin = createAdminClient()
 
@@ -166,15 +171,19 @@ export async function confirmPayment(registrationId: string): Promise<ConfirmRes
       .single()
 
     if (fetchErr || !reg) return { success: false, error: 'Registration not found.' }
-    if (reg.paid_confirmed) {
-      // Already confirmed — just regenerate + return the PDF (idempotent)
+
+    // ── Ownership check — caller must be the registrant ──────
+    if (reg.email.toLowerCase() !== registrantEmail.trim().toLowerCase()) {
+      return { success: false, error: 'Unauthorized.' }
     }
 
-    // ── Mark as confirmed ────────────────────────────────────
-    await admin
-      .from('registrations')
-      .update({ paid_confirmed: true })
-      .eq('id', registrationId)
+    // ── Mark as confirmed (idempotent) ───────────────────────
+    if (!reg.paid_confirmed) {
+      await admin
+        .from('registrations')
+        .update({ paid_confirmed: true })
+        .eq('id', registrationId)
+    }
 
     // ── Fetch event details ──────────────────────────────────
     const { data: event } = await admin
@@ -228,6 +237,67 @@ export async function confirmPayment(registrationId: string): Promise<ConfirmRes
   }
 }
 
+/**
+ * Regenerates a ticket PDF for an existing registration.
+ * Used when the attendee refreshes the page and needs their ticket again.
+ */
+export async function regenerateTicket(registrationId: string, registrantEmail: string): Promise<ConfirmResult> {
+  try {
+    const admin = createAdminClient()
+
+    const { data: reg, error: fetchErr } = await admin
+      .from('registrations')
+      .select('id, event_id, full_name, email, ticket_number, registration_type, paid_confirmed')
+      .eq('id', registrationId)
+      .single()
+
+    if (fetchErr || !reg) return { success: false, error: 'Registration not found.' }
+
+    // ── Ownership check ──────────────────────────────────────
+    if (reg.email.toLowerCase() !== registrantEmail.trim().toLowerCase()) {
+      return { success: false, error: 'Unauthorized.' }
+    }
+
+    // For paid events, only issue ticket if payment was confirmed
+    if (reg.registration_type === 'paid' && !reg.paid_confirmed) {
+      return { success: false, error: 'Payment not yet confirmed.' }
+    }
+
+    const { data: event } = await admin
+      .from('events')
+      .select('title, start_date, location_name, city, state, is_online')
+      .eq('id', reg.event_id)
+      .single()
+
+    const eventTitle = event?.title ?? 'Event'
+    const eventDate = event?.start_date
+      ? formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+      : 'TBD'
+    const eventLocation = event?.is_online
+      ? 'Online Event'
+      : [event?.location_name, event?.city].filter(Boolean).join(', ') || 'TBD'
+
+    const pdfBytes = await generateTicketPdf({
+      eventTitle,
+      eventDate,
+      eventLocation,
+      attendeeName: reg.full_name,
+      attendeeEmail: reg.email,
+      ticketNumber: reg.ticket_number,
+      registrationType: reg.registration_type ?? 'free_registration',
+    })
+
+    return {
+      success: true,
+      ticketPdfBase64: Buffer.from(pdfBytes).toString('base64'),
+      ticketNumber: reg.ticket_number,
+    }
+  } catch (err) {
+    console.error('regenerateTicket error:', err)
+    return { success: false, error: 'Something went wrong. Please try again.' }
+  }
+}
+
 interface ConfirmCodeResult {
   success: boolean
   error?: string
@@ -242,6 +312,7 @@ interface ConfirmCodeResult {
 export async function confirmEmailCode(
   registrationId: string,
   code: string,
+  registrantEmail: string,
 ): Promise<ConfirmCodeResult> {
   try {
     const admin = createAdminClient()
@@ -253,6 +324,11 @@ export async function confirmEmailCode(
       .single()
 
     if (fetchErr || !reg) return { success: false, error: 'Registration not found.' }
+
+    // ── Ownership check ──────────────────────────────────────
+    if (reg.email.toLowerCase() !== registrantEmail.trim().toLowerCase()) {
+      return { success: false, error: 'Unauthorized.' }
+    }
 
     if (reg.email_confirmed) {
       // Already confirmed — idempotent: re-generate the ticket

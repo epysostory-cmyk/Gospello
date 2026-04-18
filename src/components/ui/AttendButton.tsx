@@ -92,15 +92,17 @@ export default function AttendButton({
   // window/localStorage don't exist, so SSR always returns false regardless.
   useEffect(() => {
     if (initialAttended) return // logged-in user already resolved server-side
-    const attended = localStorage.getItem(`gospello_attended_${eventId}`)
-    const regId    = localStorage.getItem(`gospello_regid_${eventId}`)
+    const attended  = localStorage.getItem(`gospello_attended_${eventId}`)
+    const regId     = localStorage.getItem(`gospello_regid_${eventId}`)
     const ticketNum = localStorage.getItem(`gospello_ticketnum_${eventId}`)
+    const savedEmail = localStorage.getItem(`gospello_email_${eventId}`)
     if (attended || regId) {
       setAttended(true)
-      if (regId) setRegistrationId(regId)
-      if (ticketNum) setTicketNumber(Number(ticketNum))
+      if (regId)       setRegistrationId(regId)
+      if (ticketNum)   setTicketNumber(Number(ticketNum))
+      if (savedEmail && !serverUserEmail) setEmail(savedEmail)
     }
-  }, [eventId, initialAttended])
+  }, [eventId, initialAttended, serverUserEmail])
 
   // Determine which attendance mode applies.
   // registration_type is the source of truth when explicitly set; fall back to is_free/rsvp_required for older events.
@@ -212,7 +214,7 @@ export default function AttendButton({
     }
 
     const regType = mode === 'paid' ? 'paid' : mode === 'instant' ? 'free_no_registration' : 'free_registration'
-    const result = await registerForEvent(eventId, name, email, regType)
+    const result = await registerForEvent(eventId, name, email, regType, phone || undefined)
 
     if (result.alreadyRegistered) {
       setAttended(true)
@@ -237,6 +239,8 @@ export default function AttendButton({
       if (typeof window !== 'undefined') {
         if (result.registrationId) localStorage.setItem(`gospello_regid_${eventId}`, result.registrationId)
         if (result.ticketNumber)    localStorage.setItem(`gospello_ticketnum_${eventId}`, String(result.ticketNumber))
+        // Store email so ownership check passes on re-download after refresh
+        localStorage.setItem(`gospello_email_${eventId}`, email.trim().toLowerCase())
       }
 
       if (mode === 'rsvp') {
@@ -260,7 +264,7 @@ export default function AttendButton({
     if (!registrationId) return
     setConfirmingPayment(true)
     setError('')
-    const result = await confirmPayment(registrationId)
+    const result = await confirmPayment(registrationId, email)
     if (result.success) {
       setTicketPdfBase64(result.ticketPdfBase64 ?? null)
       setTicketNumber(result.ticketNumber ?? null)
@@ -286,7 +290,7 @@ export default function AttendButton({
     if (!registrationId) return
     setRegenerating(true)
     setError('')
-    const result = await regenerateTicket(registrationId)
+    const result = await regenerateTicket(registrationId, email)
     if (result.success && result.ticketPdfBase64) {
       setTicketPdfBase64(result.ticketPdfBase64)
       setTicketNumber(result.ticketNumber ?? ticketNumber)
