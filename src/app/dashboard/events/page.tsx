@@ -12,7 +12,7 @@ export default async function MyEventsPage() {
 
   const { data: events } = await supabase
     .from('events')
-    .select('*')
+    .select('id, title, slug, category, status, city, start_date, rejection_reason')
     .eq('organizer_id', user!.id)
     .order('created_at', { ascending: false })
 

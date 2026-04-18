@@ -251,13 +251,6 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
     setIsSubmitting(true)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setErrors({ submit: 'You must be logged in to create an event' })
-        setIsSubmitting(false)
-        return
-      }
-
       // Prepare event data
       const eventData = {
         title: formData.title,
