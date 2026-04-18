@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { GoogleAnalytics } from '@next/third-parties/google'
+import Script from 'next/script'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
@@ -51,7 +51,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         >
           {children}
         </ConditionalLayout>
-      <GoogleAnalytics gaId="G-312DVPG9JK" />
+      <Script src="https://www.googletagmanager.com/gtag/js?id=G-312DVPG9JK" strategy="afterInteractive" />
+      <Script id="ga-init" strategy="afterInteractive">{`
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-312DVPG9JK');
+      `}</Script>
       </body>
     </html>
   )
