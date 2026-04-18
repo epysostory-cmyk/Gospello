@@ -38,6 +38,17 @@ export async function registerForEvent(
 
     const admin = createAdminClient()
 
+    // ── Guard: organizer cannot register for their own event ─
+    const { data: eventOwner } = await admin
+      .from('events')
+      .select('organizer_id')
+      .eq('id', eventId)
+      .single()
+
+    if (eventOwner && user && eventOwner.organizer_id === user.id) {
+      return { success: false, error: 'You cannot register for your own event.' }
+    }
+
     // ── Guard: already registered? ──────────────────────────
     const { data: existing } = await admin
       .from('registrations')
