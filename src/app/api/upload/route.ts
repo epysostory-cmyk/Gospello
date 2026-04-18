@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
     if (!allowed.includes(file.type)) {
       return NextResponse.json({ error: 'Only JPEG, PNG, GIF, and WebP images are allowed' }, { status: 400 })
     }
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File must be under 10 MB' }, { status: 400 })
+    if (file.size > 2 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File must be under 2 MB' }, { status: 400 })
     }
 
     const admin = createAdminClient()
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (!existing) {
       await admin.storage.createBucket(bucket, {
         public: true,
-        fileSizeLimit: 10485760,
+        fileSizeLimit: 2097152,
         allowedMimeTypes: allowed,
       })
     }

@@ -99,7 +99,7 @@ export default function Step4Media({ formData, updateForm, errors }: StepProps) 
                 <>
                   <Upload className="w-6 h-6 text-gray-400" />
                   <span className="text-sm font-medium text-gray-700">Click to upload banner</span>
-                  <span className="text-xs text-gray-500">PNG, JPG, GIF, WebP · max 10 MB</span>
+                  <span className="text-xs text-gray-500">PNG, JPG, GIF, WebP · max 2 MB</span>
                 </>
               )}
             </button>
