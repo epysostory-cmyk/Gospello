@@ -106,6 +106,24 @@ export async function bulkSetCategoryVisibility(ids: string[], visible: boolean)
   revalidatePath('/admin/categories')
 }
 
+export async function updateCategory(
+  id: string,
+  data: { name: string; description: string; icon: string; color: string }
+) {
+  if (!data.name) return { error: 'Name is required' }
+  if (!data.icon) return { error: 'Please choose an icon' }
+
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
+    .from('categories')
+    .update({ name: data.name, description: data.description || null, icon: data.icon, color: data.color })
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/categories')
+  return { success: true }
+}
+
 export async function updateSortOrder(id: string, direction: 'up' | 'down') {
   const adminClient = createAdminClient()
 

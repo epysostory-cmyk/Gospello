@@ -222,6 +222,10 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
                     <CategoryRowActions
                       id={cat.id}
                       slug={cat.slug}
+                      name={cat.name}
+                      description={cat.description ?? ''}
+                      icon={cat.icon ?? ''}
+                      color={cat.color ?? '#6B7280'}
                       isVisible={cat.is_visible ?? true}
                       isFirst={idx === 0}
                       isLast={idx === cats.length - 1}
