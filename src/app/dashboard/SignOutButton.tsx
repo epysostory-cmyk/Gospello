@@ -1,18 +1,14 @@
 'use client'
 
-import { LogOut } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { LogOut, Loader2 } from 'lucide-react'
 
 export default function SignOutButton() {
   const [loading, setLoading] = useState(false)
 
-  const handleSignOut = async () => {
+  const handleSignOut = () => {
     setLoading(true)
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = '/auth/signout'
   }
 
   return (

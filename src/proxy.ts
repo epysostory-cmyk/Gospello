@@ -3,9 +3,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Check for a Supabase session cookie (fast — no network call, no risk of clearing cookies)
+  // Check for a real Supabase session cookie.
+  // Must exclude the PKCE code-verifier cookie (sb-*-auth-token-code-verifier)
+  // which is written when OAuth starts but does NOT represent an active session.
+  // Matching it causes a redirect loop when the user presses Back from Google.
   const hasSession = request.cookies.getAll().some(
-    (c) => c.name.includes('-auth-token')
+    (c) => c.name.includes('-auth-token') && !c.name.endsWith('-code-verifier')
   )
 
   // Protect admin routes (except /admin/login)
