@@ -63,7 +63,7 @@ export default function CategoryRowActions({
 
   const handleNameChange = (val: string) => {
     setEditName(val)
-    setEditSlug(val.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))
+    setEditSlug(val.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+$/g, ''))
   }
 
   const handleSave = () => {
@@ -221,7 +221,7 @@ export default function CategoryRowActions({
                 <input
                   type="text"
                   value={editSlug}
-                  onChange={e => setEditSlug(e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))}
+                  onChange={e => setEditSlug(e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+$/g, ''))}
                   className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
                 />
                 <p className="text-xs text-gray-600 mt-1">Lowercase letters, numbers and hyphens only</p>
