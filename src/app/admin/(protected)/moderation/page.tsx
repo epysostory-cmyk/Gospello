@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { AlertTriangle, CheckCircle, XCircle, ExternalLink } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
-import ModerationActions from './ModerationActions'
+import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
+import ModerationBulkList from './ModerationBulkList'
 
 export default async function AdminModerationPage() {
   const adminClient = createAdminClient()
@@ -74,71 +73,7 @@ export default async function AdminModerationPage() {
           </h2>
         </div>
 
-        <div className="divide-y divide-white/5">
-          {!pendingEvents || pendingEvents.length === 0 ? (
-            <div className="px-5 py-12 text-center">
-              <CheckCircle className="w-8 h-8 text-green-500/40 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">All caught up! No events pending review.</p>
-            </div>
-          ) : (
-            pendingEvents.map((event: any) => {
-              const profile = Array.isArray(event.profiles) ? event.profiles[0] : event.profiles
-              const organizer = (profile as { display_name: string })?.display_name || 'Unknown'
-
-              return (
-                <div key={event.id} className="px-4 py-4 sm:px-5 hover:bg-white/5 transition-colors">
-                  {/* Stack on mobile, row on desktop */}
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-                    {/* Event info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-white leading-snug">
-                        {event.title}
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
-                        <span className="text-xs text-gray-500">By {organizer}</span>
-                        {event.city && (
-                          <span className="text-xs text-gray-600">📍 {event.city}</span>
-                        )}
-                        {event.start_date && (
-                          <span className="text-xs text-gray-600">
-                            📅 {formatDate(event.start_date, { month: 'short', day: 'numeric' })}
-                          </span>
-                        )}
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          event.is_free
-                            ? 'bg-green-500/10 text-green-400'
-                            : 'bg-amber-500/10 text-amber-400'
-                        }`}>
-                          {event.is_free ? 'Free' : 'Paid'}
-                        </span>
-                        <span className="text-xs text-gray-600">
-                          Submitted {formatDate(event.created_at, { month: 'short', day: 'numeric' })}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Actions — full width on mobile, auto on desktop */}
-                    <div className="sm:flex-shrink-0 flex items-center gap-2">
-                      {event.slug && (
-                        <a
-                          href={`/events/${event.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-gray-400 hover:text-white hover:border-white/20 transition-colors"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          Preview
-                        </a>
-                      )}
-                      <ModerationActions eventId={event.id} />
-                    </div>
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </div>
+        <ModerationBulkList events={pendingEvents ?? []} />
       </div>
     </div>
   )

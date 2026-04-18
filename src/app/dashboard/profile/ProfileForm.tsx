@@ -414,10 +414,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
           <button
             type="button"
             className="flex items-center gap-2 flex-shrink-0 text-sm font-medium text-red-500 border border-red-200 hover:bg-red-50 px-4 py-2 rounded-xl transition-colors"
-            onClick={async () => {
-              await supabase.auth.signOut()
-              window.location.href = '/'
-            }}
+            onClick={() => { window.location.href = '/auth/signout' }}
           >
             <LogOut className="w-4 h-4" />
             Sign out

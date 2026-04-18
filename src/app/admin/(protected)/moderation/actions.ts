@@ -9,3 +9,12 @@ export async function moderateEvent(eventId: string, status: 'approved' | 'rejec
   revalidatePath('/admin/moderation')
   revalidatePath('/admin')
 }
+
+export async function bulkModerateEvents(ids: string[], status: 'approved' | 'rejected') {
+  if (!ids.length) return
+  const adminClient = createAdminClient()
+  const { error } = await adminClient.from('events').update({ status }).in('id', ids)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/moderation')
+  revalidatePath('/admin')
+}

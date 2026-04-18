@@ -74,6 +74,38 @@ export async function toggleCategoryVisibility(id: string, currentValue: boolean
   revalidatePath('/admin/categories')
 }
 
+export async function bulkDeleteCategories(ids: string[]) {
+  if (!ids.length) return
+  const adminClient = createAdminClient()
+
+  // Reassign events for each non-'other' category being deleted
+  const { data: cats } = await adminClient
+    .from('categories')
+    .select('slug')
+    .in('id', ids)
+
+  const slugsToReassign = (cats ?? []).map(c => c.slug).filter(s => s !== 'other')
+  if (slugsToReassign.length) {
+    await adminClient
+      .from('events')
+      .update({ category: 'other' })
+      .in('category', slugsToReassign)
+  }
+
+  await adminClient.from('categories').delete().in('id', ids)
+  revalidatePath('/admin/categories')
+}
+
+export async function bulkSetCategoryVisibility(ids: string[], visible: boolean) {
+  if (!ids.length) return
+  const adminClient = createAdminClient()
+  await adminClient
+    .from('categories')
+    .update({ is_visible: visible })
+    .in('id', ids)
+  revalidatePath('/admin/categories')
+}
+
 export async function updateSortOrder(id: string, direction: 'up' | 'down') {
   const adminClient = createAdminClient()
 
