@@ -44,6 +44,17 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
         {errors.start_time && <p className={errorCls}>{errors.start_time}</p>}
       </div>
 
+      {/* End Time */}
+      <div>
+        <label className={labelCls}>End Time (Optional)</label>
+        <input
+          type="time"
+          value={formData.end_time}
+          onChange={(e) => updateForm('end_time', e.target.value)}
+          className={inputCls}
+        />
+      </div>
+
       {/* End Date */}
       <div>
         <label className={labelCls}>End Date (Optional)</label>
@@ -56,19 +67,6 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
         />
         <p className="text-xs text-gray-500 mt-1">Leave empty if single-day event</p>
       </div>
-
-      {/* End Time */}
-      {formData.end_date && (
-        <div>
-          <label className={labelCls}>End Time (Optional)</label>
-          <input
-            type="time"
-            value={formData.end_time}
-            onChange={(e) => updateForm('end_time', e.target.value)}
-            className={inputCls}
-          />
-        </div>
-      )}
 
       {/* Info */}
       <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
