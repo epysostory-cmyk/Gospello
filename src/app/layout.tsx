@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
@@ -50,6 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         >
           {children}
         </ConditionalLayout>
+      <GoogleAnalytics gaId="G-312DVPG9JK" />
       </body>
     </html>
   )
