@@ -108,15 +108,32 @@ export async function bulkSetCategoryVisibility(ids: string[], visible: boolean)
 
 export async function updateCategory(
   id: string,
-  data: { name: string; description: string; icon: string; color: string }
+  oldSlug: string,
+  data: { name: string; slug: string; description: string; icon: string; color: string }
 ) {
   if (!data.name) return { error: 'Name is required' }
+  if (!data.slug) return { error: 'Slug is required' }
   if (!data.icon) return { error: 'Please choose an icon' }
+  if (!/^[a-z0-9-]+$/.test(data.slug)) return { error: 'Slug can only contain lowercase letters, numbers, and hyphens' }
 
   const adminClient = createAdminClient()
+
+  // If slug changed, reassign events and check for conflicts
+  if (data.slug !== oldSlug) {
+    const { data: existing } = await adminClient
+      .from('categories')
+      .select('id')
+      .eq('slug', data.slug)
+      .neq('id', id)
+      .maybeSingle()
+    if (existing) return { error: 'A category with this slug already exists' }
+
+    await adminClient.from('events').update({ category: data.slug }).eq('category', oldSlug)
+  }
+
   const { error } = await adminClient
     .from('categories')
-    .update({ name: data.name, description: data.description || null, icon: data.icon, color: data.color })
+    .update({ name: data.name, slug: data.slug, description: data.description || null, icon: data.icon, color: data.color })
     .eq('id', id)
 
   if (error) return { error: error.message }
