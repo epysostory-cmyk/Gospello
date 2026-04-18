@@ -52,7 +52,6 @@ export default function AttendButton({
   // Registration form state — pre-filled from server props when available
   const [name, setName] = useState(serverUserName ?? '')
   const [email, setEmail] = useState(serverUserEmail ?? '')
-  const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   // Post-registration state
@@ -214,7 +213,7 @@ export default function AttendButton({
     }
 
     const regType = mode === 'paid' ? 'paid' : mode === 'instant' ? 'free_no_registration' : 'free_registration'
-    const result = await registerForEvent(eventId, name, email, regType, phone || undefined)
+    const result = await registerForEvent(eventId, name, email, regType)
 
     if (result.alreadyRegistered) {
       setAttended(true)
@@ -511,13 +510,6 @@ export default function AttendButton({
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            className={inputCls}
-          />
-          <input
-            type="tel"
-            placeholder="Phone number (optional)"
-            value={phone}
-            onChange={e => setPhone(e.target.value)}
             className={inputCls}
           />
 
