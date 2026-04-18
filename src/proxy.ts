@@ -23,7 +23,10 @@ export function proxy(request: NextRequest) {
   }
 
   // Redirect logged-in users away from auth pages
-  if ((pathname.startsWith('/auth/login') || pathname.startsWith('/auth/signup')) && hasSession) {
+  // BUT: don't redirect if they're already coming from /dashboard (breaks redirect loop)
+  const referer = request.headers.get('referer') ?? ''
+  const comingFromDashboard = referer.includes('/dashboard')
+  if ((pathname.startsWith('/auth/login') || pathname.startsWith('/auth/signup')) && hasSession && !comingFromDashboard) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

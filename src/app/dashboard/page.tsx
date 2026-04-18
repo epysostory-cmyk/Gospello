@@ -10,9 +10,10 @@ import { redirect } from 'next/navigation'
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
 
   // Church accounts without a church profile must complete setup first
-  const { data: profile } = await supabase.from('profiles').select('account_type').eq('id', user!.id).single()
+  const { data: profile } = await supabase.from('profiles').select('account_type').eq('id', user.id).single()
   if (profile?.account_type === 'church') {
     const { data: church } = await supabase.from('churches').select('id').eq('profile_id', user!.id).single()
     if (!church) redirect('/dashboard/church/setup')
@@ -21,14 +22,14 @@ export default async function DashboardPage() {
   const { data: events } = await supabase
     .from('events')
     .select('*')
-    .eq('organizer_id', user!.id)
+    .eq('organizer_id', user.id)
     .order('created_at', { ascending: false })
     .limit(5)
 
   const { data: allEvents } = await supabase
     .from('events')
     .select('status')
-    .eq('organizer_id', user!.id)
+    .eq('organizer_id', user.id)
 
   const stats = {
     total: allEvents?.length ?? 0,
