@@ -6,9 +6,10 @@ import { LogOut, Loader2 } from 'lucide-react'
 export default function SignOutButton() {
   const [loading, setLoading] = useState(false)
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setLoading(true)
-    window.location.href = '/auth/signout'
+    await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {})
+    window.location.href = '/'
   }
 
   return (
