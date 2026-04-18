@@ -37,13 +37,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const pageUrl = `${siteUrl}/events/${slug}`
   const description = data.description?.substring(0, 155) ?? ''
 
-  // Always use the proxy route for og:image — it serves the event banner if
-  // available, or falls back to /og-default.jpg. This keeps all OG images on
-  // the gospello.com domain so WhatsApp's scraper (facebookexternalhit) can
-  // reliably fetch them (it often fails on third-party CDN domains like Supabase).
-  const ogImageUrl = `${siteUrl}/events/${slug}/og-image`
-
-  const ogImage = { url: ogImageUrl, width: 1200, height: 630, alt: data.title, type: 'image/jpeg' }
+  // Use the proxy route as primary og:image — it re-serves the Supabase banner
+  // from gospello.com so WhatsApp's scraper can reliably fetch it.
+  // The proxy falls back gracefully if the banner is unavailable.
+  const ogImageUrl = data.banner_url
+    ? `${siteUrl}/events/${slug}/og-image`
+    : null
 
   return {
     title: data.title,
@@ -54,14 +53,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url: pageUrl,
       type: 'article',
       siteName: 'Gospello',
-      images: [ogImage],
+      images: ogImageUrl
+        ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title, type: 'image/jpeg' }]
+        : [],
     },
     twitter: {
       card: 'summary_large_image',
       site: '@gospello',
       title: data.title,
       description,
-      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }],
+      images: ogImageUrl
+        ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }]
+        : [],
     },
   }
 }

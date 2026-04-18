@@ -4,10 +4,9 @@ import { NextRequest, NextResponse } from 'next/server'
 /**
  * Proxy route for event OG images.
  *
- * WhatsApp (and Facebook's scraper) often fails to fetch images directly from
- * third-party CDN domains like Supabase Storage. By serving the image through
- * gospello.com/events/[slug]/og-image we stay on a first-party domain the
- * scraper trusts, and we can set the Cache-Control header ourselves.
+ * WhatsApp's scraper (facebookexternalhit) often fails to fetch images
+ * directly from Supabase Storage URLs. This route fetches the banner
+ * server-side and re-serves it from gospello.com so scrapers trust it.
  */
 export async function GET(
   _req: NextRequest,
@@ -16,25 +15,22 @@ export async function GET(
   const { slug } = await params
   const admin = createAdminClient()
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
-  const defaultOgImage = `${siteUrl}/og-default.jpg`
-
   const { data } = await admin
     .from('events')
     .select('banner_url')
     .eq('slug', slug)
     .maybeSingle()
 
-  // If no banner, redirect to the default branded OG image
-  const imageUrl = data?.banner_url
-    ? data.banner_url.split('?')[0]
-    : defaultOgImage
+  if (!data?.banner_url) {
+    return new NextResponse('No banner for this event', { status: 404 })
+  }
+
+  const imageUrl = data.banner_url.split('?')[0]
 
   try {
     const upstream = await fetch(imageUrl)
     if (!upstream.ok) {
-      // Even the upstream failed — send the default as a hard redirect
-      return NextResponse.redirect(defaultOgImage, { status: 302 })
+      return new NextResponse('Upstream image unavailable', { status: 502 })
     }
 
     const buffer = await upstream.arrayBuffer()
@@ -47,6 +43,6 @@ export async function GET(
       },
     })
   } catch {
-    return NextResponse.redirect(defaultOgImage, { status: 302 })
+    return new NextResponse('Failed to fetch image', { status: 500 })
   }
 }
