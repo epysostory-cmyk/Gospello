@@ -16,13 +16,8 @@ const NIGERIAN_STATES = [
   'Taraba','Yobe','Zamfara',
 ]
 
-function needsCompletion(profile: { profile_completed?: boolean; account_type?: string | null; display_name?: string | null } | null): boolean {
-  if (!profile) return true
-  if (profile.profile_completed) return false
-  if (!profile.account_type) return true
-  if (!profile.display_name || profile.display_name.trim().length < 3) return true
-  if (/^[0-9._@+\-]+$/.test(profile.display_name.trim())) return true
-  return false
+function needsCompletion(profile: { profile_completed?: boolean } | null): boolean {
+  return !profile?.profile_completed
 }
 
 export default function CompleteProfilePage() {
