@@ -2,15 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 function needsProfileCompletion(
-  profile: { profile_completed?: boolean | null; account_type?: string | null; display_name?: string | null } | null
+  profile: { profile_completed?: boolean | null } | null
 ): boolean {
-  if (!profile) return true
-  if (profile.profile_completed) return false
-  if (!profile.account_type) return true
-  const name = profile.display_name?.trim() ?? ''
-  if (name.length < 3) return true
-  if (/^[0-9._@+\-]+$/.test(name)) return true
-  return false
+  return !profile?.profile_completed
 }
 
 export async function GET(request: Request) {
@@ -59,11 +53,6 @@ export async function GET(request: Request) {
         if (!church) return NextResponse.redirect(`${origin}/dashboard/church/setup`)
       }
 
-      if (profile?.account_type === 'organizer') {
-        if (!profile.profile_completed) {
-          return NextResponse.redirect(`${origin}/dashboard/organizer/setup`)
-        }
-      }
     }
 
     return NextResponse.redirect(`${origin}${next}`)

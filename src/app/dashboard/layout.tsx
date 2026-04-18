@@ -32,8 +32,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .single()
 
   if (!profile?.profile_completed) {
-    if (profile?.account_type === 'church') redirect('/dashboard/church/setup')
-    if (profile?.account_type === 'organizer') redirect('/dashboard/organizer/setup')
     redirect('/onboarding/complete-profile')
   }
 
