@@ -34,7 +34,7 @@ export default function ShareButton({
   const waMessage = `Hey 👋 Check out this gospel event I found on Gospello!\n\n🎵 ${eventTitle}${dateLine}${locationLine}\n\nDon't miss it 👉 ${waUrl}`
   const tgMessage = `Hey 👋 Check out this gospel event I found on Gospello!\n\n🎵 ${eventTitle}${dateLine}${locationLine}\n\nDon't miss it 👉 ${tgUrl}`
 
-  const waHref = `https://wa.me/?text=${encodeURIComponent(waMessage)}`
+  const waHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(waMessage)}`
   const tgHref = `https://t.me/share/url?url=${encodeURIComponent(tgUrl)}&text=${encodeURIComponent(tgMessage)}`
   const xHref  = `https://x.com/intent/tweet?text=${encodeURIComponent(`${eventTitle}\n\nDon't miss it 👉`)}&url=${encodeURIComponent(xUrl)}`
 

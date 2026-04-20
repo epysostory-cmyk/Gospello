@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .single()
   if (!data) return {}
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
   const pageUrl = `${siteUrl}/events/${slug}`
 
   const dateStr    = formatDate(data.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
@@ -140,7 +140,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const categoryIcon  = catInfo?.icon ?? null
   const categoryColor = catInfo?.color ?? '#6B7280'
   const lifecycle = getEventLifecycle(e.start_date, e.end_date)
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
   const eventUrl = `${siteUrl}/events/${e.slug}`
 
   const safeAttendance = attendanceCount ?? 0
