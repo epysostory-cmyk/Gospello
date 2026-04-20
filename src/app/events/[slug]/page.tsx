@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const admin = createAdminClient()
   const { data } = await admin
     .from('events')
-    .select('title, description, banner_url, start_date, city')
+    .select('title, description, banner_url, start_date, end_date, city, state, is_free')
     .eq('slug', slug)
     .eq('status', 'approved')
     .single()
@@ -37,22 +37,24 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
   const pageUrl = `${siteUrl}/events/${slug}`
-  const description = data.description?.substring(0, 155) ?? ''
 
-  // Use the proxy route as primary og:image — it re-serves the Supabase banner
-  // from gospello.com so WhatsApp's scraper can reliably fetch it.
-  // The proxy falls back gracefully if the banner is unavailable.
-  // v=2 busts WhatsApp's cached preview of the old broken image
+  // Build a friendly social caption with event details
+  const dateStr = formatDate(data.start_date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  const timeStr = formatTime(data.start_date)
+  const location = [data.city, data.state].filter(Boolean).join(', ')
+  const priceTag = data.is_free ? 'FREE' : 'paid'
+  const caption = `👋 Hello! Check out this ${priceTag} gospel event coming up — ${data.title}.\n\n📅 ${dateStr} at ${timeStr}${location ? `\n📍 ${location}` : ''}\n\nFind out more and register on Gospello!`
+
   const ogImageUrl = data.banner_url
-    ? `${siteUrl}/events/${slug}/og-image?v=2`
+    ? `${siteUrl}/events/${slug}/og-image?v=3`
     : null
 
   return {
     title: data.title,
-    description,
+    description: caption,
     openGraph: {
       title: data.title,
-      description,
+      description: caption,
       url: pageUrl,
       type: 'article',
       siteName: 'Gospello',
@@ -64,7 +66,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       card: 'summary_large_image',
       site: '@gospello',
       title: data.title,
-      description,
+      description: caption,
       images: ogImageUrl
         ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }]
         : [],
