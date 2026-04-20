@@ -74,24 +74,19 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
-  // Check if current user is an admin
+  // Get current user server-side (passed to AttendButton to skip client-side auth fetch)
   const { data: { user: currentUser } } = await supabase.auth.getUser()
-  const isAdmin = currentUser
-    ? !!(await adminClient.from('admin_users').select('id').eq('id', currentUser.id).maybeSingle()).data
-    : false
 
-  // Admins can preview any event; everyone else only sees approved
-  const { data: event } = await adminClient
+  const { data: event } = await supabase
     .from('events')
     .select('*, churches(*), profiles(*)')
     .eq('slug', slug)
+    .eq('status', 'approved')
     .single()
 
   if (!event) notFound()
-  if (event.status !== 'approved' && !isAdmin) notFound()
 
   const e = event as Event
-  const isPreview = event.status !== 'approved'
 
   // Parallel data fetches
   const [
@@ -206,12 +201,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     <div className="min-h-screen bg-gray-50 font-[var(--font-plus-jakarta)]">
 
       {/* Admin preview banner */}
-      {isPreview && (
-        <div className="bg-amber-500 text-white text-center text-sm font-semibold py-2.5 px-4">
-          ⚠️ Admin Preview — This event is <span className="uppercase">{event.status}</span> and not visible to the public
-        </div>
-      )}
-
       {/* MOBILE-ONLY: Full-bleed banner (edge-to-edge, no border radius, 16:9) */}
       <div className="lg:hidden relative w-full aspect-video overflow-hidden bg-slate-900">
         {e.banner_url ? (

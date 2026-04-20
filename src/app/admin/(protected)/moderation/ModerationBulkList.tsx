@@ -160,17 +160,15 @@ export default function ModerationBulkList({ events }: Props) {
 
                 {/* Row actions */}
                 <div className="sm:flex-shrink-0 flex items-center gap-2 pl-6 sm:pl-0">
-                  {event.slug && (
-                    <a
-                      href={`/events/${event.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-gray-400 hover:text-white hover:border-white/20 transition-colors"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      Preview
-                    </a>
-                  )}
+                  <a
+                    href={`/admin/events/preview?id=${event.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-gray-400 hover:text-white hover:border-white/20 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Preview
+                  </a>
                   <ModerationActions eventId={event.id} />
                 </div>
               </div>
