@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Calendar, MapPin, Zap, Star } from 'lucide-react'
 import { formatDate, formatTime, CATEGORY_LABELS, CATEGORY_COLORS, cn } from '@/lib/utils'
 import type { Event } from '@/types/database'
+import { getEventLifecycle } from '@/types/database'
 
 interface EventCardProps {
   event: Event
@@ -32,8 +33,15 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
   const now = new Date()
   const eventStart = new Date(event.start_date)
   const daysUntil = (eventStart.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  const isHappeningSoon = daysUntil > 0 && daysUntil <= 3
-  const hasEnded = eventStart.getTime() < now.getTime()
+
+  // Use the same lifecycle logic as the event page
+  const lifecycle = getEventLifecycle(event.start_date, event.end_date)
+  const isUpcoming = lifecycle === 'upcoming'
+  const isOngoing  = lifecycle === 'ongoing'
+  const hasEnded   = lifecycle === 'ended'
+
+  // "Soon" only for upcoming events starting within 3 days
+  const isHappeningSoon = isUpcoming && daysUntil <= 3
 
   // ── COMPACT ─────────────────────────────────────────────────────────────
   if (variant === 'compact') {
@@ -146,7 +154,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
             src={event.banner_url}
             alt={event.title}
             fill
-            className={`object-cover group-hover:scale-105 transition-transform duration-500 ${hasEnded ? 'grayscale opacity-70' : ''}`}
+            className={`object-cover group-hover:scale-105 transition-transform duration-500 ${hasEnded ? 'grayscale opacity-60' : ''}`}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -168,15 +176,19 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
         <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
           {hasEnded ? (
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-700/90 text-white backdrop-blur-sm">Ended</span>
+          ) : isOngoing ? (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-green-500/90 text-white backdrop-blur-sm flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" /> Live
+            </span>
           ) : event.is_free ? (
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/90 text-white backdrop-blur-sm">Free</span>
           ) : (
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/90 text-white backdrop-blur-sm">Paid</span>
           )}
-          {!hasEnded && isAlmostFull && (
+          {isUpcoming && isAlmostFull && (
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/90 text-white backdrop-blur-sm">Almost Full</span>
           )}
-          {!hasEnded && isHappeningSoon && (
+          {isHappeningSoon && (
             <span className="text-xs font-bold px-2 py-1 rounded-full bg-violet-500/90 text-white backdrop-blur-sm flex items-center gap-1">
               <Zap className="w-2.5 h-2.5 fill-white" /> Soon
             </span>
