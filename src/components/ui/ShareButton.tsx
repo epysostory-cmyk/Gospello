@@ -30,11 +30,13 @@ export default function ShareButton({
   const copyUrl = eventUrl + '?ref=copy'
 
   /* ── Share messages ── */
-  const excerpt  = eventDescription ? eventDescription.slice(0, 150).trimEnd() + (eventDescription.length > 150 ? '…' : '') : ''
-  const descLine = excerpt ? `\n\nAbout the Event\n${excerpt}` : ''
+  const dateLine     = eventDate     ? `📅 ${eventDate}`     : ''
+  const locationLine = eventLocation ? `📍 ${eventLocation}` : ''
+  const captionLines = [dateLine, locationLine].filter(Boolean).join('\n')
+  const aboutLine    = captionLines ? `\n\nAbout the Event\n${captionLines}` : ''
 
-  const waMessage = `*${eventTitle}*${descLine}\n\nCheck it out: ${waUrl}`
-  const tgMessage = `*${eventTitle}*${descLine}\n\nCheck it out: ${tgUrl}`
+  const waMessage = `*${eventTitle}*${aboutLine}\n\nCheck it out: ${waUrl}`
+  const tgMessage = `*${eventTitle}*${aboutLine}\n\nCheck it out: ${tgUrl}`
 
   const waHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(waMessage)}`
   const tgHref = `https://t.me/share/url?url=${encodeURIComponent(tgUrl)}&text=${encodeURIComponent(tgMessage)}`
