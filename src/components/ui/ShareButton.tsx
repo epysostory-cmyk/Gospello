@@ -30,7 +30,8 @@ export default function ShareButton({
   const copyUrl = eventUrl + '?ref=copy'
 
   /* ── Share messages ── */
-  const descLine = eventDescription ? `\n\nAbout the Event\n${eventDescription}` : ''
+  const excerpt  = eventDescription ? eventDescription.slice(0, 150).trimEnd() + (eventDescription.length > 150 ? '…' : '') : ''
+  const descLine = excerpt ? `\n\nAbout the Event\n${excerpt}` : ''
 
   const waMessage = `*${eventTitle}*${descLine}\n\nCheck it out: ${waUrl}`
   const tgMessage = `*${eventTitle}*${descLine}\n\nCheck it out: ${tgUrl}`
