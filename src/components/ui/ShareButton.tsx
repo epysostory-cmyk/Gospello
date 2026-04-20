@@ -30,14 +30,29 @@ export default function ShareButton({
   const copyUrl = eventUrl + '?ref=copy'
 
   /* ── Share messages ── */
-  const dateLine     = eventDate     ? `📅 ${eventDate}`     : ''
-  const locationLine = eventLocation ? `📍 ${eventLocation}` : ''
   const excerpt      = eventDescription ? eventDescription.slice(0, 140).trimEnd() + (eventDescription.length > 140 ? '…' : '') : ''
-  const aboutSection = excerpt ? `\nAbout the Event\n${excerpt}` : ''
-  const captionBody  = [`Hey 👋 Check out this gospel event I found on Gospello!`, `\n🎵 ${eventTitle}`, dateLine, locationLine].filter(Boolean).join('\n')
 
-  const waMessage = `*${eventTitle}*\n${aboutSection}\n\n${captionBody}\n\nDon't miss it 👉 ${waUrl}`
-  const tgMessage = `*${eventTitle}*\n${aboutSection}\n\n${captionBody}\n\nDon't miss it 👉 ${tgUrl}`
+  const buildMessage = (url: string) => {
+    const lines: string[] = []
+    lines.push(`*${eventTitle}*`)
+    if (excerpt) {
+      lines.push('')
+      lines.push('About the Event')
+      lines.push(excerpt)
+    }
+    lines.push('')
+    lines.push(`Hey 👋 Check out this gospel event I found on Gospello!`)
+    lines.push('')
+    lines.push(`🎵 ${eventTitle}`)
+    if (eventDate)     lines.push(`📅 ${eventDate}`)
+    if (eventLocation) lines.push(`📍 ${eventLocation}`)
+    lines.push('')
+    lines.push(`Don't miss it 👉 ${url}`)
+    return lines.join('\n')
+  }
+
+  const waMessage = buildMessage(waUrl)
+  const tgMessage = buildMessage(tgUrl)
 
   const waHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(waMessage)}`
   const tgHref = `https://t.me/share/url?url=${encodeURIComponent(tgUrl)}&text=${encodeURIComponent(tgMessage)}`
