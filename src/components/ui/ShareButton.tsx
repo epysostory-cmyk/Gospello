@@ -53,7 +53,7 @@ export default function ShareButton({
 
   const waHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(waMessage)}`
   const tgHref = `https://t.me/share/url?url=${encodeURIComponent(tgUrl)}&text=${encodeURIComponent(tgMessage)}`
-  const xHref  = `https://x.com/intent/tweet?text=${encodeURIComponent(`${eventTitle}${excerpt ? `\n\n${excerpt}` : ''}${dateLine ? `\n${dateLine}` : ''}${locationLine ? `\n${locationLine}` : ''}\n\nDon't miss it 👉`)}&url=${encodeURIComponent(xUrl)}`
+  const xHref  = `https://x.com/intent/tweet?text=${encodeURIComponent(`📢 ${eventTitle}${eventDate ? `\n📅 ${eventDate}` : ''}${eventLocation ? `\n📍 ${eventLocation}` : ''}${excerpt ? `\n\n${excerpt}` : ''}\n\nDon't miss it 👉`)}&url=${encodeURIComponent(xUrl)}`
 
   /* ── Copy link ── */
   const copyLink = async () => {
