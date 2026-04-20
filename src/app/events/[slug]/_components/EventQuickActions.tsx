@@ -1,7 +1,6 @@
 'use client'
 
-import { Share2, UserPlus, UserCheck, Ticket } from 'lucide-react'
-import { useState } from 'react'
+import { UserPlus, UserCheck, Ticket } from 'lucide-react'
 import type { RegistrationType } from '@/types/database'
 
 interface Props {
@@ -17,47 +16,37 @@ interface Props {
 }
 
 export default function EventQuickActions({
-  eventTitle,
-  eventDate,
-  eventUrl,
   isFree,
   rsvpRequired,
   lifecycle,
   attendanceCount = 0,
   registrationType,
 }: Props) {
-  const [showShareMenu, setShowShareMenu] = useState(false)
 
   const handleRsvpClick = () => {
     const el = document.getElementById('attend')
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
-  // ?ref=wa forces WhatsApp to scrape a fresh URL (bypasses its og cache)
-  const waShareUrl = `${eventUrl}?ref=wa`
-  const waMessage = encodeURIComponent(
-    `Hey 👋 I found this gospel event on Gospello!\n\n🎵 ${eventTitle}\n📅 ${eventDate}\n\nCheck it out 👉 ${waShareUrl}`
-  )
-
   const mode = !isFree ? 'paid' : rsvpRequired ? 'rsvp' : 'instant'
 
   const rsvpConfig = {
-    instant: { label: 'ATTEND',      Icon: UserPlus, cls: 'bg-indigo-600 hover:bg-indigo-700' },
+    instant: { label: 'ATTEND',      Icon: UserPlus,  cls: 'bg-indigo-600 hover:bg-indigo-700' },
     rsvp:    { label: 'REGISTER',    Icon: UserCheck, cls: 'bg-indigo-600 hover:bg-indigo-700' },
-    paid:    { label: 'GET TICKETS', Icon: Ticket,   cls: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' },
+    paid:    { label: 'GET TICKETS', Icon: Ticket,    cls: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' },
   }[mode]
 
   let priceBadgeLabel: string
   let priceBadgeCls: string
   if (registrationType === 'free_no_registration' || (isFree && !rsvpRequired)) {
     priceBadgeLabel = 'Free'
-    priceBadgeCls = 'bg-emerald-100 text-emerald-700'
+    priceBadgeCls   = 'bg-emerald-100 text-emerald-700'
   } else if (registrationType === 'free_registration' || (isFree && rsvpRequired)) {
     priceBadgeLabel = 'Free + Reg'
-    priceBadgeCls = 'bg-amber-100 text-amber-800'
+    priceBadgeCls   = 'bg-amber-100 text-amber-800'
   } else {
     priceBadgeLabel = 'Paid'
-    priceBadgeCls = 'bg-blue-100 text-blue-700'
+    priceBadgeCls   = 'bg-blue-100 text-blue-700'
   }
 
   const rsvpButton = lifecycle === 'ended' ? (
@@ -94,55 +83,6 @@ export default function EventQuickActions({
 
           {/* RSVP / Get Ticket CTA */}
           {rsvpButton}
-
-          {/* Share */}
-          <div className="relative flex-shrink-0">
-            <button
-              onClick={() => setShowShareMenu(!showShareMenu)}
-              className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gray-100 hover:bg-gray-200 transition-colors"
-              title="Share event"
-            >
-              <Share2 className="w-5 h-5 text-gray-600" />
-            </button>
-
-            {showShareMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
-                <div className="absolute bottom-[56px] right-0 z-50 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden min-w-[170px]">
-                  <a
-                    href={`https://wa.me/?text=${waMessage}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setShowShareMenu(false)}
-                    className="flex items-center gap-3 px-4 py-3.5 hover:bg-green-50 text-sm font-medium text-gray-700 border-b border-gray-50"
-                  >
-                    <span className="text-xl">💬</span>
-                    <span>WhatsApp</span>
-                  </a>
-                  <a
-                    href={`https://x.com/intent/tweet?text=${encodeURIComponent(eventTitle)}&url=${encodeURIComponent(eventUrl)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setShowShareMenu(false)}
-                    className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-100 text-sm font-medium text-gray-700 border-b border-gray-50"
-                  >
-                    <span className="text-xl font-bold">𝕏</span>
-                    <span>X (Twitter)</span>
-                  </a>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(eventUrl)
-                      setShowShareMenu(false)
-                    }}
-                    className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 text-sm font-medium text-gray-700 w-full"
-                  >
-                    <span className="text-xl">📋</span>
-                    <span>Copy Link</span>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
         </div>
       </div>
 

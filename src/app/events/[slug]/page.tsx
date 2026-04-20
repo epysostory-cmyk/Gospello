@@ -15,7 +15,6 @@ import AttendButton from '@/components/ui/AttendButton'
 import ViewCounter from '@/components/ui/ViewCounter'
 import ShareButton from '@/components/ui/ShareButton'
 import EventQuickActions from './_components/EventQuickActions'
-import DownloadFlyerButton from './_components/DownloadFlyerButton'
 import AddToCalendar from './_components/AddToCalendar'
 import ReadMoreText from './_components/ReadMoreText'
 import { EventStatusBadge, EventDaysChip } from './_components/EventStatusBadge'
@@ -29,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const admin = createAdminClient()
   const { data } = await admin
     .from('events')
-    .select('title, description, banner_url, start_date, end_date, city, state, is_free')
+    .select('title, description, banner_url, start_date, end_date, city, state, is_free, location_name')
     .eq('slug', slug)
     .eq('status', 'approved')
     .single()
@@ -38,34 +37,29 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
   const pageUrl = `${siteUrl}/events/${slug}`
 
-  // Build a friendly social caption with event details
-  const dateStr = formatDate(data.start_date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-  const timeStr = formatTime(data.start_date)
-  const location = [data.city, data.state].filter(Boolean).join(', ')
-  const priceTag = data.is_free ? 'FREE' : 'paid'
-  const caption = `👋 Hello! Check out this ${priceTag} gospel event coming up — ${data.title}.\n\n📅 ${dateStr} at ${timeStr}${location ? `\n📍 ${location}` : ''}\n\nFind out more and register on Gospello!`
+  const dateStr    = formatDate(data.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+  const venueLine  = data.location_name ? `${data.location_name}, ${data.city}` : [data.city, data.state].filter(Boolean).join(', ')
+  const caption    = `Hey 👋 Check out this gospel event I found on Gospello!\n\n🎵 ${data.title}${dateStr ? `\n📅 ${dateStr}` : ''}${venueLine ? `\n📍 ${venueLine}` : ''}\n\nDon't miss it 👉 gospello.com/events/${slug}`
 
-  const ogImageUrl = data.banner_url
-    ? `${siteUrl}/events/${slug}/og-image?v=4`
-    : null
+  const ogImageUrl = data.banner_url ? `${siteUrl}/events/${slug}/og-image?v=5` : null
 
   return {
     title: data.title,
     description: caption,
     openGraph: {
-      title: data.title,
+      title:       data.title,
       description: caption,
-      url: pageUrl,
-      type: 'article',
-      siteName: 'Gospello',
+      url:         pageUrl,
+      type:        'website',
+      siteName:    'Gospello',
       images: ogImageUrl
         ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title, type: 'image/png' }]
         : [],
     },
     twitter: {
-      card: 'summary_large_image',
-      site: '@gospello',
-      title: data.title,
+      card:        'summary_large_image',
+      site:        '@gospello',
+      title:       data.title,
       description: caption,
       images: ogImageUrl
         ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }]
@@ -184,29 +178,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   return (
     <div className="min-h-screen bg-gray-50 font-[var(--font-plus-jakarta)]">
 
-      {/* Admin preview banner */}
-      {/* MOBILE-ONLY: Full-bleed banner (edge-to-edge, no border radius, 16:9) */}
-      <div className="lg:hidden relative w-full aspect-video overflow-hidden bg-slate-900">
-        {e.banner_url ? (
-          <Image
-            src={e.banner_url}
-            alt={e.title}
-            fill
-            className="object-cover"
-            priority
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-purple-900" />
-        )}
-        {almostFull && (
-          <div className="absolute top-3 right-3">
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-500 text-white">Almost Full</span>
-          </div>
-        )}
-      </div>
-
       {/* Main content wrapper */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 lg:pt-6">
         <div className="animate-fadeInUp flex flex-col lg:flex-row gap-8">
 
           {/* LEFT COLUMN */}
@@ -221,8 +194,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               Back to Events
             </Link>
 
-            {/* Hero banner — desktop only */}
-            <div className="hidden lg:block relative w-full aspect-video rounded-2xl overflow-hidden shadow-md mb-5">
+            {/* Banner — single element, full-bleed on mobile, rounded on desktop */}
+            <div className="relative aspect-video overflow-hidden bg-slate-900 -mx-4 sm:-mx-6 lg:mx-0 lg:rounded-2xl lg:shadow-md mb-5">
               {e.banner_url ? (
                 <Image
                   src={e.banner_url}
@@ -417,11 +390,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 location={shareEventLocation}
                 description={e.description}
               />
-              {e.banner_url && (
-                <div className="mt-1">
-                  <DownloadFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
-                </div>
-              )}
             </div>
 
             <hr className="border-gray-100 my-5" />
@@ -433,6 +401,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 eventUrl={eventUrl}
                 eventDate={shareEventDate}
                 eventLocation={shareEventLocation}
+                bannerUrl={e.banner_url}
               />
               <hr className="border-gray-100 my-5" />
             </div>
@@ -698,12 +667,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 eventUrl={eventUrl}
                 eventDate={shareEventDate}
                 eventLocation={shareEventLocation}
+                bannerUrl={e.banner_url}
               />
-
-              {/* Download flyer */}
-              {e.banner_url && (
-                <DownloadFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
-              )}
             </div>
           </div>
 
