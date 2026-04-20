@@ -32,17 +32,16 @@ export default function ShareButton({
   /* ── Share messages ── */
   const dateLine     = eventDate     ? `📅 ${eventDate}`     : ''
   const locationLine = eventLocation ? `📍 ${eventLocation}` : ''
-  const captionLines = [dateLine, locationLine].filter(Boolean).join('\n')
-  const excerpt      = eventDescription ? eventDescription.slice(0, 150).trimEnd() + (eventDescription.length > 150 ? '…' : '') : ''
-  const aboutBody    = [excerpt, captionLines].filter(Boolean).join('\n')
-  const aboutLine    = aboutBody ? `\n\nAbout the Event\n${aboutBody}` : ''
+  const excerpt      = eventDescription ? eventDescription.slice(0, 140).trimEnd() + (eventDescription.length > 140 ? '…' : '') : ''
+  const aboutSection = excerpt ? `\nAbout the Event\n${excerpt}` : ''
+  const captionBody  = [`Hey 👋 Check out this gospel event I found on Gospello!`, `\n🎵 ${eventTitle}`, dateLine, locationLine].filter(Boolean).join('\n')
 
-  const waMessage = `*${eventTitle}*${aboutLine}\n\nCheck it out: ${waUrl}`
-  const tgMessage = `*${eventTitle}*${aboutLine}\n\nCheck it out: ${tgUrl}`
+  const waMessage = `*${eventTitle}*\n${aboutSection}\n\n${captionBody}\n\nDon't miss it 👉 ${waUrl}`
+  const tgMessage = `*${eventTitle}*\n${aboutSection}\n\n${captionBody}\n\nDon't miss it 👉 ${tgUrl}`
 
   const waHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(waMessage)}`
   const tgHref = `https://t.me/share/url?url=${encodeURIComponent(tgUrl)}&text=${encodeURIComponent(tgMessage)}`
-  const xHref  = `https://x.com/intent/tweet?text=${encodeURIComponent(`${eventTitle}${eventDescription ? `\n\n${eventDescription.slice(0, 200)}` : ''}\n\nCheck it out:`)}&url=${encodeURIComponent(xUrl)}`
+  const xHref  = `https://x.com/intent/tweet?text=${encodeURIComponent(`${eventTitle}${excerpt ? `\n\n${excerpt}` : ''}${dateLine ? `\n${dateLine}` : ''}${locationLine ? `\n${locationLine}` : ''}\n\nDon't miss it 👉`)}&url=${encodeURIComponent(xUrl)}`
 
   /* ── Copy link ── */
   const copyLink = async () => {
