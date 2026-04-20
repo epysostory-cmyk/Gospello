@@ -92,7 +92,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title:       ogTitle,
       description: ogDescription,
       url:         pageUrl,
-      type:        'website',
+      type:        'article',
       siteName:    'Gospello',
       images: ogImageUrl
         ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }]
