@@ -30,22 +30,19 @@ export default function ShareButton({
   const copyUrl = eventUrl + '?ref=copy'
 
   /* ── Share messages ── */
-  const excerpt      = eventDescription ? eventDescription.slice(0, 140).trimEnd() + (eventDescription.length > 140 ? '…' : '') : ''
+  const excerpt      = eventDescription ? eventDescription.slice(0, 100).trimEnd() + (eventDescription.length > 100 ? '…' : '') : ''
 
   const buildMessage = (url: string) => {
     const lines: string[] = []
-    lines.push(`*${eventTitle}*`)
-    if (excerpt) {
-      lines.push('')
-      lines.push('About the Event')
-      lines.push(excerpt)
-    }
-    lines.push('')
     lines.push(`Hey 👋 Check out this gospel event I found on Gospello!`)
     lines.push('')
-    lines.push(`🎵 ${eventTitle}`)
+    lines.push(`📢 ${eventTitle}`)
     if (eventDate)     lines.push(`📅 ${eventDate}`)
     if (eventLocation) lines.push(`📍 ${eventLocation}`)
+    if (excerpt) {
+      lines.push('')
+      lines.push(excerpt)
+    }
     lines.push('')
     lines.push(`Don't miss it 👉 ${url}`)
     return lines.join('\n')
