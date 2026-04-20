@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { formatDate, formatTime, cn } from '@/lib/utils'
 import { getCategoryMap } from '@/lib/categories'
 import {
@@ -24,14 +25,49 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  // Use admin client — social media scrapers are unauthenticated and RLS would block them
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('events')
-    .select('title, description, banner_url, start_date, end_date, city, state, is_free, location_name')
-    .eq('slug', slug)
-    .eq('status', 'approved')
-    .single()
+
+  const QUERY_COLS = 'title, description, banner_url, start_date, end_date, city, state, is_free, location_name'
+
+  // Try admin client first (bypasses RLS for unauthenticated scrapers).
+  // If the service-role key is missing/wrong, admin silently returns null —
+  // fall back to the anon/public client so approved events are still readable.
+  type EventMeta = {
+    title: string; description: string | null; banner_url: string | null
+    start_date: string; end_date: string | null
+    city: string | null; state: string | null
+    is_free: boolean; location_name: string | null
+  }
+  let data: EventMeta | null = null
+  try {
+    const admin = createAdminClient()
+    const { data: adminData, error } = await admin
+      .from('events')
+      .select(QUERY_COLS)
+      .eq('slug', slug)
+      .eq('status', 'approved')
+      .maybeSingle()
+    if (!error && adminData) {
+      data = adminData as EventMeta
+    }
+  } catch { /* ignore */ }
+
+  if (!data) {
+    // Fallback: approved events are public-readable via anon key
+    try {
+      const anon = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      )
+      const { data: anonData } = await anon
+        .from('events')
+        .select(QUERY_COLS)
+        .eq('slug', slug)
+        .eq('status', 'approved')
+        .maybeSingle()
+      data = anonData as EventMeta | null
+    } catch { /* ignore */ }
+  }
+
   if (!data) return {}
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
@@ -195,7 +231,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </Link>
 
             {/* Banner — mobile (full-bleed, below nav) */}
-            <div className="lg:hidden relative w-full aspect-video overflow-hidden bg-slate-900 -mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)]">
+            <div className="lg:hidden relative aspect-video overflow-hidden bg-slate-900 -mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)]">
               {e.banner_url ? (
                 <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
               ) : (

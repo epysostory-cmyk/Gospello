@@ -14,7 +14,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   variable: '--font-plus-jakarta',
 })
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
