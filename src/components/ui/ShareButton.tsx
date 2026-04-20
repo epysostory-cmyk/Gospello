@@ -34,7 +34,7 @@ export default function ShareButton({
   const locationLine = eventLocation ? `📍 ${eventLocation}` : ''
   const captionLines = [dateLine, locationLine].filter(Boolean).join('\n')
   const excerpt      = eventDescription ? eventDescription.slice(0, 150).trimEnd() + (eventDescription.length > 150 ? '…' : '') : ''
-  const aboutBody    = [captionLines, excerpt].filter(Boolean).join('\n')
+  const aboutBody    = [excerpt, captionLines].filter(Boolean).join('\n')
   const aboutLine    = aboutBody ? `\n\nAbout the Event\n${aboutBody}` : ''
 
   const waMessage = `*${eventTitle}*${aboutLine}\n\nCheck it out: ${waUrl}`
