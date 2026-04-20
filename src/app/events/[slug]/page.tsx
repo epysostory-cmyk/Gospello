@@ -194,16 +194,24 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               Back to Events
             </Link>
 
-            {/* Banner — single element, full-bleed on mobile, rounded on desktop */}
-            <div className="relative aspect-video overflow-hidden bg-slate-900 -mx-4 sm:-mx-6 lg:mx-0 lg:rounded-2xl lg:shadow-md mb-5">
+            {/* Banner — mobile (full-bleed, below nav) */}
+            <div className="lg:hidden relative w-full aspect-video overflow-hidden bg-slate-900 -mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)]">
               {e.banner_url ? (
-                <Image
-                  src={e.banner_url}
-                  alt={e.title}
-                  fill
-                  className="object-cover"
-                  priority
-                />
+                <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-purple-900" />
+              )}
+              {almostFull && (
+                <div className="absolute top-3 right-3">
+                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-500 text-white">Almost Full</span>
+                </div>
+              )}
+            </div>
+
+            {/* Banner — desktop (rounded, in column) */}
+            <div className="hidden lg:block relative w-full aspect-video rounded-2xl overflow-hidden shadow-md mb-5">
+              {e.banner_url ? (
+                <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-purple-900" />
               )}
