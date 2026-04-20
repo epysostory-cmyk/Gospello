@@ -3,7 +3,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { formatDate, formatTime, CATEGORY_LABELS, CATEGORY_COLORS, cn } from '@/lib/utils'
+import { formatDate, formatTime, cn } from '@/lib/utils'
+import { getCategoryMap } from '@/lib/categories'
 import {
   Calendar, MapPin, Clock, Building2, Globe, ChevronRight, ChevronLeft,
   Users, Car, Baby, StickyNote, Mic, Ticket,
@@ -17,6 +18,7 @@ import EventQuickActions from './_components/EventQuickActions'
 import DownloadFlyerButton from './_components/DownloadFlyerButton'
 import AddToCalendar from './_components/AddToCalendar'
 import ReadMoreText from './_components/ReadMoreText'
+import { EventStatusBadge, EventDaysChip } from './_components/EventStatusBadge'
 import { checkUserAttended } from '@/app/actions/attendance'
 
 export const dynamic = 'force-dynamic'
@@ -135,37 +137,16 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     }
   }
 
-  const categoryLabel = CATEGORY_LABELS[e.category] ?? e.category
+  const catMap = await getCategoryMap()
+  const catInfo = catMap[e.category]
+  const categoryLabel = catInfo?.name ?? e.category
+  const categoryIcon  = catInfo?.icon ?? null
+  const categoryColor = catInfo?.color ?? '#6B7280'
   const lifecycle = getEventLifecycle(e.start_date, e.end_date)
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
   const eventUrl = `${siteUrl}/events/${e.slug}`
 
   const safeAttendance = attendanceCount ?? 0
-
-  // Days-away chip calculation
-  const now = new Date()
-  const startDate = new Date(e.start_date)
-  const msPerDay = 1000 * 60 * 60 * 24
-  const diffDays = Math.floor((startDate.getTime() - now.getTime()) / msPerDay)
-  let daysChip: string
-  if (lifecycle === 'ended') {
-    daysChip = 'Ended'
-  } else if (diffDays < 0 || lifecycle === 'ongoing') {
-    daysChip = 'Happening Now 🔴'
-  } else if (diffDays === 0) {
-    daysChip = 'Today! 🎉'
-  } else if (diffDays === 1) {
-    daysChip = 'Tomorrow!'
-  } else {
-    daysChip = `${diffDays} Days Away 📅`
-  }
-
-  // Status badge style
-  const statusBadge = {
-    upcoming: { label: 'Upcoming',        cls: 'bg-amber-100 text-amber-800' },
-    ongoing:  { label: 'Happening Now',   cls: 'bg-green-100 text-green-800' },
-    ended:    { label: 'Ended',           cls: 'bg-gray-100 text-gray-600' },
-  }[lifecycle]
 
   // Price badge
   const priceBadge = e.is_free
@@ -259,11 +240,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
             {/* Badge row */}
             <div className="flex gap-2 flex-wrap mt-4">
-              <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadge.cls}`}>
-                {statusBadge.label}
-              </span>
-              <span className={`rounded-full px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800`}>
-                {categoryLabel}
+              <EventStatusBadge startDate={e.start_date} endDate={e.end_date} />
+              <span
+                className="rounded-full px-3 py-1 text-xs font-semibold text-white"
+                style={{ backgroundColor: categoryColor }}
+              >
+                {categoryIcon && <span className="mr-1">{categoryIcon}</span>}{categoryLabel}
               </span>
               <span className={`rounded-full px-3 py-1 text-xs font-medium ${priceBadge.cls}`}>
                 {priceBadge.label}
@@ -326,7 +308,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 {safeAttendance > 0 ? `${safeAttendance} Attending` : 'Be the first!'}
               </span>
               <span className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-1.5">
-                {daysChip}
+                <EventDaysChip startDate={e.start_date} endDate={e.end_date} />
               </span>
             </div>
 
