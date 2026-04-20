@@ -131,7 +131,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
           </div>
           {(attendanceCount !== undefined && attendanceCount > 0) && (
             <div className="mt-2 text-xs text-white/60 font-medium">
-              {attendanceCount} attending
+              {attendanceCount} {hasEnded ? 'attended' : 'attending'}
             </div>
           )}
         </div>
@@ -226,7 +226,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
             }
             {attendanceCount !== undefined && attendanceCount > 0 && (
               <span className="text-xs font-medium text-gray-400 flex-shrink-0 ml-2">
-                {attendanceCount} attending
+                {attendanceCount} {hasEnded ? 'attended' : 'attending'}
               </span>
             )}
           </div>

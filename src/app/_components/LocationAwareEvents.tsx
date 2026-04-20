@@ -7,6 +7,7 @@ import EventCard from '@/components/ui/EventCard'
 import SectionHeader from '@/components/ui/SectionHeader'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import type { Event } from '@/types/database'
+import type { CategoryMap } from '@/lib/categories'
 
 const LOCATION_KEY = 'gospello_user_location'
 const LOCATION_TTL = 24 * 60 * 60 * 1000 // 24 hours
@@ -19,6 +20,7 @@ interface CachedLocation {
 interface Props {
   allEvents: Event[]
   attendanceCountMap: Record<string, number>
+  catMap: CategoryMap
 }
 
 async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
@@ -65,7 +67,7 @@ function saveLocation(state: string) {
   } catch { /* ignore */ }
 }
 
-export default function LocationAwareEvents({ allEvents, attendanceCountMap }: Props) {
+export default function LocationAwareEvents({ allEvents, attendanceCountMap, catMap }: Props) {
   const [detectedState, setDetectedState] = useState<string | null>(null)
   const [selectedState, setSelectedState] = useState<string | null>(null)
   const [detecting, setDetecting] = useState(false)
@@ -210,6 +212,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap }: P
             key={event.id}
             event={event}
             attendanceCount={attendanceCountMap[event.id]}
+            categoryInfo={catMap[event.category]}
           />
         ))}
       </div>

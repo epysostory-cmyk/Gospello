@@ -97,11 +97,17 @@ async function getHomepageData() {
       (statsCitiesRes.data ?? []).map((r: { city: string }) => r.city?.trim().toLowerCase()).filter(Boolean)
     ).size
 
+    const rawCategories = categoriesRes.data ?? []
+    const catMap = Object.fromEntries(
+      rawCategories.map(c => [c.slug, { name: c.name, icon: c.icon ?? null, color: c.color ?? '#6B7280' }])
+    )
+
     return {
       featuredEvents,
       upcomingEvents,
       featuredChurches: (churchesRes.data ?? []) as Church[],
-      categories: categoriesRes.data ?? [],
+      categories: rawCategories,
+      catMap,
       stats: {
         events: statsEventsRes.count ?? 0,
         churches: statsChurchesRes.count ?? 0,
@@ -117,6 +123,7 @@ async function getHomepageData() {
       upcomingEvents: [],
       featuredChurches: [],
       categories: [],
+      catMap: {} as Record<string, { name: string; icon: string | null; color: string | null }>,
       stats: { events: 0, churches: 0, organizers: 0, cities: 0 },
       heroSettings: null,
       attendanceCountMap: {} as Record<string, number>,
@@ -130,6 +137,7 @@ export default async function HomePage() {
     upcomingEvents,
     featuredChurches,
     categories,
+    catMap,
     stats,
     heroSettings,
     attendanceCountMap,
@@ -392,6 +400,7 @@ export default async function HomePage() {
                   event={event}
                   variant="featured"
                   attendanceCount={attendanceCountMap[event.id]}
+                  categoryInfo={catMap[event.category]}
                 />
               ))}
             </div>
@@ -403,6 +412,7 @@ export default async function HomePage() {
           <LocationAwareEvents
             allEvents={upcomingEvents}
             attendanceCountMap={attendanceCountMap}
+            catMap={catMap}
           />
         )}
 
