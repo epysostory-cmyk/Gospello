@@ -33,8 +33,10 @@ export default function EventQuickActions({
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
+  // ?ref=wa forces WhatsApp to scrape a fresh URL (bypasses its og cache)
+  const waShareUrl = `${eventUrl}?ref=wa`
   const waMessage = encodeURIComponent(
-    `Hey 👋 I found this gospel event on Gospello!\n\n🎵 ${eventTitle}\n📅 ${eventDate}\n\nCheck it out 👉 ${eventUrl}`
+    `Hey 👋 I found this gospel event on Gospello!\n\n🎵 ${eventTitle}\n📅 ${eventDate}\n\nCheck it out 👉 ${waShareUrl}`
   )
 
   const mode = !isFree ? 'paid' : rsvpRequired ? 'rsvp' : 'instant'

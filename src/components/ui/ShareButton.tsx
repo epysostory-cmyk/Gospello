@@ -18,7 +18,9 @@ export default function ShareButton({ eventTitle, eventUrl, eventDate = '', even
     setTimeout(() => setCopied(false), 2500)
   }
 
-  const waMessage = `Hey 👋 I found this gospel event on Gospello!\n\n🎵 ${eventTitle}${eventDate ? `\n📅 ${eventDate}` : ''}${eventLocation ? `\n📍 ${eventLocation}` : ''}\n\nCheck it out 👉 ${eventUrl}`
+  // ?ref=wa gives WhatsApp a URL it hasn't cached, forcing a fresh OG scrape
+  const waShareUrl = `${eventUrl}?ref=wa`
+  const waMessage = `Hey 👋 I found this gospel event on Gospello!\n\n🎵 ${eventTitle}${eventDate ? `\n📅 ${eventDate}` : ''}${eventLocation ? `\n📍 ${eventLocation}` : ''}\n\nCheck it out 👉 ${waShareUrl}`
   const waUrl = `https://wa.me/?text=${encodeURIComponent(waMessage)}`
   const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(eventTitle)}&url=${encodeURIComponent(eventUrl)}`
 
