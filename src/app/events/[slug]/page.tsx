@@ -305,7 +305,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </span>
               <span className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5" />
-                {safeAttendance > 0 ? `${safeAttendance} Attending` : 'Be the first!'}
+                {safeAttendance > 0
+                  ? `${safeAttendance} ${lifecycle === 'ended' ? 'Attended' : 'Attending'}`
+                  : lifecycle === 'ended' ? 'No attendees recorded' : 'Be the first!'}
               </span>
               <span className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-1.5">
                 <EventDaysChip startDate={e.start_date} endDate={e.end_date} />
@@ -633,8 +635,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Users className="w-4 h-4 text-gray-400" />
                 {safeAttendance > 0
-                  ? `${safeAttendance} ${safeAttendance === 1 ? 'person' : 'people'} attending`
-                  : 'Be the first to attend!'}
+                  ? `${safeAttendance} ${safeAttendance === 1 ? 'person' : 'people'} ${lifecycle === 'ended' ? 'attended' : 'attending'}`
+                  : lifecycle === 'ended' ? 'No attendees recorded' : 'Be the first to attend!'}
               </div>
 
               {/* Capacity tracker */}
