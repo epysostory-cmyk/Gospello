@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const caption = `👋 Hello! Check out this ${priceTag} gospel event coming up — ${data.title}.\n\n📅 ${dateStr} at ${timeStr}${location ? `\n📍 ${location}` : ''}\n\nFind out more and register on Gospello!`
 
   const ogImageUrl = data.banner_url
-    ? `${siteUrl}/events/${slug}/og-image?v=3`
+    ? `${siteUrl}/events/${slug}/og-image?v=4`
     : null
 
   return {

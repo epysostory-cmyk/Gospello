@@ -20,16 +20,48 @@ export async function GET(
     return new Response('Not found', { status: 404 })
   }
 
-  // Render the banner as a clean 1200×630 crop — no overlays, no text.
-  // objectFit: cover ensures portrait/landscape banners always fill the frame.
   return new ImageResponse(
     (
-      <div style={{ width: 1200, height: 630, display: 'flex' }}>
+      <div
+        style={{
+          width: 1200,
+          height: 630,
+          display: 'flex',
+          position: 'relative',
+          backgroundColor: '#000',
+        }}
+      >
+        {/* Layer 1 — stretched background (fills letterbox bars, darkened) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={data.banner_url}
           alt=""
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center',
+            opacity: 0.35,
+          }}
+        />
+
+        {/* Layer 2 — full banner, nothing cropped */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={data.banner_url}
+          alt=""
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            objectPosition: 'center',
+          }}
         />
       </div>
     ),
