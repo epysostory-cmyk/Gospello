@@ -8,6 +8,7 @@ interface Props {
   eventUrl: string
   eventDate?: string
   eventLocation?: string
+  eventDescription?: string
   bannerUrl?: string | null
 }
 
@@ -16,6 +17,7 @@ export default function ShareButton({
   eventUrl,
   eventDate = '',
   eventLocation = '',
+  eventDescription = '',
   bannerUrl,
 }: Props) {
   const [copied, setCopied]   = useState(false)
@@ -28,15 +30,14 @@ export default function ShareButton({
   const copyUrl = eventUrl + '?ref=copy'
 
   /* ── Share messages ── */
-  const dateLine     = eventDate     ? `\n📅 ${eventDate}`     : ''
-  const locationLine = eventLocation ? `\n📍 ${eventLocation}` : ''
+  const descLine = eventDescription ? `\n\nAbout the Event\n${eventDescription}` : ''
 
-  const waMessage = `Hey 👋 Check out this gospel event I found on Gospello!\n\n🎵 ${eventTitle}${dateLine}${locationLine}\n\nDon't miss it 👉 ${waUrl}`
-  const tgMessage = `Hey 👋 Check out this gospel event I found on Gospello!\n\n🎵 ${eventTitle}${dateLine}${locationLine}\n\nDon't miss it 👉 ${tgUrl}`
+  const waMessage = `*${eventTitle}*${descLine}\n\nCheck it out: ${waUrl}`
+  const tgMessage = `*${eventTitle}*${descLine}\n\nCheck it out: ${tgUrl}`
 
   const waHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(waMessage)}`
   const tgHref = `https://t.me/share/url?url=${encodeURIComponent(tgUrl)}&text=${encodeURIComponent(tgMessage)}`
-  const xHref  = `https://x.com/intent/tweet?text=${encodeURIComponent(`${eventTitle}\n\nDon't miss it 👉`)}&url=${encodeURIComponent(xUrl)}`
+  const xHref  = `https://x.com/intent/tweet?text=${encodeURIComponent(`${eventTitle}${eventDescription ? `\n\n${eventDescription.slice(0, 200)}` : ''}\n\nCheck it out:`)}&url=${encodeURIComponent(xUrl)}`
 
   /* ── Copy link ── */
   const copyLink = async () => {

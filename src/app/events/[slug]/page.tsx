@@ -77,28 +77,34 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const venueLine  = data.location_name ? `${data.location_name}, ${data.city}` : [data.city, data.state].filter(Boolean).join(', ')
   const caption    = `Hey 👋 Check out this gospel event I found on Gospello!\n\n🎵 ${data.title}${dateStr ? `\n📅 ${dateStr}` : ''}${venueLine ? `\n📍 ${venueLine}` : ''}\n\nDon't miss it 👉 gospello.com/events/${slug}`
 
-  const ogImageUrl = data.banner_url ? `${siteUrl}/events/${slug}/og-image?v=5` : null
+  // Use the actual banner_url directly — dynamic /og-image is too slow for WhatsApp's scraper
+  const ogImageUrl = data.banner_url ?? null
+
+  const ogTitle       = `${data.title} | Gospello`
+  const ogDescription = data.description
+    ? data.description.slice(0, 200)
+    : `${dateStr ? `${dateStr} · ` : ''}${venueLine}${data.is_free ? ' · Free Event' : ''}`
 
   return {
     title: data.title,
-    description: caption,
+    description: ogDescription,
     openGraph: {
-      title:       data.title,
-      description: caption,
+      title:       ogTitle,
+      description: ogDescription,
       url:         pageUrl,
       type:        'website',
       siteName:    'Gospello',
       images: ogImageUrl
-        ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title, type: 'image/png' }]
+        ? [{ url: ogImageUrl, alt: data.title }]
         : [],
     },
     twitter: {
       card:        'summary_large_image',
       site:        '@gospello',
-      title:       data.title,
-      description: caption,
+      title:       ogTitle,
+      description: ogDescription,
       images: ogImageUrl
-        ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }]
+        ? [{ url: ogImageUrl, alt: data.title }]
         : [],
     },
   }
@@ -445,6 +451,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 eventUrl={eventUrl}
                 eventDate={shareEventDate}
                 eventLocation={shareEventLocation}
+                eventDescription={e.description ?? ''}
                 bannerUrl={e.banner_url}
               />
               <hr className="border-gray-100 my-5" />
@@ -711,6 +718,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 eventUrl={eventUrl}
                 eventDate={shareEventDate}
                 eventLocation={shareEventLocation}
+                eventDescription={e.description ?? ''}
                 bannerUrl={e.banner_url}
               />
             </div>
