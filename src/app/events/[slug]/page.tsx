@@ -42,8 +42,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // Use the proxy route as primary og:image — it re-serves the Supabase banner
   // from gospello.com so WhatsApp's scraper can reliably fetch it.
   // The proxy falls back gracefully if the banner is unavailable.
+  // v=2 busts WhatsApp's cached preview of the old broken image
   const ogImageUrl = data.banner_url
-    ? `${siteUrl}/events/${slug}/og-image`
+    ? `${siteUrl}/events/${slug}/og-image?v=2`
     : null
 
   return {
@@ -56,7 +57,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: 'article',
       siteName: 'Gospello',
       images: ogImageUrl
-        ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title, type: 'image/jpeg' }]
+        ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title, type: 'image/png' }]
         : [],
     },
     twitter: {
