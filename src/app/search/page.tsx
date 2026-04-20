@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Search, Calendar, MapPin, Building2, Users, ArrowRight } from 'lucide-react'
-import { formatDate, CATEGORY_LABELS } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
 interface Props {
   searchParams: Promise<{ q?: string; city?: string }>

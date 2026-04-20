@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
 import { NIGERIAN_STATES } from '@/lib/utils'
+import { getCategoryMap } from '@/lib/categories'
 import type { Event } from '@/types/database'
 import { Search, MapPin, X, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
@@ -133,11 +134,16 @@ export default async function EventsPage({
     getEvents(params),
     adminClient
       .from('categories')
-      .select('id, name, slug, icon')
+      .select('id, name, slug, icon, color')
       .eq('is_visible', true)
       .order('sort_order', { ascending: true }),
   ])
   const categoryOptions = categoriesRes.data?.length ? categoriesRes.data : FALLBACK_CATEGORIES
+
+  // Build catMap for EventCard badges
+  const catMap = Object.fromEntries(
+    (categoriesRes.data ?? []).map(c => [c.slug, { name: c.name, icon: c.icon ?? null, color: c.color ?? '#6B7280' }])
+  )
 
   function buildUrl(overrides: Partial<SearchParams>) {
     const merged = { ...params, ...overrides }
@@ -350,6 +356,7 @@ export default async function EventsPage({
                 key={event.id}
                 event={event}
                 attendanceCount={attendanceCountMap[event.id]}
+                categoryInfo={catMap[event.category]}
               />
             ))}
           </div>

@@ -3,28 +3,26 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Calendar, MapPin, Zap, Star } from 'lucide-react'
-import { formatDate, formatTime, CATEGORY_LABELS, CATEGORY_COLORS, cn } from '@/lib/utils'
+import { formatDate, formatTime, cn } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
+import type { CategoryInfo } from '@/lib/categories'
 
 interface EventCardProps {
   event: Event
   variant?: 'default' | 'compact' | 'featured'
   attendanceCount?: number
+  categoryInfo?: CategoryInfo
 }
 
-const CATEGORY_BADGE: Record<string, string> = {
-  worship:    'bg-purple-500/90 text-white',
-  prayer:     'bg-blue-500/90 text-white',
-  conference: 'bg-amber-500/90 text-white',
-  youth:      'bg-emerald-500/90 text-white',
-  training:   'bg-orange-500/90 text-white',
-  other:      'bg-white/80 text-gray-800',
-}
+export default function EventCard({ event, variant = 'default', attendanceCount, categoryInfo }: EventCardProps) {
+  const categoryLabel = categoryInfo?.name ?? event.category
+  const categoryColor = categoryInfo?.color ?? '#6B7280'
+  const categoryIcon  = categoryInfo?.icon ?? null
 
-export default function EventCard({ event, variant = 'default', attendanceCount }: EventCardProps) {
-  const categoryLabel = CATEGORY_LABELS[event.category] ?? event.category
-  const badgeCls = CATEGORY_BADGE[event.category] ?? 'bg-white/80 text-gray-800'
+  // Badge styles derived from DB color
+  const badgeStyle = { backgroundColor: categoryColor + 'cc', color: '#fff' }
+  const badgeCls = 'backdrop-blur-sm'
 
   const isAlmostFull = event.capacity != null && event.capacity > 0 && attendanceCount != null
     ? (attendanceCount / event.capacity) >= 0.8
@@ -108,8 +106,11 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
 
         {/* Category badge */}
         <div className="absolute top-3 left-3">
-          <span className={cn('text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm', badgeCls)}>
-            {categoryLabel}
+          <span
+            className={cn('text-xs font-semibold px-2.5 py-1 rounded-full', badgeCls)}
+            style={badgeStyle}
+          >
+            {categoryIcon && <span className="mr-1">{categoryIcon}</span>}{categoryLabel}
           </span>
         </div>
 
@@ -168,8 +169,11 @@ export default function EventCard({ event, variant = 'default', attendanceCount 
         )}
 
         {/* Category - top left */}
-        <span className={cn('absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20', badgeCls)}>
-          {categoryLabel}
+        <span
+          className="absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20"
+          style={badgeStyle}
+        >
+          {categoryIcon && <span className="mr-1">{categoryIcon}</span>}{categoryLabel}
         </span>
 
         {/* Badges - top right */}

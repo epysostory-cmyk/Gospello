@@ -3,18 +3,22 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Plus, Calendar, CheckCircle, Clock, XCircle, Pencil, Users } from 'lucide-react'
-import { formatDate, CATEGORY_LABELS } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
+import { getCategoryMap } from '@/lib/categories'
 import type { Event } from '@/types/database'
 
 export default async function MyEventsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: events } = await supabase
-    .from('events')
-    .select('id, title, slug, category, status, city, start_date, rejection_reason')
-    .eq('organizer_id', user!.id)
-    .order('created_at', { ascending: false })
+  const [{ data: events }, catMap] = await Promise.all([
+    supabase
+      .from('events')
+      .select('id, title, slug, category, status, city, start_date, rejection_reason')
+      .eq('organizer_id', user!.id)
+      .order('created_at', { ascending: false }),
+    getCategoryMap(),
+  ])
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -75,7 +79,10 @@ export default async function MyEventsPage() {
                       {formatDate(event.start_date, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-gray-600 capitalize">{CATEGORY_LABELS[event.category]}</span>
+                      <span className="text-xs text-gray-600 capitalize">
+                        {catMap[event.category]?.icon && <span className="mr-1">{catMap[event.category].icon}</span>}
+                        {catMap[event.category]?.name ?? event.category}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${statusBadge(event.status)}`}>
