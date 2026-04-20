@@ -95,7 +95,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type:        'website',
       siteName:    'Gospello',
       images: ogImageUrl
-        ? [{ url: ogImageUrl, alt: data.title }]
+        ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }]
         : [],
     },
     twitter: {
@@ -104,7 +104,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title:       ogTitle,
       description: ogDescription,
       images: ogImageUrl
-        ? [{ url: ogImageUrl, alt: data.title }]
+        ? [{ url: ogImageUrl, width: 1200, height: 630, alt: data.title }]
         : [],
     },
   }
