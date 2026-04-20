@@ -30,30 +30,15 @@ export default function ShareButton({
   const copyUrl = eventUrl + '?ref=copy'
 
   /* ── Share messages ── */
-  const excerpt      = eventDescription ? eventDescription.slice(0, 100).trimEnd() + (eventDescription.length > 100 ? '…' : '') : ''
+  const dateLine     = eventDate     ? `📅 ${eventDate}`     : ''
+  const locationLine = eventLocation ? `📍 ${eventLocation}` : ''
 
-  const buildMessage = (url: string) => {
-    const lines: string[] = []
-    lines.push(`Hey 👋 Check out this gospel event I found on Gospello!`)
-    lines.push('')
-    lines.push(`📢 ${eventTitle}`)
-    if (eventDate)     lines.push(`📅 ${eventDate}`)
-    if (eventLocation) lines.push(`📍 ${eventLocation}`)
-    if (excerpt) {
-      lines.push('')
-      lines.push(excerpt)
-    }
-    lines.push('')
-    lines.push(`Don't miss it 👉 ${url}`)
-    return lines.join('\n')
-  }
-
-  const waMessage = buildMessage(waUrl)
-  const tgMessage = buildMessage(tgUrl)
+  const waMessage = `Hey 👋 Check out this gospel event I found on Gospello!\n\n🎵 ${eventTitle}${dateLine ? `\n${dateLine}` : ''}${locationLine ? `\n${locationLine}` : ''}\n\nDon't miss it 👉 ${waUrl}`
+  const tgMessage = `Hey 👋 Check out this gospel event I found on Gospello!\n\n🎵 ${eventTitle}${dateLine ? `\n${dateLine}` : ''}${locationLine ? `\n${locationLine}` : ''}\n\nDon't miss it 👉 ${tgUrl}`
 
   const waHref = `https://api.whatsapp.com/send?text=${encodeURIComponent(waMessage)}`
   const tgHref = `https://t.me/share/url?url=${encodeURIComponent(tgUrl)}&text=${encodeURIComponent(tgMessage)}`
-  const xHref  = `https://x.com/intent/tweet?text=${encodeURIComponent(`📢 ${eventTitle}${eventDate ? `\n📅 ${eventDate}` : ''}${eventLocation ? `\n📍 ${eventLocation}` : ''}${excerpt ? `\n\n${excerpt}` : ''}\n\nDon't miss it 👉`)}&url=${encodeURIComponent(xUrl)}`
+  const xHref  = `https://x.com/intent/tweet?text=${encodeURIComponent(`🎵 ${eventTitle}${dateLine ? `\n${dateLine}` : ''}${locationLine ? `\n${locationLine}` : ''}\n\nDon't miss it 👉`)}&url=${encodeURIComponent(xUrl)}`
 
   /* ── Copy link ── */
   const copyLink = async () => {
