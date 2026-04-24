@@ -27,15 +27,24 @@ export default async function ProfilePage() {
       <ProfileForm
       userId={user.id}
       initialData={{
-        display_name: profile?.display_name ?? '',
-        email: profile?.email ?? user.email ?? '',
-        account_type: (profile?.account_type ?? 'organizer') as AccountType,
-        church_name: (profile as any)?.church_name ?? '',
-        bio: (profile as any)?.bio ?? '',
-        state: (profile as any)?.state ?? '',
-        website: (profile as any)?.website ?? '',
-        avatar_url: profile?.avatar_url ?? null,
-        ministry_type: (profile as any)?.ministry_type ?? null,
+        display_name:   profile?.display_name ?? '',
+        email:          profile?.email ?? user.email ?? '',
+        account_type:   (profile?.account_type ?? 'organizer') as AccountType,
+        church_name:    (profile as any)?.church_name ?? '',
+        bio:            (profile as any)?.bio ?? '',
+        state:          (profile as any)?.state ?? '',
+        city:           (profile as any)?.city ?? '',
+        address:        (profile as any)?.address ?? '',
+        phone:          (profile as any)?.phone ?? '',
+        whatsapp:       (profile as any)?.whatsapp ?? '',
+        website:        (profile as any)?.website ?? '',
+        instagram:      (profile as any)?.instagram ?? '',
+        facebook:       (profile as any)?.facebook ?? '',
+        twitter:        (profile as any)?.twitter ?? '',
+        youtube:        (profile as any)?.youtube ?? '',
+        contact_person: (profile as any)?.contact_person ?? '',
+        ministry_types: (profile as any)?.ministry_types ?? [],
+        avatar_url:     profile?.avatar_url ?? null,
       }}
     />
     </>

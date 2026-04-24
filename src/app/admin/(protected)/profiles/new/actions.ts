@@ -9,12 +9,13 @@ interface CreateProfileInput {
   logoUrl?: string | null
   form: {
     name: string; slug: string; city: string; state: string; address: string
-    phone: string; website: string; instagram: string; facebook: string
+    phone: string; whatsapp: string; website: string; instagram: string
+    facebook: string; twitter: string; youtube: string
     description: string; source_url: string
     // church
     pastor_name: string; denomination: string; service_times: string[]
     // organizer
-    contact_person: string; ministry_type: string
+    contact_person: string; ministry_types: string[]
   }
 }
 
@@ -22,7 +23,6 @@ export async function createAdminProfile(input: CreateProfileInput): Promise<{ e
   const { adminId, accountType, visible, form, logoUrl } = input
   const adminClient = createAdminClient()
 
-  // Generate unique slug
   const baseSlug = form.slug || form.name.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '')
   const uniqueSuffix = Math.random().toString(36).substring(2, 7)
   const slug = `${baseSlug}-${uniqueSuffix}`
@@ -53,7 +53,6 @@ export async function createAdminProfile(input: CreateProfileInput): Promise<{ e
         is_hidden:        !visible,
         is_verified:      false,
         verified_badge:   false,
-        // profile_id is nullable — requires migration_phase2 to have been run
       }).select('id').single()
 
       if (error) return { error: error.message }
@@ -65,14 +64,17 @@ export async function createAdminProfile(input: CreateProfileInput): Promise<{ e
         logo_url:        logoUrl || null,
         description:     form.description.trim() || null,
         contact_person:  form.contact_person.trim() || null,
-        ministry_type:   form.ministry_type.trim() || null,
+        ministry_types:  form.ministry_types.length > 0 ? form.ministry_types : null,
         city:            form.city.trim(),
         state:           form.state,
         address:         form.address.trim() || null,
         phone:           form.phone.trim() || null,
+        whatsapp:        form.whatsapp.trim() || null,
         website:         form.website.trim() || null,
         instagram:       form.instagram.trim() || null,
         facebook:        form.facebook.trim() || null,
+        twitter:         form.twitter.trim() || null,
+        youtube:         form.youtube.trim() || null,
         source:          'admin_seed',
         source_url:      form.source_url.trim() || null,
         owner_user_id:   null,

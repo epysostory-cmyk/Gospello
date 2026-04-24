@@ -75,6 +75,7 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
       .select('*, churches(*)')
       .eq(isSeeded ? 'seeded_organizer_id' : 'organizer_id', id)
       .eq('status', 'approved')
+      .is('church_id', null)
       .gte('start_date', now)
       .order('start_date', { ascending: true })
       .limit(12),
@@ -83,6 +84,7 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
       .select('id, title, slug, start_date, city, category, banner_url, location_name, is_free')
       .eq(isSeeded ? 'seeded_organizer_id' : 'organizer_id', id)
       .eq('status', 'approved')
+      .is('church_id', null)
       .lt('start_date', now)
       .order('start_date', { ascending: false })
       .limit(6),
