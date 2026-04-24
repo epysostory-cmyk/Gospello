@@ -69,7 +69,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
           <p className="text-xs text-gray-500 flex items-center gap-1">
             {event.is_online
               ? <><Globe className="w-3 h-3 text-sky-400" /><span className="text-sky-600 font-medium">Online</span></>
-              : <><MapPin className="w-3 h-3 text-rose-400" />{event.city}</>
+              : <><MapPin className="w-3 h-3 text-rose-400" /><span className="text-rose-600 font-medium">In Person</span>{event.city ? ` · ${event.city}` : ''}</>
             }
           </p>
         </div>
@@ -135,7 +135,8 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
             ) : (
               <span className="flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-rose-400" />
-                {event.city}
+                <span className="text-rose-200 font-medium">In Person</span>
+                {event.city && <span className="text-white/60">· {event.city}</span>}
               </span>
             )}
           </div>
@@ -225,7 +226,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
             {event.is_online ? (
               <><Globe className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" /><span className="text-sky-600 font-semibold">Online Event</span></>
             ) : (
-              <><MapPin className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" /><span className="truncate">{event.location_name ? `${event.location_name}, ` : ''}{event.city}</span></>
+              <><MapPin className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" /><span className="text-rose-600 font-semibold">In Person</span>{(event.location_name || event.city) && <span className="text-gray-500 truncate"> · {event.location_name || event.city}</span>}</>
             )}
           </div>
         </div>

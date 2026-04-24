@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Download, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 interface Props {
   eventTitle: string
@@ -20,8 +20,7 @@ export default function ShareButton({
   eventDescription = '',
   bannerUrl,
 }: Props) {
-  const [copied, setCopied]   = useState(false)
-  const [dlState, setDlState] = useState<'idle' | 'loading' | 'done'>('idle')
+  const [copied, setCopied] = useState(false)
 
   /* ── Ref-tagged URLs (single line, no breaks) ── */
   const waUrl   = eventUrl + '?ref=wa'
@@ -45,29 +44,6 @@ export default function ShareButton({
     await navigator.clipboard.writeText(copyUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2500)
-  }
-
-  /* ── Download flyer ── */
-  const handleDownload = async () => {
-    if (!bannerUrl) return
-    setDlState('loading')
-    try {
-      const res  = await fetch(bannerUrl, { mode: 'cors' })
-      const blob = await res.blob()
-      const ext  = blob.type.includes('png') ? 'png' : blob.type.includes('webp') ? 'webp' : 'jpg'
-      const name = eventTitle.replace(/[^a-z0-9\s]/gi, '').trim().replace(/\s+/g, '-').toLowerCase()
-      const url  = URL.createObjectURL(blob)
-      const a    = Object.assign(document.createElement('a'), { href: url, download: `${name || 'event-flyer'}.${ext}` })
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      setDlState('done')
-      setTimeout(() => setDlState('idle'), 3000)
-    } catch {
-      window.open(bannerUrl, '_blank', 'noopener,noreferrer')
-      setDlState('idle')
-    }
   }
 
   const btn = 'flex flex-col items-center justify-center gap-1.5 rounded-2xl py-3 flex-1 text-[13px] font-semibold transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md select-none'
@@ -126,22 +102,6 @@ export default function ShareButton({
         </button>
       </div>
 
-      {/* Save Flyer */}
-      {bannerUrl && (
-        <button
-          onClick={handleDownload}
-          disabled={dlState === 'loading'}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border-[1.5px] border-[#E5E7EB] bg-white text-[#374151] text-sm font-semibold hover:bg-gray-50 transition-all disabled:opacity-60"
-        >
-          {dlState === 'loading' ? (
-            <><Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> Saving flyer...</>
-          ) : dlState === 'done' ? (
-            <><span className="text-emerald-500">✓</span> Saved!</>
-          ) : (
-            <><Download className="w-4 h-4 text-indigo-500" /> Save Flyer</>
-          )}
-        </button>
-      )}
     </div>
   )
 }

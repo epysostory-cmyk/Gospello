@@ -1,6 +1,7 @@
 'use client'
 
-import { UserPlus, UserCheck, Ticket } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Heart, UserCheck, Ticket, CheckCircle2 } from 'lucide-react'
 import type { RegistrationType } from '@/types/database'
 
 interface Props {
@@ -16,25 +17,36 @@ interface Props {
 }
 
 export default function EventQuickActions({
+  eventId,
   isFree,
   rsvpRequired,
   lifecycle,
   attendanceCount = 0,
   registrationType,
 }: Props) {
+  const [attended, setAttended] = useState(false)
+
+  // Check localStorage on mount to know if user already registered/attended
+  useEffect(() => {
+    const attendedKey = `gospello_attended_${eventId}`
+    const regIdKey    = `gospello_regid_${eventId}`
+    if (localStorage.getItem(attendedKey) || localStorage.getItem(regIdKey)) {
+      setAttended(true)
+    }
+  }, [eventId])
 
   const handleRsvpClick = () => {
     const el = document.getElementById('attend')
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
-  const mode = !isFree ? 'paid' : rsvpRequired ? 'rsvp' : 'instant'
-
-  const rsvpConfig = {
-    instant: { label: 'ATTEND',      Icon: UserPlus,  cls: 'bg-indigo-600 hover:bg-indigo-700' },
-    rsvp:    { label: 'REGISTER',    Icon: UserCheck, cls: 'bg-indigo-600 hover:bg-indigo-700' },
-    paid:    { label: 'GET TICKETS', Icon: Ticket,    cls: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' },
-  }[mode]
+  const mode =
+    registrationType === 'free_no_registration' ? 'instant'
+    : registrationType === 'free_registration'  ? 'rsvp'
+    : registrationType === 'paid'               ? 'paid'
+    : !isFree ? 'paid'
+    : rsvpRequired ? 'rsvp'
+    : 'instant'
 
   let priceBadgeLabel: string
   let priceBadgeCls: string
@@ -42,16 +54,27 @@ export default function EventQuickActions({
     priceBadgeLabel = 'Free'
     priceBadgeCls   = 'bg-emerald-100 text-emerald-700'
   } else if (registrationType === 'free_registration' || (isFree && rsvpRequired)) {
-    priceBadgeLabel = 'Free + Reg'
-    priceBadgeCls   = 'bg-amber-100 text-amber-800'
+    priceBadgeLabel = 'Free'
+    priceBadgeCls   = 'bg-emerald-100 text-emerald-700'
   } else {
     priceBadgeLabel = 'Paid'
     priceBadgeCls   = 'bg-blue-100 text-blue-700'
   }
 
+  const rsvpConfig = {
+    instant: { label: 'INTERESTED',       Icon: Heart,      cls: 'bg-indigo-600 hover:bg-indigo-700' },
+    rsvp:    { label: 'REGISTER FREE',    Icon: UserCheck,  cls: 'bg-indigo-600 hover:bg-indigo-700' },
+    paid:    { label: 'GET TICKETS',      Icon: Ticket,     cls: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' },
+  }[mode]
+
   const rsvpButton = lifecycle === 'ended' ? (
     <div className="flex-1 bg-gray-100 text-gray-400 font-semibold py-3 px-4 rounded-2xl text-center text-sm">
       Event Ended
+    </div>
+  ) : attended ? (
+    <div className="flex-1 flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-semibold py-3 px-4 rounded-2xl text-sm border border-emerald-200">
+      <CheckCircle2 className="w-4 h-4" />
+      {mode === 'instant' ? "You're going! 🎉" : "You're registered! 🎉"}
     </div>
   ) : (
     <button

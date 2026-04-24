@@ -39,9 +39,14 @@ export default function DiscoverChurches({ churches }: Props) {
 
   return (
     <section ref={sectionRef} className="py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Find Your Church Family</h2>
-        <p className="text-gray-500 mt-1 text-sm sm:text-base">Discover churches near you and across Nigeria</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Find Your Church Family</h2>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Discover churches near you and across Nigeria</p>
+        </div>
+        <Link href="/churches" className="flex-shrink-0 flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-1">
+          See all <ChevronRight className="w-4 h-4" />
+        </Link>
       </div>
 
       {/* Scroll container */}
@@ -115,16 +120,6 @@ export default function DiscoverChurches({ churches }: Props) {
         <div className="flex-shrink-0 w-4" />
       </div>
 
-      {/* Explore all button */}
-      <div className="flex justify-center mt-6 px-4">
-        <Link
-          href="/churches"
-          className="flex items-center gap-2 h-11 px-6 rounded-xl bg-white border-[1.5px] border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-        >
-          Explore All Churches
-          <ChevronRight className="w-4 h-4 text-gray-500" />
-        </Link>
-      </div>
     </section>
   )
 }

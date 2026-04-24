@@ -17,6 +17,7 @@ import RegistrationButton from '@/components/ui/RegistrationButton'
 import SaveButton from '@/components/ui/SaveButton'
 import ViewCounter from '@/components/ui/ViewCounter'
 import ShareButton from '@/components/ui/ShareButton'
+import SaveFlyerButton from '@/components/ui/SaveFlyerButton'
 import EventQuickActions from './_components/EventQuickActions'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
 import AddToCalendar from './_components/AddToCalendar'
@@ -289,9 +290,13 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <span className={`rounded-full px-3 py-1 text-xs font-medium ${priceBadge.cls}`}>
                 {priceBadge.label}
               </span>
-              {e.is_online && (
+              {e.is_online ? (
                 <span className="rounded-full px-3 py-1 text-xs font-medium bg-sky-100 text-sky-700 flex items-center gap-1">
-                  <Globe className="w-3 h-3" /> Online
+                  <Globe className="w-3 h-3" /> Online Event
+                </span>
+              ) : (
+                <span className="rounded-full px-3 py-1 text-xs font-medium bg-rose-50 text-rose-600 flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> In Person
                 </span>
               )}
             </div>
@@ -300,6 +305,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mt-3 leading-tight tracking-tight">
               {e.title}
             </h1>
+
+            {/* Save Flyer — visible if banner exists */}
+            {e.banner_url && (
+              <SaveFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
+            )}
 
             {/* Quick meta row */}
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 mt-2 flex-wrap">
@@ -348,6 +358,40 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
 
             <hr className="border-gray-100 my-5" />
+
+            {/* Mobile-only: Location detail card (desktop shows in sidebar) */}
+            <div className="lg:hidden bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-5">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Location</p>
+              {e.is_online ? (
+                <div className="flex items-start gap-3">
+                  <Globe className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{e.online_platform ?? 'Online Event'}</p>
+                    <p className="text-xs text-gray-500">Online Event</p>
+                    {e.online_link && (
+                      <a href={e.online_link} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors mt-1">
+                        <Globe className="w-3 h-3" /> Join Event
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{e.location_name}</p>
+                    {e.address && <p className="text-xs text-gray-500">{e.address}</p>}
+                    <p className="text-xs text-gray-500">{e.city}, {e.state}</p>
+                    <a href={`https://maps.google.com/?q=${encodeURIComponent([e.location_name, e.address, e.city, e.state].filter(Boolean).join(', '))}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-blue-500 hover:underline mt-1 inline-block">
+                      Open in Google Maps →
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Tags */}
             {e.tags && e.tags.length > 0 && (
