@@ -59,8 +59,11 @@ async function getHomepageData() {
         .limit(20),
       supabase.from('churches').select('*').eq('is_featured', true).limit(6),
       supabase.from('events').select('id', { count: 'exact', head: true }),
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_type', 'church'),
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_type', 'organizer'),
+      adminClient.from('churches').select('id', { count: 'exact', head: true }).eq('is_hidden', false),
+      Promise.all([
+        adminClient.from('seeded_organizers').select('id', { count: 'exact', head: true }).eq('is_hidden', false),
+        adminClient.from('profiles').select('id', { count: 'exact', head: true }).eq('account_type', 'organizer').eq('is_hidden', false),
+      ]),
       adminClient.from('events').select('city').eq('status', 'approved').not('city', 'is', null),
       adminClient
         .from('categories')
@@ -209,7 +212,7 @@ async function getHomepageData() {
       stats: {
         events: statsEventsRes.count ?? 0,
         churches: statsChurchesRes.count ?? 0,
-        organizers: statsOrganizersRes.count ?? 0,
+        organizers: (statsOrganizersRes[0].count ?? 0) + (statsOrganizersRes[1].count ?? 0),
         cities: uniqueCities,
       },
       heroSettings: heroSettingsRes.data ?? null,
