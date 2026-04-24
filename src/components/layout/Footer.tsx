@@ -22,6 +22,7 @@ interface FooterSettings {
   footer_copyright: string
   footer_contact_email: string
   footer_bottom_links: { label: string; url: string }[]
+  footer_badges: string[]
 }
 
 const DEFAULTS: FooterSettings = {
@@ -54,6 +55,7 @@ const DEFAULTS: FooterSettings = {
     { label: 'Privacy Policy', url: '/privacy' },
     { label: 'Terms of Use', url: '/terms' },
   ],
+  footer_badges: ['🇳🇬 Nigeria', '⛪ Churches', '🙏 Est. 2025'],
 }
 
 async function getFooterData(): Promise<FooterSettings> {
@@ -62,7 +64,7 @@ async function getFooterData(): Promise<FooterSettings> {
     const { data } = await admin
       .from('site_settings')
       .select('key, value')
-      .in('key', ['site_logo_url', 'footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links'])
+      .in('key', ['site_logo_url', 'footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links', 'footer_badges'])
 
     if (!data || data.length === 0) return DEFAULTS
 
@@ -85,6 +87,7 @@ async function getFooterData(): Promise<FooterSettings> {
       footer_copyright: parse<string>(map['footer_copyright'], DEFAULTS.footer_copyright),
       footer_contact_email: parse<string>(map['footer_contact_email'], DEFAULTS.footer_contact_email),
       footer_bottom_links: parse<{ label: string; url: string }[]>(map['footer_bottom_links'], DEFAULTS.footer_bottom_links),
+      footer_badges: parse<string[]>(map['footer_badges'], DEFAULTS.footer_badges),
     }
   } catch {
     return DEFAULTS
@@ -136,11 +139,13 @@ export default async function Footer() {
             </p>
 
             {/* Trust badges */}
-            <div className="flex flex-wrap gap-2 mt-4">
-              <span className="text-xs text-slate-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">🇳🇬 Nigeria</span>
-              <span className="text-xs text-slate-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">⛪ Churches</span>
-              <span className="text-xs text-slate-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">🙏 Est. 2025</span>
-            </div>
+            {settings.footer_badges.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {settings.footer_badges.map((badge, i) => (
+                  <span key={i} className="text-xs text-slate-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">{badge}</span>
+                ))}
+              </div>
+            )}
 
             {/* Social links */}
             {socialEntries.length > 0 && (

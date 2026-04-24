@@ -32,6 +32,7 @@ export default function FooterEditor({ initial }: Props) {
   const [social, setSocial] = useState(initial.footer_social)
   const [columns, setColumns] = useState<FooterColumn[]>(initial.footer_columns)
   const [bottomLinks, setBottomLinks] = useState(initial.footer_bottom_links)
+  const [badges, setBadges] = useState<string[]>(initial.footer_badges)
 
   // Logo
   const [logoUrl, setLogoUrl] = useState<string | null>(initial.site_logo_url)
@@ -82,6 +83,7 @@ export default function FooterEditor({ initial }: Props) {
     const fd = new FormData(e.currentTarget)
     fd.set('footer_columns_json', JSON.stringify(columns))
     fd.set('footer_bottom_links_json', JSON.stringify(bottomLinks))
+    fd.set('footer_badges_json', JSON.stringify(badges))
     startTransition(async () => {
       await saveFooterSettings(fd)
       setSaved(true)
@@ -161,6 +163,36 @@ export default function FooterEditor({ initial }: Props) {
             <textarea name="footer_tagline" rows={3} value={tagline}
               onChange={e => setTagline(e.target.value)} className={inputCls} />
           </div>
+        </div>
+
+        {/* Trust Badges */}
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-900">Trust Badges</h2>
+            <button type="button"
+              onClick={() => setBadges(b => [...b, ''])}
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+              + Add badge
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 -mt-1">Small pills shown under the tagline. Include an emoji for best results, e.g. "🇳🇬 Nigeria".</p>
+          <div className="space-y-2">
+            {badges.map((badge, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  value={badge}
+                  onChange={e => setBadges(b => b.map((x, idx) => idx === i ? e.target.value : x))}
+                  placeholder="e.g. 🇳🇬 Nigeria"
+                  className="flex-1 bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500 placeholder-gray-400"
+                />
+                <button type="button" onClick={() => setBadges(b => b.filter((_, idx) => idx !== i))}
+                  className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <input type="hidden" name="footer_badges_json" value={JSON.stringify(badges)} />
         </div>
 
         {/* Columns */}

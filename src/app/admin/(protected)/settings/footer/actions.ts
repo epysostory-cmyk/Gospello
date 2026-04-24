@@ -23,6 +23,7 @@ export interface FooterSettings {
   footer_copyright: string
   footer_contact_email: string
   footer_bottom_links: { label: string; url: string }[]
+  footer_badges: string[]
 }
 
 const FOOTER_DEFAULTS: FooterSettings = {
@@ -36,6 +37,7 @@ const FOOTER_DEFAULTS: FooterSettings = {
   footer_copyright: '© {year} Gospello. All rights reserved.',
   footer_contact_email: 'hello@gospello.com',
   footer_bottom_links: [{ label: 'Privacy Policy', url: '/privacy' }, { label: 'Terms of Use', url: '/terms' }],
+  footer_badges: ['🇳🇬 Nigeria', '⛪ Churches', '🙏 Est. 2025'],
 }
 
 /** Safely parse a value that may be a JSON string or already-parsed object */
@@ -53,7 +55,7 @@ export async function getFooterSettings(): Promise<FooterSettings> {
     const { data, error } = await admin
       .from('site_settings')
       .select('key, value')
-      .in('key', ['site_logo_url', 'footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links'])
+      .in('key', ['site_logo_url', 'footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links', 'footer_badges'])
 
     if (error) return FOOTER_DEFAULTS
 
@@ -70,6 +72,7 @@ export async function getFooterSettings(): Promise<FooterSettings> {
       footer_copyright: parse<string>(map['footer_copyright'], FOOTER_DEFAULTS.footer_copyright),
       footer_contact_email: parse<string>(map['footer_contact_email'], FOOTER_DEFAULTS.footer_contact_email),
       footer_bottom_links: parse<{ label: string; url: string }[]>(map['footer_bottom_links'], FOOTER_DEFAULTS.footer_bottom_links),
+      footer_badges: parse<string[]>(map['footer_badges'], FOOTER_DEFAULTS.footer_badges),
     }
   } catch {
     return FOOTER_DEFAULTS
@@ -102,6 +105,10 @@ export async function saveFooterSettings(formData: FormData) {
   let bottomLinks: { label: string; url: string }[] = []
   try { bottomLinks = JSON.parse(bottomLinksJson) } catch { bottomLinks = [] }
 
+  const badgesJson = formData.get('footer_badges_json') as string
+  let badges: string[] = []
+  try { badges = JSON.parse(badgesJson) } catch { badges = [] }
+
   const upserts = [
     { key: 'footer_tagline',       value: tagline,                    updated_at: new Date().toISOString() },
     { key: 'footer_copyright',     value: copyright,                  updated_at: new Date().toISOString() },
@@ -109,6 +116,7 @@ export async function saveFooterSettings(formData: FormData) {
     { key: 'footer_social',        value: JSON.stringify(social),      updated_at: new Date().toISOString() },
     { key: 'footer_columns',       value: JSON.stringify(columns),     updated_at: new Date().toISOString() },
     { key: 'footer_bottom_links',  value: JSON.stringify(bottomLinks), updated_at: new Date().toISOString() },
+    { key: 'footer_badges',        value: JSON.stringify(badges),      updated_at: new Date().toISOString() },
   ]
 
   await admin.from('site_settings').upsert(upserts, { onConflict: 'key' })
