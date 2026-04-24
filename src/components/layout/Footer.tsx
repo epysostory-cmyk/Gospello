@@ -78,6 +78,7 @@ async function getFooterData(): Promise<FooterSettings> {
     }
 
     return {
+      site_logo_url: (map['site_logo_url'] as string | null) ?? null,
       footer_tagline: parse<string>(map['footer_tagline'], DEFAULTS.footer_tagline),
       footer_columns: parse<FooterColumn[]>(map['footer_columns'], DEFAULTS.footer_columns),
       footer_social: parse<FooterSettings['footer_social']>(map['footer_social'], DEFAULTS.footer_social),
