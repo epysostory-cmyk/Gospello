@@ -9,7 +9,7 @@ interface FooterColumn {
 }
 
 interface FooterSettings {
-  site_logo_url: string | null
+  footer_logo_url: string | null
   footer_tagline: string
   footer_columns: FooterColumn[]
   footer_social: {
@@ -27,7 +27,7 @@ interface FooterSettings {
 }
 
 const DEFAULTS: FooterSettings = {
-  site_logo_url: null,
+  footer_logo_url: null,
   footer_tagline: "Nigeria's home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond.",
   footer_columns: [
     {
@@ -66,7 +66,7 @@ async function getFooterData(): Promise<FooterSettings> {
     const { data } = await admin
       .from('site_settings')
       .select('key, value')
-      .in('key', ['site_logo_url', 'footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links', 'footer_badges'])
+      .in('key', ['footer_logo_url', 'footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links', 'footer_badges'])
 
     if (!data || data.length === 0) return DEFAULTS
 
@@ -82,7 +82,7 @@ async function getFooterData(): Promise<FooterSettings> {
     }
 
     return {
-      site_logo_url: (map['site_logo_url'] as string | null) ?? null,
+      footer_logo_url: (map['footer_logo_url'] as string | null) ?? null,
       footer_tagline: parse<string>(map['footer_tagline'], DEFAULTS.footer_tagline),
       footer_columns: parse<FooterColumn[]>(map['footer_columns'], DEFAULTS.footer_columns),
       footer_social: parse<FooterSettings['footer_social']>(map['footer_social'], DEFAULTS.footer_social),
@@ -105,12 +105,12 @@ const SOCIAL_ICONS: Record<string, string> = {
   whatsapp: '💬',
 }
 
-export default async function Footer({ logoUrl }: { logoUrl?: string | null }) {
+export default async function Footer() {
   const settings = await getFooterData()
   const year = new Date().getFullYear()
   const copyright = settings.footer_copyright.replace('{year}', String(year))
   const socialEntries = Object.entries(settings.footer_social).filter(([, v]) => v)
-  const resolvedLogoUrl = logoUrl ?? settings.site_logo_url
+  const resolvedLogoUrl = settings.footer_logo_url
 
   return (
     <footer className="relative bg-slate-950 text-slate-400 overflow-hidden">

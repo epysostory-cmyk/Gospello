@@ -9,7 +9,7 @@ export interface FooterColumn {
 }
 
 export interface FooterSettings {
-  site_logo_url: string | null
+  footer_logo_url: string | null
   footer_tagline: string
   footer_columns: FooterColumn[]
   footer_social: {
@@ -27,7 +27,7 @@ export interface FooterSettings {
 }
 
 const FOOTER_DEFAULTS: FooterSettings = {
-  site_logo_url: null,
+  footer_logo_url: null,
   footer_tagline: "Nigeria's home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond.",
   footer_columns: [
     { heading: 'Explore', links: [{ label: 'Events', url: '/events' }, { label: 'Categories', url: '/categories' }, { label: 'Churches', url: '/churches' }, { label: 'Organizers', url: '/organizers' }] },
@@ -55,7 +55,7 @@ export async function getFooterSettings(): Promise<FooterSettings> {
     const { data, error } = await admin
       .from('site_settings')
       .select('key, value')
-      .in('key', ['site_logo_url', 'footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links', 'footer_badges'])
+      .in('key', ['footer_logo_url', 'footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links', 'footer_badges'])
 
     if (error) return FOOTER_DEFAULTS
 
@@ -65,7 +65,7 @@ export async function getFooterSettings(): Promise<FooterSettings> {
     }
 
     return {
-      site_logo_url: (map['site_logo_url'] as string | null) ?? null,
+      footer_logo_url: (map['footer_logo_url'] as string | null) ?? null,
       footer_tagline: parse<string>(map['footer_tagline'], FOOTER_DEFAULTS.footer_tagline),
       footer_columns: parse<FooterColumn[]>(map['footer_columns'], FOOTER_DEFAULTS.footer_columns),
       footer_social: parse<FooterSettings['footer_social']>(map['footer_social'], FOOTER_DEFAULTS.footer_social),

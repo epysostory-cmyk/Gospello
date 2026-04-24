@@ -35,7 +35,7 @@ export default function FooterEditor({ initial }: Props) {
   const [badges, setBadges] = useState<string[]>(initial.footer_badges)
 
   // Logo
-  const [logoUrl, setLogoUrl] = useState<string | null>(initial.site_logo_url)
+  const [logoUrl, setLogoUrl] = useState<string | null>(initial.footer_logo_url)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [savedLogo, setSavedLogo] = useState(false)
   const [logoError, setLogoError] = useState('')
@@ -66,7 +66,7 @@ export default function FooterEditor({ initial }: Props) {
     setSavedLogo(false)
     try {
       const url = await uploadLogoFile(file)
-      await updateSiteSetting('site_logo_url', url)
+      await updateSiteSetting('footer_logo_url', url)
       setLogoUrl(url)
       setSavedLogo(true)
       setTimeout(() => setSavedLogo(false), 3000)
@@ -113,7 +113,7 @@ export default function FooterEditor({ initial }: Props) {
             <ImageIcon className="w-4 h-4 text-indigo-500" />
             <h2 className="text-sm font-semibold text-gray-900">Footer Logo</h2>
           </div>
-          <p className="text-xs text-gray-500 -mt-1">Same logo shown in the top navbar. Upload a PNG or SVG with a transparent background.</p>
+          <p className="text-xs text-gray-500 -mt-1">Logo displayed in the footer. Upload a PNG or SVG with a transparent background.</p>
 
           {logoError && (
             <p className="text-xs text-red-500">{logoError}</p>
