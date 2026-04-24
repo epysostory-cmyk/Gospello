@@ -17,7 +17,13 @@ interface AdminEventInput {
     location_name: string; address: string; city: string; state: string
     registration_type: 'free_no_registration' | 'free_registration' | 'paid'
     price: string; currency: string; payment_link: string
-    rsvp_required: boolean; capacity: string; tags: string[]
+    capacity: string; tags: string[]
+    banner_url: string
+    visibility: 'public' | 'draft'
+    speakers: string
+    parking_available: boolean
+    child_friendly: boolean
+    notes: string
     source_url: string
   }
 }
@@ -29,21 +35,15 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
   try {
     const slug = slugify(form.title)
 
-    // Build start/end datetime strings
-    const startDatetime = form.start_date && form.start_time
-      ? `${form.start_date}T${form.start_time}:00`
-      : form.start_date
+    const startDatetime = `${form.start_date}T${form.start_time}:00`
 
     const endDatetime = form.end_date
       ? `${form.end_date}T${form.end_time || '23:59'}:00`
       : null
 
-    // Determine church_id and seeded_organizer_id based on profile type
     const church_id           = selectedProfile.profileType === 'church'     ? selectedProfile.id : null
     const seeded_organizer_id = selectedProfile.profileType === 'seeded_org' ? selectedProfile.id : null
-    // For organizer_id: use the admin's own profile (they are creating on behalf)
-    // For auth_org: use the organizer's own id (which is a profiles.id)
-    const organizer_id = selectedProfile.profileType === 'auth_org' ? selectedProfile.id : adminId
+    const organizer_id        = selectedProfile.profileType === 'auth_org'   ? selectedProfile.id : adminId
 
     const { data, error } = await adminClient.from('events').insert({
       organizer_id,
@@ -53,7 +53,7 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
       slug,
       description:       form.description.trim() || 'No description provided.',
       category:          form.category,
-      status:            'approved', // admin-created events are auto-approved
+      status:            'approved',
       start_date:        startDatetime,
       end_date:          endDatetime,
       is_online:         form.is_online,
@@ -72,8 +72,13 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
       rsvp_required:     form.registration_type === 'free_registration',
       capacity:          form.capacity ? parseInt(form.capacity) : null,
       tags:              form.tags,
-      visibility:        'public',
+      banner_url:        form.banner_url || null,
       gallery_urls:      [],
+      visibility:        form.visibility,
+      speakers:          form.speakers || null,
+      parking_available: form.parking_available,
+      child_friendly:    form.child_friendly,
+      notes:             form.notes || null,
       created_by_admin:  true,
       source_url:        form.source_url || null,
     }).select('id').single()

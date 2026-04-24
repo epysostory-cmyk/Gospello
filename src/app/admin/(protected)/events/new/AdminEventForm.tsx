@@ -1,34 +1,65 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Building2, Mic2, ArrowLeft, ChevronDown } from 'lucide-react'
-import { NIGERIAN_STATES, CATEGORY_LABELS } from '@/lib/utils'
+import Image from 'next/image'
+import { Search, ArrowLeft, ChevronDown, Upload, Loader2 } from 'lucide-react'
+import { NIGERIAN_STATES } from '@/lib/utils'
+import { getVisibleCategories, type CategoryRow } from '@/app/actions/categories'
 import { createAdminEvent } from './actions'
 
 type ProfileType = 'church' | 'seeded_org'
 interface Profile { id: string; name: string; city: string; state: string; logo_url: string|null; profileType: ProfileType }
 interface Props { adminId: string; profiles: Profile[] }
 
+async function uploadBanner(file: File): Promise<string> {
+  const body = new FormData()
+  body.append('file', file)
+  body.append('bucket', 'event-banners')
+  body.append('folder', 'event-banners')
+  const res = await fetch('/api/upload', { method: 'POST', body })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error ?? 'Upload failed')
+  return json.url as string
+}
+
 export default function AdminEventForm({ adminId, profiles }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
+  const [categories, setCategories] = useState<CategoryRow[]>([])
 
   const [selectedProfile, setSelectedProfile] = useState<Profile|null>(null)
   const [profileSearch, setProfileSearch]     = useState('')
   const [showProfileList, setShowProfileList] = useState(false)
 
   const [form, setForm] = useState({
-    title: '', description: '', category: 'worship',
-    start_date: '', start_time: '09:00', end_date: '', end_time: '',
+    title: '', description: '', category: '',
+    start_date: '', start_time: '', end_date: '', end_time: '',
     is_online: false, online_platform: '', online_link: '',
     location_name: '', address: '', city: '', state: 'Lagos',
     registration_type: 'free_no_registration' as 'free_no_registration'|'free_registration'|'paid',
     price: '', currency: 'NGN', payment_link: '',
-    rsvp_required: false, capacity: '', tags: [] as string[],
+    capacity: '', tags: [] as string[],
+    banner_url: '',
+    visibility: 'public' as 'public' | 'draft',
+    speakers: '',
+    parking_available: false,
+    child_friendly: false,
+    notes: '',
     source_url: '',
   })
+
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const bannerRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    getVisibleCategories().then(cats => {
+      setCategories(cats)
+      if (cats.length > 0) setForm(p => ({ ...p, category: cats[0].slug }))
+    })
+  }, [])
 
   const set = (k: string, v: string|boolean|string[]) => setForm(p => ({ ...p, [k]: v }))
 
@@ -37,12 +68,29 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
     p.city.toLowerCase().includes(profileSearch.toLowerCase())
   )
 
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setUploadError('')
+    try {
+      const url = await uploadBanner(file)
+      set('banner_url', url)
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+      if (bannerRef.current) bannerRef.current.value = ''
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!selectedProfile) { setError('Please select a profile'); return }
-    if (!form.title.trim()) { setError('Event title is required'); return }
-    if (!form.start_date)  { setError('Start date is required'); return }
+    if (!selectedProfile)      { setError('Please select a profile'); return }
+    if (!form.title.trim())    { setError('Event title is required'); return }
+    if (!form.start_date)      { setError('Start date is required'); return }
+    if (!form.start_time)      { setError('Start time is required'); return }
 
     startTransition(async () => {
       const result = await createAdminEvent({ adminId, selectedProfile, form })
@@ -71,7 +119,6 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
         {/* Profile selector */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5">
           <label className={labelCls}>Which profile is hosting this event? <span className="text-red-500">*</span></label>
-
           {selectedProfile ? (
             <div className="flex items-center justify-between p-3 rounded-xl border border-[#7C3AED] bg-violet-50">
               <div className="flex items-center gap-3">
@@ -132,14 +179,50 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
           </div>
           <div>
             <label className={labelCls}>Description</label>
-            <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} placeholder="Describe the event..." className={`${inputCls} resize-none`} />
+            <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={4} placeholder="Describe the event..." className={`${inputCls} resize-none`} />
           </div>
           <div>
-            <label className={labelCls}>Category</label>
+            <label className={labelCls}>Category <span className="text-red-500">*</span></label>
             <select value={form.category} onChange={e => set('category', e.target.value)} className={inputCls}>
-              {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              {categories.length === 0
+                ? <option value="">Loading categories…</option>
+                : categories.map(c => <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>)
+              }
             </select>
           </div>
+          <div>
+            <label className={labelCls}>Speakers / Guests</label>
+            <input value={form.speakers} onChange={e => set('speakers', e.target.value)} placeholder="e.g. Pastor John Doe, Mercy Chinwo" className={inputCls} />
+          </div>
+        </div>
+
+        {/* Banner */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-3">
+          <p className="text-sm font-semibold text-gray-900">Banner Image <span className="text-red-500">*</span></p>
+          {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
+          {form.banner_url ? (
+            <div className="space-y-3">
+              <div className="relative h-44 rounded-xl overflow-hidden bg-gray-100">
+                <Image src={form.banner_url} alt="Banner preview" fill className="object-cover" />
+              </div>
+              <button type="button" onClick={() => { set('banner_url', ''); if (bannerRef.current) bannerRef.current.value = '' }}
+                className="w-full py-2 px-4 rounded-xl border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors">
+                Change Banner
+              </button>
+            </div>
+          ) : (
+            <>
+              <input ref={bannerRef} type="file" accept="image/*" onChange={handleBannerUpload} disabled={uploading} className="hidden" />
+              <button type="button" onClick={() => bannerRef.current?.click()} disabled={uploading}
+                className="w-full py-10 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#7C3AED] hover:bg-violet-50 transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-60">
+                {uploading ? (
+                  <><Loader2 className="w-6 h-6 animate-spin text-[#7C3AED]" /><span className="text-sm text-[#7C3AED] font-medium">Uploading…</span></>
+                ) : (
+                  <><Upload className="w-6 h-6 text-gray-400" /><span className="text-sm font-medium text-gray-700">Click to upload banner</span><span className="text-xs text-gray-400">PNG, JPG, WebP · max 2 MB</span></>
+                )}
+              </button>
+            </>
+          )}
         </div>
 
         {/* Date & time */}
@@ -151,7 +234,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
               <input type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Start Time</label>
+              <label className={labelCls}>Start Time <span className="text-red-500">*</span></label>
               <input type="time" value={form.start_time} onChange={e => set('start_time', e.target.value)} className={inputCls} />
             </div>
             <div>
@@ -169,7 +252,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-gray-900">Location</p>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input type="checkbox" checked={form.is_online} onChange={e => set('is_online', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-[#7C3AED]" />
               Online event
             </label>
@@ -191,7 +274,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
           ) : (
             <div className="space-y-3">
               <div>
-                <label className={labelCls}>Venue Name <span className="text-red-500">*</span></label>
+                <label className={labelCls}>Venue Name</label>
                 <input value={form.location_name} onChange={e => set('location_name', e.target.value)} placeholder="e.g. National Stadium Surulere" className={inputCls} />
               </div>
               <div>
@@ -241,8 +324,44 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
             </div>
           )}
           <div>
-            <label className={labelCls}>Source URL (optional)</label>
+            <label className={labelCls}>Capacity (leave blank for unlimited)</label>
+            <input type="number" value={form.capacity} onChange={e => set('capacity', e.target.value)} placeholder="e.g. 500" className={inputCls} />
+          </div>
+        </div>
+
+        {/* Additional info */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+          <p className="text-sm font-semibold text-gray-900">Additional Info</p>
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked={form.parking_available} onChange={e => set('parking_available', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-[#7C3AED]" />
+              <span className="text-sm text-gray-700">Parking available</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked={form.child_friendly} onChange={e => set('child_friendly', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-[#7C3AED]" />
+              <span className="text-sm text-gray-700">Child-friendly</span>
+            </label>
+          </div>
+          <div>
+            <label className={labelCls}>Notes (internal)</label>
+            <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} placeholder="Any additional notes..." className={`${inputCls} resize-none`} />
+          </div>
+          <div>
+            <label className={labelCls}>Source URL</label>
             <input value={form.source_url} onChange={e => set('source_url', e.target.value)} placeholder="e.g. instagram post, flyer link" className={inputCls} />
+          </div>
+        </div>
+
+        {/* Visibility */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-3">
+          <p className="text-sm font-semibold text-gray-900">Visibility</p>
+          <div className="flex gap-4">
+            {(['public','draft'] as const).map(v => (
+              <label key={v} className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="visibility" value={v} checked={form.visibility === v} onChange={() => set('visibility', v)} className="w-4 h-4 text-[#7C3AED]" />
+                <span className="text-sm text-gray-700 capitalize">{v}</span>
+              </label>
+            ))}
           </div>
         </div>
 
