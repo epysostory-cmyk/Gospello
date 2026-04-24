@@ -425,13 +425,15 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   This event has ended
                 </div>
               )}
-              <SaveButton
-                eventId={e.id}
-                eventTitle={e.title}
-                initialSaved={initialSaved}
-                serverUserId={currentUser?.id ?? null}
-                variant="button"
-              />
+              {lifecycle !== 'ended' && (
+                <SaveButton
+                  eventId={e.id}
+                  eventTitle={e.title}
+                  initialSaved={initialSaved}
+                  serverUserId={currentUser?.id ?? null}
+                  variant="button"
+                />
+              )}
               <AddToCalendar
                 title={e.title}
                 startDate={e.start_date}
@@ -686,13 +688,15 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     This event has ended
                   </div>
                 )}
-                <SaveButton
-                  eventId={e.id}
-                  eventTitle={e.title}
-                  initialSaved={initialSaved}
-                  serverUserId={currentUser?.id ?? null}
-                  variant="button"
-                />
+                {lifecycle !== 'ended' && (
+                  <SaveButton
+                    eventId={e.id}
+                    eventTitle={e.title}
+                    initialSaved={initialSaved}
+                    serverUserId={currentUser?.id ?? null}
+                    variant="button"
+                  />
+                )}
                 <AddToCalendar
                   title={e.title}
                   startDate={e.start_date}
