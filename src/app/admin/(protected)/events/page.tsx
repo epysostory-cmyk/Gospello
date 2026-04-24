@@ -28,7 +28,7 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
 
   let query = adminClient
     .from('events')
-    .select('id, title, status, start_date, views_count, profiles(display_name)', { count: 'exact' })
+    .select('id, title, status, start_date, views_count, profiles(display_name), churches(name), seeded_organizers(name)', { count: 'exact' })
     .order('created_at', { ascending: false })
 
   if (search) query = query.ilike('title', `%${search}%`)
@@ -100,8 +100,10 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
                   <td colSpan={5} className="px-5 py-10 text-center text-sm text-gray-400">No events found</td>
                 </tr>
               ) : events.map((event) => {
+                const church     = Array.isArray(event.churches) ? event.churches[0] : event.churches
+                const seededOrg  = Array.isArray(event.seeded_organizers) ? event.seeded_organizers[0] : event.seeded_organizers
                 const profile    = Array.isArray(event.profiles) ? event.profiles[0] : event.profiles
-                const organizer  = (profile as {display_name:string})?.display_name || 'Unknown'
+                const organizer  = (church as {name:string}|null)?.name || (seededOrg as {name:string}|null)?.name || (profile as {display_name:string})?.display_name || 'Unknown'
                 const statusInfo = STATUS_OPTS.find(s => s.value === event.status)
                 return (
                   <tr key={event.id} className="hover:bg-gray-50 transition-colors">
