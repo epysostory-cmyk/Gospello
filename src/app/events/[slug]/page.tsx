@@ -165,11 +165,17 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       .neq('id', e.id)
       .gte('start_date', new Date().toISOString())
       .limit(1),
-    adminClient
-      .from('events')
-      .select('id', { count: 'exact', head: true })
-      .eq('organizer_id', e.organizer_id)
-      .eq('status', 'approved'),
+    e.church_id
+      ? adminClient
+          .from('events')
+          .select('id', { count: 'exact', head: true })
+          .eq('church_id', e.church_id)
+          .eq('status', 'approved')
+      : adminClient
+          .from('events')
+          .select('id', { count: 'exact', head: true })
+          .eq('organizer_id', e.organizer_id)
+          .eq('status', 'approved'),
   ])
 
   // Merge and deduplicate related events
@@ -473,7 +479,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     {e.churches.logo_url ? (
                       <Image
                         src={e.churches.logo_url}
-                        alt={e.churches.name}
+                        alt=""
                         width={56}
                         height={56}
                         className="object-cover"
@@ -502,7 +508,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     {e.profiles.avatar_url ? (
                       <Image
                         src={e.profiles.avatar_url}
-                        alt={e.profiles.display_name}
+                        alt=""
                         width={56}
                         height={56}
                         className="object-cover"
