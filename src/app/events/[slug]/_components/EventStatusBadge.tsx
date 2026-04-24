@@ -30,9 +30,12 @@ export function EventStatusBadge({ startDate, endDate }: Props) {
 
 export function EventDaysChip({ startDate, endDate }: Props) {
   const lifecycle = getEventLifecycle(startDate, endDate)
-  const now       = new Date()
-  const start     = new Date(startDate)
-  const diffDays  = Math.floor((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const tz = 'Africa/Lagos'
+  const toCalendarDate = (d: Date) =>
+    new Date(d.toLocaleDateString('en-CA', { timeZone: tz })) // YYYY-MM-DD in Lagos time
+  const nowDay   = toCalendarDate(new Date())
+  const startDay = toCalendarDate(new Date(startDate))
+  const diffDays = Math.round((startDay.getTime() - nowDay.getTime()) / (1000 * 60 * 60 * 24))
 
   let label: string
   if (lifecycle === 'ended') {
