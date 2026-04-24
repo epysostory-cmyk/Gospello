@@ -6,7 +6,7 @@ import { Search, Building2, Mic2, ArrowLeft, ChevronDown } from 'lucide-react'
 import { NIGERIAN_STATES, CATEGORY_LABELS } from '@/lib/utils'
 import { createAdminEvent } from './actions'
 
-type ProfileType = 'church' | 'seeded_org' | 'auth_org'
+type ProfileType = 'church' | 'seeded_org'
 interface Profile { id: string; name: string; city: string; state: string; logo_url: string|null; profileType: ProfileType }
 interface Props { adminId: string; profiles: Profile[] }
 
