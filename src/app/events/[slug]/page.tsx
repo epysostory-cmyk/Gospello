@@ -17,6 +17,7 @@ import SaveButton from '@/components/ui/SaveButton'
 import ViewCounter from '@/components/ui/ViewCounter'
 import ShareButton from '@/components/ui/ShareButton'
 import EventQuickActions from './_components/EventQuickActions'
+import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
 import AddToCalendar from './_components/AddToCalendar'
 import ReadMoreText from './_components/ReadMoreText'
 import { EventStatusBadge, EventDaysChip } from './_components/EventStatusBadge'
@@ -521,6 +522,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 </Link>
               ) : null}
             </div>
+
+            {/* Have an Event CTA */}
+            <HaveAnEventCTA />
 
             {/* More Events You'll Love */}
             {related.length > 0 && (

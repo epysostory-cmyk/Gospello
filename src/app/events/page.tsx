@@ -11,6 +11,7 @@ import { getCategoryMap } from '@/lib/categories'
 import type { Event } from '@/types/database'
 import { Search, MapPin, X, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
+import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
 
 export const revalidate = 60
 
@@ -389,6 +390,8 @@ export default async function EventsPage({
             )}
           </div>
         )}
+
+        <HaveAnEventCTA />
       </div>
     </div>
   )

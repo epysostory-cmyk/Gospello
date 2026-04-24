@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { instantAttend, unattend, anonymousAttend } from '@/app/actions/attendance'
 import { registerForEvent, confirmPayment, regenerateTicket } from '@/app/actions/registrations'
 import type { User } from '@supabase/supabase-js'
+import HaveAnEventCTA from './HaveAnEventCTA'
 
 interface Props {
   eventId: string
@@ -356,6 +357,7 @@ export default function AttendButton({
           <Download className="w-4 h-4" />
           Download Ticket {ticketNumber ? `#${String(ticketNumber).padStart(4, '0')}` : ''}
         </button>
+        <HaveAnEventCTA compact />
       </div>
     )
   }
@@ -399,6 +401,7 @@ export default function AttendButton({
           <Download className="w-4 h-4" />
           Download Ticket {ticketNumber ? `#${String(ticketNumber).padStart(4, '0')}` : ''}
         </button>
+        <HaveAnEventCTA compact />
       </div>
     )
   }

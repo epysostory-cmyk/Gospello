@@ -6,6 +6,7 @@ import { Building2, Mic2, CheckCircle, MapPin, Phone, Globe, Link2, ArrowLeft, E
 import Image from 'next/image'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import { createAdminProfile } from './actions'
+import ImageCropModal from '@/components/ui/ImageCropModal'
 
 const DENOMINATIONS = [
   'Pentecostal', 'Charismatic', 'Apostolic', 'Anglican', 'Catholic', 'Methodist',
@@ -38,6 +39,7 @@ export default function CreateProfileForm({ adminId }: Props) {
   const [error, setError]             = useState('')
   const [logoUrl, setLogoUrl]         = useState<string | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoCropSrc, setLogoCropSrc] = useState<string | null>(null)
   const [logoUploading, setLogoUploading] = useState(false)
 
   const [form, setForm] = useState({
@@ -51,17 +53,22 @@ export default function CreateProfileForm({ adminId }: Props) {
     contact_person: '', ministry_type: '',
   })
 
-  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 2 * 1024 * 1024) { setError('Logo must be under 2 MB'); return }
-    setLogoPreview(URL.createObjectURL(file))
+    setLogoCropSrc(URL.createObjectURL(file))
+    e.target.value = ''
+  }
+
+  async function handleLogoCropConfirm(croppedFile: File) {
+    setLogoCropSrc(null)
+    setLogoPreview(URL.createObjectURL(croppedFile))
     setLogoUploading(true)
     try {
       const fd = new FormData()
-      fd.append('file', file)
+      fd.append('file', croppedFile)
       fd.append('bucket', 'profile-logos')
-      fd.append('path', `${Date.now()}-${file.name}`)
+      fd.append('path', `${Date.now()}-photo.jpg`)
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
       const json = await res.json()
       if (json.url) setLogoUrl(json.url)
@@ -119,6 +126,13 @@ export default function CreateProfileForm({ adminId }: Props) {
 
   return (
     <div className="max-w-6xl">
+      {logoCropSrc && (
+        <ImageCropModal
+          imageSrc={logoCropSrc}
+          onConfirm={handleLogoCropConfirm}
+          onCancel={() => setLogoCropSrc(null)}
+        />
+      )}
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => router.back()} className="p-2 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:border-gray-300 transition-colors">

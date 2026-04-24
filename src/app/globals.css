@@ -40,3 +40,11 @@ body {
 .animate-fadeInUp {
   animation: fadeInUp 400ms ease-out forwards;
 }
+
+@keyframes ctaGlow {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+  50%       { box-shadow: 0 4px 32px rgba(255,255,255,0.35), 0 0 0 4px rgba(255,255,255,0.1); }
+}
+.cta-glow {
+  animation: ctaGlow 3s ease-in-out infinite;
+}

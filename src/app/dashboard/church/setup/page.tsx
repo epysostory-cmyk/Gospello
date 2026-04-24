@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { slugify, NIGERIAN_STATES } from '@/lib/utils'
 import { Loader2, Building2, Camera, Plus, Trash2 } from 'lucide-react'
 import Image from 'next/image'
+import ImageCropModal from '@/components/ui/ImageCropModal'
 
 export default function ChurchSetupPage() {
   const router = useRouter()
@@ -16,6 +17,8 @@ export default function ChurchSetupPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoCropSrc, setLogoCropSrc] = useState<string | null>(null)
   const [logoUploading, setLogoUploading] = useState(false)
   const [serviceTimes, setServiceTimes] = useState([''])
 
@@ -71,12 +74,19 @@ export default function ChurchSetupPage() {
 
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setLogoCropSrc(URL.createObjectURL(file))
+    e.target.value = ''
+  }
+
+  const handleLogoCropConfirm = async (croppedFile: File) => {
+    setLogoCropSrc(null)
+    setLogoPreview(URL.createObjectURL(croppedFile))
     setLogoUploading(true)
     const fd = new FormData()
-    fd.append('file', file)
+    fd.append('file', croppedFile)
     fd.append('bucket', 'church-assets')
     const res = await fetch('/api/upload', { method: 'POST', body: fd })
     const { url } = await res.json()
@@ -149,6 +159,13 @@ export default function ChurchSetupPage() {
 
   return (
     <div className="max-w-2xl">
+      {logoCropSrc && (
+        <ImageCropModal
+          imageSrc={logoCropSrc}
+          onConfirm={handleLogoCropConfirm}
+          onCancel={() => setLogoCropSrc(null)}
+        />
+      )}
       <div className="mb-8">
         <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center mb-4">
           <Building2 className="w-6 h-6 text-indigo-600" />
@@ -172,8 +189,8 @@ export default function ChurchSetupPage() {
               >
                 {logoUploading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                ) : logoUrl ? (
-                  <Image src={logoUrl} alt="Logo" width={80} height={80} className="object-cover w-full h-full" />
+                ) : (logoPreview || logoUrl) ? (
+                  <Image src={logoPreview ?? logoUrl} alt="Logo" width={80} height={80} className="object-cover w-full h-full" />
                 ) : (
                   <Camera className="w-6 h-6 text-gray-300" />
                 )}
@@ -189,7 +206,7 @@ export default function ChurchSetupPage() {
                 <p className="text-xs text-gray-400 mt-1">PNG or JPG, square image recommended</p>
               </div>
             </div>
-            <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+            <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoSelect} />
           </div>
 
           {/* Church name */}

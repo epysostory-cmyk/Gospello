@@ -9,6 +9,7 @@ import type { Profile, SeededOrganizer } from '@/types/database'
 import { Search, Calendar, Users, ShieldCheck, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
 
 interface SearchParams {
   q?: string
@@ -332,6 +333,8 @@ export default async function OrganizersPage({
             )}
           </div>
         )}
+
+        <HaveAnEventCTA />
       </div>
     </div>
   )

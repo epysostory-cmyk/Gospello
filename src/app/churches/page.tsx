@@ -9,6 +9,7 @@ import type { Church } from '@/types/database'
 import { Search, MapPin, X } from 'lucide-react'
 import Link from 'next/link'
 import { NIGERIAN_STATES } from '@/lib/utils'
+import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
 
 interface SearchParams {
   q?: string
@@ -191,6 +192,7 @@ export default async function ChurchesPage({
             )}
           </div>
         )}
+        <HaveAnEventCTA />
       </div>
     </div>
   )

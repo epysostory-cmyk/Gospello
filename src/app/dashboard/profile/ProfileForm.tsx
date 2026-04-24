@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Loader2, Camera, CheckCircle, AlertCircle, User, LogOut } from 'lucide-react'
 import Image from 'next/image'
 import type { AccountType } from '@/types/database'
+import ImageCropModal from '@/components/ui/ImageCropModal'
 
 const NIGERIAN_STATES = [
   'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
@@ -57,6 +58,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialData.avatar_url)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
 
   const [saving, setSaving] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
@@ -71,22 +73,27 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 2 * 1024 * 1024) {
-      setError('Avatar must be under 2 MB')
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image must be under 10 MB')
       return
     }
-    setAvatarFile(file)
-    setAvatarPreview(URL.createObjectURL(file))
+    setCropSrc(URL.createObjectURL(file))
+    e.target.value = ''
+  }
+
+  const handleCropConfirm = (croppedFile: File) => {
+    setCropSrc(null)
+    setAvatarFile(croppedFile)
+    setAvatarPreview(URL.createObjectURL(croppedFile))
   }
 
   const uploadAvatar = async (): Promise<string | null> => {
     if (!avatarFile) return avatarUrl
     setUploadingAvatar(true)
-    const ext = avatarFile.name.split('.').pop()
-    const path = `${userId}/avatar.${ext}`
+    const path = `${userId}/avatar.jpg`
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(path, avatarFile, { upsert: true })
+      .upload(path, avatarFile, { upsert: true, contentType: 'image/jpeg' })
     setUploadingAvatar(false)
     if (uploadError) {
       setError('Avatar upload failed: ' + uploadError.message)
@@ -176,6 +183,13 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
 
   return (
     <div className="space-y-8 max-w-2xl">
+      {cropSrc && (
+        <ImageCropModal
+          imageSrc={cropSrc}
+          onConfirm={handleCropConfirm}
+          onCancel={() => { setCropSrc(null) }}
+        />
+      )}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
         <p className="text-gray-500 mt-1 text-sm">Update your public profile and account details</p>
