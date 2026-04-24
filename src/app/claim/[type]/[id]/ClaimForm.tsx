@@ -21,6 +21,7 @@ export default function ClaimForm({ profileId, profileType, profileName }: Props
   const [form, setForm] = useState({
     claimant_name: '',
     claimant_role: '',
+    claimant_role_other: '',
     claimant_phone: '',
     verification_notes: '',
   })
@@ -49,11 +50,13 @@ export default function ClaimForm({ profileId, profileType, profileName }: Props
     setError('')
     if (!form.claimant_name.trim()) { setError('Your full name is required'); return }
     if (!form.claimant_role) { setError('Please select your role'); return }
+    if (form.claimant_role === 'Other' && !form.claimant_role_other.trim()) { setError('Please specify your role'); return }
     if (!form.claimant_phone.trim()) { setError('Phone number is required'); return }
     if (!form.verification_notes.trim()) { setError('Verification notes are required'); return }
 
     startTransition(async () => {
-      const res = await submitClaim({ profileId, profileType, ...form })
+      const resolvedRole = form.claimant_role === 'Other' ? form.claimant_role_other.trim() : form.claimant_role
+      const res = await submitClaim({ profileId, profileType, ...form, claimant_role: resolvedRole })
       if (res.error) { setError(res.error); return }
       setSubmitted(true)
     })
@@ -74,6 +77,14 @@ export default function ClaimForm({ profileId, profileType, profileName }: Props
           <option value="">Select your role</option>
           {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
         </select>
+        {form.claimant_role === 'Other' && (
+          <input
+            value={form.claimant_role_other}
+            onChange={e => set('claimant_role_other', e.target.value)}
+            placeholder="Please specify your role…"
+            className={`${inputCls} mt-2`}
+          />
+        )}
       </div>
       <div>
         <label className={labelCls}>Phone Number <span className="text-red-500">*</span></label>
