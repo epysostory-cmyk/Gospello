@@ -47,7 +47,11 @@ export default async function AdminOrganizationsPage({
 
   const { data: profiles } = await profileQuery
   const { data: churches } = await supabase.from('churches').select('id, profile_id, name, city, slug, is_hidden')
-  const { data: eventRows } = await supabase.from('events').select('organizer_id')
+  const { data: eventRows } = await supabase
+    .from('events')
+    .select('organizer_id')
+    .is('church_id', null)
+    .is('seeded_organizer_id', null)
 
   const churchByProfile = new Map((churches ?? []).map(c => [c.profile_id, c]))
   const eventCountMap   = new Map<string, number>()

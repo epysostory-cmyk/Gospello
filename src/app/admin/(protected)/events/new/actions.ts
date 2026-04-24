@@ -43,7 +43,7 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
 
     const church_id           = selectedProfile.profileType === 'church'     ? selectedProfile.id : null
     const seeded_organizer_id = selectedProfile.profileType === 'seeded_org' ? selectedProfile.id : null
-    const organizer_id        = selectedProfile.profileType === 'auth_org'   ? selectedProfile.id : null
+    const organizer_id        = selectedProfile.profileType === 'auth_org'   ? selectedProfile.id : adminId
 
     const { data, error } = await adminClient.from('events').insert({
       organizer_id,
