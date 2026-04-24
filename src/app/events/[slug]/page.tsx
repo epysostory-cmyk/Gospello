@@ -296,35 +296,35 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </h1>
 
             {/* Quick meta row */}
-            <div className="flex items-center gap-2 text-sm text-gray-500 mt-2 flex-wrap">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 mt-2 flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                 {formatDate(e.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
-              <span className="text-gray-300">·</span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-gray-300 font-normal">·</span>
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                 {formatTime(e.start_date)}
               </span>
               {!e.is_online && e.city && (
                 <>
-                  <span className="text-gray-300">·</span>
+                  <span className="text-gray-300 font-normal">·</span>
                   <a
                     href={`https://maps.google.com/?q=${mapsQuery}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 hover:text-gray-700 transition-colors"
+                    className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors"
                   >
-                    <MapPin className="w-3.5 h-3.5 text-rose-400" />
+                    <MapPin className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
                     {e.location_name}, {e.city}
                   </a>
                 </>
               )}
               {e.is_online && (
                 <>
-                  <span className="text-gray-300">·</span>
-                  <span className="flex items-center gap-1">
-                    <Globe className="w-3.5 h-3.5 text-sky-400" />
+                  <span className="text-gray-300 font-normal">·</span>
+                  <span className="flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
                     Online Event
                   </span>
                 </>
@@ -590,12 +590,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </div>
 
               {/* Date & time */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 text-sm text-gray-700">
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-3 text-sm font-bold text-gray-900">
                   <Calendar className="w-4 h-4 text-indigo-400 flex-shrink-0" />
                   {formatDate(e.start_date, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
                 </div>
-                <div className="flex items-center gap-3 text-sm text-gray-700">
+                <div className="flex items-center gap-3 text-sm font-bold text-gray-900">
                   <Clock className="w-4 h-4 text-indigo-400 flex-shrink-0" />
                   {formatTime(e.start_date)}{e.end_date ? ` – ${formatTime(e.end_date)}` : ''}
                 </div>

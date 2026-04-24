@@ -14,10 +14,14 @@ export default function AdminEventActions({ event }: { event: Event }) {
   const [showRejectForm, setShowRejectForm] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const run = async (key: string, fn: () => Promise<unknown>) => {
+  const run = async (key: string, fn: () => Promise<{ error?: string } | unknown>) => {
     setLoading(key)
-    await fn()
+    const result = await fn()
     setLoading(null)
+    if (result && typeof result === 'object' && 'error' in result && result.error) {
+      alert(`Error: ${result.error}`)
+      return
+    }
     router.refresh()
   }
 

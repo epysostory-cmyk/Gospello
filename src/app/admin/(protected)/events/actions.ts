@@ -64,8 +64,18 @@ export async function unhideEvent(eventId: string) {
   await approveEvent(eventId)
 }
 
-export async function deleteEvent(eventId: string) {
+export async function deleteEvent(eventId: string): Promise<{ error?: string }> {
   const supabase = createAdminClient()
-  await supabase.from('events').delete().eq('id', eventId)
+
+  // Remove related records first to avoid FK constraint failures
+  await supabase.from('attendances').delete().eq('event_id', eventId)
+  await supabase.from('saved_events').delete().eq('event_id', eventId)
+
+  const { error } = await supabase.from('events').delete().eq('id', eventId)
+  if (error) return { error: error.message }
+
   revalidatePath('/admin/events')
+  revalidatePath('/churches')
+  revalidatePath('/events')
+  return {}
 }
