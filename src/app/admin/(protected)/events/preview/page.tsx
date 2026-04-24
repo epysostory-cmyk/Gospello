@@ -28,6 +28,7 @@ export default async function AdminEventPreview({
     pending:  'bg-amber-500',
     approved: 'bg-green-500',
     rejected: 'bg-red-500',
+    hidden:   'bg-gray-500',
   }
 
   return (
@@ -35,11 +36,11 @@ export default async function AdminEventPreview({
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <Link
-          href="/admin/moderation"
+          href="/admin/events"
           className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Moderation
+          Back to Events
         </Link>
         <Link
           href={`/events/${event.slug}`}

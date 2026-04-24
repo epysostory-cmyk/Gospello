@@ -44,7 +44,7 @@ export default async function AdminOrganizersPage({ searchParams }: { searchPara
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Seeded Organizers</h1>
-          <p className="text-gray-500 mt-0.5 text-sm">Admin-created organizer profiles not tied to user accounts</p>
+          <p className="text-gray-500 mt-0.5 text-sm">Admin-created organizer profiles — not tied to any user account</p>
         </div>
         <Link href="/admin/profiles/new"
           className="inline-flex items-center gap-1.5 px-4 h-10 rounded-xl bg-[#7C3AED] text-white text-sm font-semibold hover:bg-[#6D28D9] transition-colors">
@@ -113,7 +113,10 @@ export default async function AdminOrganizersPage({ searchParams }: { searchPara
                     </td>
                     <td className="px-5 py-3.5 text-sm text-gray-500 whitespace-nowrap">{formatDate(row.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                     <td className="px-5 py-3.5">
-                      <Link href={`/organizers/${row.id}`} target="_blank" className="text-xs text-[#7C3AED] hover:underline">View →</Link>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/organizers/${row.id}`} target="_blank" className="text-xs text-[#7C3AED] hover:underline">View →</Link>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Admin-seeded</span>
+                      </div>
                     </td>
                   </tr>
                 ))}

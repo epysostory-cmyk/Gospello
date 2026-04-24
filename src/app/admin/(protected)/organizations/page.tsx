@@ -101,8 +101,8 @@ export default async function AdminOrganizationsPage({
   return (
     <div className="space-y-6 max-w-7xl">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Churches &amp; Organisers</h1>
-        <p className="text-gray-500 mt-0.5 text-sm">Manage user-owned churches and event organisers</p>
+        <h1 className="text-xl font-bold text-gray-900">User Profiles</h1>
+        <p className="text-gray-500 mt-0.5 text-sm">User-owned church and organizer accounts — registered through the platform</p>
       </div>
 
       {/* Stats */}
@@ -196,10 +196,13 @@ export default async function AdminOrganizationsPage({
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${row.account_type === 'church' ? 'bg-violet-100 text-violet-700' : 'bg-blue-100 text-blue-700'}`}>
-                          {row.account_type === 'church' ? <Building2 className="w-3 h-3" /> : <Users className="w-3 h-3" />}
-                          {row.account_type === 'church' ? 'Church' : 'Organiser'}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full w-fit ${row.account_type === 'church' ? 'bg-violet-100 text-violet-700' : 'bg-blue-100 text-blue-700'}`}>
+                            {row.account_type === 'church' ? <Building2 className="w-3 h-3" /> : <Users className="w-3 h-3" />}
+                            {row.account_type === 'church' ? 'Church' : 'Organiser'}
+                          </span>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200 w-fit">User-owned</span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{row.church_city ?? '—'}</td>
                       <td className="px-4 py-3 text-center"><span className="text-sm font-semibold text-gray-900">{row.event_count}</span></td>

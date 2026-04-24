@@ -76,8 +76,8 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Admin Profiles</h1>
-          <p className="text-gray-500 mt-0.5 text-sm">Church and organizer profiles seeded by admins</p>
+          <h1 className="text-xl font-bold text-gray-900">Seeded Profiles</h1>
+          <p className="text-gray-500 mt-0.5 text-sm">Admin-created churches and organizer profiles (not tied to user accounts)</p>
         </div>
         <Link href="/admin/profiles/new"
           className="inline-flex items-center gap-1.5 px-4 h-10 rounded-xl bg-[#7C3AED] text-white text-sm font-semibold hover:bg-[#6D28D9] transition-colors">
@@ -162,6 +162,9 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
                   target="_blank" className="text-xs text-[#7C3AED] hover:underline flex-1">View public page →</Link>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${row.type === 'church' ? 'bg-violet-100 text-violet-700' : 'bg-blue-100 text-blue-700'}`}>
                   {row.type === 'church' ? 'Church' : 'Organizer'}
+                </span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                  Admin-seeded
                 </span>
               </div>
             </div>

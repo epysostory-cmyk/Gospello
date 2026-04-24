@@ -53,3 +53,19 @@ export async function rejectEvent(eventId: string, reason: string) {
 
   revalidatePath('/admin/events')
 }
+
+export async function hideEvent(eventId: string) {
+  const supabase = createAdminClient()
+  await supabase.from('events').update({ status: 'hidden' }).eq('id', eventId)
+  revalidatePath('/admin/events')
+}
+
+export async function unhideEvent(eventId: string) {
+  await approveEvent(eventId)
+}
+
+export async function deleteEvent(eventId: string) {
+  const supabase = createAdminClient()
+  await supabase.from('events').delete().eq('id', eventId)
+  revalidatePath('/admin/events')
+}

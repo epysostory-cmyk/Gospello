@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { Search, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
+import AdminEventActions from './AdminEventActions'
 
 interface SearchParams {
   search?: string
@@ -32,7 +33,7 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
     .order('created_at', { ascending: false })
 
   if (search) query = query.ilike('title', `%${search}%`)
-  if (status) query = query.eq('status', status as 'pending' | 'approved' | 'rejected')
+  if (status) query = query.eq('status', status as 'pending' | 'approved' | 'rejected' | 'hidden')
 
   const { data: events, count: total } = await query.range((page - 1) * pageSize, page * pageSize - 1)
   const totalPages = Math.ceil((total ?? 0) / pageSize)
@@ -89,7 +90,7 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
           <table className="w-full">
             <thead className="border-b border-gray-100 bg-gray-50">
               <tr>
-                {['Event','Organizer','Date','Views','Status'].map(h => (
+                {['Event','Organizer','Date','Views','Status','Actions'].map(h => (
                   <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
@@ -97,7 +98,7 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
             <tbody className="divide-y divide-gray-50">
               {!events || events.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-sm text-gray-400">No events found</td>
+                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-gray-400">No events found</td>
                 </tr>
               ) : events.map((event) => {
                 const church     = Array.isArray(event.churches) ? event.churches[0] : event.churches
@@ -123,6 +124,9 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
                       <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${statusInfo?.cls ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}>
                         {statusInfo?.label || event.status}
                       </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <AdminEventActions event={event as any} />
                     </td>
                   </tr>
                 )
