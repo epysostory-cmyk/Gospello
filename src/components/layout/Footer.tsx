@@ -128,7 +128,7 @@ export default async function Footer() {
             {/* Logo */}
             <Link href="/" className="inline-flex items-center gap-2.5 mb-5 group">
               {resolvedLogoUrl ? (
-                <Image src={resolvedLogoUrl} alt="Gospello logo" width={200} height={60} className="object-contain" />
+                <Image src={resolvedLogoUrl} alt="Gospello logo" width={100} height={60} className="object-contain" />
               ) : (
                 <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-700 group-hover:from-indigo-400 group-hover:to-indigo-600 rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-900/50">
                   <span className="text-white font-black text-base tracking-tight">G</span>
