@@ -15,7 +15,7 @@ const DEFAULTS = {
 }
 
 const INPUT_CLS =
-  'w-full bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl px-4 py-2.5 placeholder-gray-600'
+  'w-full bg-white border border-gray-200 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl px-4 py-2.5 placeholder-gray-400'
 
 export default async function ContactSettingsPage({
   searchParams,
@@ -50,11 +50,11 @@ export default async function ContactSettingsPage({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">
-            <Link href="/admin/settings" className="hover:text-gray-300 transition-colors">Settings</Link>
+            <Link href="/admin/settings" className="hover:text-gray-700 transition-colors">Settings</Link>
             {' / '}
-            <span className="text-gray-300">Contact Page</span>
+            <span className="text-gray-500">Contact Page</span>
           </p>
-          <h1 className="text-2xl font-bold text-white mt-1">Contact Page</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">Contact Page</h1>
         </div>
         <Link
           href="/contact"
@@ -75,15 +75,15 @@ export default async function ContactSettingsPage({
       <form action={saveContactSettings} className="space-y-5">
 
         {/* Contact Information */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-emerald-400" />
-            <h2 className="text-sm font-semibold text-white">Contact Information</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Contact Information</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Email Address</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Email Address</label>
               <input
                 type="email"
                 name="contact_email"
@@ -93,7 +93,7 @@ export default async function ContactSettingsPage({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Partnership Email</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Partnership Email</label>
               <input
                 type="email"
                 name="contact_partnership_email"
@@ -105,7 +105,7 @@ export default async function ContactSettingsPage({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">WhatsApp Number</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">WhatsApp Number</label>
             <input
               type="text"
               name="contact_whatsapp"
@@ -120,7 +120,7 @@ export default async function ContactSettingsPage({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Location</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Location</label>
               <input
                 type="text"
                 name="contact_location"
@@ -130,7 +130,7 @@ export default async function ContactSettingsPage({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Support Hours</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Support Hours</label>
               <input
                 type="text"
                 name="contact_hours"
@@ -143,11 +143,11 @@ export default async function ContactSettingsPage({
         </div>
 
         {/* Page Content */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white">Page Content</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-900">Page Content</h2>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Hero Subheadline</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Hero Subheadline</label>
             <textarea
               name="contact_hero_subheadline"
               rows={2}

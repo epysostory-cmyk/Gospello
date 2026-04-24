@@ -30,7 +30,7 @@ const DEFAULTS = {
 }
 
 const INPUT_CLS =
-  'w-full bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl px-4 py-2.5 placeholder-gray-600'
+  'w-full bg-white border border-gray-200 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl px-4 py-2.5 placeholder-gray-400'
 
 export default async function AboutSettingsPage({
   searchParams,
@@ -80,11 +80,11 @@ export default async function AboutSettingsPage({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">
-            <Link href="/admin/settings" className="hover:text-gray-300 transition-colors">Settings</Link>
+            <Link href="/admin/settings" className="hover:text-gray-700 transition-colors">Settings</Link>
             {' / '}
-            <span className="text-gray-300">About Page</span>
+            <span className="text-gray-500">About Page</span>
           </p>
-          <h1 className="text-2xl font-bold text-white mt-1">About Page</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">About Page</h1>
         </div>
         <Link
           href="/about"
@@ -105,15 +105,15 @@ export default async function AboutSettingsPage({
       <form action={saveAboutSettings} className="space-y-5">
 
         {/* Hero Section */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Heart className="w-4 h-4 text-rose-400" />
-            <h2 className="text-sm font-semibold text-white">Hero Section</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Hero Section</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 Headline — White Part
               </label>
               <input
@@ -125,7 +125,7 @@ export default async function AboutSettingsPage({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 Headline — Gold Gradient Part
               </label>
               <input
@@ -139,7 +139,7 @@ export default async function AboutSettingsPage({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Hero Subheadline</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Hero Subheadline</label>
             <textarea
               name="about_hero_subheadline"
               rows={3}
@@ -150,11 +150,11 @@ export default async function AboutSettingsPage({
         </div>
 
         {/* Mission Statement */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white">Mission Statement &amp; Stats</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-900">Mission Statement &amp; Stats</h2>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Mission Quote</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Mission Quote</label>
             <textarea
               name="about_mission_quote"
               rows={3}
@@ -166,7 +166,7 @@ export default async function AboutSettingsPage({
           </div>
 
           <div>
-            <p className="text-xs font-medium text-gray-400 mb-2">Stats (shown below the mission quote)</p>
+            <p className="text-xs font-medium text-gray-600 mb-2">Stats (shown below the mission quote)</p>
             <div className="space-y-2">
               {/* Stat headers */}
               <div className="grid grid-cols-3 gap-3">
@@ -197,11 +197,11 @@ export default async function AboutSettingsPage({
         </div>
 
         {/* Our Story */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white">Our Story Section</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-900">Our Story Section</h2>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Story Headline</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Story Headline</label>
             <input
               type="text"
               name="about_story_headline"
@@ -211,7 +211,7 @@ export default async function AboutSettingsPage({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Paragraph 1</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Paragraph 1</label>
             <textarea
               name="about_story_p1"
               rows={4}
@@ -221,7 +221,7 @@ export default async function AboutSettingsPage({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Paragraph 2</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Paragraph 2</label>
             <textarea
               name="about_story_p2"
               rows={4}
@@ -231,7 +231,7 @@ export default async function AboutSettingsPage({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Paragraph 3</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Paragraph 3</label>
             <textarea
               name="about_story_p3"
               rows={3}
@@ -241,7 +241,7 @@ export default async function AboutSettingsPage({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">
               Location (shown in the gradient info card)
             </label>
             <input
@@ -255,12 +255,12 @@ export default async function AboutSettingsPage({
         </div>
 
         {/* CTA Section */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white">Bottom CTA Section</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-900">Bottom CTA Section</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 CTA Headline — White Part
               </label>
               <input
@@ -272,7 +272,7 @@ export default async function AboutSettingsPage({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 CTA Headline — Gold Gradient Part
               </label>
               <input
@@ -286,7 +286,7 @@ export default async function AboutSettingsPage({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">CTA Subtitle</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">CTA Subtitle</label>
             <textarea
               name="about_cta_subtitle"
               rows={2}

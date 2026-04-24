@@ -18,7 +18,7 @@ const DEFAULTS = {
 }
 
 const INPUT_CLS =
-  'w-full bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl px-4 py-2.5 placeholder-gray-600'
+  'w-full bg-white border border-gray-200 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl px-4 py-2.5 placeholder-gray-400'
 
 export default async function HeroSettingsPage({
   searchParams,
@@ -58,11 +58,11 @@ export default async function HeroSettingsPage({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">
-            <Link href="/admin/settings" className="hover:text-gray-300 transition-colors">Settings</Link>
+            <Link href="/admin/settings" className="hover:text-gray-700 transition-colors">Settings</Link>
             {' / '}
-            <span className="text-gray-300">Hero Section</span>
+            <span className="text-gray-500">Hero Section</span>
           </p>
-          <h1 className="text-2xl font-bold text-white mt-1">Hero Section</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">Hero Section</h1>
         </div>
         <Link
           href="/"
@@ -83,12 +83,12 @@ export default async function HeroSettingsPage({
       <form action={saveHeroSettings} className="space-y-5">
 
         {/* Badge & Headline */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white">Badge &amp; Headline</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-900">Badge &amp; Headline</h2>
 
           {/* Badge */}
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Badge Text</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Badge Text</label>
             <input
               type="text"
               name="hero_badge"
@@ -100,7 +100,7 @@ export default async function HeroSettingsPage({
           {/* Headline lines */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Headline Line 1 (white)</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Headline Line 1 (white)</label>
               <input
                 type="text"
                 name="hero_headline_1"
@@ -109,7 +109,7 @@ export default async function HeroSettingsPage({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Headline Line 2 (gold gradient)</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Headline Line 2 (gold gradient)</label>
               <input
                 type="text"
                 name="hero_headline_gradient"
@@ -118,7 +118,7 @@ export default async function HeroSettingsPage({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Headline Line 3 (light grey)</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Headline Line 3 (light grey)</label>
               <input
                 type="text"
                 name="hero_headline_3"
@@ -130,7 +130,7 @@ export default async function HeroSettingsPage({
 
           {/* Subheadline */}
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Subheadline</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Subheadline</label>
             <textarea
               name="hero_subheadline"
               rows={3}
@@ -141,11 +141,11 @@ export default async function HeroSettingsPage({
         </div>
 
         {/* CTA Buttons */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white">CTA Buttons</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-900">CTA Buttons</h2>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Primary Button (gold)</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Primary Button (gold)</label>
               <input
                 type="text"
                 name="hero_cta_primary"
@@ -154,7 +154,7 @@ export default async function HeroSettingsPage({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Secondary Button (ghost)</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Secondary Button (ghost)</label>
               <input
                 type="text"
                 name="hero_cta_secondary"
@@ -166,10 +166,10 @@ export default async function HeroSettingsPage({
         </div>
 
         {/* Popular Searches */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white">Popular Searches</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-900">Popular Searches</h2>
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Tags (comma-separated)</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Tags (comma-separated)</label>
             <input
               type="text"
               name="hero_popular_searches"
@@ -183,13 +183,13 @@ export default async function HeroSettingsPage({
         </div>
 
         {/* Footer Brand */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-white">Footer Brand Text</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Footer Brand Text</h2>
             <p className="text-xs text-gray-500 mt-0.5">The description shown in the bottom-left of the footer</p>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Footer Tagline</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Footer Tagline</label>
             <textarea
               name="footer_tagline"
               rows={3}
@@ -202,7 +202,7 @@ export default async function HeroSettingsPage({
 
         {/* Live Preview */}
         <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-white">Live Preview</h2>
+          <h2 className="text-sm font-semibold text-gray-900">Live Preview</h2>
           <div className="bg-slate-950 rounded-xl p-6 space-y-3 overflow-hidden">
             {/* Badge pill */}
             <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-xs px-3 py-1.5 rounded-full">
