@@ -95,7 +95,7 @@ export default function AdminEventActions({ event }: { event: Event }) {
       )}
 
       {/* Reject */}
-      {event.status !== 'rejected' && (
+      {event.status === 'pending' && (
         <button
           onClick={() => setShowRejectForm(true)}
           className="flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-colors"
