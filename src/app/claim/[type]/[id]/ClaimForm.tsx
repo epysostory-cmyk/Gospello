@@ -47,8 +47,10 @@ export default function ClaimForm({ profileId, profileType, profileName }: Props
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!form.claimant_name.trim()) { setError('Your name is required'); return }
+    if (!form.claimant_name.trim()) { setError('Your full name is required'); return }
     if (!form.claimant_role) { setError('Please select your role'); return }
+    if (!form.claimant_phone.trim()) { setError('Phone number is required'); return }
+    if (!form.verification_notes.trim()) { setError('Verification notes are required'); return }
 
     startTransition(async () => {
       const res = await submitClaim({ profileId, profileType, ...form })
@@ -74,11 +76,11 @@ export default function ClaimForm({ profileId, profileType, profileName }: Props
         </select>
       </div>
       <div>
-        <label className={labelCls}>Phone Number</label>
+        <label className={labelCls}>Phone Number <span className="text-red-500">*</span></label>
         <input type="tel" value={form.claimant_phone} onChange={e => set('claimant_phone', e.target.value)} placeholder="+234 800 000 0000" className={inputCls} />
       </div>
       <div>
-        <label className={labelCls}>Verification Notes</label>
+        <label className={labelCls}>Verification Notes <span className="text-red-500">*</span></label>
         <textarea
           value={form.verification_notes}
           onChange={e => set('verification_notes', e.target.value)}
