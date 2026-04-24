@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   if (!user) redirect('/auth/login')
 
   // Church accounts without a church profile must complete setup first
-  const { data: profile } = await supabase.from('profiles').select('account_type, ministry_type').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('account_type, ministry_type, ministry_types').eq('id', user.id).single()
   if (profile?.account_type === 'church') {
     const { data: church } = await supabase.from('churches').select('id').eq('profile_id', user!.id).single()
     if (!church) redirect('/dashboard/church/setup')
@@ -33,7 +33,10 @@ export default async function DashboardPage() {
     churchDenomination = churchData?.denomination ?? null
   }
   const needsDenomination = profile?.account_type === 'church' && !churchDenomination
-  const needsMinistryType = profile?.account_type === 'organizer' && !(profile as { ministry_type?: string | null }).ministry_type
+  const profileAny = profile as { ministry_type?: string | null; ministry_types?: string[] | null } | null
+  const needsMinistryType = profile?.account_type === 'organizer'
+    && !profileAny?.ministry_type
+    && !(profileAny?.ministry_types?.length)
 
   const { data: events } = await supabase
     .from('events')
