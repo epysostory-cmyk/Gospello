@@ -72,12 +72,12 @@ export default function AddCategoryForm() {
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-6">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-sm font-semibold text-white">Add New Category</h2>
+        <h2 className="text-sm font-semibold text-gray-900">Add New Category</h2>
         <button
           onClick={() => setOpen(false)}
-          className="text-gray-500 hover:text-gray-300 text-xs"
+          className="text-gray-500 hover:text-gray-700 text-xs"
         >
           Cancel
         </button>
@@ -102,7 +102,7 @@ export default function AddCategoryForm() {
         {/* Name + Slug */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Name *</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1.5">Name *</label>
             <input
               type="text"
               name="name"
@@ -110,11 +110,11 @@ export default function AddCategoryForm() {
               onChange={handleNameChange}
               required
               placeholder="e.g. Revival Meetings"
-              className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Slug *</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1.5">Slug *</label>
             <input
               type="text"
               name="slug"
@@ -122,30 +122,30 @@ export default function AddCategoryForm() {
               onChange={(e) => setSlug(e.target.value)}
               required
               placeholder="e.g. revival"
-              className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <p className="text-xs text-gray-600 mt-1">Cannot be changed after creation</p>
+            <p className="text-xs text-gray-400 mt-1">Cannot be changed after creation</p>
           </div>
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5">Description <span className="text-gray-600">(optional)</span></label>
+          <label className="block text-xs font-medium text-gray-700 mb-1.5">Description <span className="text-gray-400">(optional)</span></label>
           <textarea
             name="description"
             rows={2}
             placeholder="Short description of this category"
             maxLength={200}
-            className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
           />
         </div>
 
         {/* Icon Picker */}
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-2">
             Icon *
             {selectedIcon && (
-              <span className="ml-2 text-white text-base">{selectedIcon} selected</span>
+              <span className="ml-2 text-gray-900 text-base">{selectedIcon} selected</span>
             )}
           </label>
           <div className="grid grid-cols-8 gap-1.5">
@@ -157,7 +157,7 @@ export default function AddCategoryForm() {
                 className={`w-10 h-10 flex items-center justify-center rounded-lg text-xl transition-all ${
                   selectedIcon === emoji
                     ? 'bg-indigo-600 ring-2 ring-indigo-400 scale-110'
-                    : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                    : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
                 }`}
               >
                 {emoji}

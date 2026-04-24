@@ -7,6 +7,7 @@ import { formatDate, formatTime, cn } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import type { CategoryInfo } from '@/lib/categories'
+import SaveButton from './SaveButton'
 
 interface EventCardProps {
   event: Event
@@ -129,11 +130,6 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
               {event.city}
             </span>
           </div>
-          {(attendanceCount !== undefined && attendanceCount > 0) && (
-            <div className="mt-2 text-xs text-white/60 font-medium">
-              {attendanceCount} {hasEnded ? 'attended' : 'attending'}
-            </div>
-          )}
         </div>
       </Link>
     )
@@ -198,6 +194,11 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
             </span>
           )}
         </div>
+
+        {/* Save button - absolute over image, bottom right */}
+        <div className="absolute bottom-3 right-3" onClick={e => e.preventDefault()}>
+          <SaveButton eventId={event.id} initialSaved={false} variant="icon" size="sm" />
+        </div>
       </div>
 
       {/* Body */}
@@ -218,19 +219,20 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
         </div>
 
         {/* Footer */}
-        {(event.churches || attendanceCount !== undefined) && (
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-            {event.churches
-              ? <p className="text-xs font-semibold text-indigo-600 truncate">{event.churches.name}</p>
-              : <span />
-            }
-            {attendanceCount !== undefined && attendanceCount > 0 && (
-              <span className="text-xs font-medium text-gray-400 flex-shrink-0 ml-2">
-                {attendanceCount} {hasEnded ? 'attended' : 'attending'}
-              </span>
-            )}
-          </div>
-        )}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+          {event.churches
+            ? <p className="text-xs font-semibold text-indigo-600 truncate">{event.churches.name}</p>
+            : <span />
+          }
+          {/* Free / Paid price badge */}
+          {event.is_free ? (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">Free</span>
+          ) : event.price != null ? (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex-shrink-0">₦{event.price.toLocaleString()}</span>
+          ) : (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex-shrink-0">Paid</span>
+          )}
+        </div>
       </div>
     </Link>
   )

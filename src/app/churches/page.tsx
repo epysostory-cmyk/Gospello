@@ -1,3 +1,6 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Churches' }
+
 export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
@@ -26,6 +29,8 @@ async function getChurches(params: SearchParams) {
     .select('*', { count: 'exact' })
     .eq('is_hidden', false)
     .order('is_featured', { ascending: false })
+    .order('verified_badge', { ascending: false })
+    .order('is_claimed', { ascending: false })
     .order('name', { ascending: true })
     .range(from, to)
 

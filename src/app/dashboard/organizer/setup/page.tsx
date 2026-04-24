@@ -12,7 +12,18 @@ export default function OrganizerSetupPage() {
   const [checking, setChecking] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ display_name: '', bio: '', state: 'Lagos', website: '' })
+  const MINISTRY_TYPES = [
+    'Evangelism Ministry','Worship Ministry','Prayer Ministry','Youth Ministry',
+    'Children Ministry','Women Ministry','Men Ministry','Campus Ministry',
+    'Music Ministry','Media Ministry','Prophetic Ministry','Healing and Deliverance Ministry',
+    'Discipleship Ministry','Missions and Outreach Ministry','Marriage and Family Ministry',
+    'Singles Ministry','Leadership and Mentorship Ministry','Business and Marketplace Ministry',
+    'Creative Arts Ministry','Drama and Theatre Ministry','Dance Ministry','Podcast Ministry',
+    'Conference and Events Ministry','Charity and Community Ministry','Prison Ministry',
+    'Hospital and Healthcare Ministry','Sports Ministry','Tech and Digital Ministry','Other',
+  ]
+
+  const [form, setForm] = useState({ display_name: '', bio: '', state: 'Lagos', website: '', ministry_type: '' })
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -51,6 +62,7 @@ export default function OrganizerSetupPage() {
         bio: form.bio.trim() || null,
         state: form.state,
         website: form.website.trim() || null,
+        ministry_type: form.ministry_type || null,
         profile_completed: true,
       })
       .eq('id', session.user.id)
@@ -86,6 +98,22 @@ export default function OrganizerSetupPage() {
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             />
+          </div>
+
+          {/* Ministry type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Ministry Type <span className="text-red-400">*</span>
+            </label>
+            <select
+              value={form.ministry_type}
+              onChange={e => update('ministry_type', e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              required
+            >
+              <option value="">— Select ministry type —</option>
+              {MINISTRY_TYPES.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
           </div>
 
           <div>

@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
-import { Settings, Bell, Shield, Layout, Heart, MessageSquare } from 'lucide-react'
+import { Settings, Bell, Shield, Layout, Heart, MessageSquare, Globe, FileText, Shield as ShieldIcon, Home } from 'lucide-react'
 import { saveGeneralSettings, saveNotificationSettings, saveSecuritySettings } from './actions'
 import { getSiteSettings } from '@/app/actions/site-settings'
 import BrandingSettings from './BrandingSettings'
@@ -153,6 +153,54 @@ export default async function AdminSettingsPage({
             <div>
               <h2 className="font-semibold text-white text-sm">Contact Page</h2>
               <p className="text-xs text-gray-500 mt-0.5">Update email, WhatsApp number, location, hours and partnership details</p>
+            </div>
+          </div>
+          <span className="text-gray-500 group-hover:text-gray-300 text-sm transition-colors">Edit →</span>
+        </Link>
+
+        {/* Footer */}
+        <Link href="/admin/settings/footer" className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between hover:bg-white/8 transition-colors group">
+          <div className="flex items-center gap-3">
+            <Globe className="w-5 h-5 text-purple-400" />
+            <div>
+              <h2 className="font-semibold text-white text-sm">Footer</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Customize footer tagline, columns, social links, copyright and bottom links</p>
+            </div>
+          </div>
+          <span className="text-gray-500 group-hover:text-gray-300 text-sm transition-colors">Edit →</span>
+        </Link>
+
+        {/* Homepage CTA */}
+        <Link href="/admin/settings/homepage" className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between hover:bg-white/8 transition-colors group">
+          <div className="flex items-center gap-3">
+            <Home className="w-5 h-5 text-amber-400" />
+            <div>
+              <h2 className="font-semibold text-white text-sm">Homepage CTA</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Edit the &quot;Is your church on Gospello?&quot; section</p>
+            </div>
+          </div>
+          <span className="text-gray-500 group-hover:text-gray-300 text-sm transition-colors">Edit →</span>
+        </Link>
+
+        {/* Privacy Policy */}
+        <Link href="/admin/settings/privacy" className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between hover:bg-white/8 transition-colors group">
+          <div className="flex items-center gap-3">
+            <ShieldIcon className="w-5 h-5 text-blue-400" />
+            <div>
+              <h2 className="font-semibold text-white text-sm">Privacy Policy</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Edit the content shown at /privacy</p>
+            </div>
+          </div>
+          <span className="text-gray-500 group-hover:text-gray-300 text-sm transition-colors">Edit →</span>
+        </Link>
+
+        {/* Terms of Use */}
+        <Link href="/admin/settings/terms" className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between hover:bg-white/8 transition-colors group">
+          <div className="flex items-center gap-3">
+            <FileText className="w-5 h-5 text-cyan-400" />
+            <div>
+              <h2 className="font-semibold text-white text-sm">Terms of Use</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Edit the content shown at /terms</p>
             </div>
           </div>
           <span className="text-gray-500 group-hover:text-gray-300 text-sm transition-colors">Edit →</span>

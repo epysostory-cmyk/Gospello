@@ -137,12 +137,12 @@ export default function Step1Basics({ formData, updateForm, errors, categories }
           <div className="mt-4 space-y-4">
             {/* Speakers */}
             <div>
-              <label className={labelCls}>Guest Speakers <span className="text-gray-400 font-normal">(optional)</span></label>
+              <label className={labelCls}>Featured Ministers &amp; Speakers <span className="text-gray-400 font-normal">(optional)</span></label>
               <input
                 type="text"
                 value={formData.speakers || ''}
                 onChange={(e) => updateForm('speakers', e.target.value)}
-                placeholder="e.g., Pastor John Adeyemi, Apostle Grace..."
+                placeholder="e.g. Min Tasha Cobbs, Pastor Biodun Fatoyinbo, Dunsin Oyekan"
                 className={inputCls}
               />
             </div>

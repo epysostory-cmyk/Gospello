@@ -1,3 +1,6 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'My Events' }
+
 export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'

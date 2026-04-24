@@ -6,6 +6,9 @@ import EventCard from '@/components/ui/EventCard'
 import ChurchCard from '@/components/ui/ChurchCard'
 import SectionHeader from '@/components/ui/SectionHeader'
 import LocationAwareEvents from './_components/LocationAwareEvents'
+import DiscoverChurches from './_components/DiscoverChurches'
+import DiscoverOrganizers from './_components/DiscoverOrganizers'
+import type { OrganizerCard } from './_components/DiscoverOrganizers'
 import type { Event, Church } from '@/types/database'
 
 export const revalidate = 60
@@ -29,6 +32,10 @@ async function getHomepageData() {
       statsOrganizersRes,
       statsCitiesRes,
       categoriesRes,
+      eventOrganizerIdsRes,
+      discoverProfileOrganizersRes,
+      discoverSeededOrganizersRes,
+      churchCtaRes,
     ] = await Promise.all([
       supabase
         .from('platform_settings')
@@ -61,6 +68,33 @@ async function getHomepageData() {
         .eq('is_visible', true)
         .order('sort_order', { ascending: true })
         .limit(6),
+      // Church IDs that have at least one approved event
+      adminClient
+        .from('events')
+        .select('organizer_id')
+        .eq('status', 'approved')
+        .not('organizer_id', 'is', null),
+      // Discover Organizers — from profiles
+      adminClient
+        .from('profiles')
+        .select('id, display_name, avatar_url, state, ministry_type')
+        .eq('account_type', 'organizer')
+        .eq('is_hidden', false)
+        .order('created_at', { ascending: false })
+        .limit(20),
+      // Discover Organizers — from seeded_organizers
+      adminClient
+        .from('seeded_organizers')
+        .select('id, name, slug, logo_url, ministry_type, city, state, verified_badge')
+        .eq('is_hidden', false)
+        .order('created_at', { ascending: false })
+        .limit(20),
+      // Homepage church CTA settings
+      adminClient
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'homepage_church_cta')
+        .maybeSingle(),
     ])
 
     const featuredEvents = (featuredRes.data ?? []) as Event[]
@@ -102,6 +136,70 @@ async function getHomepageData() {
       rawCategories.map(c => [c.slug, { name: c.name, icon: c.icon ?? null, color: c.color ?? '#6B7280' }])
     )
 
+    // IDs of churches/organizers with at least one approved event
+    const approvedOrganizerIds = new Set(
+      (eventOrganizerIdsRes.data ?? []).map((r: { organizer_id: string }) => r.organizer_id).filter(Boolean)
+    )
+
+    // Fetch churches that have approved events
+    const discoverChurches = approvedOrganizerIds.size > 0
+      ? await adminClient
+          .from('churches')
+          .select('id, name, slug, logo_url, denomination, city, state, verified_badge')
+          .eq('is_hidden', false)
+          .in('id', [...approvedOrganizerIds])
+          .order('verified_badge', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(10)
+          .then(r => (r.data ?? []).map(c => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            logo_url: c.logo_url,
+            denomination: c.denomination ?? null,
+            city: c.city ?? '',
+            state: c.state ?? '',
+            verified_badge: c.verified_badge ?? false,
+          })))
+      : []
+
+    // Build discover organizers list (merge profiles + seeded, limit to 10)
+    const profileOrgs: OrganizerCard[] = (discoverProfileOrganizersRes.data ?? []).map((p: { id: string; display_name: string; avatar_url: string | null; state: string | null; ministry_type?: string | null }) => ({
+      id: p.id,
+      name: p.display_name,
+      slug: p.id,
+      logo_url: p.avatar_url,
+      ministry_type: (p as { ministry_type?: string | null }).ministry_type ?? null,
+      city: '',
+      state: p.state ?? '',
+      verified_badge: false,
+      source: 'profile' as const,
+    }))
+    const seededOrgs: OrganizerCard[] = (discoverSeededOrganizersRes.data ?? []).map((s: { id: string; name: string; slug: string; logo_url: string | null; ministry_type: string | null; city: string; state: string; verified_badge: boolean }) => ({
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      logo_url: s.logo_url,
+      ministry_type: s.ministry_type,
+      city: s.city ?? '',
+      state: s.state ?? '',
+      verified_badge: s.verified_badge ?? false,
+      source: 'seeded' as const,
+    }))
+    // Merge: only show organizers with at least one approved event, limit 10
+    const allOrgs: OrganizerCard[] = [...profileOrgs, ...seededOrgs]
+      .filter(o => approvedOrganizerIds.has(o.id))
+      .slice(0, 10)
+
+    // Homepage CTA settings
+    const rawCta = churchCtaRes?.data?.value
+    const churchCta = rawCta && typeof rawCta === 'object' ? rawCta as {
+      heading: string; subtext: string
+      button1_label: string; button1_url: string
+      button2_label: string; button2_url: string
+      visible: boolean
+    } : null
+
     return {
       featuredEvents,
       upcomingEvents,
@@ -116,6 +214,9 @@ async function getHomepageData() {
       },
       heroSettings: heroSettingsRes.data ?? null,
       attendanceCountMap,
+      discoverChurches,
+      discoverOrganizers: allOrgs,
+      churchCta,
     }
   } catch {
     return {
@@ -127,6 +228,9 @@ async function getHomepageData() {
       stats: { events: 0, churches: 0, organizers: 0, cities: 0 },
       heroSettings: null,
       attendanceCountMap: {} as Record<string, number>,
+      discoverChurches: [],
+      discoverOrganizers: [],
+      churchCta: null,
     }
   }
 }
@@ -141,6 +245,9 @@ export default async function HomePage() {
     stats,
     heroSettings,
     attendanceCountMap,
+    discoverChurches,
+    discoverOrganizers,
+    churchCta,
   } = await getHomepageData()
 
   const heroBadge        = heroSettings?.hero_badge             ?? "Nigeria's Gospel Event Platform"
@@ -384,6 +491,12 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── DISCOVER CHURCHES ────────────────────────────────────── */}
+      <DiscoverChurches churches={discoverChurches} />
+
+      {/* ── DISCOVER ORGANIZERS ──────────────────────────────────── */}
+      <DiscoverOrganizers organizers={discoverOrganizers} />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-16">
 
         {/* ── FEATURED EVENTS ────────────────────────────────────── */}
@@ -399,7 +512,6 @@ export default async function HomePage() {
                   key={event.id}
                   event={event}
                   variant="featured"
-                  attendanceCount={attendanceCountMap[event.id]}
                   categoryInfo={catMap[event.category]}
                 />
               ))}
@@ -449,37 +561,41 @@ export default async function HomePage() {
         )}
 
         {/* ── CTA BANNER ─────────────────────────────────────────── */}
-        <section className="relative bg-slate-950 rounded-3xl p-10 md:p-16 text-white overflow-hidden text-center">
-          <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
-            <div className="absolute -top-20 -right-20 w-72 h-72 bg-indigo-600/20 rounded-full blur-3xl" />
-            <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-purple-600/20 rounded-full blur-3xl" />
-          </div>
-          <div className="relative">
-            <h2 className="text-3xl md:text-4xl font-black mb-3">
-              Is your church on{' '}
-              <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">
-                Gospello?
-              </span>
-            </h2>
-            <p className="text-slate-400 mb-8 max-w-lg mx-auto">
-              Join churches and organizers reaching more believers by listing your events for free.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/auth/signup?type=church"
-                className="bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-8 py-3.5 rounded-xl transition-colors"
-              >
-                Register Your Church
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="bg-white/8 hover:bg-white/12 text-white font-semibold px-8 py-3.5 rounded-xl transition-colors border border-white/10"
-              >
-                Post an Event
-              </Link>
+        {(churchCta === null || churchCta.visible !== false) && (
+          <section className="relative bg-slate-950 rounded-3xl p-10 md:p-16 text-white overflow-hidden text-center">
+            <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+              <div className="absolute -top-20 -right-20 w-72 h-72 bg-indigo-600/20 rounded-full blur-3xl" />
+              <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-purple-600/20 rounded-full blur-3xl" />
             </div>
-          </div>
-        </section>
+            <div className="relative">
+              <h2 className="text-3xl md:text-4xl font-black mb-3">
+                {churchCta?.heading
+                  ? <span>{churchCta.heading.replace('Gospello', '').trim().replace(/\?$/, '')}{' '}
+                      <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">Gospello?</span>
+                    </span>
+                  : <>Is your church on{' '}<span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">Gospello?</span></>
+                }
+              </h2>
+              <p className="text-slate-400 mb-8 max-w-lg mx-auto">
+                {churchCta?.subtext ?? 'Join churches and organizers reaching more believers by listing your events for free.'}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href={churchCta?.button1_url ?? '/auth/signup?type=church'}
+                  className="bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-8 py-3.5 rounded-xl transition-colors"
+                >
+                  {churchCta?.button1_label ?? 'Register Your Church'}
+                </Link>
+                <Link
+                  href={churchCta?.button2_url ?? '/auth/signup'}
+                  className="bg-white/8 hover:bg-white/12 text-white font-semibold px-8 py-3.5 rounded-xl transition-colors border border-white/10"
+                >
+                  {churchCta?.button2_label ?? 'Post an Event'}
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
 
       </div>
     </div>

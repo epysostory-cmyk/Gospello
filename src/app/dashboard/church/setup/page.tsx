@@ -19,9 +19,18 @@ export default function ChurchSetupPage() {
   const [logoUploading, setLogoUploading] = useState(false)
   const [serviceTimes, setServiceTimes] = useState([''])
 
+  const DENOMINATIONS = [
+    'Pentecostal','Charismatic','Apostolic','Anglican','Catholic','Methodist',
+    'Baptist','Presbyterian','Lutheran','Seventh-day Adventist','Church of God',
+    'Foursquare Gospel','Assemblies of God','African Traditional Christian','Evangelical',
+    'Reformed','Brethren','Salvation Army','Quaker (Friends)','Interdenominational',
+    'Non-denominational','Other',
+  ]
+
   const [form, setForm] = useState({
     name: '',
     lead_pastor: '',
+    denomination: '',
     address: '',
     city: 'Lagos',
     state: 'Lagos',
@@ -102,6 +111,7 @@ export default function ChurchSetupPage() {
       name: form.name.trim(),
       slug,
       lead_pastor: form.lead_pastor.trim(),
+      denomination: form.denomination || null,
       logo_url: logoUrl,
       description: form.description.trim() || null,
       address: form.address.trim(),
@@ -198,6 +208,18 @@ export default function ChurchSetupPage() {
             </label>
             <input type="text" value={form.lead_pastor} onChange={e => update('lead_pastor', e.target.value)}
               placeholder="e.g. Pastor Sam Adeyemi" className={inputCls} required />
+          </div>
+
+          {/* Denomination */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Denomination <span className="text-red-400">*</span>
+            </label>
+            <select value={form.denomination} onChange={e => update('denomination', e.target.value)}
+              className={inputCls + ' bg-white'} required>
+              <option value="">— Select denomination —</option>
+              {DENOMINATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
           </div>
 
           {/* Address */}

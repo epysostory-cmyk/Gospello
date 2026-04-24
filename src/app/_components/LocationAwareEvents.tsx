@@ -211,7 +211,6 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
           <EventCard
             key={event.id}
             event={event}
-            attendanceCount={attendanceCountMap[event.id]}
             categoryInfo={catMap[event.category]}
           />
         ))}

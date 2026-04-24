@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ConditionalLayout from '@/components/layout/ConditionalLayout'
 import ScrollToTop from '@/components/ui/ScrollToTop'
+import SavedEventsMigrator from '@/components/SavedEventsMigrator'
 import { getSiteSettings } from '@/app/actions/site-settings'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -45,6 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={`min-h-full flex flex-col bg-gray-50 ${plusJakartaSans.variable}`}>
         <ScrollToTop />
+        <SavedEventsMigrator />
         <ConditionalLayout
           navbar={<Navbar logoUrl={settings.site_logo_url} siteName={settings.site_name} />}
           footer={<Footer />}

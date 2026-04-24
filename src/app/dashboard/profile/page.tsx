@@ -1,3 +1,6 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Profile Settings' }
+
 export const dynamic = 'force-dynamic'
 
 import { redirect } from 'next/navigation'
@@ -29,6 +32,7 @@ export default async function ProfilePage() {
         state: (profile as any)?.state ?? '',
         website: (profile as any)?.website ?? '',
         avatar_url: profile?.avatar_url ?? null,
+        ministry_type: (profile as any)?.ministry_type ?? null,
       }}
     />
   )

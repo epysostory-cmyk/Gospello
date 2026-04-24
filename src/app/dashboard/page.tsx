@@ -1,3 +1,6 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Dashboard' }
+
 export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
@@ -13,11 +16,24 @@ export default async function DashboardPage() {
   if (!user) redirect('/auth/login')
 
   // Church accounts without a church profile must complete setup first
-  const { data: profile } = await supabase.from('profiles').select('account_type').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('account_type, ministry_type').eq('id', user.id).single()
   if (profile?.account_type === 'church') {
     const { data: church } = await supabase.from('churches').select('id').eq('profile_id', user!.id).single()
     if (!church) redirect('/dashboard/church/setup')
   }
+
+  // Check for missing denomination (church) or ministry_type (organizer)
+  let churchDenomination: string | null = null
+  if (profile?.account_type === 'church') {
+    const { data: churchData } = await supabase
+      .from('churches')
+      .select('denomination')
+      .eq('profile_id', user.id)
+      .maybeSingle()
+    churchDenomination = churchData?.denomination ?? null
+  }
+  const needsDenomination = profile?.account_type === 'church' && !churchDenomination
+  const needsMinistryType = profile?.account_type === 'organizer' && !(profile as { ministry_type?: string | null }).ministry_type
 
   const { data: events } = await supabase
     .from('events')
@@ -52,6 +68,36 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8 max-w-4xl">
+
+      {/* ── Completion banners ─────────────────────────────────── */}
+      {needsDenomination && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Complete your profile</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Add your denomination so people can find your church more easily.
+            </p>
+          </div>
+          <a href="/dashboard/church" className="flex-shrink-0 text-sm font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2">
+            Update Profile →
+          </a>
+        </div>
+      )}
+
+      {needsMinistryType && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Complete your profile</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Add your ministry type so people can find you more easily.
+            </p>
+          </div>
+          <a href="/dashboard/profile" className="flex-shrink-0 text-sm font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2">
+            Update Profile →
+          </a>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <Link

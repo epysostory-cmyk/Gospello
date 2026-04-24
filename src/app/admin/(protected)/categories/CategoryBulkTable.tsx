@@ -70,8 +70,8 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
     <div>
       {/* Bulk action toolbar */}
       {someSelected && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
-          <span className="text-sm text-gray-300 font-medium mr-1">
+        <div className="mb-3 flex flex-wrap items-center gap-2 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200">
+          <span className="text-sm text-gray-700 font-medium mr-1">
             {selected.size} selected
           </span>
 
@@ -87,7 +87,7 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
           <button
             onClick={handleBulkHide}
             disabled={isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200 transition-colors disabled:opacity-50"
           >
             <EyeOff className="w-3.5 h-3.5" />
             Hide
@@ -114,7 +114,7 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-white/10 text-gray-400 hover:bg-white/20 transition-colors"
+                className="px-3 py-1.5 text-xs rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
@@ -123,7 +123,7 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
 
           <button
             onClick={clearSelection}
-            className="ml-auto text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            className="ml-auto text-xs text-gray-500 hover:text-gray-700 transition-colors"
           >
             Clear
           </button>
@@ -133,23 +133,23 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
       )}
 
       {/* Table */}
-      <div className="rounded-2xl border border-white/10 overflow-hidden">
+      <div className="rounded-2xl border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10 bg-white/5">
+            <tr className="border-b border-gray-200 bg-gray-50">
               <th className="px-4 py-3 w-8">
                 <input
                   type="checkbox"
                   checked={allSelected}
                   onChange={toggleAll}
-                  className="rounded border-white/20 bg-white/5 accent-indigo-500 cursor-pointer"
+                  className="rounded border-gray-300 bg-white accent-indigo-500 cursor-pointer"
                 />
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Category</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden sm:table-cell">Slug</th>
-              <th className="text-center px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Events</th>
-              <th className="text-center px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden sm:table-cell">Status</th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Actions</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Slug</th>
+              <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Events</th>
+              <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Status</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -163,8 +163,8 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
               cats.map((cat, idx) => (
                 <tr
                   key={cat.id}
-                  className={`border-b border-white/5 transition-colors ${
-                    selected.has(cat.id) ? 'bg-indigo-500/5' : 'hover:bg-white/[0.03]'
+                  className={`border-b border-gray-100 transition-colors ${
+                    selected.has(cat.id) ? 'bg-indigo-50' : 'hover:bg-gray-50'
                   }`}
                 >
                   {/* Checkbox */}
@@ -173,7 +173,7 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
                       type="checkbox"
                       checked={selected.has(cat.id)}
                       onChange={() => toggle(cat.id)}
-                      className="rounded border-white/20 bg-white/5 accent-indigo-500 cursor-pointer"
+                      className="rounded border-gray-300 bg-white accent-indigo-500 cursor-pointer"
                     />
                   </td>
 
@@ -187,7 +187,7 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
                         {cat.icon || '⛪'}
                       </div>
                       <div>
-                        <p className="text-white font-semibold text-sm">{cat.name}</p>
+                        <p className="text-gray-900 font-semibold text-sm">{cat.name}</p>
                         {cat.description && (
                           <p className="text-xs text-gray-500 mt-0.5 line-clamp-1 max-w-[200px]">{cat.description}</p>
                         )}
@@ -197,12 +197,12 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
 
                   {/* Slug */}
                   <td className="px-4 py-3.5 hidden sm:table-cell">
-                    <code className="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded-lg">{cat.slug}</code>
+                    <code className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{cat.slug}</code>
                   </td>
 
                   {/* Event count */}
                   <td className="px-4 py-3.5 text-center">
-                    <span className="text-sm font-semibold text-white">{countMap[cat.slug] ?? 0}</span>
+                    <span className="text-sm font-semibold text-gray-900">{countMap[cat.slug] ?? 0}</span>
                   </td>
 
                   {/* Visibility badge */}

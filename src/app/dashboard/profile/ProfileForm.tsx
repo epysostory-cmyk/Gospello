@@ -14,6 +14,17 @@ const NIGERIAN_STATES = [
   'Taraba','Yobe','Zamfara',
 ]
 
+const MINISTRY_TYPES = [
+  'Evangelism Ministry','Worship Ministry','Prayer Ministry','Youth Ministry',
+  'Children Ministry','Women Ministry','Men Ministry','Campus Ministry',
+  'Music Ministry','Media Ministry','Prophetic Ministry','Healing and Deliverance Ministry',
+  'Discipleship Ministry','Missions and Outreach Ministry','Marriage and Family Ministry',
+  'Singles Ministry','Leadership and Mentorship Ministry','Business and Marketplace Ministry',
+  'Creative Arts Ministry','Drama and Theatre Ministry','Dance Ministry','Podcast Ministry',
+  'Conference and Events Ministry','Charity and Community Ministry','Prison Ministry',
+  'Hospital and Healthcare Ministry','Sports Ministry','Tech and Digital Ministry','Other',
+]
+
 interface ProfileFormProps {
   userId: string
   initialData: {
@@ -25,6 +36,7 @@ interface ProfileFormProps {
     state: string
     website: string
     avatar_url: string | null
+    ministry_type?: string | null
   }
 }
 
@@ -40,6 +52,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     bio: initialData.bio,
     state: initialData.state,
     website: initialData.website,
+    ministry_type: initialData.ministry_type ?? '',
   })
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialData.avatar_url)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -111,6 +124,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
         state: form.state || null,
         website: form.website.trim() || null,
         avatar_url: newAvatarUrl,
+        ministry_type: form.account_type === 'organizer' ? form.ministry_type || null : null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId)
@@ -296,6 +310,24 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
           </div>
+
+          {/* Ministry type — organizer only */}
+          {form.account_type === 'organizer' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Ministry Type
+                {!form.ministry_type && <span className="ml-2 text-xs text-amber-600 font-normal">⚠ Incomplete</span>}
+              </label>
+              <select
+                value={form.ministry_type}
+                onChange={e => setForm(f => ({ ...f, ministry_type: e.target.value }))}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+              >
+                <option value="">Select your ministry type</option>
+                {MINISTRY_TYPES.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+          )}
 
           {/* Email (read-only) */}
           <div>

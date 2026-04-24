@@ -1,3 +1,6 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Events' }
+
 export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
@@ -56,21 +59,12 @@ async function getEvents(params: SearchParams) {
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
-  // When searching, don't cap by date — show all future + recent matching events
-  const ninetyDaysOut = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
-
   let query = supabase
     .from('events')
     .select('*, churches(*)', { count: 'exact' })
     .eq('status', 'approved')
-    .gte('start_date', new Date().toISOString())
-    .order('start_date', { ascending: true })
+    .order('start_date', { ascending: false })
     .range(from, to)
-
-  // Only apply 90-day cap when not searching
-  if (!params.q) {
-    query = query.lte('start_date', ninetyDaysOut)
-  }
 
   if (params.q) {
     query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%,location_name.ilike.%${params.q}%`)
@@ -355,7 +349,6 @@ export default async function EventsPage({
               <EventCard
                 key={event.id}
                 event={event}
-                attendanceCount={attendanceCountMap[event.id]}
                 categoryInfo={catMap[event.category]}
               />
             ))}

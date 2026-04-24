@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Clock, CheckCircle, Star } from 'lucide-react'
+import { MapPin, Clock, CheckCircle, Star, ShieldCheck } from 'lucide-react'
 import type { Church } from '@/types/database'
 
 interface ChurchCardProps {
@@ -82,12 +82,30 @@ export default function ChurchCard({ church }: ChurchCardProps) {
               </div>
             )}
           </div>
-          {church.is_verified && (
+          {church.verified_badge ? (
+            <div className="flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100 mb-1">
+              <ShieldCheck className="w-3 h-3" />
+              Verified
+            </div>
+          ) : church.is_claimed ? (
+            <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 mb-1">
+              <CheckCircle className="w-3 h-3" />
+              Claimed
+            </div>
+          ) : church.claim_requested_at ? (
+            <div className="flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100 mb-1">
+              Pending
+            </div>
+          ) : (church.created_by_admin && !church.is_claimed) ? (
+            <div className="flex items-center gap-1 text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full mb-1">
+              Unverified
+            </div>
+          ) : church.is_verified ? (
             <div className="flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100 mb-1">
               <CheckCircle className="w-3 h-3 fill-indigo-600 text-white" />
               Verified
             </div>
-          )}
+          ) : null}
         </div>
 
         <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors leading-snug line-clamp-2 text-[15px]">

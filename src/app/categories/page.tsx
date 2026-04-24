@@ -1,3 +1,6 @@
+import type { Metadata } from 'next'
+export const metadata: Metadata = { title: 'Categories' }
+
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
@@ -6,10 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function CategoriesPage() {
   const admin = createAdminClient()
-  const now = new Date().toISOString()
-  const in90Days = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
-
-  // Fetch visible categories + all upcoming event categories in parallel
+  // Fetch visible categories + all approved event categories in parallel
   const [{ data: categories }, { data: eventRows }] = await Promise.all([
     admin
       .from('categories')
@@ -19,9 +19,7 @@ export default async function CategoriesPage() {
     admin
       .from('events')
       .select('category')
-      .eq('status', 'approved')
-      .gte('start_date', now)
-      .lte('start_date', in90Days),
+      .eq('status', 'approved'),
   ])
 
   // Count events per category slug
@@ -90,7 +88,7 @@ export default async function CategoriesPage() {
                         className="text-xs font-semibold px-2.5 py-1 rounded-full"
                         style={{ backgroundColor: hex + '18', color: hex }}
                       >
-                        {count > 0 ? `${count} upcoming` : 'Coming soon'}
+                        {count > 0 ? `${count} event${count === 1 ? '' : 's'}` : 'Coming soon'}
                       </span>
                     </div>
 

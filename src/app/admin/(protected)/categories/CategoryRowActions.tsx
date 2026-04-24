@@ -110,7 +110,7 @@ export default function CategoryRowActions({
         <button
           onClick={handleMoveUp}
           disabled={isFirst || isPending}
-          className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
+          className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors disabled:opacity-30"
           title="Move up"
         >
           <ChevronUp className="w-3.5 h-3.5" />
@@ -118,7 +118,7 @@ export default function CategoryRowActions({
         <button
           onClick={handleMoveDown}
           disabled={isLast || isPending}
-          className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
+          className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors disabled:opacity-30"
           title="Move down"
         >
           <ChevronDown className="w-3.5 h-3.5" />
@@ -141,7 +141,7 @@ export default function CategoryRowActions({
           className={`p-1.5 rounded-lg transition-colors ${
             isVisible
               ? 'text-emerald-400 hover:bg-emerald-500/10'
-              : 'text-gray-600 hover:bg-white/10 hover:text-gray-400'
+              : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
           }`}
           title={isVisible ? 'Hide from website' : 'Show on website'}
         >
@@ -168,7 +168,7 @@ export default function CategoryRowActions({
             </button>
             <button
               onClick={() => setShowDeleteConfirm(false)}
-              className="text-xs px-2 py-1 bg-white/10 text-gray-400 rounded-lg hover:bg-white/20 transition-colors"
+              className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Cancel
             </button>
@@ -185,7 +185,7 @@ export default function CategoryRowActions({
               <h2 className="text-sm font-semibold text-white">Edit Category</h2>
               <button
                 onClick={() => setShowEdit(false)}
-                className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>

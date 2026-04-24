@@ -8,11 +8,12 @@ import { formatDate, formatTime, cn } from '@/lib/utils'
 import { getCategoryMap } from '@/lib/categories'
 import {
   Calendar, MapPin, Clock, Building2, Globe, ChevronRight, ChevronLeft,
-  Users, Car, Baby, StickyNote, Mic, Ticket,
+  Car, Baby, StickyNote, Mic, Ticket,
 } from 'lucide-react'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
-import AttendButton from '@/components/ui/AttendButton'
+import RegistrationButton from '@/components/ui/RegistrationButton'
+import SaveButton from '@/components/ui/SaveButton'
 import ViewCounter from '@/components/ui/ViewCounter'
 import ShareButton from '@/components/ui/ShareButton'
 import EventQuickActions from './_components/EventQuickActions'
@@ -20,6 +21,7 @@ import AddToCalendar from './_components/AddToCalendar'
 import ReadMoreText from './_components/ReadMoreText'
 import { EventStatusBadge, EventDaysChip } from './_components/EventStatusBadge'
 import { checkUserAttended } from '@/app/actions/attendance'
+import { checkEventSaved } from '@/app/actions/saved-events'
 
 export const dynamic = 'force-dynamic'
 
@@ -115,7 +117,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
-  // Get current user server-side (passed to AttendButton to skip client-side auth fetch)
+  // Get current user server-side (passed to RegistrationButton to skip client-side auth fetch)
   const { data: { user: currentUser } } = await supabase.auth.getUser()
 
   const { data: event } = await supabase
@@ -133,6 +135,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const [
     { count: attendanceCount },
     initialAttended,
+    initialSaved,
     { data: relatedCat },
     { data: relatedCity },
     { count: organizerEventCount },
@@ -142,6 +145,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       .select('id', { count: 'exact', head: true })
       .eq('event_id', e.id),
     checkUserAttended(e.id),
+    checkEventSaved(e.id),
     supabase
       .from('events')
       .select('id, title, slug, start_date, city, category, banner_url, location_name, is_free')
@@ -330,12 +334,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 <ViewCounter eventId={e.id} initialCount={e.views_count ?? 0} />
               </span>
               <span className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" />
-                {safeAttendance > 0
-                  ? `${safeAttendance} ${lifecycle === 'ended' ? 'Attended' : 'Attending'}`
-                  : lifecycle === 'ended' ? 'No attendees recorded' : 'Be the first!'}
-              </span>
-              <span className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-1.5">
                 <EventDaysChip startDate={e.start_date} endDate={e.end_date} />
               </span>
             </div>
@@ -374,7 +372,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 <hr className="border-gray-100 my-5" />
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Mic className="w-3.5 h-3.5" /> Guest Speakers
+                    <Mic className="w-3.5 h-3.5" /> Featured Ministers &amp; Speakers
                   </p>
                   <p className="text-gray-600 text-sm leading-relaxed">{e.speakers}</p>
                 </div>
@@ -414,25 +412,26 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             {/* CTA — mobile only (desktop: right sidebar) */}
             <div id="attend" className="lg:hidden space-y-2">
               {lifecycle !== 'ended' ? (
-                <AttendButton
-                  eventId={e.id}
-                  eventTitle={e.title}
-                  isFree={e.is_free}
-                  rsvpRequired={e.rsvp_required}
-                  registrationType={e.registration_type}
-                  paymentLink={e.payment_link}
-                  initialCount={safeAttendance}
-                  initialAttended={initialAttended}
-                  serverUserId={currentUser?.id ?? null}
-                  serverUserName={currentUser?.user_metadata?.display_name ?? null}
-                  serverUserEmail={currentUser?.email ?? null}
+                <RegistrationButton
+                  event={{ id: e.id, registration_type: e.registration_type, price: e.price, payment_link: e.payment_link, rsvp_required: e.rsvp_required, is_free: e.is_free, title: e.title }}
+                  userId={currentUser?.id ?? null}
+                  userName={currentUser?.user_metadata?.display_name ?? null}
+                  userEmail={currentUser?.email ?? null}
                   isOrganizer={!!currentUser && currentUser.id === e.organizer_id}
+                  initialRegistered={initialAttended}
                 />
               ) : (
                 <div className="w-full text-center text-sm text-gray-400 py-3.5 bg-gray-50 rounded-2xl border border-gray-100">
                   This event has ended
                 </div>
               )}
+              <SaveButton
+                eventId={e.id}
+                eventTitle={e.title}
+                initialSaved={initialSaved}
+                serverUserId={currentUser?.id ?? null}
+                variant="button"
+              />
               <AddToCalendar
                 title={e.title}
                 startDate={e.start_date}
@@ -654,14 +653,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
               <hr className="border-gray-100" />
 
-              {/* Attendee count */}
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Users className="w-4 h-4 text-gray-400" />
-                {safeAttendance > 0
-                  ? `${safeAttendance} ${safeAttendance === 1 ? 'person' : 'people'} ${lifecycle === 'ended' ? 'attended' : 'attending'}`
-                  : lifecycle === 'ended' ? 'No attendees recorded' : 'Be the first to attend!'}
-              </div>
-
               {/* Capacity tracker */}
               {e.capacity != null && e.capacity > 0 && (
                 <div>
@@ -682,25 +673,26 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {/* CTA */}
               <div className="space-y-2">
                 {lifecycle !== 'ended' ? (
-                  <AttendButton
-                    eventId={e.id}
-                    eventTitle={e.title}
-                    isFree={e.is_free}
-                    rsvpRequired={e.rsvp_required}
-                    registrationType={e.registration_type}
-                    paymentLink={e.payment_link}
-                    initialCount={safeAttendance}
-                    initialAttended={initialAttended}
-                    serverUserId={currentUser?.id ?? null}
-                    serverUserName={currentUser?.user_metadata?.display_name ?? null}
-                    serverUserEmail={currentUser?.email ?? null}
+                  <RegistrationButton
+                    event={{ id: e.id, registration_type: e.registration_type, price: e.price, payment_link: e.payment_link, rsvp_required: e.rsvp_required, is_free: e.is_free, title: e.title }}
+                    userId={currentUser?.id ?? null}
+                    userName={currentUser?.user_metadata?.display_name ?? null}
+                    userEmail={currentUser?.email ?? null}
                     isOrganizer={!!currentUser && currentUser.id === e.organizer_id}
+                    initialRegistered={initialAttended}
                   />
                 ) : (
                   <div className="w-full text-center text-sm text-gray-400 py-3.5 bg-gray-50 rounded-2xl border border-gray-100">
                     This event has ended
                   </div>
                 )}
+                <SaveButton
+                  eventId={e.id}
+                  eventTitle={e.title}
+                  initialSaved={initialSaved}
+                  serverUserId={currentUser?.id ?? null}
+                  variant="button"
+                />
                 <AddToCalendar
                   title={e.title}
                   startDate={e.start_date}

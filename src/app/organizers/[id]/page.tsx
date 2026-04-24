@@ -2,9 +2,10 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate, cn } from '@/lib/utils'
-import { Calendar, MapPin, ArrowLeft, ExternalLink } from 'lucide-react'
-import type { Profile, Event } from '@/types/database'
+import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone } from 'lucide-react'
+import type { Profile, SeededOrganizer, Event } from '@/types/database'
 import EventCard from '@/components/ui/EventCard'
 
 export const dynamic = 'force-dynamic'
@@ -12,9 +13,13 @@ export const dynamic = 'force-dynamic'
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
-  const { data } = await supabase.from('profiles').select('display_name').eq('id', id).single()
-  if (!data) return {}
-  return { title: data.display_name }
+  // Try auth profile first, then seeded
+  const { data: p } = await supabase.from('profiles').select('display_name').eq('id', id).single()
+  if (p) return { title: p.display_name }
+  const adminClient = createAdminClient()
+  const { data: s } = await adminClient.from('seeded_organizers').select('name').eq('id', id).single()
+  if (s) return { title: s.name }
+  return {}
 }
 
 const BANNER_GRADIENTS: Record<number, string> = {
@@ -29,24 +34,45 @@ const BANNER_GRADIENTS: Record<number, string> = {
 export default async function OrganizerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
+  const adminClient = createAdminClient()
+  const now = new Date().toISOString()
 
-  const { data: profile } = await supabase
+  // Try auth organizer first
+  const { data: profileData } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', id)
     .eq('account_type', 'organizer')
     .single()
 
-  if (!profile) notFound()
+  // Then try seeded organizer
+  const { data: seededData } = profileData
+    ? { data: null }
+    : await adminClient.from('seeded_organizers').select('*').eq('id', id).eq('is_hidden', false).single()
 
-  const organizer = profile as Profile
-  const now = new Date().toISOString()
+  if (!profileData && !seededData) notFound()
+
+  const isSeeded = !profileData
+  const organizer = profileData as Profile | null
+  const seeded = seededData as SeededOrganizer | null
+
+  const displayName = isSeeded ? seeded!.name : organizer!.display_name
+  const avatarUrl = isSeeded ? seeded!.logo_url : organizer!.avatar_url
+  const bioText = isSeeded ? seeded!.description : organizer!.bio
+  const websiteUrl = isSeeded ? seeded!.website : organizer!.website
+  const phoneNum = isSeeded ? seeded!.phone : null
+  const locationStr = isSeeded ? [seeded!.city, seeded!.state].filter(Boolean).join(', ') : organizer!.state ?? ''
+
+  // Claim state (seeded organizers only)
+  const isVerified = isSeeded ? seeded!.verified_badge : false
+  const isClaimed = isSeeded ? seeded!.is_claimed : true // auth organizers own their profile
+  const hasPendingClaim = isSeeded ? !!seeded!.claim_requested_at : false
 
   const [upcomingRes, pastRes] = await Promise.all([
     supabase
       .from('events')
       .select('*, churches(*)')
-      .eq('organizer_id', id)
+      .eq(isSeeded ? 'seeded_organizer_id' : 'organizer_id', id)
       .eq('status', 'approved')
       .gte('start_date', now)
       .order('start_date', { ascending: true })
@@ -54,7 +80,7 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
     supabase
       .from('events')
       .select('id, title, slug, start_date, city, category, banner_url, location_name, is_free')
-      .eq('organizer_id', id)
+      .eq(isSeeded ? 'seeded_organizer_id' : 'organizer_id', id)
       .eq('status', 'approved')
       .lt('start_date', now)
       .order('start_date', { ascending: false })
@@ -64,16 +90,15 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
   const upcoming = (upcomingRes.data ?? []) as Event[]
   const past = (pastRes.data ?? []) as Event[]
 
-  const gradientKey = (organizer.display_name?.charCodeAt(0) ?? 0) % 6
+  const gradientKey = (displayName?.charCodeAt(0) ?? 0) % 6
   const bannerGradient = BANNER_GRADIENTS[gradientKey]
-  const initial = organizer.display_name?.[0]?.toUpperCase() ?? '?'
+  const initial = displayName?.[0]?.toUpperCase() ?? '?'
 
   return (
     <div className="min-h-screen bg-gray-50">
 
       {/* ── HERO BANNER ─────────────────────────────────────────── */}
       <div className={`relative w-full bg-gradient-to-br ${bannerGradient} overflow-hidden`}>
-        {/* Dot pattern */}
         <div
           className="absolute inset-0 opacity-[0.06]"
           style={{
@@ -81,10 +106,8 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
             backgroundSize: '24px 24px',
           }}
         />
-        {/* Glow orb */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
-        {/* Back button */}
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-5">
           <Link
             href="/organizers"
@@ -95,15 +118,13 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
           </Link>
         </div>
 
-        {/* Profile content */}
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10">
           <div className="flex flex-col sm:flex-row sm:items-end gap-5">
-            {/* Avatar */}
             <div className="flex-shrink-0">
-              {organizer.avatar_url ? (
+              {avatarUrl ? (
                 <Image
-                  src={organizer.avatar_url}
-                  alt={organizer.display_name}
+                  src={avatarUrl}
+                  alt={displayName}
                   width={96}
                   height={96}
                   className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-4 ring-white/20 shadow-xl"
@@ -115,16 +136,23 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
               )}
             </div>
 
-            {/* Name + stats */}
             <div className="flex-1 pb-1">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/15 text-white/90 backdrop-blur-sm">
                   Event Organizer
                 </span>
+                {isVerified && (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/80 text-white flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3" /> Gospello Verified
+                  </span>
+                )}
+                {!isVerified && isClaimed && (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/70 text-white flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Claimed
+                  </span>
+                )}
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white drop-shadow-sm">
-                {organizer.display_name}
-              </h1>
+              <h1 className="text-2xl sm:text-3xl font-black text-white drop-shadow-sm">{displayName}</h1>
               <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-2 text-sm text-white/70">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-amber-400" />
@@ -135,9 +163,16 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
                     {past.length} past event{past.length !== 1 ? 's' : ''}
                   </span>
                 )}
-                <span className="text-white/40">
-                  Since {formatDate(organizer.created_at, { month: 'short', year: 'numeric' })}
-                </span>
+                {locationStr && (
+                  <span className="flex items-center gap-1 text-white/50">
+                    <MapPin className="w-3 h-3" />{locationStr}
+                  </span>
+                )}
+                {!isSeeded && organizer && (
+                  <span className="text-white/40">
+                    Since {formatDate(organizer.created_at, { month: 'short', year: 'numeric' })}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -145,72 +180,164 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
       </div>
 
       {/* ── MAIN CONTENT ─────────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Upcoming Events */}
-        <section>
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className="text-xl font-black text-gray-900">Upcoming Events</h2>
-              {upcoming.length > 0 && (
-                <p className="text-sm text-gray-400 mt-0.5">{upcoming.length} event{upcoming.length !== 1 ? 's' : ''} coming up</p>
+          {/* Left: bio + events */}
+          <div className="lg:col-span-2 space-y-8">
+
+            {bioText && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm">
+                <h2 className="text-base font-bold text-gray-900 mb-3">About {displayName}</h2>
+                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap text-sm">{bioText}</p>
+              </div>
+            )}
+
+            {/* Upcoming Events */}
+            <section>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">Upcoming Events</h2>
+                  {upcoming.length > 0 && (
+                    <p className="text-sm text-gray-400 mt-0.5">{upcoming.length} event{upcoming.length !== 1 ? 's' : ''} coming up</p>
+                  )}
+                </div>
+              </div>
+
+              {upcoming.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center shadow-sm">
+                  <div className="text-4xl mb-3">📅</div>
+                  <p className="text-gray-500 text-sm">No upcoming events at the moment</p>
+                  <p className="text-gray-400 text-xs mt-1">Check back soon</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {upcoming.map((event) => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </div>
               )}
-            </div>
+            </section>
+
+            {/* Past Events */}
+            {past.length > 0 && (
+              <section>
+                <h2 className="text-xl font-black text-gray-900 mb-5">Past Events</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {past.map((event) => (
+                    <Link
+                      key={event.id}
+                      href={`/events/${event.slug}`}
+                      className="group flex gap-3 bg-white rounded-2xl border border-gray-100 p-3 hover:border-indigo-100 hover:shadow-sm transition-all"
+                    >
+                      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 grayscale group-hover:grayscale-0 transition-all">
+                        {event.banner_url ? (
+                          <Image src={event.banner_url} alt={event.title} fill className="object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl font-bold">
+                            {event.title[0]}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex flex-col justify-center">
+                        <p className="text-sm font-semibold text-gray-700 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
+                          {event.title}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {formatDate(event.start_date, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
+                        {event.city && (
+                          <p className="text-xs text-gray-400 flex items-center gap-0.5">
+                            <MapPin className="w-2.5 h-2.5" />{event.city}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
 
-          {upcoming.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center shadow-sm">
-              <div className="text-4xl mb-3">📅</div>
-              <p className="text-gray-500 text-sm">No upcoming events at the moment</p>
-              <p className="text-gray-400 text-xs mt-1">Check back soon</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {upcoming.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-          )}
-        </section>
+          {/* Right: sidebar */}
+          <div className="lg:sticky lg:top-6 self-start space-y-4">
 
-        {/* Past Events */}
-        {past.length > 0 && (
-          <section>
-            <h2 className="text-xl font-black text-gray-900 mb-5">Past Events</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {past.map((event) => (
-                <Link
-                  key={event.id}
-                  href={`/events/${event.slug}`}
-                  className="group flex gap-3 bg-white rounded-2xl border border-gray-100 p-3 hover:border-indigo-100 hover:shadow-sm transition-all"
-                >
-                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 grayscale group-hover:grayscale-0 transition-all">
-                    {event.banner_url ? (
-                      <Image src={event.banner_url} alt={event.title} fill className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl font-bold">
-                        {event.title[0]}
-                      </div>
-                    )}
+            {/* Claim state — only for seeded organizers */}
+            {isSeeded && (
+              isVerified ? (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-indigo-50 border border-indigo-200">
+                  <ShieldCheck className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-indigo-900">Gospello Verified</p>
+                    <p className="text-xs text-indigo-600">This profile is officially verified</p>
                   </div>
-                  <div className="min-w-0 flex flex-col justify-center">
-                    <p className="text-sm font-semibold text-gray-700 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
-                      {event.title}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {formatDate(event.start_date, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </p>
-                    {event.city && (
-                      <p className="text-xs text-gray-400 flex items-center gap-0.5">
-                        <MapPin className="w-2.5 h-2.5" />{event.city}
-                      </p>
-                    )}
+                </div>
+              ) : isClaimed ? (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200">
+                  <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-emerald-900">Claimed Profile</p>
+                    <p className="text-xs text-emerald-600">Managed by the organizer</p>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
+                </div>
+              ) : hasPendingClaim ? (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-amber-900">Claim Pending</p>
+                    <p className="text-xs text-amber-600">A claim request is under review</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-4 rounded-2xl bg-gray-50 border border-gray-200">
+                  <p className="text-sm font-bold text-gray-900 mb-1">Are you an organizer?</p>
+                  <p className="text-xs text-gray-500 mb-3">Claim this profile to manage events and get verified.</p>
+                  <Link
+                    href={`/claim/organizer/${seeded!.id}`}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#7C3AED] text-white text-xs font-semibold hover:bg-[#6D28D9] transition-colors"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    Claim this Profile
+                  </Link>
+                </div>
+              )
+            )}
+
+            {/* Info card */}
+            {(websiteUrl || phoneNum || locationStr) && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4 shadow-sm">
+                <h2 className="font-bold text-gray-900">Info</h2>
+                {locationStr && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-4 h-4 text-rose-500" />
+                    </div>
+                    <p className="text-sm text-gray-700">{locationStr}</p>
+                  </div>
+                )}
+                {phoneNum && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-4 h-4 text-emerald-500" />
+                    </div>
+                    <a href={`tel:${phoneNum}`} className="text-sm font-medium text-indigo-600 hover:underline">{phoneNum}</a>
+                  </div>
+                )}
+                {websiteUrl && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center flex-shrink-0">
+                      <Globe className="w-4 h-4 text-sky-500" />
+                    </div>
+                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-indigo-600 hover:underline inline-flex items-center gap-1">
+                      Visit Website <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+        </div>
       </div>
     </div>
   )

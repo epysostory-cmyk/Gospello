@@ -37,18 +37,25 @@ export default async function EventRegistrationsPage({ params }: Props) {
   if (!event) notFound()
   if (event.organizer_id !== user.id) notFound()
 
-  // Fetch all registrations
-  const { data: registrations } = await admin
-    .from('registrations')
-    .select('*')
-    .eq('event_id', id)
-    .order('ticket_number', { ascending: true })
+  // Fetch all registrations + saved count in parallel
+  const [{ data: registrations }, { count: savedCount }] = await Promise.all([
+    admin
+      .from('registrations')
+      .select('*')
+      .eq('event_id', id)
+      .order('ticket_number', { ascending: true }),
+    admin
+      .from('saved_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', id),
+  ])
 
   const regs = registrations ?? []
   const totalCount = regs.length
   const paidConfirmedCount = regs.filter(r => r.paid_confirmed).length
   const freeCount = regs.filter(r => r.registration_type === 'free_registration').length
   const paidCount = regs.filter(r => r.registration_type === 'paid').length
+  const interestedCount = savedCount ?? 0
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -76,14 +83,18 @@ export default async function EventRegistrationsPage({ params }: Props) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
           <div className="text-2xl font-bold text-gray-900">{totalCount}</div>
           <div className="text-xs text-gray-500 mt-1">Total Registrations</div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+          <div className="text-2xl font-bold text-rose-500">{interestedCount}</div>
+          <div className="text-xs text-gray-500 mt-1">Saved / Interested</div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
           <div className="text-2xl font-bold text-indigo-600">{freeCount}</div>
-          <div className="text-xs text-gray-500 mt-1">Free</div>
+          <div className="text-xs text-gray-500 mt-1">Free Registered</div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
           <div className="text-2xl font-bold text-amber-600">{paidCount}</div>
@@ -163,17 +174,19 @@ export default async function EventRegistrationsPage({ params }: Props) {
                             <CheckCircle2 className="w-3 h-3" />
                             Confirmed
                           </span>
+                        ) : (reg as { payment_status?: string }).payment_status === 'payment_self_confirmed' ? (
+                          <span className="flex items-center gap-1 text-xs font-medium text-orange-700 bg-orange-50 px-2.5 py-1 rounded-full w-fit">
+                            <Clock className="w-3 h-3" />
+                            Self-Confirmed ⚠️
+                          </span>
                         ) : (
                           <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full w-fit">
                             <Clock className="w-3 h-3" />
-                            Awaiting Payment
+                            Pending Payment
                           </span>
                         )
                       ) : (
-                        <span className="flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full w-fit">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Registered
-                        </span>
+                        <span className="text-xs text-gray-400">—</span>
                       )}
                     </td>
                   </tr>

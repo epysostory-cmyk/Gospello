@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { MapPin, Clock, Globe, Phone, CheckCircle, ArrowLeft, Calendar, ExternalLink } from 'lucide-react'
+import { MapPin, Clock, Globe, Phone, CheckCircle, ArrowLeft, Calendar, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react'
 import EventCard from '@/components/ui/EventCard'
 import type { Church, Event } from '@/types/database'
 
@@ -29,7 +29,7 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
   const { slug } = await params
   const supabase = await createClient()
 
-  const { data: church } = await supabase.from('churches').select('*').eq('slug', slug).single()
+  const { data: church } = await supabase.from('churches').select('*').eq('slug', slug).eq('is_hidden', false).single()
   if (!church) notFound()
 
   const c = church as Church
@@ -169,7 +169,47 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
           </div>
 
           {/* Right: sidebar info */}
-          <div className="lg:sticky lg:top-6 self-start">
+          <div className="lg:sticky lg:top-6 self-start space-y-4">
+
+            {/* Claim state card */}
+            {c.verified_badge ? (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-indigo-50 border border-indigo-200">
+                <ShieldCheck className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-indigo-900">Gospello Verified</p>
+                  <p className="text-xs text-indigo-600">This profile is officially verified</p>
+                </div>
+              </div>
+            ) : c.is_claimed ? (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200">
+                <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-emerald-900">Claimed Profile</p>
+                  <p className="text-xs text-emerald-600">Managed by the church leadership</p>
+                </div>
+              </div>
+            ) : c.claim_requested_at ? (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
+                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-amber-900">Claim Pending</p>
+                  <p className="text-xs text-amber-600">A claim request is under review</p>
+                </div>
+              </div>
+            ) : (
+              <div className="px-4 py-4 rounded-2xl bg-gray-50 border border-gray-200">
+                <p className="text-sm font-bold text-gray-900 mb-1">Is this your church or ministry?</p>
+                <p className="text-xs text-gray-500 mb-3">Claim this profile to manage events, update info, and get verified.</p>
+                <Link
+                  href={`/claim/church/${c.id}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#7C3AED] text-white text-xs font-semibold hover:bg-[#6D28D9] transition-colors"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Claim this Profile
+                </Link>
+              </div>
+            )}
+
             <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4 shadow-sm">
               <h2 className="font-bold text-gray-900">Church Info</h2>
 

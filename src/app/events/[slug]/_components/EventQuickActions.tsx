@@ -71,13 +71,10 @@ export default function EventQuickActions({
         style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: '72px' }}
       >
         <div className="flex items-center gap-2.5 px-4 h-full">
-          {/* Price badge + attendee count */}
+          {/* Price badge */}
           <div className="flex flex-col items-start flex-shrink-0 min-w-[56px]">
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${priceBadgeCls}`}>
               {priceBadgeLabel}
-            </span>
-            <span className="text-[10px] text-gray-400 mt-0.5">
-              {attendanceCount > 0 ? `${attendanceCount} attending` : 'Be first!'}
             </span>
           </div>
 
