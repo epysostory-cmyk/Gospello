@@ -132,7 +132,6 @@ export default async function Footer({ logoUrl }: { logoUrl?: string | null }) {
                   <span className="text-white font-black text-base tracking-tight">G</span>
                 </div>
               )}
-              <span className="text-xl font-black text-white tracking-tight">Gospello</span>
               <span className="relative flex h-2 w-2 ml-0.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
