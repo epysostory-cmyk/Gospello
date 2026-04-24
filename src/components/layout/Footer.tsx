@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { unstable_noStore as noStore } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 interface FooterColumn {
@@ -59,6 +60,7 @@ const DEFAULTS: FooterSettings = {
 }
 
 async function getFooterData(): Promise<FooterSettings> {
+  noStore()
   try {
     const admin = createAdminClient()
     const { data } = await admin

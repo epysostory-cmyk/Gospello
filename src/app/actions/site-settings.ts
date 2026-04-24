@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_noStore as noStore } from 'next/cache'
 
 export interface SiteSettings {
   site_logo_url: string | null
@@ -16,6 +16,7 @@ const DEFAULTS: SiteSettings = {
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
+  noStore()
   try {
     const admin = createAdminClient()
     const { data, error } = await admin
