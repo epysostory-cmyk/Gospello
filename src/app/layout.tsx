@@ -55,7 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SavedEventsMigrator />
         <ConditionalLayout
           navbar={<Navbar logoUrl={settings.site_logo_url} siteName={settings.site_name} />}
-          footer={<Footer />}
+          footer={<Footer logoUrl={settings.site_logo_url} />}
         >
           {children}
         </ConditionalLayout>

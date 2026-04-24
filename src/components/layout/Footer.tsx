@@ -103,11 +103,12 @@ const SOCIAL_ICONS: Record<string, string> = {
   whatsapp: '💬',
 }
 
-export default async function Footer() {
+export default async function Footer({ logoUrl }: { logoUrl?: string | null }) {
   const settings = await getFooterData()
   const year = new Date().getFullYear()
   const copyright = settings.footer_copyright.replace('{year}', String(year))
   const socialEntries = Object.entries(settings.footer_social).filter(([, v]) => v)
+  const resolvedLogoUrl = logoUrl ?? settings.site_logo_url
 
   return (
     <footer className="relative bg-slate-950 text-slate-400 overflow-hidden">
@@ -124,9 +125,13 @@ export default async function Footer() {
           <div className="sm:col-span-2">
             {/* Logo */}
             <Link href="/" className="inline-flex items-center gap-2.5 mb-5 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-700 group-hover:from-indigo-400 group-hover:to-indigo-600 rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-900/50">
-                <span className="text-white font-black text-base tracking-tight">G</span>
-              </div>
+              {resolvedLogoUrl ? (
+                <Image src={resolvedLogoUrl} alt="Gospello logo" width={40} height={40} className="w-10 h-10 object-contain rounded-xl" />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-700 group-hover:from-indigo-400 group-hover:to-indigo-600 rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-900/50">
+                  <span className="text-white font-black text-base tracking-tight">G</span>
+                </div>
+              )}
               <span className="text-xl font-black text-white tracking-tight">Gospello</span>
               <span className="relative flex h-2 w-2 ml-0.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
