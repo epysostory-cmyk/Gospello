@@ -8,6 +8,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Church } from '@/types/database'
+import BackButton from '@/components/ui/BackButton'
 
 export default function ChurchProfilePage() {
   const supabase = createClient()
@@ -169,6 +170,7 @@ export default function ChurchProfilePage() {
 
   return (
     <div className="space-y-8 max-w-2xl">
+      <BackButton />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Church Profile</h1>

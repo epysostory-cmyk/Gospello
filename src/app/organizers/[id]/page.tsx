@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate, cn } from '@/lib/utils'
 import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone } from 'lucide-react'
 import type { Profile, SeededOrganizer, Event } from '@/types/database'
+import BackButton from '@/components/ui/BackButton'
 import EventCard from '@/components/ui/EventCard'
 
 export const dynamic = 'force-dynamic'
@@ -96,6 +97,10 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
 
   return (
     <div className="min-h-screen bg-gray-50">
+
+      <div className="max-w-6xl mx-auto px-4 pt-4">
+        <BackButton />
+      </div>
 
       {/* ── HERO BANNER ─────────────────────────────────────────── */}
       <div className={`relative w-full bg-gradient-to-br ${bannerGradient} overflow-hidden`}>

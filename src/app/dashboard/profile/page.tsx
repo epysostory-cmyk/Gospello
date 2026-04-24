@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ProfileForm from './ProfileForm'
 import type { AccountType } from '@/types/database'
+import BackButton from '@/components/ui/BackButton'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -21,7 +22,9 @@ export default async function ProfilePage() {
     .single()
 
   return (
-    <ProfileForm
+    <>
+      <BackButton />
+      <ProfileForm
       userId={user.id}
       initialData={{
         display_name: profile?.display_name ?? '',
@@ -35,5 +38,6 @@ export default async function ProfilePage() {
         ministry_type: (profile as any)?.ministry_type ?? null,
       }}
     />
+    </>
   )
 }

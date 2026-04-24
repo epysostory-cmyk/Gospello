@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import { Loader2, User2 } from 'lucide-react'
+import BackButton from '@/components/ui/BackButton'
 
 export default function OrganizerSetupPage() {
   const router = useRouter()
@@ -78,6 +79,7 @@ export default function OrganizerSetupPage() {
 
   return (
     <div className="max-w-2xl">
+      <BackButton />
       <div className="mb-8">
         <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center mb-4">
           <User2 className="w-6 h-6 text-indigo-600" />

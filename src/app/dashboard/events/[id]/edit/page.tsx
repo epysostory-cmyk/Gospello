@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
 import EventFormStepper from '../../new/_components/EventFormStepper'
 import type { Event } from '@/types/database'
+import BackButton from '@/components/ui/BackButton'
 
 export default function EditEventPage() {
   const params = useParams()
@@ -47,5 +48,10 @@ export default function EditEventPage() {
     )
   }
 
-  return <EventFormStepper isEditMode={true} initialEvent={event} />
+  return (
+    <>
+      <BackButton />
+      <EventFormStepper isEditMode={true} initialEvent={event} />
+    </>
+  )
 }

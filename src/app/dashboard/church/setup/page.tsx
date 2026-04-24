@@ -7,6 +7,7 @@ import { slugify, NIGERIAN_STATES } from '@/lib/utils'
 import { Loader2, Building2, Camera, Plus, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import ImageCropModal from '@/components/ui/ImageCropModal'
+import BackButton from '@/components/ui/BackButton'
 
 export default function ChurchSetupPage() {
   const router = useRouter()
@@ -159,6 +160,7 @@ export default function ChurchSetupPage() {
 
   return (
     <div className="max-w-2xl">
+      <BackButton />
       {logoCropSrc && (
         <ImageCropModal
           imageSrc={logoCropSrc}

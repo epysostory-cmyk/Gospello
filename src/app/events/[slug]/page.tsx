@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import BackButton from '@/components/ui/BackButton'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
@@ -226,7 +227,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     <div className="min-h-screen bg-gray-50 font-[var(--font-plus-jakarta)]">
 
       {/* Main content wrapper */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 lg:pt-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 pt-4 lg:pt-6">
+        <BackButton />
         <div className="animate-fadeInUp flex flex-col lg:flex-row gap-8">
 
           {/* LEFT COLUMN */}

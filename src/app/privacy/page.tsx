@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import BackButton from '@/components/ui/BackButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -108,6 +109,7 @@ export default async function PrivacyPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-[800px] mx-auto px-6 py-16">
+        <BackButton />
         <p className="text-sm text-gray-400 mb-4">Last updated: {lastUpdated}</p>
         <h1 className="text-[28px] font-bold text-gray-900 mb-8">Privacy Policy</h1>
         <div className="prose-content" style={{ color: '#374151', lineHeight: '1.8', fontSize: '16px' }}>

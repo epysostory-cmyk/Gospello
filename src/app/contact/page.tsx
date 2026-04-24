@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { Mail, MessageSquare, MapPin, Clock, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import BackButton from '@/components/ui/BackButton'
 import { createClient } from '@/lib/supabase/server'
 import { submitContactForm } from './actions'
 
@@ -85,6 +86,10 @@ export default async function ContactPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
+
+      <div className="max-w-6xl mx-auto px-4 pt-4">
+        <BackButton />
+      </div>
 
       {/* ── HERO ──────────────────────────────────────────────── */}
       <section className="relative bg-slate-950 text-white overflow-hidden">

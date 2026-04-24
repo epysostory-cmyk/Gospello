@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 interface FooterColumn {
@@ -7,6 +8,7 @@ interface FooterColumn {
 }
 
 interface FooterSettings {
+  site_logo_url: string | null
   footer_tagline: string
   footer_columns: FooterColumn[]
   footer_social: {
@@ -23,6 +25,7 @@ interface FooterSettings {
 }
 
 const DEFAULTS: FooterSettings = {
+  site_logo_url: null,
   footer_tagline: "Nigeria's home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond.",
   footer_columns: [
     {
@@ -59,7 +62,7 @@ async function getFooterData(): Promise<FooterSettings> {
     const { data } = await admin
       .from('site_settings')
       .select('key, value')
-      .in('key', ['footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links'])
+      .in('key', ['site_logo_url', 'footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links'])
 
     if (!data || data.length === 0) return DEFAULTS
 

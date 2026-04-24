@@ -1,12 +1,25 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { Plus, Trash2, Save, Loader2, GripVertical, Link2 } from 'lucide-react'
+import { useState, useRef, useTransition } from 'react'
+import Image from 'next/image'
+import { Plus, Trash2, Save, Loader2, GripVertical, Link2, Upload, CheckCircle, Image as ImageIcon } from 'lucide-react'
 import { saveFooterSettings } from './actions'
 import type { FooterSettings, FooterColumn } from './actions'
+import { updateSiteSetting } from '@/app/actions/site-settings'
 
 interface Props {
   initial: FooterSettings
+}
+
+async function uploadLogoFile(file: File): Promise<string> {
+  const body = new FormData()
+  body.append('file', file)
+  body.append('bucket', 'site-assets')
+  body.append('folder', 'logo')
+  const res = await fetch('/api/upload', { method: 'POST', body })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error ?? 'Upload failed')
+  return json.url as string
 }
 
 export default function FooterEditor({ initial }: Props) {
@@ -19,6 +32,13 @@ export default function FooterEditor({ initial }: Props) {
   const [social, setSocial] = useState(initial.footer_social)
   const [columns, setColumns] = useState<FooterColumn[]>(initial.footer_columns)
   const [bottomLinks, setBottomLinks] = useState(initial.footer_bottom_links)
+
+  // Logo
+  const [logoUrl, setLogoUrl] = useState<string | null>(initial.site_logo_url)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [savedLogo, setSavedLogo] = useState(false)
+  const [logoError, setLogoError] = useState('')
+  const logoRef = useRef<HTMLInputElement>(null)
 
   const currentYear = new Date().getFullYear()
 
@@ -36,6 +56,26 @@ export default function FooterEditor({ initial }: Props) {
   // Bottom links
   const updateBottomLink = (i: number, field: 'label' | 'url', v: string) =>
     setBottomLinks(bl => bl.map((lnk, idx) => idx === i ? { ...lnk, [field]: v } : lnk))
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingLogo(true)
+    setLogoError('')
+    setSavedLogo(false)
+    try {
+      const url = await uploadLogoFile(file)
+      await updateSiteSetting('site_logo_url', url)
+      setLogoUrl(url)
+      setSavedLogo(true)
+      setTimeout(() => setSavedLogo(false), 3000)
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploadingLogo(false)
+      if (logoRef.current) logoRef.current.value = ''
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -64,6 +104,54 @@ export default function FooterEditor({ initial }: Props) {
             Footer settings saved successfully.
           </div>
         )}
+
+        {/* ── Logo ── */}
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-indigo-500" />
+            <h2 className="text-sm font-semibold text-gray-900">Footer Logo</h2>
+          </div>
+          <p className="text-xs text-gray-500 -mt-1">Same logo shown in the top navbar. Upload a PNG or SVG with a transparent background.</p>
+
+          {logoError && (
+            <p className="text-xs text-red-500">{logoError}</p>
+          )}
+
+          <div className="flex items-center gap-4">
+            {/* Preview */}
+            <div className="w-16 h-16 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {logoUrl ? (
+                <Image src={logoUrl} alt="Footer logo" width={64} height={64} className="object-contain w-full h-full p-1" />
+              ) : (
+                <span className="text-2xl font-black text-indigo-500">G</span>
+              )}
+            </div>
+
+            <div className="flex-1">
+              <input
+                ref={logoRef}
+                type="file"
+                accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                className="hidden"
+                onChange={handleLogoUpload}
+              />
+              <button
+                type="button"
+                onClick={() => logoRef.current?.click()}
+                disabled={uploadingLogo}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium rounded-xl transition-colors"
+              >
+                {uploadingLogo ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
+                ) : savedLogo ? (
+                  <><CheckCircle className="w-4 h-4" /> Saved!</>
+                ) : (
+                  <><Upload className="w-4 h-4" /> {logoUrl ? 'Change Logo' : 'Upload Logo'}</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* Tagline */}
         <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
@@ -98,7 +186,7 @@ export default function FooterEditor({ initial }: Props) {
                   </button>
                 </div>
                 <div className="space-y-2 pl-6">
-                  {col.links.map((lnk, li) => (
+                  {(col.links ?? []).map((lnk, li) => (
                     <div key={li} className="flex items-center gap-2">
                       <input value={lnk.label} onChange={e => updateLink(ci, li, 'label', e.target.value)}
                         placeholder="Label"
@@ -139,7 +227,7 @@ export default function FooterEditor({ initial }: Props) {
                 <div className="relative">
                   <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <input type="text" name={key}
-                    value={social[key.replace('social_', '') as keyof typeof social]}
+                    value={social[key.replace('social_', '') as keyof typeof social] ?? ''}
                     onChange={e => updateSocial(key.replace('social_', '') as keyof typeof social, e.target.value)}
                     placeholder={ph}
                     className="w-full bg-white border border-gray-200 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl pl-9 pr-4 py-2.5 placeholder-gray-400" />
@@ -205,7 +293,11 @@ export default function FooterEditor({ initial }: Props) {
             {/* Brand */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-sm">G</div>
+                {logoUrl ? (
+                  <Image src={logoUrl} alt="Logo" width={32} height={32} className="w-8 h-8 object-contain rounded" />
+                ) : (
+                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-sm">G</div>
+                )}
                 <span className="text-white font-black text-base">Gospello</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed max-w-xs">{tagline}</p>
@@ -229,7 +321,7 @@ export default function FooterEditor({ initial }: Props) {
                 <div key={ci}>
                   <p className="text-white font-bold text-xs uppercase tracking-wider mb-2">{col.heading}</p>
                   <ul className="space-y-1">
-                    {col.links.map((lnk, li) => (
+                    {(col.links ?? []).map((lnk, li) => (
                       <li key={li} className="text-xs text-slate-400">{lnk.label || '—'}</li>
                     ))}
                   </ul>
