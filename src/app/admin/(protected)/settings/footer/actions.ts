@@ -24,19 +24,34 @@ export interface FooterSettings {
   footer_bottom_links: { label: string; url: string }[]
 }
 
+const FOOTER_DEFAULTS: FooterSettings = {
+  footer_tagline: "Nigeria's home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond.",
+  footer_columns: [
+    { heading: 'Explore', links: [{ label: 'Events', url: '/events' }, { label: 'Categories', url: '/categories' }, { label: 'Churches', url: '/churches' }, { label: 'Organizers', url: '/organizers' }] },
+    { heading: 'Company', links: [{ label: 'About Us', url: '/about' }, { label: 'Contact Us', url: '/contact' }] },
+  ],
+  footer_social: { instagram: '', twitter: '', facebook: '', youtube: '', tiktok: '', whatsapp: '' },
+  footer_copyright: '© {year} Gospello. All rights reserved.',
+  footer_contact_email: 'hello@gospello.com',
+  footer_bottom_links: [{ label: 'Privacy Policy', url: '/privacy' }, { label: 'Terms of Use', url: '/terms' }],
+}
+
 export async function getFooterSettings(): Promise<FooterSettings> {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('site_settings')
-    .select('key, value')
-    .in('key', ['footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links'])
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('site_settings')
+      .select('key, value')
+      .in('key', ['footer_tagline', 'footer_columns', 'footer_social', 'footer_copyright', 'footer_contact_email', 'footer_bottom_links'])
 
-  const map: Record<string, unknown> = {}
-  for (const row of data ?? []) {
-    if (row.key) map[row.key] = row.value
-  }
+    if (error) return FOOTER_DEFAULTS
 
-  return {
+    const map: Record<string, unknown> = {}
+    for (const row of data ?? []) {
+      if (row.key) map[row.key] = row.value
+    }
+
+    return {
     footer_tagline: (map['footer_tagline'] as string) ?? "Nigeria's home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond.",
     footer_columns: (map['footer_columns'] as FooterColumn[]) ?? [
       { heading: 'Explore', links: [{ label: 'Events', url: '/events' }, { label: 'Categories', url: '/categories' }, { label: 'Churches', url: '/churches' }, { label: 'Organizers', url: '/organizers' }] },
@@ -49,6 +64,9 @@ export async function getFooterSettings(): Promise<FooterSettings> {
       { label: 'Privacy Policy', url: '/privacy' },
       { label: 'Terms of Use', url: '/terms' },
     ],
+  }
+  } catch {
+    return FOOTER_DEFAULTS
   }
 }
 
