@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate, cn } from '@/lib/utils'
-import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, Instagram, Facebook, Twitter, Youtube, MessageCircle, User } from 'lucide-react'
+import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, MessageCircle, User } from 'lucide-react'
 import type { Profile, SeededOrganizer, Event } from '@/types/database'
 import BackButton from '@/components/ui/BackButton'
 import EventCard from '@/components/ui/EventCard'
@@ -379,29 +379,29 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
                   </div>
                 )}
                 {(instagramUrl || facebookUrl || twitterUrl || youtubeUrl) && (
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {instagramUrl && (
                       <a href={instagramUrl.startsWith('http') ? instagramUrl : `https://instagram.com/${instagramUrl}`} target="_blank" rel="noopener noreferrer"
-                        className="w-8 h-8 rounded-xl bg-pink-50 flex items-center justify-center hover:bg-pink-100 transition-colors">
-                        <Instagram className="w-4 h-4 text-pink-500" />
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-pink-50 text-pink-600 text-xs font-semibold hover:bg-pink-100 transition-colors">
+                        Instagram <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                     {facebookUrl && (
                       <a href={facebookUrl.startsWith('http') ? facebookUrl : `https://facebook.com/${facebookUrl}`} target="_blank" rel="noopener noreferrer"
-                        className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center hover:bg-blue-100 transition-colors">
-                        <Facebook className="w-4 h-4 text-blue-600" />
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors">
+                        Facebook <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                     {twitterUrl && (
                       <a href={twitterUrl.startsWith('http') ? twitterUrl : `https://x.com/${twitterUrl}`} target="_blank" rel="noopener noreferrer"
-                        className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center hover:bg-sky-100 transition-colors">
-                        <Twitter className="w-4 h-4 text-sky-500" />
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sky-50 text-sky-600 text-xs font-semibold hover:bg-sky-100 transition-colors">
+                        X / Twitter <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                     {youtubeUrl && (
                       <a href={youtubeUrl.startsWith('http') ? youtubeUrl : `https://youtube.com/${youtubeUrl}`} target="_blank" rel="noopener noreferrer"
-                        className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center hover:bg-red-100 transition-colors">
-                        <Youtube className="w-4 h-4 text-red-500" />
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition-colors">
+                        YouTube <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                   </div>
