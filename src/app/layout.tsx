@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
-import { Plus_Jakarta_Sans } from 'next/font/google'
+import { Plus_Jakarta_Sans, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -13,6 +13,12 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-plus-jakarta',
+})
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '800', '900'],
+  variable: '--font-playfair',
 })
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
@@ -44,7 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="icon" href={settings.site_favicon_url ?? '/favicon.ico'} sizes="any" />
         <link rel="apple-touch-icon" href={settings.site_favicon_url ?? '/favicon.ico'} />
       </head>
-      <body className={`min-h-full flex flex-col bg-gray-50 ${plusJakartaSans.variable}`}>
+      <body className={`min-h-full flex flex-col bg-gray-50 ${plusJakartaSans.variable} ${playfairDisplay.variable}`}>
         <ScrollToTop />
         <SavedEventsMigrator />
         <ConditionalLayout

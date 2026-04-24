@@ -69,7 +69,7 @@ export async function saveHomepageCtaSettings(formData: FormData) {
   await admin
     .from('site_settings')
     .upsert(
-      { key: 'homepage_church_cta', value: JSON.stringify(settings), updated_at: new Date().toISOString() },
+      { key: 'homepage_church_cta', value: settings as unknown as string, updated_at: new Date().toISOString() },
       { onConflict: 'key' }
     )
 

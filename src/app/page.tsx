@@ -193,12 +193,12 @@ async function getHomepageData() {
 
     // Homepage CTA settings
     const rawCta = churchCtaRes?.data?.value
-    const churchCta = rawCta && typeof rawCta === 'object' ? rawCta as {
-      heading: string; subtext: string
-      button1_label: string; button1_url: string
-      button2_label: string; button2_url: string
-      visible: boolean
-    } : null
+    type CtaShape = { heading: string; subtext: string; button1_label: string; button1_url: string; button2_label: string; button2_url: string; visible: boolean }
+    let churchCta: CtaShape | null = null
+    if (rawCta) {
+      const parsed: unknown = typeof rawCta === 'string' ? (() => { try { return JSON.parse(rawCta) } catch { return null } })() : rawCta
+      if (parsed && typeof parsed === 'object') churchCta = parsed as CtaShape
+    }
 
     return {
       featuredEvents,
@@ -295,18 +295,16 @@ export default async function HomePage() {
             </div>
 
             {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black leading-[1.05] tracking-tight">
-              <span className="text-white">{heroLine1}</span>
-              <br />
-              <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent">
+            <h1 className="font-black leading-[1.08] tracking-tight" style={{ fontFamily: 'var(--font-playfair), serif' }}>
+              <span className="block text-4xl sm:text-6xl md:text-7xl text-white">{heroLine1}</span>
+              <span className="block text-4xl sm:text-6xl md:text-7xl bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent whitespace-nowrap">
                 {heroGradient}
               </span>
-              <br />
-              <span className="text-slate-300">{heroLine3}</span>
+              <span className="block text-4xl sm:text-6xl md:text-7xl text-slate-300">{heroLine3}</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="mt-6 text-lg md:text-xl text-slate-400 max-w-xl leading-relaxed">
+            <p className="mt-6 text-lg md:text-xl text-slate-400 max-w-xl leading-relaxed" style={{ fontFamily: 'var(--font-playfair), serif' }}>
               {heroSubheadline}
             </p>
 

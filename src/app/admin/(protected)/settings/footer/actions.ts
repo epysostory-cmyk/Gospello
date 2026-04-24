@@ -42,7 +42,7 @@ const FOOTER_DEFAULTS: FooterSettings = {
 function parse<T>(val: unknown, fallback: T): T {
   if (val === null || val === undefined) return fallback
   if (typeof val === 'string') {
-    try { return JSON.parse(val) as T } catch { return fallback }
+    try { return JSON.parse(val) as T } catch { return val as unknown as T }
   }
   return val as T
 }
