@@ -71,12 +71,11 @@ async function getHomepageData() {
         .eq('is_visible', true)
         .order('sort_order', { ascending: true })
         .limit(6),
-      // Church IDs that have at least one approved event
+      // Organizer + church IDs that have at least one approved event
       adminClient
         .from('events')
-        .select('organizer_id')
-        .eq('status', 'approved')
-        .not('organizer_id', 'is', null),
+        .select('organizer_id, church_id')
+        .eq('status', 'approved'),
       // Discover Organizers — from profiles
       adminClient
         .from('profiles')
@@ -139,18 +138,22 @@ async function getHomepageData() {
       rawCategories.map(c => [c.slug, { name: c.name, icon: c.icon ?? null, color: c.color ?? '#6B7280' }])
     )
 
-    // IDs of churches/organizers with at least one approved event
+    // IDs of organizers with at least one approved event
     const approvedOrganizerIds = new Set(
-      (eventOrganizerIdsRes.data ?? []).map((r: { organizer_id: string }) => r.organizer_id).filter(Boolean)
+      (eventOrganizerIdsRes.data ?? []).map((r: { organizer_id: string | null }) => r.organizer_id).filter(Boolean)
+    )
+    // IDs of churches with at least one approved event
+    const approvedChurchIds = new Set(
+      (eventOrganizerIdsRes.data ?? []).map((r: { church_id: string | null }) => r.church_id).filter(Boolean)
     )
 
     // Fetch churches that have approved events
-    const discoverChurches = approvedOrganizerIds.size > 0
+    const discoverChurches = approvedChurchIds.size > 0
       ? await adminClient
           .from('churches')
           .select('id, name, slug, logo_url, denomination, city, state, verified_badge')
           .eq('is_hidden', false)
-          .in('id', [...approvedOrganizerIds])
+          .in('id', [...approvedChurchIds])
           .order('verified_badge', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(10)

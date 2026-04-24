@@ -18,8 +18,8 @@ type NavItem = {
 const ALL_NAV: NavItem[] = [
   { href: '/admin',              label: 'Dashboard',       icon: LayoutDashboard, exact: true, roles: ['super_admin','admin','moderator'] },
   { href: '/admin/events',       label: 'Events',          icon: Calendar,                     roles: ['super_admin','admin','moderator'] },
-  { href: '/admin/profiles',     label: 'Profiles',        icon: Users,                        roles: ['super_admin','admin','moderator'] },
-  { href: '/admin/organizations',label: 'Churches',        icon: Building2,                    roles: ['super_admin','admin'] },
+  { href: '/admin/profiles',     label: 'Seeded Profiles', icon: Users,                        roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/organizations',label: 'User Profiles',   icon: Building2,                    roles: ['super_admin','admin'] },
   { href: '/admin/organizers',   label: 'Organizers',      icon: Mic2,                         roles: ['super_admin','admin'] },
   { href: '/admin/categories',   label: 'Categories',      icon: Grid3X3,                      roles: ['super_admin'] },
   { href: '/admin/claims',       label: 'Pending Claims',  icon: Bell,   badge: 'claims',      roles: ['super_admin','admin'] },

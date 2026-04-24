@@ -614,7 +614,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{e.online_platform ?? 'Online Event'}</p>
                     <p className="text-xs text-gray-500">Online Event</p>
-                    {e.online_link && lifecycle !== 'ended' && (
+                    {e.online_link && (
                       <a
                         href={e.online_link}
                         target="_blank"

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, MapPin, Zap, Star } from 'lucide-react'
+import { Calendar, MapPin, Zap, Star, Globe } from 'lucide-react'
 import { formatDate, formatTime, cn } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
@@ -67,8 +67,10 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
             {formatDate(event.start_date, { month: 'short', day: 'numeric' })}
           </p>
           <p className="text-xs text-gray-500 flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-rose-400" />
-            {event.city}
+            {event.is_online
+              ? <><Globe className="w-3 h-3 text-sky-400" /><span className="text-sky-600 font-medium">Online</span></>
+              : <><MapPin className="w-3 h-3 text-rose-400" />{event.city}</>
+            }
           </p>
         </div>
       </Link>
@@ -125,10 +127,17 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
               <Calendar className="w-3.5 h-3.5 text-amber-400" />
               {formatDate(event.start_date, { month: 'short', day: 'numeric' })}
             </span>
-            <span className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-rose-400" />
-              {event.city}
-            </span>
+            {event.is_online ? (
+              <span className="flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-sky-400" />
+                <span className="text-sky-300 font-medium">Online</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-rose-400" />
+                {event.city}
+              </span>
+            )}
           </div>
         </div>
       </Link>
@@ -213,8 +222,11 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
             <span>{formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-500">
-            <MapPin className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
-            <span className="truncate">{event.location_name ? `${event.location_name}, ` : ''}{event.city}</span>
+            {event.is_online ? (
+              <><Globe className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" /><span className="text-sky-600 font-semibold">Online Event</span></>
+            ) : (
+              <><MapPin className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" /><span className="truncate">{event.location_name ? `${event.location_name}, ` : ''}{event.city}</span></>
+            )}
           </div>
         </div>
 

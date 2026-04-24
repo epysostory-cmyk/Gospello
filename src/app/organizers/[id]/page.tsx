@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate, cn } from '@/lib/utils'
-import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone } from 'lucide-react'
+import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, Instagram, Facebook, Twitter, Youtube, MessageCircle, User } from 'lucide-react'
 import type { Profile, SeededOrganizer, Event } from '@/types/database'
 import BackButton from '@/components/ui/BackButton'
 import EventCard from '@/components/ui/EventCard'
@@ -61,8 +61,20 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
   const avatarUrl = isSeeded ? seeded!.logo_url : organizer!.avatar_url
   const bioText = isSeeded ? seeded!.description : organizer!.bio
   const websiteUrl = isSeeded ? seeded!.website : organizer!.website
-  const phoneNum = isSeeded ? seeded!.phone : null
-  const locationStr = isSeeded ? [seeded!.city, seeded!.state].filter(Boolean).join(', ') : organizer!.state ?? ''
+  const phoneNum = isSeeded ? seeded!.phone : (organizer as unknown as Record<string, string | null>)?.phone ?? null
+  const whatsappNum = isSeeded ? null : (organizer as unknown as Record<string, string | null>)?.whatsapp ?? null
+  const instagramUrl = isSeeded ? seeded!.instagram : (organizer as unknown as Record<string, string | null>)?.instagram ?? null
+  const facebookUrl = isSeeded ? seeded!.facebook : (organizer as unknown as Record<string, string | null>)?.facebook ?? null
+  const twitterUrl = isSeeded ? null : (organizer as unknown as Record<string, string | null>)?.twitter ?? null
+  const youtubeUrl = isSeeded ? null : (organizer as unknown as Record<string, string | null>)?.youtube ?? null
+  const contactPerson = isSeeded ? seeded!.contact_person : (organizer as unknown as Record<string, string | null>)?.contact_person ?? null
+  const ministryTypes: string[] = isSeeded
+    ? (seeded!.ministry_type ? [seeded!.ministry_type] : [])
+    : (() => { const raw = (organizer as unknown as Record<string, unknown>)?.ministry_types; return Array.isArray(raw) ? raw as string[] : raw ? [String(raw)] : [] })()
+  const cityStr = isSeeded ? seeded!.city : (organizer as unknown as Record<string, string | null>)?.city ?? null
+  const locationStr = isSeeded
+    ? [seeded!.city, seeded!.state].filter(Boolean).join(', ')
+    : [cityStr, organizer!.state].filter(Boolean).join(', ')
 
   // Claim state (seeded organizers only)
   const isVerified = isSeeded ? seeded!.verified_badge : false
@@ -160,6 +172,13 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
                 )}
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-white drop-shadow-sm">{displayName}</h1>
+              {ministryTypes.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {ministryTypes.map(t => (
+                    <span key={t} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/20 text-white backdrop-blur-sm">{t}</span>
+                  ))}
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-2 text-sm text-white/70">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-amber-400" />
@@ -311,9 +330,20 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
             )}
 
             {/* Info card */}
-            {(websiteUrl || phoneNum || locationStr) && (
+            {(websiteUrl || phoneNum || whatsappNum || locationStr || contactPerson || instagramUrl || facebookUrl || twitterUrl || youtubeUrl) && (
               <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4 shadow-sm">
                 <h2 className="font-bold text-gray-900">Info</h2>
+                {contactPerson && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-violet-500" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Contact</p>
+                      <p className="text-sm text-gray-700">{contactPerson}</p>
+                    </div>
+                  </div>
+                )}
                 {locationStr && (
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
@@ -330,6 +360,14 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
                     <a href={`tel:${phoneNum}`} className="text-sm font-medium text-indigo-600 hover:underline">{phoneNum}</a>
                   </div>
                 )}
+                {whatsappNum && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                      <MessageCircle className="w-4 h-4 text-green-500" />
+                    </div>
+                    <a href={`https://wa.me/${whatsappNum.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-indigo-600 hover:underline">WhatsApp</a>
+                  </div>
+                )}
                 {websiteUrl && (
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center flex-shrink-0">
@@ -338,6 +376,34 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
                     <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-indigo-600 hover:underline inline-flex items-center gap-1">
                       Visit Website <ExternalLink className="w-3 h-3" />
                     </a>
+                  </div>
+                )}
+                {(instagramUrl || facebookUrl || twitterUrl || youtubeUrl) && (
+                  <div className="flex items-center gap-2 pt-1">
+                    {instagramUrl && (
+                      <a href={instagramUrl.startsWith('http') ? instagramUrl : `https://instagram.com/${instagramUrl}`} target="_blank" rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-xl bg-pink-50 flex items-center justify-center hover:bg-pink-100 transition-colors">
+                        <Instagram className="w-4 h-4 text-pink-500" />
+                      </a>
+                    )}
+                    {facebookUrl && (
+                      <a href={facebookUrl.startsWith('http') ? facebookUrl : `https://facebook.com/${facebookUrl}`} target="_blank" rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center hover:bg-blue-100 transition-colors">
+                        <Facebook className="w-4 h-4 text-blue-600" />
+                      </a>
+                    )}
+                    {twitterUrl && (
+                      <a href={twitterUrl.startsWith('http') ? twitterUrl : `https://x.com/${twitterUrl}`} target="_blank" rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center hover:bg-sky-100 transition-colors">
+                        <Twitter className="w-4 h-4 text-sky-500" />
+                      </a>
+                    )}
+                    {youtubeUrl && (
+                      <a href={youtubeUrl.startsWith('http') ? youtubeUrl : `https://youtube.com/${youtubeUrl}`} target="_blank" rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center hover:bg-red-100 transition-colors">
+                        <Youtube className="w-4 h-4 text-red-500" />
+                      </a>
+                    )}
                   </div>
                 )}
               </div>

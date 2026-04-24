@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, Calendar, Users, Building2, Grid3X3,
+  LayoutDashboard, Calendar, Users, Building2, Mic2, Grid3X3,
   Bell, History, User, Shield, Star, Settings, ExternalLink, LogOut,
   ChevronRight, Tag,
 } from 'lucide-react'
@@ -39,6 +39,7 @@ function buildNav(role: string): NavSection[] {
         { href: '/admin/events',        label: 'Events',             icon: Calendar,   roles: ['super_admin','admin','moderator'] },
         { href: '/admin/profiles',      label: 'Seeded Profiles',    icon: Users,      roles: ['super_admin','admin','moderator'] },
         { href: '/admin/organizations', label: 'User Profiles',      icon: Building2,  roles: ['super_admin','admin'] },
+        { href: '/admin/organizers',    label: 'Organizers',         icon: Mic2,       roles: ['super_admin','admin'] },
         { href: '/admin/categories',    label: 'Categories',         icon: Grid3X3,    roles: ['super_admin'] },
       ],
     },

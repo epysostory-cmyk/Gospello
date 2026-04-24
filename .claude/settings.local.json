@@ -71,7 +71,24 @@
       "Bash(curl -s \"https://www.gospello.com/events/altar-of-praise-3mrhp/og-image\" -o /tmp/og-new.jpg)",
       "Bash(curl -sI \"https://www.gospello.com/events/altar-of-praise-3mrhp/og-image?v=2\")",
       "Bash(curl -s \"https://www.gospello.com/events/altar-of-praise-3mrhp/og-image?v=2\" -o /tmp/og-v2.png)",
-      "Bash(curl -s \"https://www.gospello.com/events/altar-of-praise-3mrhp?ref=wa\")"
+      "Bash(curl -s \"https://www.gospello.com/events/altar-of-praise-3mrhp?ref=wa\")",
+      "Bash(grep -v \"^d.*\\\\.$\")",
+      "Bash(sed -i '1s/^/import type { Metadata } from '\"'\"'next'\"'\"'\\\\nexport const metadata: Metadata = { title: '\"'\"'Dashboard'\"'\"' }\\\\n\\\\n/' /c/Users/Hi/Desktop/Gospello/src/app/dashboard/page.tsx)",
+      "Bash(sed -i '1s/^/import type { Metadata } from '\"'\"'next'\"'\"'\\\\nexport const metadata: Metadata = { title: '\"'\"'My Events'\"'\"' }\\\\n\\\\n/' /c/Users/Hi/Desktop/Gospello/src/app/dashboard/events/page.tsx)",
+      "Bash(sed -i '1s/^/import type { Metadata } from '\"'\"'next'\"'\"'\\\\nexport const metadata: Metadata = { title: '\"'\"'Profile Settings'\"'\"' }\\\\n\\\\n/' /c/Users/Hi/Desktop/Gospello/src/app/dashboard/profile/page.tsx)",
+      "Bash(sed -i '1s/^/import type { Metadata } from '\"'\"'next'\"'\"'\\\\nexport const metadata: Metadata = { title: '\"'\"'Church Setup'\"'\"' }\\\\n\\\\n/' /c/Users/Hi/Desktop/Gospello/src/app/dashboard/church/setup/page.tsx)",
+      "Bash(sed -i '1s/^/import type { Metadata } from '\"'\"'next'\"'\"'\\\\nexport const metadata: Metadata = { title: '\"'\"'Organizer Setup'\"'\"' }\\\\n\\\\n/' /c/Users/Hi/Desktop/Gospello/src/app/dashboard/organizer/setup/page.tsx)",
+      "Bash(sed -i '/^import type { Metadata } from .next./d; /^export const metadata: Metadata = { title: .Church Setup. }/d; /^export const metadata: Metadata = { title: .Organizer Setup. }/d' /c/Users/Hi/Desktop/Gospello/src/app/dashboard/church/setup/page.tsx)",
+      "Bash(sed -i '/^import type { Metadata } from .next./d; /^export const metadata: Metadata = { title: .Church Setup. }/d; /^export const metadata: Metadata = { title: .Organizer Setup. }/d' /c/Users/Hi/Desktop/Gospello/src/app/dashboard/organizer/setup/page.tsx)",
+      "Bash(sed -i '/./,$!d' /c/Users/Hi/Desktop/Gospello/src/app/dashboard/church/setup/page.tsx)",
+      "Bash(sed -i '/./,$!d' /c/Users/Hi/Desktop/Gospello/src/app/dashboard/organizer/setup/page.tsx)",
+      "Bash(git -C /c/Users/Hi/Desktop/Gospello diff --stat HEAD)",
+      "Bash(git -C /c/Users/Hi/Desktop/Gospello status --short)",
+      "Bash(git -C C:\\\\Users\\\\Hi\\\\Desktop\\\\Gospello worktree list)",
+      "Bash(git merge *)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts|jsx|js\\)$\")",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(grep -E \"\\\\.\\(sql|ts\\)$\")"
     ]
   }
 }
