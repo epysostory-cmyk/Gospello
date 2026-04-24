@@ -99,7 +99,7 @@ export default function HaveAnEventCTA({ compact = false }: Props) {
           </button>
 
           {/* Fine print */}
-          <p className="text-white/70 text-xs mt-4">Free to post · No credit card needed</p>
+          <p className="text-white/70 text-xs mt-4">Free to post · Free forever</p>
         </div>
       </div>
     </div>
