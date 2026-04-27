@@ -1,11 +1,22 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Eye, EyeOff, Loader2, Check } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Check, ChevronLeft } from 'lucide-react'
+import { NIGERIAN_STATES } from '@/lib/utils'
+import { CITIES_BY_STATE } from '@/lib/nigerian-cities'
 import type { AccountType } from '@/types/database'
+
+/* ─── Ministry types (curated for signup) ───────────────────── */
+const SIGNUP_MINISTRY_TYPES = [
+  'Pastor', 'Youth Pastor', 'Evangelist', 'Prophet', 'Apostle', 'Bishop',
+  'Worship Leader', 'Gospel Artist', 'Event Organizer', 'Conference Host',
+  'Campus Minister', 'Ministry Leader', 'Musician', 'Christian Speaker',
+  'Campus Fellowship', 'Other',
+]
 
 /* ─── Name validation ───────────────────────────────────────── */
 function validateFullName(name: string): string | null {
@@ -99,6 +110,40 @@ function Field({
   )
 }
 
+/* ─── Select component ───────────────────────────────────────── */
+function SelectField({
+  id, label, value, onChange, options, placeholder, disabled,
+}: {
+  id: string; label: string; value: string
+  onChange: (v: string) => void
+  options: string[]; placeholder: string; disabled?: boolean
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-[13px] font-medium text-[#374151] mb-1.5">
+        {label}
+      </label>
+      <select
+        id={id}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        disabled={disabled}
+        className="w-full h-[52px] px-4 rounded-xl border-[1.5px] border-[#E5E7EB] text-[15px] text-gray-900
+          bg-white outline-none appearance-none
+          focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE]
+          disabled:bg-gray-50 disabled:text-gray-400
+          transition-all duration-150"
+        style={{ fontFamily: 'var(--font-plus-jakarta), sans-serif' }}
+      >
+        <option value="">{placeholder}</option>
+        {options.map(opt => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
 /* ─── Main page ──────────────────────────────────────────────── */
 export default function SignUpPage() {
   return (
@@ -117,19 +162,27 @@ function SignUpForm() {
   const router = useRouter()
   const supabase = createClient()
 
+  // Site logo
+  const [siteLogoUrl, setSiteLogoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase
+      .from('platform_settings')
+      .select('site_logo_url')
+      .eq('id', 'default')
+      .single()
+      .then(({ data }) => {
+        if (data?.site_logo_url) setSiteLogoUrl(data.site_logo_url)
+      })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // On mount: clean up any ghost/orphaned Supabase auth state.
-  // This covers the "Google back button" case — when a user starts OAuth,
-  // abandons it by pressing back, and Supabase has written a broken partial
-  // session to localStorage. Left in place, it causes an infinite redirect loop.
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
-        // Valid session → already logged in, go to dashboard
         router.replace('/dashboard')
         return
       }
-      // No valid session — clear any leftover PKCE / partial OAuth tokens from
-      // localStorage that Supabase may have written during an abandoned OAuth flow.
       try {
         const keysToRemove: string[] = []
         for (let i = 0; i < localStorage.length; i++) {
@@ -139,37 +192,51 @@ function SignUpForm() {
           }
         }
         keysToRemove.forEach(k => localStorage.removeItem(k))
-      } catch { /* localStorage unavailable (e.g. SSR or private mode) */ }
+      } catch { /* localStorage unavailable */ }
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [accountType, setAccountType] = useState<AccountType>(
     (searchParams.get('type') as AccountType) ?? 'organizer'
   )
-  const [fullName, setFullName]         = useState('')
-  const [churchName, setChurchName]     = useState('')
-  const [email, setEmail]               = useState('')
-  const [password, setPassword]         = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading]           = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
-  const [error, setError]               = useState('')
-  const [emailError, setEmailError]     = useState('')
-  const [success, setSuccess]           = useState(false)
-  const [shake, setShake]               = useState(false)
+  const [fullName, setFullName]               = useState('')
+  const [churchName, setChurchName]           = useState('')
+  const [email, setEmail]                     = useState('')
+  const [password, setPassword]               = useState('')
+  const [showPassword, setShowPassword]       = useState(false)
+  const [state, setState]                     = useState('')
+  const [city, setCity]                       = useState('')
+  const [ministryTypes, setMinistryTypes]     = useState<string[]>([])
+  const [loading, setLoading]                 = useState(false)
+  const [googleLoading, setGoogleLoading]     = useState(false)
+  const [error, setError]                     = useState('')
+  const [emailError, setEmailError]           = useState('')
+  const [success, setSuccess]                 = useState(false)
+  const [shake, setShake]                     = useState(false)
 
-  const strength = getStrength(password)
+  const strength   = getStrength(password)
+  const cities     = state ? (CITIES_BY_STATE[state] ?? []) : []
+
+  // Reset city when state changes
+  useEffect(() => { setCity('') }, [state])
 
   const triggerShake = () => {
     setShake(true)
     setTimeout(() => setShake(false), 600)
   }
 
+  const toggleMinistryType = (type: string) => {
+    setMinistryTypes(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : prev.length < 3 ? [...prev, type] : prev
+    )
+  }
+
   /* ── Email sign-up ── */
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Name validation
     const nameError = accountType === 'church'
       ? validateChurchName(churchName)
       : validateFullName(fullName)
@@ -200,10 +267,6 @@ function SignUpForm() {
       return
     }
 
-    // Supabase silently returns a user-like object for existing confirmed emails
-    // instead of an error. Detect this: identities array is empty for existing accounts.
-    // Immediately sign out to wipe the ghost auth token Supabase already wrote to
-    // localStorage — if left in place it causes an infinite /dashboard ↔ /auth/login loop.
     if (data.user && (data.user.identities?.length ?? 1) === 0) {
       await supabase.auth.signOut()
       setEmailError('exists')
@@ -220,6 +283,8 @@ function SignUpForm() {
           email,
           accountType,
           displayName,
+          state: state || undefined,
+          ministryType: ministryTypes.length > 0 ? ministryTypes.join(', ') : undefined,
         }),
       })
     }
@@ -237,6 +302,32 @@ function SignUpForm() {
     })
     setGoogleLoading(false)
   }
+
+  /* ── Logo component ── */
+  const LogoBlock = ({ dark = false }: { dark?: boolean }) => (
+    <Link href="/" className="inline-flex items-center gap-2.5">
+      {siteLogoUrl ? (
+        <Image
+          src={siteLogoUrl}
+          alt="Gospello"
+          width={120}
+          height={36}
+          className="h-8 w-auto object-contain"
+          style={dark ? { filter: 'brightness(0) invert(1)' } : {}}
+        />
+      ) : (
+        <>
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: dark ? 'rgba(255,255,255,0.2)' : '#7C3AED' }}
+          >
+            <span className="text-white font-black text-sm">G</span>
+          </div>
+          <span className={`text-lg font-black ${dark ? 'text-white' : 'text-gray-900'}`}>Gospello</span>
+        </>
+      )}
+    </Link>
+  )
 
   /* ── Success screen ── */
   if (success) {
@@ -266,7 +357,7 @@ function SignUpForm() {
     )
   }
 
-  /* ── Form ── */
+  /* ── Form content ── */
   const formContent = (
     <div className="w-full max-w-[420px] mx-auto">
 
@@ -300,7 +391,6 @@ function SignUpForm() {
                 background:  active ? '#FAF5FF' : '#FFFFFF',
               }}
             >
-              {/* Checkmark */}
               {active && (
                 <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#7C3AED] flex items-center justify-center">
                   <Check className="w-3 h-3 text-white" strokeWidth={3} />
@@ -322,11 +412,11 @@ function SignUpForm() {
       {/* Form fields */}
       <form onSubmit={handleSignUp} className="space-y-4">
 
-        {/* Full Name — only for organizer */}
+        {/* Full Name — organizer only */}
         <div
           className="overflow-hidden transition-all duration-200 ease-in-out"
           style={{
-            maxHeight: accountType === 'organizer' ? '80px' : '0',
+            maxHeight: accountType === 'organizer' ? '90px' : '0',
             opacity:   accountType === 'organizer' ? 1 : 0,
           }}
         >
@@ -335,14 +425,14 @@ function SignUpForm() {
             onChange={setFullName} placeholder="e.g. Tunde Bello"
             autoComplete="name" shake={shake}
           />
-          <p className="text-[11px] text-gray-400 mt-1.5 px-1">Enter your first and last name — no numbers or symbols</p>
+          <p className="text-[11px] text-gray-400 mt-1.5 px-1">Enter your first and last name</p>
         </div>
 
-        {/* Church name — only for church */}
+        {/* Church name — church only */}
         <div
           className="overflow-hidden transition-all duration-200 ease-in-out"
           style={{
-            maxHeight: accountType === 'church' ? '80px' : '0',
+            maxHeight: accountType === 'church' ? '90px' : '0',
             opacity:   accountType === 'church' ? 1 : 0,
           }}
         >
@@ -352,9 +442,70 @@ function SignUpForm() {
             placeholder="e.g. Redeemed Christian Church Lagos"
             autoComplete="organization" shake={shake}
           />
-          <p className="text-[11px] text-gray-400 mt-1.5 px-1">Enter the full official name of your church (at least 2 words)</p>
+          <p className="text-[11px] text-gray-400 mt-1.5 px-1">Enter the full official name of your church</p>
         </div>
 
+        {/* Ministry Types — organizer only */}
+        <div
+          className="overflow-hidden transition-all duration-200 ease-in-out"
+          style={{
+            maxHeight: accountType === 'organizer' ? '160px' : '0',
+            opacity:   accountType === 'organizer' ? 1 : 0,
+          }}
+        >
+          <div>
+            <p className="text-[13px] font-medium text-[#374151] mb-1.5">
+              Ministry Type <span className="text-gray-400 font-normal">(pick up to 3)</span>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SIGNUP_MINISTRY_TYPES.map(type => {
+                const selected = ministryTypes.includes(type)
+                const disabled = !selected && ministryTypes.length >= 3
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => toggleMinistryType(type)}
+                    className="px-3 py-1.5 rounded-full text-[12px] font-medium border transition-colors"
+                    style={{
+                      borderColor: selected ? '#7C3AED' : '#E5E7EB',
+                      background:  selected ? '#FAF5FF' : '#FFFFFF',
+                      color:       selected ? '#7C3AED' : disabled ? '#D1D5DB' : '#374151',
+                      cursor:      disabled ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {selected && <span className="mr-1">✓</span>}
+                    {type}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* State */}
+        <SelectField
+          id="state"
+          label="State"
+          value={state}
+          onChange={setState}
+          options={NIGERIAN_STATES}
+          placeholder="Select your state"
+        />
+
+        {/* City */}
+        <SelectField
+          id="city"
+          label="City"
+          value={city}
+          onChange={setCity}
+          options={cities}
+          placeholder={state ? 'Select your city' : 'Select state first'}
+          disabled={!state}
+        />
+
+        {/* Email */}
         <div>
           <Field
             id="email" label="Email Address" type="email" value={email}
@@ -370,7 +521,7 @@ function SignUpForm() {
           )}
         </div>
 
-        {/* Password with show/hide + strength */}
+        {/* Password */}
         <div className={shake ? 'animate-shake' : ''}>
           <label htmlFor="password" className="block text-[13px] font-medium text-[#374151] mb-1.5">
             Password
@@ -399,8 +550,6 @@ function SignUpForm() {
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
-
-          {/* Strength bar */}
           {password.length > 0 && (
             <div className="mt-2">
               <div className="flex gap-1">
@@ -434,13 +583,11 @@ function SignUpForm() {
           className="w-full h-[52px] rounded-xl text-white text-[16px] font-semibold
             flex items-center justify-center gap-2
             transition-all duration-150 active:scale-[0.98] disabled:opacity-80"
-          style={{ background: loading ? '#7C3AED' : undefined, backgroundColor: '#7C3AED' }}
+          style={{ backgroundColor: '#7C3AED' }}
           onMouseOver={e => { if (!loading) (e.currentTarget.style.backgroundColor = '#6D28D9') }}
           onMouseOut={e => { (e.currentTarget.style.backgroundColor = '#7C3AED') }}
         >
-          {loading
-            ? <Loader2 className="w-5 h-5 animate-spin" />
-            : 'Create Account'}
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Account'}
         </button>
       </form>
 
@@ -478,7 +625,6 @@ function SignUpForm() {
 
   return (
     <>
-      {/* Shake animation */}
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
@@ -490,17 +636,22 @@ function SignUpForm() {
         .animate-shake { animation: shake 0.5s ease-in-out; }
       `}</style>
 
-      {/* ── MOBILE layout (hidden on md+) ── */}
-      <div className="md:hidden min-h-screen bg-white px-5 pt-12 overflow-y-auto">
+      {/* ── MOBILE layout ── */}
+      <div className="md:hidden min-h-screen bg-white px-5 pt-8 overflow-y-auto">
+        {/* Back to homepage */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-6 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Back to homepage
+        </Link>
+
         {/* Brand header */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: '#7C3AED' }}>
-              <span className="text-white font-black text-base">G</span>
-            </div>
-            <span className="text-xl font-black text-gray-900">Gospello</span>
-          </Link>
+          <div className="flex justify-center mb-5">
+            <LogoBlock />
+          </div>
           <h1 className="text-[24px] font-bold text-[#111827] leading-tight">Join Gospello</h1>
           <p className="text-[14px] text-[#6B7280] mt-1">Nigeria&apos;s home for gospel events</p>
         </div>
@@ -508,7 +659,7 @@ function SignUpForm() {
         {formContent}
       </div>
 
-      {/* ── DESKTOP layout (hidden below md) ── */}
+      {/* ── DESKTOP layout ── */}
       <div className="hidden md:flex min-h-screen">
 
         {/* Left panel */}
@@ -516,7 +667,6 @@ function SignUpForm() {
           className="w-[45%] flex-shrink-0 relative flex flex-col"
           style={{ background: 'linear-gradient(160deg, #4F1787 0%, #6D28D9 55%, #7C3AED 100%)' }}
         >
-          {/* Glow overlay */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{ background: 'radial-gradient(ellipse at 60% 80%, rgba(167,139,250,0.18) 0%, transparent 70%)' }}
@@ -524,12 +674,7 @@ function SignUpForm() {
 
           {/* Logo top-left */}
           <div className="px-10 pt-10 z-10">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                <span className="text-white font-black text-sm">G</span>
-              </div>
-              <span className="text-lg font-black text-white">Gospello</span>
-            </Link>
+            <LogoBlock dark />
           </div>
 
           {/* Center content */}
@@ -555,8 +700,19 @@ function SignUpForm() {
         </div>
 
         {/* Right panel */}
-        <div className="flex-1 flex items-center justify-center px-10 py-12 bg-white overflow-y-auto">
-          {formContent}
+        <div className="flex-1 flex flex-col px-10 py-12 bg-white overflow-y-auto">
+          {/* Back to homepage */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-8 self-start transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to homepage
+          </Link>
+
+          <div className="flex-1 flex items-start justify-center">
+            {formContent}
+          </div>
         </div>
       </div>
     </>

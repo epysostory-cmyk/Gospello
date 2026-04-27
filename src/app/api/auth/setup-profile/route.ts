@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function POST(req: NextRequest) {
   try {
-    const { userId, email, accountType, displayName } = await req.json()
+    const { userId, email, accountType, displayName, state, ministryType } = await req.json()
 
     if (!userId || !email || !accountType) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -28,7 +28,9 @@ export async function POST(req: NextRequest) {
           email,
           account_type: accountType,
           display_name: displayName || email.split('@')[0],
-          profile_completed: true, // email signup users provide all info upfront
+          profile_completed: true,
+          ...(state       ? { state }         : {}),
+          ...(ministryType ? { ministry_type: ministryType } : {}),
         },
         { onConflict: 'id', ignoreDuplicates: false }
       )
