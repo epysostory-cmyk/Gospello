@@ -55,7 +55,7 @@ async function getHomepageData() {
         .from('events')
         .select('*, churches(*)')
         .eq('status', 'approved')
-        .order('start_date', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(20),
       supabase.from('churches').select('*').eq('is_featured', true).limit(6),
       supabase.from('events').select('id', { count: 'exact', head: true }),
@@ -74,7 +74,7 @@ async function getHomepageData() {
       // Organizer + church IDs that have at least one approved event
       adminClient
         .from('events')
-        .select('organizer_id, church_id')
+        .select('organizer_id, church_id, seeded_organizer_id')
         .eq('status', 'approved'),
       // Discover Organizers — from profiles
       adminClient
@@ -101,15 +101,10 @@ async function getHomepageData() {
 
     const featuredEvents = (featuredRes.data ?? []) as Event[]
 
-    // Sort: upcoming events first (soonest first), then ended events (most recently ended first)
-    const nowMs = Date.now()
-    const upcomingEvents = ((upcomingRes.data ?? []) as Event[]).sort((a, b) => {
-      const aEnded = new Date(a.start_date).getTime() < nowMs
-      const bEnded = new Date(b.start_date).getTime() < nowMs
-      if (!aEnded && !bEnded) return new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
-      if (aEnded && bEnded) return new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
-      return aEnded ? 1 : -1
-    })
+    // Sort: newest created events first
+    const upcomingEvents = ((upcomingRes.data ?? []) as Event[]).sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
 
     // Batch fetch attendance counts for all events shown on homepage
     const allEventIds = [
@@ -145,6 +140,10 @@ async function getHomepageData() {
     // IDs of churches with at least one approved event
     const approvedChurchIds = new Set(
       (eventOrganizerIdsRes.data ?? []).map((r: { church_id: string | null }) => r.church_id).filter(Boolean)
+    )
+    // IDs of seeded organizers with at least one approved event
+    const approvedSeededOrgIds = new Set(
+      (eventOrganizerIdsRes.data ?? []).map((r: { seeded_organizer_id?: string | null }) => r.seeded_organizer_id).filter(Boolean)
     )
 
     // Fetch churches that have approved events
@@ -192,10 +191,11 @@ async function getHomepageData() {
       verified_badge: s.verified_badge ?? false,
       source: 'seeded' as const,
     }))
-    // Merge: only show organizers with at least one approved event, limit 10
-    const allOrgs: OrganizerCard[] = [...profileOrgs, ...seededOrgs]
-      .filter(o => approvedOrganizerIds.has(o.id))
-      .slice(0, 10)
+    // Merge: profile orgs filtered by approvedOrganizerIds, seeded orgs by approvedSeededOrgIds
+    const allOrgs: OrganizerCard[] = [
+      ...profileOrgs.filter(o => approvedOrganizerIds.has(o.id)),
+      ...seededOrgs.filter(o => approvedSeededOrgIds.has(o.id)),
+    ].slice(0, 10)
 
     // Homepage CTA settings
     const rawCta = churchCtaRes?.data?.value

@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { Plus, Search, Building2, Mic2, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { Plus, Search, Building2, Mic2, CheckCircle, Clock, AlertCircle, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 
@@ -159,12 +159,16 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
               {row.contact && <p className="text-xs text-gray-400 mt-2 truncate">{row.type === 'church' ? 'Pastor: ' : 'Contact: '}{row.contact}</p>}
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50">
                 <Link href={row.type === 'church' ? `/churches/${row.slug}` : `/organizers/${row.id}`}
-                  target="_blank" className="text-xs text-[#7C3AED] hover:underline flex-1">View public page →</Link>
+                  target="_blank" className="text-xs text-[#7C3AED] hover:underline flex-1">View public →</Link>
+                <Link
+                  href={`/admin/profiles/${row.type}/${row.id}/edit`}
+                  className="flex items-center gap-1 text-xs font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 px-2.5 py-1 rounded-lg transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Edit
+                </Link>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${row.type === 'church' ? 'bg-violet-100 text-violet-700' : 'bg-blue-100 text-blue-700'}`}>
                   {row.type === 'church' ? 'Church' : 'Organizer'}
-                </span>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                  Admin-seeded
                 </span>
               </div>
             </div>
