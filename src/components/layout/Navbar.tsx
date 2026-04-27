@@ -74,8 +74,8 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
       <header
         className={`sticky top-0 z-50 transition-all duration-300 ${
           scrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-md border-b border-gray-100'
-            : 'bg-white/95 backdrop-blur-md border-b border-gray-100'
+            ? 'bg-[#F5F5F7]/95 backdrop-blur-md shadow-sm border-b border-gray-200'
+            : 'bg-[#F5F5F7]/95 backdrop-blur-md border-b border-gray-200'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -199,7 +199,7 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
 
       {/* Mobile menu — full-width dropdown */}
       {menuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-16 z-40 bg-white border-b border-gray-100 shadow-xl">
+        <div className="md:hidden fixed inset-x-0 top-16 z-40 bg-[#F5F5F7] border-b border-gray-200 shadow-xl">
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
 
             {/* Nav links */}
