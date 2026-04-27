@@ -8,7 +8,6 @@ import type { AccountType } from '@/types/database'
 import ImageCropModal from '@/components/ui/ImageCropModal'
 import OrganizerTypeChips from '@/components/ui/OrganizerTypeChips'
 import { NIGERIAN_STATES } from '@/lib/utils'
-import { CITIES_BY_STATE } from '@/lib/nigerian-cities'
 
 interface ProfileFormProps {
   userId: string
@@ -74,8 +73,6 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const [pwError, setPwError] = useState('')
 
   const isOrganizer = form.account_type === 'organizer'
-  const cities = CITIES_BY_STATE[form.state] ?? []
-
   function setField<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm(f => {
       const next = { ...f, [k]: v }
@@ -307,11 +304,12 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 City <span className="text-gray-400 font-normal">(optional)</span>
               </label>
-              <select value={form.city} onChange={e => setField('city', e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] bg-white">
-                <option value="">Select city</option>
-                {cities.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <input
+                type="text"
+                value={form.city ?? ''} onChange={e => setField('city', e.target.value)}
+                placeholder="e.g. Lekki"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]"
+              />
             </div>
           </div>
 

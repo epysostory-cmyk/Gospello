@@ -7,7 +7,6 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Eye, EyeOff, Loader2, Check, ChevronLeft } from 'lucide-react'
 import { NIGERIAN_STATES } from '@/lib/utils'
-import { CITIES_BY_STATE } from '@/lib/nigerian-cities'
 import type { AccountType } from '@/types/database'
 
 /* ─── Ministry types (curated for signup) ───────────────────── */
@@ -215,9 +214,6 @@ function SignUpForm() {
   const [shake, setShake]                     = useState(false)
 
   const strength   = getStrength(password)
-  const cities     = state ? (CITIES_BY_STATE[state] ?? []) : []
-
-  // Reset city when state changes
   useEffect(() => { setCity('') }, [state])
 
   const triggerShake = () => {
@@ -241,6 +237,12 @@ function SignUpForm() {
       ? validateChurchName(churchName)
       : validateFullName(fullName)
     if (nameError) { setError(nameError); triggerShake(); return }
+
+    if (accountType === 'organizer' && ministryTypes.length === 0) {
+      setError('Please select at least one ministry type')
+      triggerShake()
+      return
+    }
 
     if (password.length < 6) { setError('Password must be at least 6 characters'); triggerShake(); return }
     setLoading(true)
@@ -447,16 +449,30 @@ function SignUpForm() {
 
         {/* Ministry Types — organizer only */}
         <div
-          className="overflow-hidden transition-all duration-200 ease-in-out"
+          className="overflow-hidden transition-all duration-300 ease-in-out"
           style={{
-            maxHeight: accountType === 'organizer' ? '160px' : '0',
+            maxHeight: accountType === 'organizer' ? '360px' : '0',
             opacity:   accountType === 'organizer' ? 1 : 0,
           }}
         >
           <div>
-            <p className="text-[13px] font-medium text-[#374151] mb-1.5">
-              Ministry Type <span className="text-gray-400 font-normal">(pick up to 3)</span>
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[13px] font-medium text-[#374151]">
+                Ministry Type <span className="text-red-400 text-[11px] font-normal">* required</span>
+              </p>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                ministryTypes.length === 0
+                  ? 'bg-gray-100 text-gray-400'
+                  : ministryTypes.length < 3
+                  ? 'bg-violet-100 text-violet-600'
+                  : 'bg-violet-600 text-white'
+              }`}>
+                {ministryTypes.length}/3
+              </span>
+            </div>
+            {ministryTypes.length === 0 && accountType === 'organizer' && (
+              <p className="text-[11px] text-gray-400 mb-2">Pick at least 1, up to 3</p>
+            )}
             <div className="flex flex-wrap gap-2">
               {SIGNUP_MINISTRY_TYPES.map(type => {
                 const selected = ministryTypes.includes(type)
@@ -467,15 +483,20 @@ function SignUpForm() {
                     type="button"
                     disabled={disabled}
                     onClick={() => toggleMinistryType(type)}
-                    className="px-3 py-1.5 rounded-full text-[12px] font-medium border transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-medium border transition-all duration-150 active:scale-95"
                     style={{
-                      borderColor: selected ? '#7C3AED' : '#E5E7EB',
-                      background:  selected ? '#FAF5FF' : '#FFFFFF',
-                      color:       selected ? '#7C3AED' : disabled ? '#D1D5DB' : '#374151',
+                      borderColor: selected ? '#7C3AED' : disabled ? '#F3F4F6' : '#E5E7EB',
+                      background:  selected ? '#7C3AED' : disabled ? '#F9FAFB' : '#FFFFFF',
+                      color:       selected ? '#FFFFFF'  : disabled ? '#C4C4C4' : '#374151',
                       cursor:      disabled ? 'not-allowed' : 'pointer',
+                      boxShadow:   selected ? '0 1px 4px rgba(124,58,237,0.25)' : 'none',
                     }}
                   >
-                    {selected && <span className="mr-1">✓</span>}
+                    {selected && (
+                      <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 12 12">
+                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
                     {type}
                   </button>
                 )
@@ -495,14 +516,10 @@ function SignUpForm() {
         />
 
         {/* City */}
-        <SelectField
-          id="city"
-          label="City"
-          value={city}
-          onChange={setCity}
-          options={cities}
-          placeholder={state ? 'Select your city' : 'Select state first'}
-          disabled={!state}
+        <Field
+          id="city" label="City" value={city}
+          onChange={setCity} placeholder="e.g. Lekki"
+          shake={shake}
         />
 
         {/* Email */}
