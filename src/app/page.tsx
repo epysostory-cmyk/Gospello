@@ -272,128 +272,120 @@ export default async function HomePage() {
     <div className="min-h-screen bg-white">
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
-      <section className="relative bg-slate-950 text-white overflow-hidden">
-        {/* Background glow orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-32 -right-32 w-[700px] h-[700px] bg-indigo-600/20 rounded-full blur-[120px]" />
-          <div className="absolute -bottom-32 -left-32 w-[600px] h-[600px] bg-purple-700/20 rounded-full blur-[100px]" />
-          <div className="absolute top-1/2 left-1/3 w-[400px] h-[400px] bg-amber-500/8 rounded-full blur-[90px] -translate-y-1/2" />
-          <div
-            className="absolute inset-0 opacity-[0.04]"
-            style={{
-              backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-              backgroundSize: '28px 28px',
-            }}
-          />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        </div>
+      <section className="bg-[#F5F5F7] border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 md:pt-28 md:pb-32 text-center">
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 md:pt-28 md:pb-32">
-          <div className="max-w-4xl">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-500 text-xs font-semibold px-4 py-2 rounded-full mb-8 shadow-sm">
+            <span className="text-indigo-500">✦</span>
+            {heroBadge}
+          </div>
 
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2.5 bg-white/5 border border-white/10 text-sm px-4 py-2 rounded-full mb-8 backdrop-blur-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
-              </span>
-              <span className="text-slate-300 font-medium">{heroBadge}</span>
-            </div>
+          {/* Headline */}
+          <h1
+            className="font-black leading-[1.06] tracking-tight text-gray-900"
+            style={{ fontFamily: 'var(--font-inter), var(--font-plus-jakarta), sans-serif' }}
+          >
+            <span className="block text-5xl sm:text-6xl md:text-7xl">{heroLine1}</span>
+            <span className="block text-5xl sm:text-6xl md:text-7xl bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+              {heroGradient}
+            </span>
+            <span className="block text-5xl sm:text-6xl md:text-7xl">{heroLine3}</span>
+          </h1>
 
-            {/* Headline */}
-            <h1 className="font-black leading-[1.08] tracking-tight" style={{ fontFamily: 'var(--font-playfair), serif' }}>
-              <span className="block text-4xl sm:text-6xl md:text-7xl text-white">{heroLine1}</span>
-              <span className="block text-4xl sm:text-6xl md:text-7xl bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent whitespace-nowrap">
-                {heroGradient}
-              </span>
-              <span className="block text-4xl sm:text-6xl md:text-7xl text-slate-300">{heroLine3}</span>
-            </h1>
+          {/* Subheadline */}
+          <p
+            className="mt-6 text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed"
+            style={{ fontFamily: 'var(--font-inter), var(--font-plus-jakarta), sans-serif' }}
+          >
+            {heroSubheadline}
+          </p>
 
-            {/* Subheadline */}
-            <p className="mt-6 text-lg md:text-xl text-slate-400 max-w-xl leading-relaxed" style={{ fontFamily: 'var(--font-playfair), serif' }}>
-              {heroSubheadline}
-            </p>
-
-            {/* Search card */}
-            <div className="mt-10 max-w-2xl">
-              <form
-                action="/search"
-                method="GET"
-                className="flex items-center gap-2 bg-white rounded-2xl p-2 shadow-[0_0_60px_rgba(99,102,241,0.3)]"
-              >
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    name="q"
-                    placeholder="Search events, churches, organizers..."
-                    className="w-full pl-12 pr-4 py-3.5 text-gray-900 placeholder-gray-400 text-sm focus:outline-none bg-transparent"
-                  />
-                </div>
-                <div className="hidden sm:flex items-center border-l border-gray-200 pl-2 pr-1">
-                  <MapPin className="w-4 h-4 text-gray-400 ml-2 mr-1 flex-shrink-0" />
-                  <input
-                    type="text"
-                    name="city"
-                    placeholder="City"
-                    className="w-24 py-3.5 pr-2 text-gray-900 placeholder-gray-400 text-sm focus:outline-none bg-transparent"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3.5 rounded-xl transition-colors text-sm"
-                >
-                  Search
-                </button>
-              </form>
-
-              {/* Popular searches */}
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <span className="text-xs text-slate-600">Popular:</span>
-                {popularSearches.map((tag) => (
-                  <Link
-                    key={tag}
-                    href={`/search?q=${tag}`}
-                    className="text-xs text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1 rounded-full transition-colors border border-white/10"
-                  >
-                    {tag}
-                  </Link>
-                ))}
+          {/* Search bar */}
+          <div className="mt-10 max-w-2xl mx-auto">
+            <form
+              action="/search"
+              method="GET"
+              className="flex items-center gap-2 bg-white rounded-2xl p-2 border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.07)]"
+            >
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  name="q"
+                  placeholder="Search events, churches, organizers..."
+                  className="w-full pl-11 pr-4 py-3.5 text-gray-900 placeholder-gray-400 text-sm focus:outline-none bg-transparent"
+                />
               </div>
-            </div>
-
-            {/* CTA buttons */}
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/events"
-                className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 hover:-translate-y-0.5 text-sm"
+              <div className="hidden sm:flex items-center border-l border-gray-100 pl-2 pr-1">
+                <MapPin className="w-4 h-4 text-gray-400 ml-2 mr-1 flex-shrink-0" />
+                <input
+                  type="text"
+                  name="city"
+                  placeholder="City"
+                  className="w-24 py-3.5 pr-2 text-gray-900 placeholder-gray-400 text-sm focus:outline-none bg-transparent"
+                />
+              </div>
+              <button
+                type="submit"
+                className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3.5 rounded-xl text-sm transition-colors"
               >
-                {heroCtaPrimary}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="inline-flex items-center gap-2 bg-white/8 hover:bg-white/12 text-white font-semibold px-7 py-3.5 rounded-xl transition-colors border border-white/10 backdrop-blur-sm text-sm"
-              >
-                {heroCtaSecondary}
-              </Link>
-            </div>
+                Search
+              </button>
+            </form>
 
-            {/* Stats */}
-            <div className="mt-16 pt-8 border-t border-white/10 grid grid-cols-2 gap-x-6 gap-y-5 sm:flex sm:gap-12">
-              {[
-                { value: stats.events > 0 ? `${stats.events}+` : '—',     label: 'Events created' },
-                { value: stats.churches > 0 ? `${stats.churches}+` : '—', label: 'Churches' },
-                { value: stats.cities > 0 ? `${stats.cities}+` : '36',    label: 'Cities covered' },
-                { value: stats.organizers > 0 ? `${stats.organizers}+` : '—', label: 'Organizers' },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center sm:text-left">
-                  <p className="text-3xl font-black text-white tracking-tight">{stat.value}</p>
-                  <p className="text-sm text-slate-500 mt-1">{stat.label}</p>
-                </div>
+            {/* Popular searches */}
+            <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+              <span className="text-xs text-gray-400 font-medium">Popular:</span>
+              {popularSearches.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/search?q=${tag}`}
+                  className="text-xs text-gray-600 hover:text-indigo-600 bg-white hover:bg-indigo-50 px-3 py-1.5 rounded-full border border-gray-200 hover:border-indigo-200 font-medium transition-colors"
+                >
+                  {tag}
+                </Link>
               ))}
             </div>
           </div>
+
+          {/* CTA buttons */}
+          <div className="mt-8 flex flex-wrap gap-3 justify-center">
+            <Link
+              href="/events"
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3.5 rounded-xl text-sm transition-colors"
+            >
+              {heroCtaPrimary}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-800 font-semibold px-8 py-3.5 rounded-xl border border-gray-200 text-sm transition-colors"
+            >
+              {heroCtaSecondary}
+            </Link>
+          </div>
+
+          {/* Stats */}
+          <div className="mt-16 pt-8 border-t border-gray-200 grid grid-cols-2 gap-x-6 gap-y-5 sm:flex sm:gap-12 sm:justify-center">
+            {[
+              { value: stats.events > 0 ? `${stats.events}+` : '—',         label: 'Events created' },
+              { value: stats.churches > 0 ? `${stats.churches}+` : '—',     label: 'Churches' },
+              { value: stats.cities > 0 ? `${stats.cities}+` : '36',        label: 'Cities covered' },
+              { value: stats.organizers > 0 ? `${stats.organizers}+` : '—', label: 'Organizers' },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p
+                  className="text-3xl font-black text-gray-900 tracking-tight"
+                  style={{ fontFamily: 'var(--font-inter), var(--font-plus-jakarta), sans-serif' }}
+                >
+                  {stat.value}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+
         </div>
       </section>
 

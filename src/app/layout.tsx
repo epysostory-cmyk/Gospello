@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
-import { Plus_Jakarta_Sans, Playfair_Display } from 'next/font/google'
+import { Inter, Plus_Jakarta_Sans, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -8,6 +8,12 @@ import ConditionalLayout from '@/components/layout/ConditionalLayout'
 import ScrollToTop from '@/components/ui/ScrollToTop'
 import SavedEventsMigrator from '@/components/SavedEventsMigrator'
 import { getSiteSettings } from '@/app/actions/site-settings'
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-inter',
+})
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -50,7 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="icon" href={settings.site_favicon_url ?? '/favicon.ico'} sizes="any" />
         <link rel="apple-touch-icon" href={settings.site_favicon_url ?? '/favicon.ico'} />
       </head>
-      <body className={`min-h-full flex flex-col bg-gray-50 ${plusJakartaSans.variable} ${playfairDisplay.variable}`}>
+      <body className={`min-h-full flex flex-col bg-gray-50 ${inter.variable} ${plusJakartaSans.variable} ${playfairDisplay.variable}`}>
         <ScrollToTop />
         <SavedEventsMigrator />
         <ConditionalLayout
