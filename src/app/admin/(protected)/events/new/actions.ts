@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
+import type { DaySchedule } from '@/types/database'
 
 interface AdminEventInput {
   adminId: string
@@ -10,9 +11,10 @@ interface AdminEventInput {
     name: string
     profileType: 'church' | 'seeded_org' | 'auth_org'
   }
+  startDatetime: string
+  endDatetime: string | null
   form: {
     title: string; description: string; category: string
-    start_date: string; start_time: string; end_date: string; end_time: string
     is_online: boolean; online_platform: string; online_link: string
     location_name: string; address: string; city: string; state: string
     registration_type: 'free_no_registration' | 'free_registration' | 'paid'
@@ -25,21 +27,16 @@ interface AdminEventInput {
     child_friendly: boolean
     notes: string
     source_url: string
+    daily_schedule: DaySchedule[] | null
   }
 }
 
 export async function createAdminEvent(input: AdminEventInput): Promise<{ error?: string; id?: string }> {
-  const { adminId, selectedProfile, form } = input
+  const { adminId, selectedProfile, form, startDatetime, endDatetime } = input
   const adminClient = createAdminClient()
 
   try {
     const slug = slugify(form.title)
-
-    const startDatetime = `${form.start_date}T${form.start_time}:00`
-
-    const endDatetime = form.end_date
-      ? `${form.end_date}T${form.end_time || '23:59'}:00`
-      : null
 
     const church_id           = selectedProfile.profileType === 'church'     ? selectedProfile.id : null
     const seeded_organizer_id = selectedProfile.profileType === 'seeded_org' ? selectedProfile.id : null
@@ -56,6 +53,7 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
       status:            'approved',
       start_date:        startDatetime,
       end_date:          endDatetime,
+      daily_schedule:    form.daily_schedule ?? null,
       is_online:         form.is_online,
       online_platform:   form.online_platform || null,
       online_link:       form.online_link || null,

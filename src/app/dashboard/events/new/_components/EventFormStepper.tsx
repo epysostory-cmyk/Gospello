@@ -11,7 +11,7 @@ import Step4Media from './steps/Step4Media'
 import Step5Entry from './steps/Step5Entry'
 import Step6Review from './steps/Step6Review'
 import { createClient } from '@/lib/supabase/client'
-import type { Event } from '@/types/database'
+import type { Event, DaySchedule } from '@/types/database'
 import { getVisibleCategories, type CategoryRow } from '@/app/actions/categories'
 
 const TOTAL_STEPS = 6
@@ -24,10 +24,12 @@ interface FormState {
   title: string
   description: string
   category: string
+  event_type: 'single' | 'multi'
   start_date: string
   start_time: string
   end_date: string
   end_time: string
+  daily_schedule: DaySchedule[] | null
   is_online: boolean
   online_platform: string
   online_link: string
@@ -55,10 +57,12 @@ const INITIAL_FORM_STATE: FormState = {
   title: '',
   description: '',
   category: 'worship',
+  event_type: 'single',
   start_date: '',
   start_time: '',
   end_date: '',
   end_time: '',
+  daily_schedule: null,
   is_online: false,
   online_platform: '',
   online_link: '',
@@ -104,14 +108,17 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
   useEffect(() => {
     if (isEditMode && initialEvent) {
       // Load from database (edit mode)
+      const hasMultiDaySchedule = !!(initialEvent as any).daily_schedule?.length
       setFormData({
         title: initialEvent.title || '',
         description: initialEvent.description || '',
         category: initialEvent.category || 'worship',
+        event_type: hasMultiDaySchedule ? 'multi' : 'single',
         start_date: initialEvent.start_date?.split('T')[0] || '',
-        start_time: initialEvent.start_date?.split('T')[1]?.substring(0, 5) || '',
+        start_time: hasMultiDaySchedule ? '' : (initialEvent.start_date?.split('T')[1]?.substring(0, 5) || ''),
         end_date: initialEvent.end_date?.split('T')[0] || '',
-        end_time: initialEvent.end_date?.split('T')[1]?.substring(0, 5) || '',
+        end_time: hasMultiDaySchedule ? '' : (initialEvent.end_date?.split('T')[1]?.substring(0, 5) || ''),
+        daily_schedule: (initialEvent as any).daily_schedule || null,
         is_online: initialEvent.is_online || false,
         online_platform: initialEvent.online_platform || '',
         online_link: initialEvent.online_link || '',
@@ -204,8 +211,22 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         if (!formData.category) newErrors.category = 'Category is required'
         break
       case 2:
-        if (!formData.start_date) newErrors.start_date = 'Start date is required'
-        if (!formData.start_time) newErrors.start_time = 'Start time is required'
+        if (formData.event_type === 'multi') {
+          if (!formData.start_date) newErrors.start_date = 'Start date is required'
+          if (!formData.end_date)   newErrors.end_date   = 'End date is required'
+          else if (formData.end_date <= formData.start_date)
+            newErrors.end_date = 'End date must be after start date'
+          const sched = formData.daily_schedule || []
+          if (sched.length > 14)
+            newErrors.end_date = 'Event duration cannot exceed 14 days'
+          else if (sched.some((d: DaySchedule) => !d.start_time))
+            newErrors.daily_schedule = 'Every day must have a start time set'
+          else if (sched.length === 0)
+            newErrors.start_date = 'Please set a valid date range'
+        } else {
+          if (!formData.start_date) newErrors.start_date = 'Start date is required'
+          if (!formData.start_time) newErrors.start_time = 'Start time is required'
+        }
         break
       case 3:
         if (formData.is_online) {
@@ -251,15 +272,33 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
     setIsSubmitting(true)
 
     try {
+      // Compute start/end datetimes and daily_schedule
+      let startDatetime: string
+      let endDatetime: string | null
+      let daily_schedule: DaySchedule[] | null = null
+
+      if (formData.event_type === 'multi' && formData.daily_schedule?.length) {
+        const sched: DaySchedule[] = formData.daily_schedule
+        const first = sched[0]
+        const last  = sched[sched.length - 1]
+        startDatetime = `${first.date}T${first.start_time}:00`
+        endDatetime   = `${last.date}T${last.end_time || '23:59'}:00`
+        daily_schedule = sched
+      } else {
+        startDatetime = `${formData.start_date}T${formData.start_time}:00`
+        endDatetime   = formData.end_time
+          ? `${formData.start_date}T${formData.end_time}:00`
+          : null
+      }
+
       // Prepare event data
       const eventData = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
-        start_date: `${formData.start_date}T${formData.start_time}:00`,
-        end_date: formData.end_date
-          ? `${formData.end_date}T${formData.end_time || '00:00'}:00`
-          : null,
+        start_date: startDatetime,
+        end_date: endDatetime,
+        daily_schedule,
         is_online: formData.is_online,
         online_platform: formData.is_online ? formData.online_platform : null,
         online_link: formData.is_online ? formData.online_link : null,

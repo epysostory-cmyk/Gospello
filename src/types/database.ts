@@ -1,5 +1,11 @@
 export type RegistrationType = 'free_no_registration' | 'free_registration' | 'paid'
 
+export interface DaySchedule {
+  date: string        // "2026-05-04"
+  start_time: string  // "09:00"
+  end_time: string | null
+}
+
 export type AccountType = 'church' | 'organizer'
 export type AdminRole = 'super_admin' | 'admin' | 'moderator'
 export type UserRole = 'super_admin' | 'admin' | 'moderator' | 'user'
@@ -161,6 +167,7 @@ export interface Event {
   // Phase 2 additions
   created_by_admin: boolean
   source_url: string | null
+  daily_schedule: DaySchedule[] | null
   // admin fields
   rejection_reason: string | null
   approved_at: string | null

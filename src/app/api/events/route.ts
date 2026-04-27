@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
       parking_available: body.parking_available || false,
       child_friendly: body.child_friendly || false,
       notes: body.notes || null,
+      daily_schedule: body.daily_schedule || null,
       is_featured: false,
       featured_until: null,
       views_count: 0,

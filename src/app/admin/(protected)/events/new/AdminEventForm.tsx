@@ -1,12 +1,50 @@
 'use client'
 
-import { useState, useEffect, useRef, useTransition } from 'react'
+import { useState, useEffect, useRef, useTransition, useMemo } from 'react'
+import type { DaySchedule } from '@/types/database'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Search, ArrowLeft, ChevronDown, Upload, Loader2 } from 'lucide-react'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import { getVisibleCategories, type CategoryRow } from '@/app/actions/categories'
 import { createAdminEvent } from './actions'
+
+/* ── Schedule helpers ─────────────────────────────────── */
+function fmt12(t: string): string {
+  if (!t) return ''
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
+function fmtDayFull(dateStr: string): string {
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-NG', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    timeZone: 'Africa/Lagos',
+  })
+}
+
+function fmtDayShort(dateStr: string): string {
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-NG', {
+    weekday: 'short', day: 'numeric', month: 'short',
+    timeZone: 'Africa/Lagos',
+  })
+}
+
+function getDateRange(start: string, end: string): string[] {
+  if (!start || !end) return []
+  const dates: string[] = []
+  const cur = new Date(start + 'T12:00:00')
+  const last = new Date(end + 'T12:00:00')
+  if (last < cur) return []
+  let count = 0
+  while (cur <= last && count < 31) {
+    dates.push(cur.toISOString().split('T')[0])
+    cur.setDate(cur.getDate() + 1)
+    count++
+  }
+  return dates
+}
 
 type ProfileType = 'church' | 'seeded_org'
 interface Profile { id: string; name: string; city: string; state: string; logo_url: string|null; profileType: ProfileType }
@@ -50,9 +88,30 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
     source_url: '',
   })
 
+  const [eventType, setEventType] = useState<'single' | 'multi'>('single')
+  const [scheduleMap, setScheduleMap] = useState<Record<string, { start_time: string; end_time: string }>>({})
+
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const bannerRef = useRef<HTMLInputElement>(null)
+
+  /* Sync scheduleMap when date range changes in multi mode */
+  useEffect(() => {
+    if (eventType !== 'multi') return
+    const dates = getDateRange(form.start_date, form.end_date)
+    setScheduleMap(prev => {
+      const next: Record<string, { start_time: string; end_time: string }> = {}
+      for (const d of dates) next[d] = prev[d] ?? { start_time: '', end_time: '' }
+      return next
+    })
+  }, [form.start_date, form.end_date, eventType])
+
+  const dateRange = useMemo(
+    () => eventType === 'multi' ? getDateRange(form.start_date, form.end_date) : [],
+    [form.start_date, form.end_date, eventType]
+  )
+  const tooLong = dateRange.length > 14
+  const completedDays = dateRange.filter(d => scheduleMap[d]?.start_time).length
 
   useEffect(() => {
     getVisibleCategories().then(cats => {
@@ -87,13 +146,43 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!selectedProfile)      { setError('Please select a profile'); return }
-    if (!form.title.trim())    { setError('Event title is required'); return }
-    if (!form.start_date)      { setError('Start date is required'); return }
-    if (!form.start_time)      { setError('Start time is required'); return }
+    if (!selectedProfile)   { setError('Please select a profile'); return }
+    if (!form.title.trim()) { setError('Event title is required'); return }
+
+    let startDatetime: string
+    let endDatetime: string | null
+    let daily_schedule: DaySchedule[] | null = null
+
+    if (eventType === 'multi') {
+      if (!form.start_date) { setError('Start date is required'); return }
+      if (!form.end_date)   { setError('End date is required'); return }
+      if (tooLong)          { setError('Event duration cannot exceed 14 days'); return }
+      if (dateRange.length === 0) { setError('End date must be after start date'); return }
+      const missing = dateRange.find(d => !scheduleMap[d]?.start_time)
+      if (missing) { setError(`Start time is required for ${fmtDayShort(missing)}`); return }
+
+      daily_schedule = dateRange.map(d => ({
+        date: d,
+        start_time: scheduleMap[d].start_time,
+        end_time: scheduleMap[d].end_time || null,
+      }))
+      startDatetime = `${dateRange[0]}T${scheduleMap[dateRange[0]].start_time}:00`
+      const lastD = dateRange[dateRange.length - 1]
+      endDatetime = `${lastD}T${scheduleMap[lastD].end_time || '23:59'}:00`
+    } else {
+      if (!form.start_date) { setError('Start date is required'); return }
+      if (!form.start_time) { setError('Start time is required'); return }
+      startDatetime = `${form.start_date}T${form.start_time}:00`
+      endDatetime = form.end_time ? `${form.start_date}T${form.end_time}:00` : null
+    }
 
     startTransition(async () => {
-      const result = await createAdminEvent({ adminId, selectedProfile, form })
+      const result = await createAdminEvent({
+        adminId, selectedProfile,
+        form: { ...form, daily_schedule },
+        startDatetime,
+        endDatetime,
+      })
       if (result.error) { setError(result.error); return }
       router.push('/admin/events')
     })
@@ -226,26 +315,183 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
         </div>
 
         {/* Date & time */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-5">
           <p className="text-sm font-semibold text-gray-900">Date &amp; Time</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>Start Date <span className="text-red-500">*</span></label>
-              <input type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} className={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls}>Start Time <span className="text-red-500">*</span></label>
-              <input type="time" value={form.start_time} onChange={e => set('start_time', e.target.value)} className={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls}>End Date</label>
-              <input type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} className={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls}>End Time</label>
-              <input type="time" value={form.end_time} onChange={e => set('end_time', e.target.value)} className={inputCls} />
+
+          {/* Single / Multi toggle */}
+          <div>
+            <label className={labelCls}>Event Duration</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                ['single', '📅', 'Single Day'],
+                ['multi',  '📆', 'Multiple Days'],
+              ] as const).map(([type, icon, label]) => {
+                const active = eventType === type
+                return (
+                  <button key={type} type="button"
+                    onClick={() => {
+                      setEventType(type)
+                      if (type === 'single') { set('end_date', ''); setScheduleMap({}) }
+                      else { set('start_time', ''); set('end_time', '') }
+                    }}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+                      active ? 'border-[#7C3AED] bg-violet-50 text-[#7C3AED]' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    <span>{icon}</span> {label}
+                    {active && (
+                      <span className="ml-auto w-4 h-4 rounded-full bg-[#7C3AED] flex items-center justify-center">
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 10">
+                          <path d="M2 5l2.5 2.5 3.5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
+
+          {/* ── Single day ── */}
+          {eventType === 'single' && (
+            <div className="space-y-4">
+              <div>
+                <label className={labelCls}>Date <span className="text-red-500">*</span></label>
+                <input type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} className={inputCls} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Start Time <span className="text-red-500">*</span></label>
+                  <input type="time" value={form.start_time} onChange={e => set('start_time', e.target.value)} className={inputCls} />
+                  {form.start_time && <p className="text-xs text-[#7C3AED] font-semibold mt-1">{fmt12(form.start_time)}</p>}
+                </div>
+                <div>
+                  <label className={labelCls}>End Time <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input type="time" value={form.end_time} onChange={e => set('end_time', e.target.value)} className={inputCls} />
+                  {form.end_time && <p className="text-xs text-gray-500 mt-1">{fmt12(form.end_time)}</p>}
+                </div>
+              </div>
+              {form.start_date && form.start_time && (
+                <div className="flex items-center gap-2 bg-violet-50 border border-violet-100 rounded-xl px-4 py-2.5">
+                  <span className="text-violet-500">📅</span>
+                  <p className="text-sm font-medium text-violet-800">
+                    {fmtDayShort(form.start_date)} · {fmt12(form.start_time)}{form.end_time ? ` – ${fmt12(form.end_time)}` : ''}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Multi-day ── */}
+          {eventType === 'multi' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Start Date <span className="text-red-500">*</span></label>
+                  <input type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>End Date <span className="text-red-500">*</span></label>
+                  <input type="date" value={form.end_date} min={form.start_date} onChange={e => set('end_date', e.target.value)} className={inputCls} />
+                </div>
+              </div>
+
+              {dateRange.length > 0 && !tooLong && (
+                <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-full px-3 py-1 text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {dateRange.length} day{dateRange.length > 1 ? 's' : ''}
+                </span>
+              )}
+
+              {tooLong && (
+                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+                  <span>⚠️</span>
+                  <span>Event duration cannot exceed 14 days. Please shorten the date range.</span>
+                </div>
+              )}
+
+              {!tooLong && dateRange.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Daily Schedule</p>
+                    <span className="text-xs text-gray-400">{completedDays}/{dateRange.length} days set</span>
+                  </div>
+                  {dateRange.map((date, idx) => {
+                    const entry = scheduleMap[date] ?? { start_time: '', end_time: '' }
+                    const done = !!entry.start_time
+                    return (
+                      <div key={date} className={`rounded-xl border-2 overflow-hidden transition-colors ${done ? 'border-[#7C3AED]/30' : 'border-gray-100'}`}>
+                        <div className={`flex items-center gap-3 px-4 py-2.5 ${done ? 'bg-violet-50' : 'bg-gray-50'}`}>
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${done ? 'bg-[#7C3AED] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                            {done ? (
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 12 12">
+                                <path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            ) : idx + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-bold ${done ? 'text-[#7C3AED]' : 'text-gray-700'}`}>{fmtDayFull(date)}</p>
+                            {done && (
+                              <p className="text-xs text-violet-500 font-medium mt-0.5">
+                                {fmt12(entry.start_time)}{entry.end_time ? ` – ${fmt12(entry.end_time)}` : ''}
+                              </p>
+                            )}
+                          </div>
+                          {!done && (
+                            <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                              Needs time
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 p-4">
+                          <div>
+                            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                              Start Time <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="time"
+                              value={entry.start_time}
+                              onChange={e => setScheduleMap(prev => ({
+                                ...prev, [date]: { ...prev[date], start_time: e.target.value }
+                              }))}
+                              className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:border-[#7C3AED] bg-white ${
+                                !entry.start_time ? 'border-amber-300 bg-amber-50/40' : 'border-gray-200'
+                              }`}
+                            />
+                            {entry.start_time && (
+                              <p className="text-xs font-semibold text-[#7C3AED] mt-1">{fmt12(entry.start_time)}</p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                              End Time <span className="text-gray-400 font-normal normal-case tracking-normal">(opt.)</span>
+                            </label>
+                            <input
+                              type="time"
+                              value={entry.end_time}
+                              onChange={e => setScheduleMap(prev => ({
+                                ...prev, [date]: { ...prev[date], end_time: e.target.value }
+                              }))}
+                              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#7C3AED] bg-white"
+                            />
+                            {entry.end_time && (
+                              <p className="text-xs text-gray-500 mt-1">{fmt12(entry.end_time)}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {!tooLong && dateRange.length === 0 && (
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
+                  <p className="text-sm text-gray-400">Select start and end dates to set up the daily schedule.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Location */}

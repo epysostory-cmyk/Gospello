@@ -60,6 +60,7 @@ export async function PUT(
       parking_available: body.parking_available,
       child_friendly: body.child_friendly,
       notes: body.notes || null,
+      daily_schedule: body.daily_schedule || null,
     }
 
     const { data, error } = await adminClient

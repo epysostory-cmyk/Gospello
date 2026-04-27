@@ -11,6 +11,23 @@ import {
   Calendar, MapPin, Clock, Building2, Globe, ChevronRight, ChevronLeft,
   Car, Baby, StickyNote, Mic, Ticket,
 } from 'lucide-react'
+import type { DaySchedule } from '@/types/database'
+
+/* "HH:MM" → "9:00 AM" */
+function fmt12(t: string): string {
+  if (!t) return ''
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
+/* "2026-05-04" → "Mon, 4 May" */
+function fmtScheduleDay(dateStr: string): string {
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-NG', {
+    weekday: 'short', day: 'numeric', month: 'short',
+    timeZone: 'Africa/Lagos',
+  })
+}
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import RegistrationButton from '@/components/ui/RegistrationButton'
@@ -315,12 +332,18 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 mt-2 flex-wrap">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                {formatDate(e.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                {e.daily_schedule?.length
+                  ? `${fmtScheduleDay(e.daily_schedule[0].date)} – ${fmtScheduleDay(e.daily_schedule[e.daily_schedule.length - 1].date)}`
+                  : formatDate(e.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+                }
               </span>
               <span className="text-gray-300 font-normal">·</span>
               <span className="flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                {formatTime(e.start_date)}
+                {e.daily_schedule?.length
+                  ? fmt12(e.daily_schedule[0].start_time)
+                  : formatTime(e.start_date)
+                }
               </span>
               {!e.is_online && e.city && (
                 <>
@@ -358,6 +381,31 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
 
             <hr className="border-gray-100 my-5" />
+
+            {/* Mobile-only: Multi-day schedule card */}
+            {e.daily_schedule && e.daily_schedule.length > 0 && (
+              <div className="lg:hidden bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-5">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" /> Schedule · {e.daily_schedule.length} days
+                </p>
+                <div className="space-y-2">
+                  {e.daily_schedule.map((day: DaySchedule, idx: number) => (
+                    <div key={day.date} className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{fmtScheduleDay(day.date)}</p>
+                        <p className="text-xs text-gray-500">
+                          {fmt12(day.start_time)}
+                          {day.end_time ? ` – ${fmt12(day.end_time)}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Mobile-only: Location detail card (desktop shows in sidebar) */}
             <div className="lg:hidden bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-5">
@@ -640,16 +688,43 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </div>
 
               {/* Date & time */}
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-3 text-sm font-bold text-gray-900">
-                  <Calendar className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                  {formatDate(e.start_date, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+              {e.daily_schedule?.length ? (
+                /* ── Multi-day: per-day schedule ── */
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+                      Schedule · {e.daily_schedule.length} days
+                    </p>
+                  </div>
+                  {e.daily_schedule.map((day: DaySchedule, idx: number) => (
+                    <div key={day.date} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
+                      <div className="w-5 h-5 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">{fmtScheduleDay(day.date)}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {fmt12(day.start_time)}
+                          {day.end_time ? <> &ndash; {fmt12(day.end_time)}</> : ''}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center gap-3 text-sm font-bold text-gray-900">
-                  <Clock className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                  {formatTime(e.start_date)}{e.end_date ? ` – ${formatTime(e.end_date)}` : ''}
+              ) : (
+                /* ── Single day ── */
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-3 text-sm font-bold text-gray-900">
+                    <Calendar className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                    {formatDate(e.start_date, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-bold text-gray-900">
+                    <Clock className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                    {formatTime(e.start_date)}{e.end_date ? ` – ${formatTime(e.end_date)}` : ''}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Location */}
               {e.is_online ? (
