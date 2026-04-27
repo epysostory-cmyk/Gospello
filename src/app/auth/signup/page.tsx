@@ -416,7 +416,7 @@ function SignUpForm() {
         <div
           className="overflow-hidden transition-all duration-200 ease-in-out"
           style={{
-            maxHeight: accountType === 'organizer' ? '90px' : '0',
+            maxHeight: accountType === 'organizer' ? '110px' : '0',
             opacity:   accountType === 'organizer' ? 1 : 0,
           }}
         >
@@ -432,7 +432,7 @@ function SignUpForm() {
         <div
           className="overflow-hidden transition-all duration-200 ease-in-out"
           style={{
-            maxHeight: accountType === 'church' ? '90px' : '0',
+            maxHeight: accountType === 'church' ? '110px' : '0',
             opacity:   accountType === 'church' ? 1 : 0,
           }}
         >
