@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { NIGERIAN_STATES } from '@/lib/utils'
-import { CITIES_BY_STATE } from '@/lib/nigerian-cities'
 import { Loader2, Phone, Globe, Link2, ChevronRight, ChevronLeft } from 'lucide-react'
 import BackButton from '@/components/ui/BackButton'
 import OrganizerTypeChips from '@/components/ui/OrganizerTypeChips'
@@ -180,8 +179,6 @@ export default function OrganizerSetupPage() {
     router.push('/dashboard')
   }
 
-  const cities = CITIES_BY_STATE[form.state] ?? []
-
   if (checking) return (
     <div className="flex items-center justify-center h-48">
       <Loader2 className="w-6 h-6 animate-spin text-[#7C3AED]" />
@@ -296,14 +293,13 @@ export default function OrganizerSetupPage() {
                   <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
                     City <span className="text-red-400">*</span>
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={form.city}
                     onChange={e => update('city', e.target.value)}
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] bg-white ${fieldErrors.city ? 'border-red-400' : 'border-gray-200'}`}
-                  >
-                    <option value="">Select city</option>
-                    {cities.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                    placeholder="e.g. Lekki"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] ${fieldErrors.city ? 'border-red-400' : 'border-gray-200'}`}
+                  />
                   {fieldErrors.city && <p className="text-xs text-red-500 mt-1">{fieldErrors.city}</p>}
                 </div>
 
