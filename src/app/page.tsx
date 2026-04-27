@@ -487,15 +487,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── DISCOVER CHURCHES ────────────────────────────────────── */}
-      <DiscoverChurches churches={discoverChurches} />
+      {/* ── EVENTS ───────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 pb-8">
 
-      {/* ── DISCOVER ORGANIZERS ──────────────────────────────────── */}
-      <DiscoverOrganizers organizers={discoverOrganizers} />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-16">
-
-        {/* ── FEATURED EVENTS ────────────────────────────────────── */}
+        {/* Featured Events */}
         {featuredEvents.length > 0 && (
           <section>
             <SectionHeader
@@ -515,7 +510,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ── UPCOMING EVENTS (location-aware) ──────────────────── */}
+        {/* Upcoming Events (location-aware) */}
         {upcomingEvents.length > 0 && (
           <LocationAwareEvents
             allEvents={upcomingEvents}
@@ -540,7 +535,18 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ── FEATURED CHURCHES ──────────────────────────────────── */}
+      </div>
+
+      {/* ── DISCOVER CHURCHES ────────────────────────────────────── */}
+      <DiscoverChurches churches={discoverChurches} />
+
+      {/* ── DISCOVER ORGANIZERS ──────────────────────────────────── */}
+      <DiscoverOrganizers organizers={discoverOrganizers} />
+
+      {/* ── BOTTOM SECTIONS ──────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-16">
+
+        {/* Featured Churches */}
         {featuredChurches.length > 0 && (
           <section>
             <SectionHeader
@@ -556,7 +562,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ── CTA BANNER ─────────────────────────────────────────── */}
+        {/* CTA Banner */}
         {(churchCta === null || churchCta.visible !== false) && (
           <section className="relative bg-slate-950 rounded-3xl p-10 md:p-16 text-white overflow-hidden text-center">
             <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">

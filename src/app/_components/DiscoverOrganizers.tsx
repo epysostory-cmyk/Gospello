@@ -42,7 +42,7 @@ export default function DiscoverOrganizers({ organizers }: Props) {
     <section ref={sectionRef} className="py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Meet the Organizers</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Meet the Organizers</h2>
           <p className="text-gray-500 mt-1 text-sm sm:text-base">Ministries and organizers bringing gospel events to life</p>
         </div>
         <Link href="/organizers" className="flex-shrink-0 flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-1">
