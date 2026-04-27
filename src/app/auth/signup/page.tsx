@@ -370,7 +370,7 @@ function SignUpForm() {
 
       {/* Account type label */}
       <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
-        I want to…
+        Account Type
       </p>
 
       {/* Account type cards */}
