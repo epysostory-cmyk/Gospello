@@ -447,6 +447,22 @@ function SignUpForm() {
           <p className="text-[11px] text-gray-400 mt-1.5 px-1">Enter the full official name of your church</p>
         </div>
 
+        {/* Email */}
+        <div>
+          <Field
+            id="email" label="Email Address" type="email" value={email}
+            onChange={v => { setEmail(v); setEmailError('') }}
+            placeholder="Enter your email address"
+            required autoComplete="email" shake={shake && !!emailError}
+          />
+          {emailError === 'exists' && (
+            <p className="mt-1.5 text-[13px] text-red-600">
+              An account with this email already exists.{' '}
+              <Link href="/auth/login" className="font-semibold underline text-red-700">Sign in instead?</Link>
+            </p>
+          )}
+        </div>
+
         {/* Ministry Types — organizer only */}
         <div
           className="overflow-hidden transition-all duration-300 ease-in-out"
@@ -521,22 +537,6 @@ function SignUpForm() {
           onChange={setCity} placeholder="e.g. Lekki"
           shake={shake}
         />
-
-        {/* Email */}
-        <div>
-          <Field
-            id="email" label="Email Address" type="email" value={email}
-            onChange={v => { setEmail(v); setEmailError('') }}
-            placeholder="Enter your email address"
-            required autoComplete="email" shake={shake && !!emailError}
-          />
-          {emailError === 'exists' && (
-            <p className="mt-1.5 text-[13px] text-red-600">
-              An account with this email already exists.{' '}
-              <Link href="/auth/login" className="font-semibold underline text-red-700">Sign in instead?</Link>
-            </p>
-          )}
-        </div>
 
         {/* Password */}
         <div className={shake ? 'animate-shake' : ''}>

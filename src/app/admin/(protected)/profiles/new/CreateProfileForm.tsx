@@ -590,7 +590,7 @@ export default function CreateProfileForm({ adminId }: Props) {
                   </div>
 
                   {/* Step content */}
-                  <OrgStepContent />
+                  {OrgStepContent()}
 
                   {/* Navigation */}
                   {step < ORG_STEPS.length - 1 && (
