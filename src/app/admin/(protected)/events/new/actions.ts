@@ -87,3 +87,54 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
     return { error: err instanceof Error ? err.message : 'An unexpected error occurred' }
   }
 }
+
+/* ── Update an existing event (admin, keeps current status) ─── */
+interface AdminEventUpdateInput {
+  eventId: string
+  startDatetime: string
+  endDatetime: string | null
+  form: AdminEventInput['form']
+}
+
+export async function updateAdminEvent(input: AdminEventUpdateInput): Promise<{ error?: string }> {
+  const { eventId, form, startDatetime, endDatetime } = input
+  const adminClient = createAdminClient()
+
+  try {
+    const { error } = await adminClient.from('events').update({
+      title:             form.title.trim(),
+      description:       form.description.trim() || 'No description provided.',
+      category:          form.category,
+      start_date:        startDatetime,
+      end_date:          endDatetime,
+      daily_schedule:    form.daily_schedule ?? null,
+      is_online:         form.is_online,
+      online_platform:   form.online_platform || null,
+      online_link:       form.online_link || null,
+      location_name:     form.is_online ? (form.online_platform || 'Online') : (form.location_name.trim() || 'TBD'),
+      address:           form.is_online ? null : (form.address.trim() || null),
+      city:              form.is_online ? 'Online' : (form.city.trim() || 'Lagos'),
+      state:             form.is_online ? 'Online' : form.state,
+      registration_type: form.registration_type,
+      is_free:           form.registration_type !== 'paid',
+      price:             form.registration_type === 'paid' && form.price ? parseFloat(form.price) : null,
+      currency:          form.currency || 'NGN',
+      payment_link:      form.payment_link || null,
+      rsvp_required:     form.registration_type === 'free_registration',
+      capacity:          form.capacity ? parseInt(form.capacity) : null,
+      tags:              form.tags,
+      banner_url:        form.banner_url || null,
+      visibility:        form.visibility,
+      speakers:          form.speakers || null,
+      parking_available: form.parking_available,
+      child_friendly:    form.child_friendly,
+      notes:             form.notes || null,
+      source_url:        form.source_url || null,
+    }).eq('id', eventId)
+
+    if (error) return { error: error.message }
+    return {}
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'An unexpected error occurred' }
+  }
+}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, XCircle, EyeOff, Eye, Trash2, ExternalLink, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, EyeOff, Eye, Trash2, ExternalLink, Loader2, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import type { Event } from '@/types/database'
 import { approveEvent, rejectEvent, hideEvent, unhideEvent, deleteEvent } from './actions'
@@ -84,6 +84,15 @@ export default function AdminEventActions({ event }: { event: Event }) {
       >
         <ExternalLink className="w-3 h-3" />
         Preview
+      </Link>
+
+      {/* Edit */}
+      <Link
+        href={`/admin/events/${event.id}/edit`}
+        className="flex items-center gap-1 text-xs font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 px-2.5 py-1.5 rounded-lg transition-colors"
+      >
+        <Pencil className="w-3 h-3" />
+        Edit
       </Link>
 
       {/* Approve */}
