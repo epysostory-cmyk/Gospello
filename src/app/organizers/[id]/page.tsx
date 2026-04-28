@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { data: p } = await supabase.from('profiles').select('display_name').eq('id', id).single()
   if (p) return { title: p.display_name }
   const adminClient = createAdminClient()
-  const { data: s } = await adminClient.from('seeded_organizers').select('name').eq('id', id).single()
+  const { data: s } = await adminClient.from('seeded_organizers').select('name').or(`id.eq.${id},slug.eq.${id}`).limit(1).single()
   if (s) return { title: s.name }
   return {}
 }
@@ -46,10 +46,16 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
     .eq('account_type', 'organizer')
     .single()
 
-  // Then try seeded organizer
+  // Then try seeded organizer — match by either id or slug (links may use either)
   const { data: seededData } = profileData
     ? { data: null }
-    : await adminClient.from('seeded_organizers').select('*').eq('id', id).eq('is_hidden', false).single()
+    : await adminClient
+        .from('seeded_organizers')
+        .select('*')
+        .eq('is_hidden', false)
+        .or(`id.eq.${id},slug.eq.${id}`)
+        .limit(1)
+        .single()
 
   if (!profileData && !seededData) notFound()
 
@@ -81,11 +87,14 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
   const isClaimed = isSeeded ? seeded!.is_claimed : true // auth organizers own their profile
   const hasPendingClaim = isSeeded ? !!seeded!.claim_requested_at : false
 
+  // Use the actual DB id (not the URL param which may be a slug) for event lookup
+  const eventsProfileId = isSeeded ? seeded!.id : id
+
   // Use adminClient to bypass RLS — profile pages are public and need to show all approved events
   const eventsQuery = adminClient
     .from('events')
     .select('*, churches(*)')
-    .eq(isSeeded ? 'seeded_organizer_id' : 'organizer_id', id)
+    .eq(isSeeded ? 'seeded_organizer_id' : 'organizer_id', eventsProfileId)
     .eq('status', 'approved')
     .is('church_id', null)
     .order('start_date', { ascending: false })
