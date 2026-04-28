@@ -6,11 +6,11 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
-import { NIGERIAN_STATES } from '@/lib/utils'
-import { getCategoryMap } from '@/lib/categories'
+import { NIGERIAN_STATES, formatDate, formatTime } from '@/lib/utils'
 import type { Event } from '@/types/database'
-import { Search, MapPin, X, SlidersHorizontal } from 'lucide-react'
+import { Search, MapPin, X } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
 
 export const revalidate = 60
@@ -345,15 +345,82 @@ export default async function EventsPage({
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                categoryInfo={catMap[event.category]}
-              />
-            ))}
-          </div>
+          <>
+            {/* Mobile: compact list */}
+            <div className="flex flex-col md:hidden" style={{ gap: 10 }}>
+              {events.map(event => {
+                const categoryInfo = catMap[event.category]
+                return (
+                  <Link
+                    key={event.id}
+                    href={`/events/${event.slug}`}
+                    className="flex gap-3 p-3 rounded-2xl bg-white active:bg-[#F9FAFB] active:scale-[0.99] transition-all duration-100"
+                    style={{ border: '0.5px solid #E5E7EB' }}
+                  >
+                    <div className="flex-shrink-0 rounded-xl overflow-hidden" style={{ width: 90, height: 90 }}>
+                      {event.banner_url ? (
+                        <Image
+                          src={event.banner_url}
+                          alt={event.title}
+                          width={90}
+                          height={90}
+                          className="object-cover object-center w-full h-full"
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full flex flex-col items-center justify-center gap-1"
+                          style={{ background: 'linear-gradient(135deg, #4F1787, #7C3AED)' }}
+                        >
+                          <span className="text-2xl leading-none">{categoryInfo?.icon ?? '🎵'}</span>
+                          <span className="text-white font-bold text-center leading-tight px-1" style={{ fontSize: 8, letterSpacing: '1px' }}>
+                            {categoryInfo?.name ?? event.category}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className="text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
+                          style={{ background: event.is_free ? '#059669' : '#2563EB', color: 'white' }}
+                        >
+                          {event.is_free ? 'Free' : event.price != null ? `₦${event.price.toLocaleString()}` : 'Paid'}
+                        </span>
+                        {categoryInfo && (
+                          <span className="text-[11px] text-[#6B7280] truncate">
+                            {categoryInfo.icon} {categoryInfo.name}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 font-medium text-[#111827] leading-snug line-clamp-2" style={{ fontSize: 14 }}>
+                        {event.title}
+                      </p>
+                      <p className="mt-1.5 text-[12px] text-[#6B7280]">
+                        {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}
+                      </p>
+                      <p className="mt-1 text-[12px] text-[#6B7280] truncate">
+                        {event.is_online
+                          ? 'Online'
+                          : [event.location_name, event.city].filter(Boolean).join(' · ') || event.state || ''
+                        }
+                      </p>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+
+            {/* Desktop: card grid */}
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {events.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  categoryInfo={catMap[event.category]}
+                />
+              ))}
+            </div>
+          </>
         )}
 
         {/* Pagination */}
