@@ -72,29 +72,27 @@ export default async function OrganizersPage({
   const seededOrganizers = (seededRes.data ?? []) as SeededOrganizer[]
 
   // Batch event counts
-  const allIds = [
-    ...authOrganizers.map(o => ({ id: o.id, field: 'organizer_id' as const })),
-    ...seededOrganizers.map(o => ({ id: o.id, field: 'seeded_organizer_id' as const })),
-  ]
-
   const eventCountMap: Record<string, number> = {}
 
   if (authOrganizers.length > 0) {
-    const { data: rows } = await supabase
+    const { data: rows } = await adminClient
       .from('events')
       .select('organizer_id')
       .eq('status', 'approved')
       .gte('start_date', now)
+      .is('church_id', null)
+      .is('seeded_organizer_id', null)
       .in('organizer_id', authOrganizers.map(o => o.id))
     for (const r of rows ?? []) eventCountMap[r.organizer_id] = (eventCountMap[r.organizer_id] ?? 0) + 1
   }
 
   if (seededOrganizers.length > 0) {
-    const { data: rows } = await supabase
+    const { data: rows } = await adminClient
       .from('events')
       .select('seeded_organizer_id')
       .eq('status', 'approved')
       .gte('start_date', now)
+      .is('church_id', null)
       .in('seeded_organizer_id', seededOrganizers.map(o => o.id))
     for (const r of rows ?? []) {
       if (r.seeded_organizer_id) eventCountMap[r.seeded_organizer_id] = (eventCountMap[r.seeded_organizer_id] ?? 0) + 1

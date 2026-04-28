@@ -113,7 +113,7 @@ export default function DiscoverOrganizers({ organizers }: Props) {
 
               {/* Button */}
               <Link
-                href={org.source === 'seeded' ? `/organizers/${org.slug}` : `/organizers/${org.id}`}
+                href={`/organizers/${org.id}`}
                 className="w-full h-8 flex items-center justify-center text-[12px] font-medium text-gray-700 bg-white transition-colors rounded-lg"
                 style={{ border: '1.5px solid #E5E7EB' }}
                 onMouseEnter={e => {
