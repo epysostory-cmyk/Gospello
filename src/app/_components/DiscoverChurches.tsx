@@ -51,15 +51,14 @@ export default function DiscoverChurches({ churches }: Props) {
 
       {/* Scroll container */}
       <div
-        className="flex gap-4 overflow-x-auto pl-4 sm:pl-6 lg:pl-8 pr-4 pb-2 snap-x snap-mandatory"
+        className="flex gap-3 overflow-x-auto pl-4 sm:pl-6 lg:pl-8 pr-4 pb-2 snap-x snap-mandatory"
         style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
         {churches.map((church, i) => (
           <div
             key={church.id}
-            className="flex-shrink-0 snap-start"
+            className="flex-shrink-0 snap-start w-[160px] md:w-[180px]"
             style={{
-              width: '160px',
               opacity: visible ? 1 : 0,
               transform: visible ? 'translateY(0)' : 'translateY(20px)',
               transition: `opacity 0.4s ease ${i * 50}ms, transform 0.4s ease ${i * 50}ms`,
@@ -68,15 +67,19 @@ export default function DiscoverChurches({ churches }: Props) {
             <div
               className="flex flex-col items-center text-center p-4"
               style={{
+                height: 200,
                 borderRadius: '20px',
                 background: 'white',
-                border: '1px solid #F3F4F6',
+                border: '0.5px solid #E5E7EB',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                overflow: 'hidden',
               }}
             >
               {/* Avatar */}
-              <div className="w-16 h-16 rounded-full overflow-hidden mb-3 flex-shrink-0 flex items-center justify-center"
-                style={{ background: church.logo_url ? undefined : 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)' }}>
+              <div
+                className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center mb-2"
+                style={{ background: church.logo_url ? undefined : 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)' }}
+              >
                 {church.logo_url ? (
                   <Image src={church.logo_url} alt={church.name} width={64} height={64} className="object-cover w-full h-full" />
                 ) : (
@@ -85,8 +88,8 @@ export default function DiscoverChurches({ churches }: Props) {
               </div>
 
               {/* Name + verified */}
-              <div className="flex items-center gap-1 justify-center mb-1">
-                <p className="text-[14px] font-bold text-[#111827] line-clamp-2 leading-tight">{church.name}</p>
+              <div className="flex items-center gap-1 justify-center mb-1 w-full">
+                <p className="text-[14px] font-medium text-[#111827] line-clamp-2 leading-tight">{church.name}</p>
                 {church.verified_badge && (
                   <span className="text-amber-500 text-xs flex-shrink-0" title="Verified">✓</span>
                 )}
@@ -94,23 +97,38 @@ export default function DiscoverChurches({ churches }: Props) {
 
               {/* Denomination */}
               {church.denomination && (
-                <span className="inline-block bg-purple-100 text-purple-700 text-[11px] font-medium px-2 py-0.5 rounded-full mb-1.5 truncate max-w-full">
+                <span className="inline-block bg-purple-100 text-purple-700 text-[11px] font-medium px-2 py-0.5 rounded-full mb-1 truncate max-w-full">
                   {church.denomination}
                 </span>
               )}
 
               {/* Location */}
-              <p className="text-[12px] text-gray-400 mb-3">
+              <p className="text-[12px] text-[#6B7280] text-center">
                 {[church.city, church.state].filter(Boolean).join(', ')}
               </p>
+
+              {/* Spacer */}
+              <div className="flex-1" />
 
               {/* Button */}
               <Link
                 href={`/churches/${church.slug}`}
-                className="w-full h-8 flex items-center justify-center text-[12px] font-semibold text-gray-700 bg-white hover:bg-purple-700 hover:text-white transition-colors rounded-xl"
+                className="w-full h-8 flex items-center justify-center text-[12px] font-medium text-gray-700 bg-white transition-colors rounded-lg"
                 style={{ border: '1.5px solid #E5E7EB' }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLAnchorElement
+                  el.style.background = '#7C3AED'
+                  el.style.color = 'white'
+                  el.style.borderColor = '#7C3AED'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLAnchorElement
+                  el.style.background = 'white'
+                  el.style.color = '#374151'
+                  el.style.borderColor = '#E5E7EB'
+                }}
               >
-                View Church
+                View Profile
               </Link>
             </div>
           </div>
@@ -119,7 +137,6 @@ export default function DiscoverChurches({ churches }: Props) {
         {/* Trailing padding */}
         <div className="flex-shrink-0 w-4" />
       </div>
-
     </section>
   )
 }
