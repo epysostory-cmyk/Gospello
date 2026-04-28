@@ -166,14 +166,14 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
         start_time: scheduleMap[d].start_time,
         end_time: scheduleMap[d].end_time || null,
       }))
-      startDatetime = `${dateRange[0]}T${scheduleMap[dateRange[0]].start_time}:00`
+      startDatetime = `${dateRange[0]}T${scheduleMap[dateRange[0]].start_time}:00+01:00`
       const lastD = dateRange[dateRange.length - 1]
-      endDatetime = `${lastD}T${scheduleMap[lastD].end_time || '23:59'}:00`
+      endDatetime = `${lastD}T${scheduleMap[lastD].end_time || '23:59'}:00+01:00`
     } else {
       if (!form.start_date) { setError('Start date is required'); return }
       if (!form.start_time) { setError('Start time is required'); return }
-      startDatetime = `${form.start_date}T${form.start_time}:00`
-      endDatetime = form.end_time ? `${form.start_date}T${form.end_time}:00` : null
+      startDatetime = `${form.start_date}T${form.start_time}:00+01:00`
+      endDatetime = form.end_time ? `${form.start_date}T${form.end_time}:00+01:00` : null
     }
 
     startTransition(async () => {

@@ -637,36 +637,40 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                       See all <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
-                  <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory -mx-4 px-4">
+                  <div className="flex flex-col gap-2.5">
                     {related.map((ev) => (
                       <Link
                         key={ev.id}
                         href={`/events/${ev.slug}`}
-                        className="w-64 flex-shrink-0 snap-start group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-all hover:-translate-y-0.5"
+                        className="flex gap-3 p-3 rounded-2xl bg-white active:bg-gray-50 active:scale-[0.99] transition-all duration-100"
+                        style={{ border: '0.5px solid #E5E7EB' }}
                       >
-                        <div className="relative w-full h-36 bg-gradient-to-br from-indigo-50 to-purple-50 overflow-hidden">
-                          {ev.banner_url && (
+                        <div className="flex-shrink-0 rounded-xl overflow-hidden" style={{ width: 80, height: 80 }}>
+                          {ev.banner_url ? (
                             <Image
                               src={ev.banner_url}
                               alt={ev.title}
-                              fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                              width={80}
+                              height={80}
+                              className="object-cover object-center w-full h-full"
                             />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #4F1787, #7C3AED)' }}>
+                              <span className="text-2xl">🎵</span>
+                            </div>
                           )}
-                          <div className="absolute top-2.5 right-2.5">
-                            {ev.is_free ? (
-                              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500 text-white">Free</span>
-                            ) : (
-                              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500 text-white">Paid</span>
-                            )}
-                          </div>
                         </div>
-                        <div className="p-4">
-                          <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 text-sm leading-snug">
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          <span
+                            className="text-[11px] font-medium px-2 py-0.5 rounded-full w-fit mb-1"
+                            style={{ background: ev.is_free ? '#059669' : '#2563EB', color: 'white' }}
+                          >
+                            {ev.is_free ? 'Free' : 'Paid'}
+                          </span>
+                          <p className="font-medium text-[#111827] leading-snug line-clamp-2" style={{ fontSize: 14 }}>
                             {ev.title}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
+                          <p className="mt-1 text-[12px] text-[#6B7280]">
                             {formatDate(ev.start_date, { month: 'short', day: 'numeric' })} · {ev.city}
                           </p>
                         </div>

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { MapPin, Clock, Globe, Phone, CheckCircle, ArrowLeft, Calendar, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react'
 import EventCard from '@/components/ui/EventCard'
 import type { Church, Event } from '@/types/database'
@@ -33,17 +34,21 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
   if (!church) notFound()
 
   const c = church as Church
+  const adminClient = createAdminClient()
+  const now = new Date().toISOString()
 
-  const { data: eventsData } = await supabase
+  // Use adminClient to bypass RLS — public page needs all approved events
+  const { data: eventsData } = await adminClient
     .from('events')
     .select('*, churches(*)')
     .eq('church_id', c.id)
     .eq('status', 'approved')
-    .gte('start_date', new Date().toISOString())
-    .order('start_date', { ascending: true })
-    .limit(6)
+    .order('start_date', { ascending: false })
+    .limit(100)
 
-  const events = (eventsData ?? []) as Event[]
+  const allEvents = (eventsData ?? []) as Event[]
+  const upcoming = allEvents.filter(e => e.start_date >= now).reverse()
+  const past     = allEvents.filter(e => e.start_date < now)
 
   const gradientKey = (c.name.charCodeAt(0) ?? 0) % 6
   const bannerGradient = BANNER_GRADIENTS[gradientKey]
@@ -150,11 +155,18 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
             )}
 
             {/* Upcoming events */}
-            <div>
-              <h2 className="text-xl font-black text-gray-900 mb-4">Upcoming Events</h2>
-              {events.length > 0 ? (
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">Upcoming Events</h2>
+                  {upcoming.length > 0 && (
+                    <p className="text-sm text-gray-400 mt-0.5">{upcoming.length} event{upcoming.length !== 1 ? 's' : ''} coming up</p>
+                  )}
+                </div>
+              </div>
+              {upcoming.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {events.map((event) => (
+                  {upcoming.map((event) => (
                     <EventCard key={event.id} event={event} />
                   ))}
                 </div>
@@ -165,7 +177,19 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                   <p className="text-gray-400 text-xs mt-1">Check back soon</p>
                 </div>
               )}
-            </div>
+            </section>
+
+            {/* Past events */}
+            {past.length > 0 && (
+              <section>
+                <h2 className="text-xl font-black text-gray-900 mb-4">Past Events</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {past.map((event) => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
 
           {/* Right: sidebar info */}
