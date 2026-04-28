@@ -51,12 +51,15 @@ async function getHomepageData() {
         .or(`featured_until.is.null,featured_until.gte.${now}`)
         .order('start_date', { ascending: true })
         .limit(4),
+      // Upcoming events: next 90 days, ordered by soonest first
       supabase
         .from('events')
         .select('*, churches(*)')
         .eq('status', 'approved')
-        .order('created_at', { ascending: false })
-        .limit(20),
+        .gte('start_date', now)
+        .lte('start_date', in90Days)
+        .order('start_date', { ascending: true })
+        .limit(100),
       supabase.from('churches').select('*').eq('is_featured', true).limit(6),
       supabase.from('events').select('id', { count: 'exact', head: true }),
       adminClient.from('churches').select('id', { count: 'exact', head: true }).eq('is_hidden', false),
@@ -65,12 +68,12 @@ async function getHomepageData() {
         adminClient.from('profiles').select('id', { count: 'exact', head: true }).eq('account_type', 'organizer').eq('is_hidden', false),
       ]),
       adminClient.from('events').select('city').eq('status', 'approved').not('city', 'is', null),
+      // Fetch all visible categories (no limit — used for homepage grid and filter dropdown)
       adminClient
         .from('categories')
         .select('id, name, slug, icon, color')
         .eq('is_visible', true)
-        .order('sort_order', { ascending: true })
-        .limit(6),
+        .order('sort_order', { ascending: true }),
       // Organizer + church IDs that have at least one approved event
       adminClient
         .from('events')
@@ -100,11 +103,7 @@ async function getHomepageData() {
     ])
 
     const featuredEvents = (featuredRes.data ?? []) as Event[]
-
-    // Sort: newest created events first
-    const upcomingEvents = ((upcomingRes.data ?? []) as Event[]).sort((a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )
+    const upcomingEvents = (upcomingRes.data ?? []) as Event[]
 
     // Batch fetch attendance counts for all events shown on homepage
     const allEventIds = [
@@ -133,15 +132,13 @@ async function getHomepageData() {
       rawCategories.map(c => [c.slug, { name: c.name, icon: c.icon ?? null, color: c.color ?? '#6B7280' }])
     )
 
-    // IDs of organizers with at least one approved event
+    // IDs of organizers/churches with at least one approved event
     const approvedOrganizerIds = new Set(
       (eventOrganizerIdsRes.data ?? []).map((r: { organizer_id: string | null }) => r.organizer_id).filter(Boolean)
     )
-    // IDs of churches with at least one approved event
     const approvedChurchIds = new Set(
       (eventOrganizerIdsRes.data ?? []).map((r: { church_id: string | null }) => r.church_id).filter(Boolean)
     )
-    // IDs of seeded organizers with at least one approved event
     const approvedSeededOrgIds = new Set(
       (eventOrganizerIdsRes.data ?? []).map((r: { seeded_organizer_id?: string | null }) => r.seeded_organizer_id).filter(Boolean)
     )
@@ -191,7 +188,6 @@ async function getHomepageData() {
       verified_badge: s.verified_badge ?? false,
       source: 'seeded' as const,
     }))
-    // Merge: profile orgs filtered by approvedOrganizerIds, seeded orgs by approvedSeededOrgIds
     const allOrgs: OrganizerCard[] = [
       ...profileOrgs.filter(o => approvedOrganizerIds.has(o.id)),
       ...seededOrgs.filter(o => approvedSeededOrgIds.has(o.id)),
@@ -210,6 +206,7 @@ async function getHomepageData() {
       featuredEvents,
       upcomingEvents,
       featuredChurches: (churchesRes.data ?? []) as Church[],
+      // Slice to 6 for the homepage category grid; pass full list to filter dropdown
       categories: rawCategories,
       catMap,
       stats: {
@@ -255,6 +252,9 @@ export default async function HomePage() {
     discoverOrganizers,
     churchCta,
   } = await getHomepageData()
+
+  // Slice to 6 for the homepage category grid
+  const displayCategories = categories.slice(0, 6)
 
   const heroBadge        = heroSettings?.hero_badge             ?? "Nigeria's Gospel Event Platform"
   const heroLine1        = heroSettings?.hero_headline_1        ?? 'Discover Every'
@@ -391,44 +391,26 @@ export default async function HomePage() {
 
       {/* ── CATEGORIES ───────────────────────────────────────────── */}
       <section className="py-16">
-        {/* Header — no "View all" link; button below handles navigation */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Browse by Category</h2>
           <p className="text-gray-500 mt-1 text-sm sm:text-base">Find events that match your spiritual interests</p>
         </div>
 
-        {/* ── MOBILE: swipe carousel (2.5 visible) ── */}
+        {/* Mobile: swipe carousel (2.5 visible) */}
         <div
-          className="
-            md:hidden
-            flex gap-3 overflow-x-auto
-            pl-4 pr-4 pb-2
-            snap-x snap-mandatory
-            [-webkit-overflow-scrolling:touch]
-          "
+          className="md:hidden flex gap-3 overflow-x-auto pl-4 pr-4 pb-2 snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
           style={{ scrollbarWidth: 'none' }}
         >
-          {categories.map((cat, i) => (
+          {displayCategories.map((cat, i) => (
             <Link
               key={cat.slug}
               href={`/events?category=${cat.slug}`}
               className="flex-shrink-0 snap-start"
-              style={{
-                width: 'calc(40% - 6px)',
-                animationDelay: `${i * 60}ms`,
-              }}
+              style={{ width: 'calc(40% - 6px)', animationDelay: `${i * 60}ms` }}
             >
               <div
-                className="
-                  h-[100px] rounded-2xl bg-white border border-gray-100 p-4
-                  flex flex-col items-center justify-center gap-2
-                  active:scale-[0.97] transition-transform duration-150
-                  animate-fadeInUp
-                "
-                style={{
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-                  borderLeft: `3px solid ${cat.color ?? '#6B7280'}`,
-                }}
+                className="h-[100px] rounded-2xl bg-white border border-gray-100 p-4 flex flex-col items-center justify-center gap-2 active:scale-[0.97] transition-transform duration-150 animate-fadeInUp"
+                style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)', borderLeft: `3px solid ${cat.color ?? '#6B7280'}` }}
               >
                 <span className="text-3xl leading-none">{cat.icon}</span>
                 <span className="text-[13px] font-semibold text-gray-900 text-center leading-tight line-clamp-1 w-full">
@@ -439,9 +421,9 @@ export default async function HomePage() {
           ))}
         </div>
 
-        {/* ── DESKTOP: 6-column static grid ── */}
+        {/* Desktop: 6-column static grid */}
         <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {categories.map((cat, i) => (
+          {displayCategories.map((cat, i) => (
             <Link
               key={cat.slug}
               href={`/events?category=${cat.slug}`}
@@ -449,15 +431,8 @@ export default async function HomePage() {
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div
-                className="
-                  h-[120px] rounded-2xl bg-white border border-gray-100 p-5
-                  flex flex-col items-center justify-center gap-2.5
-                  hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200
-                "
-                style={{
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                  borderLeft: `3px solid ${cat.color ?? '#6B7280'}`,
-                }}
+                className="h-[120px] rounded-2xl bg-white border border-gray-100 p-5 flex flex-col items-center justify-center gap-2.5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `3px solid ${cat.color ?? '#6B7280'}` }}
               >
                 <span className="text-4xl leading-none">{cat.icon}</span>
                 <span className="text-sm font-semibold text-gray-900 text-center leading-tight line-clamp-2 w-full">
@@ -468,18 +443,11 @@ export default async function HomePage() {
           ))}
         </div>
 
-        {/* See More button — below carousel on all sizes */}
+        {/* See More button */}
         <div className="flex justify-center mt-6 px-4 md:px-0">
           <Link
             href="/categories"
-            className="
-              w-full md:w-auto
-              flex items-center justify-center gap-2
-              h-12 px-8 rounded-xl
-              bg-white border-[1.5px] border-gray-200
-              text-sm font-semibold text-gray-700
-              hover:bg-gray-50 hover:border-gray-300 transition-colors
-            "
+            className="w-full md:w-auto flex items-center justify-center gap-2 h-12 px-8 rounded-xl bg-white border-[1.5px] border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
             See all categories
             <ChevronRight className="w-4 h-4 text-gray-500" />
@@ -487,11 +455,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── EVENTS ───────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 pb-8">
-
-        {/* Featured Events */}
-        {featuredEvents.length > 0 && (
+      {/* ── FEATURED EVENTS ──────────────────────────────────────── */}
+      {featuredEvents.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           <section>
             <SectionHeader
               title="Featured Events"
@@ -508,19 +474,22 @@ export default async function HomePage() {
               ))}
             </div>
           </section>
-        )}
+        </div>
+      )}
 
-        {/* Upcoming Events (location-aware) */}
-        {upcomingEvents.length > 0 && (
-          <LocationAwareEvents
-            allEvents={upcomingEvents}
-            attendanceCountMap={attendanceCountMap}
-            catMap={catMap}
-          />
-        )}
+      {/* ── UPCOMING EVENTS (with sticky filter bar) ─────────────── */}
+      {upcomingEvents.length > 0 && (
+        <LocationAwareEvents
+          allEvents={upcomingEvents}
+          attendanceCountMap={attendanceCountMap}
+          catMap={catMap}
+          categories={categories}
+        />
+      )}
 
-        {/* Empty state */}
-        {featuredEvents.length === 0 && upcomingEvents.length === 0 && (
+      {/* Empty state */}
+      {featuredEvents.length === 0 && upcomingEvents.length === 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           <section className="text-center py-20">
             <div className="text-6xl mb-4">⛪</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Events coming soon</h2>
@@ -533,9 +502,8 @@ export default async function HomePage() {
               <ArrowRight className="w-4 h-4" />
             </Link>
           </section>
-        )}
-
-      </div>
+        </div>
+      )}
 
       {/* ── DISCOVER CHURCHES ────────────────────────────────────── */}
       <DiscoverChurches churches={discoverChurches} />
