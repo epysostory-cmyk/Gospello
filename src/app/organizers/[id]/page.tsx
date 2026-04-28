@@ -81,29 +81,24 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
   const isClaimed = isSeeded ? seeded!.is_claimed : true // auth organizers own their profile
   const hasPendingClaim = isSeeded ? !!seeded!.claim_requested_at : false
 
-  const [upcomingRes, pastRes] = await Promise.all([
-    supabase
-      .from('events')
-      .select('*, churches(*)')
-      .eq(isSeeded ? 'seeded_organizer_id' : 'organizer_id', id)
-      .eq('status', 'approved')
-      .is('church_id', null)
-      .gte('start_date', now)
-      .order('start_date', { ascending: true })
-      .limit(12),
-    supabase
-      .from('events')
-      .select('id, title, slug, start_date, city, category, banner_url, location_name, is_free')
-      .eq(isSeeded ? 'seeded_organizer_id' : 'organizer_id', id)
-      .eq('status', 'approved')
-      .is('church_id', null)
-      .lt('start_date', now)
-      .order('start_date', { ascending: false })
-      .limit(6),
-  ])
+  // Use adminClient to bypass RLS — profile pages are public and need to show all approved events
+  const eventsQuery = adminClient
+    .from('events')
+    .select('*, churches(*)')
+    .eq(isSeeded ? 'seeded_organizer_id' : 'organizer_id', id)
+    .eq('status', 'approved')
+    .is('church_id', null)
+    .order('start_date', { ascending: false })
+    .limit(100)
 
-  const upcoming = (upcomingRes.data ?? []) as Event[]
-  const past = (pastRes.data ?? []) as Event[]
+  // For auth organizers (incl. admin accounts): exclude events that belong to a seeded org or church
+  const { data: allEventsData } = isSeeded
+    ? await eventsQuery
+    : await eventsQuery.is('seeded_organizer_id', null)
+
+  const allEvents = (allEventsData ?? []) as Event[]
+  const upcoming = allEvents.filter(e => e.start_date >= now).reverse()
+  const past     = allEvents.filter(e => e.start_date < now)
 
   const gradientKey = (displayName?.charCodeAt(0) ?? 0) % 6
   const bannerGradient = BANNER_GRADIENTS[gradientKey]
