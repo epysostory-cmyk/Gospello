@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
 import { NIGERIAN_STATES, formatDate, formatTime } from '@/lib/utils'
 import type { Event } from '@/types/database'
+import { getEventLifecycle } from '@/types/database'
 import { Search, MapPin, X } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -89,8 +90,15 @@ async function getEvents(params: SearchParams) {
     query = query.gte('start_date', friday.toISOString()).lte('start_date', sunday.toISOString())
   }
   if (params.timeframe === 'week') {
-    const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-    query = query.lte('start_date', weekFromNow.toISOString())
+    // Sunday–Saturday of the current week
+    const now = new Date()
+    const sunday = new Date(now)
+    sunday.setDate(now.getDate() - now.getDay())
+    sunday.setHours(0, 0, 0, 0)
+    const saturday = new Date(sunday)
+    saturday.setDate(sunday.getDate() + 6)
+    saturday.setHours(23, 59, 59, 999)
+    query = query.gte('start_date', sunday.toISOString()).lte('start_date', saturday.toISOString())
   }
 
   const { data, count } = await query
@@ -350,25 +358,26 @@ export default async function EventsPage({
             <div className="flex flex-col md:hidden" style={{ gap: 10 }}>
               {events.map(event => {
                 const categoryInfo = catMap[event.category]
+                const hasEnded = getEventLifecycle(event.start_date, event.end_date) === 'ended'
                 return (
                   <Link
                     key={event.id}
                     href={`/events/${event.slug}`}
                     className="flex gap-3 p-3 rounded-2xl bg-white active:bg-[#F9FAFB] active:scale-[0.99] transition-all duration-100"
-                    style={{ border: '0.5px solid #E5E7EB' }}
+                    style={{ border: '0.5px solid #E5E7EB', opacity: hasEnded ? 0.6 : 1 }}
                   >
-                    <div className="flex-shrink-0 rounded-xl overflow-hidden" style={{ width: 90, height: 90 }}>
+                    <div className="flex-shrink-0 rounded-xl overflow-hidden relative" style={{ width: 90, height: 90 }}>
                       {event.banner_url ? (
                         <Image
                           src={event.banner_url}
                           alt={event.title}
                           width={90}
                           height={90}
-                          className="object-cover object-center w-full h-full"
+                          className={`object-cover object-center w-full h-full${hasEnded ? ' grayscale' : ''}`}
                         />
                       ) : (
                         <div
-                          className="w-full h-full flex flex-col items-center justify-center gap-1"
+                          className={`w-full h-full flex flex-col items-center justify-center gap-1${hasEnded ? ' grayscale' : ''}`}
                           style={{ background: 'linear-gradient(135deg, #4F1787, #7C3AED)' }}
                         >
                           <span className="text-2xl leading-none">{categoryInfo?.icon ?? '🎵'}</span>
@@ -377,15 +386,26 @@ export default async function EventsPage({
                           </span>
                         </div>
                       )}
+                      {hasEnded && (
+                        <div className="absolute inset-0 bg-gray-900/30 rounded-xl flex items-center justify-center">
+                          <span className="text-[10px] font-bold text-white bg-gray-800/80 px-2 py-0.5 rounded-full">Ended</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className="text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
-                          style={{ background: event.is_free ? '#059669' : '#2563EB', color: 'white' }}
-                        >
-                          {event.is_free ? 'Free' : event.price != null ? `₦${event.price.toLocaleString()}` : 'Paid'}
-                        </span>
+                        {hasEnded ? (
+                          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap bg-gray-200 text-gray-500">
+                            Ended
+                          </span>
+                        ) : (
+                          <span
+                            className="text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
+                            style={{ background: event.is_free ? '#059669' : '#2563EB', color: 'white' }}
+                          >
+                            {event.is_free ? 'Free' : event.price != null ? `₦${event.price.toLocaleString()}` : 'Paid'}
+                          </span>
+                        )}
                         {categoryInfo && (
                           <span className="text-[11px] text-[#6B7280] truncate">
                             {categoryInfo.icon} {categoryInfo.name}
