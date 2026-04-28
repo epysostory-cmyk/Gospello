@@ -131,7 +131,7 @@ function DropdownPanel({
 }: {
   anchorRect: DOMRect | null
   children: React.ReactNode
-  panelRef: React.RefObject<HTMLDivElement>
+  panelRef: React.RefObject<HTMLDivElement | null>
 }) {
   if (!anchorRect) return null
   const PANEL_W = 232
