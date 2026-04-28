@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate, cn } from '@/lib/utils'
 import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, MessageCircle, User } from 'lucide-react'
 import type { Profile, SeededOrganizer, Event } from '@/types/database'
+import { getEventLifecycle } from '@/types/database'
 import BackButton from '@/components/ui/BackButton'
 import EventCard from '@/components/ui/EventCard'
 
@@ -106,8 +107,8 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
     : await eventsQuery.is('seeded_organizer_id', null)
 
   const allEvents = (allEventsData ?? []) as Event[]
-  const upcoming = allEvents.filter(e => e.start_date >= now).reverse()
-  const past     = allEvents.filter(e => e.start_date < now)
+  const upcoming = allEvents.filter(e => getEventLifecycle(e.start_date, e.end_date) !== 'ended').reverse()
+  const past     = allEvents.filter(e => getEventLifecycle(e.start_date, e.end_date) === 'ended')
 
   const gradientKey = (displayName?.charCodeAt(0) ?? 0) % 6
   const bannerGradient = BANNER_GRADIENTS[gradientKey]
