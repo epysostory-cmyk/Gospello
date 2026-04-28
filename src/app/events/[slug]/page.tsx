@@ -869,6 +869,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         lifecycle={lifecycle}
         attendanceCount={safeAttendance}
         registrationType={e.registration_type}
+        isOrganizer={!!currentUser && currentUser.id === e.organizer_id}
       />
     </div>
   )

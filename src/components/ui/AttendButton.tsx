@@ -121,6 +121,10 @@ export default function AttendButton({
   // For legacy events (registration_type null) or any rsvp mode, guests always see the form.
   const guestCanOneTap = registrationType === 'free_no_registration'
 
+  const notifyAttended = (id: string) => {
+    window.dispatchEvent(new CustomEvent('gospello:attended', { detail: { eventId: id } }))
+  }
+
   const doInstantAttend = async () => {
     setBusy(true)
     setError('')
@@ -128,8 +132,10 @@ export default function AttendButton({
     if (res.success) {
       setAttended(true)
       setCount(c => c + 1)
+      notifyAttended(eventId)
     } else if (res.alreadyAttending) {
       setAttended(true)
+      notifyAttended(eventId)
     } else {
       setError(res.error ?? 'Something went wrong. Try again.')
     }
@@ -151,6 +157,7 @@ export default function AttendButton({
       setAttended(true)
       setCount(c => c + 1)
       if (typeof window !== 'undefined') localStorage.setItem(key, '1')
+      notifyAttended(eventId)
     } else {
       setError(res.error ?? 'Something went wrong. Try again.')
     }
@@ -235,6 +242,7 @@ export default function AttendButton({
       setShowForm(false)
       setRegistrationId(result.registrationId ?? null)
       setTicketNumber(result.ticketNumber ?? null)
+      notifyAttended(eventId)
       // Persist so the button stays in "registered" state after a page refresh
       if (typeof window !== 'undefined') {
         if (result.registrationId) localStorage.setItem(`gospello_regid_${eventId}`, result.registrationId)

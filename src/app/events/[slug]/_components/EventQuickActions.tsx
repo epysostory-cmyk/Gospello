@@ -14,6 +14,7 @@ interface Props {
   lifecycle: 'upcoming' | 'ongoing' | 'ended'
   attendanceCount?: number
   registrationType?: RegistrationType
+  isOrganizer?: boolean
 }
 
 export default function EventQuickActions({
@@ -23,6 +24,7 @@ export default function EventQuickActions({
   lifecycle,
   attendanceCount = 0,
   registrationType,
+  isOrganizer = false,
 }: Props) {
   const [attended, setAttended] = useState(false)
 
@@ -33,6 +35,15 @@ export default function EventQuickActions({
     if (localStorage.getItem(attendedKey) || localStorage.getItem(regIdKey)) {
       setAttended(true)
     }
+  }, [eventId])
+
+  // Sync with AttendButton when attendance is recorded in the same tab
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      if (e.detail?.eventId === eventId) setAttended(true)
+    }
+    window.addEventListener('gospello:attended', handler as EventListener)
+    return () => window.removeEventListener('gospello:attended', handler as EventListener)
   }, [eventId])
 
   const handleRsvpClick = () => {
@@ -67,7 +78,11 @@ export default function EventQuickActions({
     paid:    { label: 'GET TICKETS',      Icon: Ticket,     cls: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' },
   }[mode]
 
-  const rsvpButton = lifecycle === 'ended' ? (
+  const rsvpButton = isOrganizer ? (
+    <div className="flex-1 bg-gray-50 text-gray-400 font-semibold py-3 px-4 rounded-2xl text-center text-sm border border-gray-200">
+      You&apos;re organizing this event
+    </div>
+  ) : lifecycle === 'ended' ? (
     <div className="flex-1 bg-gray-100 text-gray-400 font-semibold py-3 px-4 rounded-2xl text-center text-sm">
       Event Ended
     </div>
