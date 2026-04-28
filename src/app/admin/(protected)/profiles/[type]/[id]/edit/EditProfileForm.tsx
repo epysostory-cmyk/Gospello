@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Loader2, Save, Eye, EyeOff } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowLeft, Loader2, Save, Eye, EyeOff, Upload, X } from 'lucide-react'
 import Link from 'next/link'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import { updateAdminChurch, updateAdminOrganizer } from './actions'
@@ -47,11 +48,25 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inputCls = 'w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent'
 
+async function uploadLogo(file: File): Promise<string> {
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('bucket', 'profile-logos')
+  fd.append('folder', 'profile-logos')
+  const res = await fetch('/api/upload', { method: 'POST', body: fd })
+  const json = await res.json()
+  if (!res.ok || !json.url) throw new Error(json.error ?? 'Upload failed')
+  return json.url as string
+}
+
 export default function EditProfileForm({ type, profile }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [logoUrl, setLogoUrl] = useState<string | null>(profile.logo_url)
+  const [logoUploading, setLogoUploading] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   const isChurch = type === 'church'
   const church = isChurch ? (profile as ChurchProfile) : null
@@ -71,7 +86,6 @@ export default function EditProfileForm({ type, profile }: Props) {
     pastor_name:   church!.pastor_name ?? '',
     denomination:  church!.denomination ?? '',
     service_times: church!.service_times ? church!.service_times.split('\n') : [''],
-    // organizer placeholders
     whatsapp: '', twitter: '', youtube: '', contact_person: '', ministry_type: '',
     is_hidden: church!.is_hidden,
   } : {
@@ -90,13 +104,28 @@ export default function EditProfileForm({ type, profile }: Props) {
     source_url:     org!.source_url ?? '',
     contact_person: org!.contact_person ?? '',
     ministry_type:  org!.ministry_type ?? '',
-    // church placeholders
     pastor_name: '', denomination: '', service_times: [''],
     is_hidden: org!.is_hidden,
   })
 
   const set = (key: string, val: string | boolean | string[]) =>
     setForm(prev => ({ ...prev, [key]: val }))
+
+  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoUploading(true)
+    setError('')
+    try {
+      const url = await uploadLogo(file)
+      setLogoUrl(url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Logo upload failed')
+    } finally {
+      setLogoUploading(false)
+      if (logoInputRef.current) logoInputRef.current.value = ''
+    }
+  }
 
   function handleSubmit() {
     setError('')
@@ -106,6 +135,7 @@ export default function EditProfileForm({ type, profile }: Props) {
       if (isChurch) {
         result = await updateAdminChurch({
           id: profile.id,
+          logoUrl,
           form: {
             name: form.name, city: form.city, state: form.state, address: form.address,
             phone: form.phone, website: form.website, instagram: form.instagram, facebook: form.facebook,
@@ -117,6 +147,7 @@ export default function EditProfileForm({ type, profile }: Props) {
       } else {
         result = await updateAdminOrganizer({
           id: profile.id,
+          logoUrl,
           form: {
             name: form.name, city: form.city, state: form.state, address: form.address,
             phone: form.phone, whatsapp: form.whatsapp, website: form.website,
@@ -145,9 +176,7 @@ export default function EditProfileForm({ type, profile }: Props) {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">
-            Edit {isChurch ? 'Church' : 'Organizer'}
-          </h1>
+          <h1 className="text-xl font-bold text-gray-900">Edit {isChurch ? 'Church' : 'Organizer'}</h1>
           <p className="text-sm text-gray-500 mt-0.5">{profile.name}</p>
         </div>
       </div>
@@ -157,7 +186,6 @@ export default function EditProfileForm({ type, profile }: Props) {
           Saved successfully! Redirecting…
         </div>
       )}
-
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
           {error}
@@ -165,6 +193,52 @@ export default function EditProfileForm({ type, profile }: Props) {
       )}
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] divide-y divide-gray-50">
+
+        {/* Logo */}
+        <section className="p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Logo</h2>
+          <div className="flex items-center gap-4">
+            {/* Preview */}
+            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0 flex items-center justify-center">
+              {logoUploading ? (
+                <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
+              ) : logoUrl ? (
+                <Image src={logoUrl} alt="Logo" width={80} height={80} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-3xl font-black text-gray-300">{profile.name[0]?.toUpperCase()}</span>
+              )}
+            </div>
+            {/* Buttons */}
+            <div className="flex flex-col gap-2">
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleLogoChange}
+              />
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                disabled={logoUploading}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-50 border border-violet-200 text-violet-700 text-sm font-medium hover:bg-violet-100 transition-colors disabled:opacity-50"
+              >
+                <Upload className="w-4 h-4" />
+                {logoUploading ? 'Uploading…' : logoUrl ? 'Change Logo' : 'Upload Logo'}
+              </button>
+              {logoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setLogoUrl(null)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-medium hover:bg-red-100 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  Remove Logo
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* Basic Info */}
         <section className="p-5 space-y-4">
@@ -218,7 +292,7 @@ export default function EditProfileForm({ type, profile }: Props) {
             </>
           )}
           <Field label="Description">
-            <textarea className={inputCls} rows={3} value={form.description} onChange={e => set('description', e.target.value)} />
+            <textarea className={inputCls} rows={4} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Brief description…" />
           </Field>
         </section>
 
@@ -245,29 +319,29 @@ export default function EditProfileForm({ type, profile }: Props) {
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Contact & Social</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Phone">
-              <input className={inputCls} value={form.phone} onChange={e => set('phone', e.target.value)} />
+              <input className={inputCls} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+234…" />
             </Field>
             {!isChurch && (
               <Field label="WhatsApp">
-                <input className={inputCls} value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)} />
+                <input className={inputCls} value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)} placeholder="+234…" />
               </Field>
             )}
             <Field label="Website">
-              <input className={inputCls} value={form.website} onChange={e => set('website', e.target.value)} />
+              <input className={inputCls} value={form.website} onChange={e => set('website', e.target.value)} placeholder="https://…" />
             </Field>
             <Field label="Instagram">
-              <input className={inputCls} value={form.instagram} onChange={e => set('instagram', e.target.value)} />
+              <input className={inputCls} value={form.instagram} onChange={e => set('instagram', e.target.value)} placeholder="@handle or URL" />
             </Field>
             <Field label="Facebook">
-              <input className={inputCls} value={form.facebook} onChange={e => set('facebook', e.target.value)} />
+              <input className={inputCls} value={form.facebook} onChange={e => set('facebook', e.target.value)} placeholder="@handle or URL" />
             </Field>
             {!isChurch && (
               <>
                 <Field label="Twitter / X">
-                  <input className={inputCls} value={form.twitter} onChange={e => set('twitter', e.target.value)} />
+                  <input className={inputCls} value={form.twitter} onChange={e => set('twitter', e.target.value)} placeholder="@handle or URL" />
                 </Field>
                 <Field label="YouTube">
-                  <input className={inputCls} value={form.youtube} onChange={e => set('youtube', e.target.value)} />
+                  <input className={inputCls} value={form.youtube} onChange={e => set('youtube', e.target.value)} placeholder="URL" />
                 </Field>
               </>
             )}
@@ -302,7 +376,7 @@ export default function EditProfileForm({ type, profile }: Props) {
         </Link>
         <button
           onClick={handleSubmit}
-          disabled={isPending || success}
+          disabled={isPending || success || logoUploading}
           className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold disabled:opacity-60 transition-colors"
         >
           {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
