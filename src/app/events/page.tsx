@@ -66,6 +66,7 @@ async function getEvents(params: SearchParams) {
     .from('events')
     .select('*, churches(*)', { count: 'exact' })
     .eq('status', 'approved')
+    .eq('visibility', 'public')
     .order('start_date', { ascending: false })
     .range(from, to)
 

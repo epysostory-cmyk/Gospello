@@ -160,7 +160,8 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
       if (savedDraft) {
         try {
           const parsed = JSON.parse(savedDraft)
-          setFormData(parsed)
+          // Always default visibility to public — never restore a draft value
+          setFormData({ ...parsed, visibility: 'public' })
         } catch (e) {
           console.error('Failed to parse saved draft:', e)
         }
