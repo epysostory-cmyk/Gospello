@@ -38,6 +38,9 @@ export const metadata: Metadata = {
   description:
     'Discover Christian events, churches, and spiritual gatherings happening near you. Lagos-first, globally accessible.',
   keywords: ['christian events', 'church events', 'lagos', 'nigeria', 'worship', 'prayer', 'conference'],
+  verification: {
+    google: 'Au2OSU7tCEpEq0THkVnQy7eaTyBjhTttXgro1gJA4yw',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_NG',
