@@ -237,7 +237,7 @@ export default async function OrganizersPage({
                   className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:-translate-y-1 transition-all duration-300"
                   style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
                 >
-                  <div className={`relative h-20 bg-gradient-to-br ${gradient}`}>
+                  <div className={`relative h-12 bg-gradient-to-br ${gradient}`}>
                     <div
                       className="absolute inset-0 opacity-10"
                       style={{
