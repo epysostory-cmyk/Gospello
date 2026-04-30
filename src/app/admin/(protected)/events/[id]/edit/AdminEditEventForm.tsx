@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ArrowLeft, Upload, Loader2 } from 'lucide-react'
-import { NIGERIAN_STATES } from '@/lib/utils'
+import { NIGERIAN_STATES, COUNTRY_LIST } from '@/lib/utils'
 import type { CategoryRow } from '@/app/actions/categories'
 import type { DaySchedule } from '@/types/database'
 import { updateAdminEvent } from '../../new/actions'
@@ -101,6 +101,7 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
     address:       event.address ?? '',
     city:          event.city ?? '',
     state:         event.state ?? 'Lagos',
+    country:       event.country ?? 'Nigeria',
     registration_type: (event.registration_type ?? 'free_no_registration') as 'free_no_registration' | 'free_registration' | 'paid',
     price:         event.price?.toString() ?? '',
     currency:      event.currency ?? 'NGN',
@@ -490,6 +491,12 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
           ) : (
             <div className="space-y-3">
               <div>
+                <label className={labelCls}>Country</label>
+                <select value={form.country} onChange={e => { set('country', e.target.value); set('state', '') }} className={inputCls}>
+                  {COUNTRY_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
                 <label className={labelCls}>Venue Name</label>
                 <input value={form.location_name} onChange={e => set('location_name', e.target.value)} placeholder="e.g. National Stadium Surulere" className={inputCls} />
               </div>
@@ -500,13 +507,18 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>City</label>
-                  <input value={form.city} onChange={e => set('city', e.target.value)} placeholder="Lagos" className={inputCls} />
+                  <input value={form.city} onChange={e => set('city', e.target.value)} placeholder={form.country === 'Nigeria' ? 'Lagos' : 'e.g. London'} className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>State</label>
-                  <select value={form.state} onChange={e => set('state', e.target.value)} className={inputCls}>
-                    {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <label className={labelCls}>{form.country === 'Nigeria' ? 'State' : 'State / Province'}</label>
+                  {form.country === 'Nigeria' ? (
+                    <select value={form.state} onChange={e => set('state', e.target.value)} className={inputCls}>
+                      <option value="">Select state</option>
+                      {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  ) : (
+                    <input value={form.state} onChange={e => set('state', e.target.value)} placeholder="e.g. England" className={inputCls} />
+                  )}
                 </div>
               </div>
             </div>

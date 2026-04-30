@@ -77,6 +77,59 @@ export const NIGERIAN_STATES = [
   'Yobe', 'Zamfara',
 ]
 
+export const COUNTRY_LIST = [
+  // Africa
+  'Nigeria',
+  'Ghana',
+  'South Africa',
+  'Kenya',
+  'Uganda',
+  'Tanzania',
+  'Rwanda',
+  'Cameroon',
+  'Zimbabwe',
+  'Zambia',
+  'Botswana',
+  'Ivory Coast',
+  'Ethiopia',
+  'Egypt',
+  'Morocco',
+  'Senegal',
+  // Europe
+  'United Kingdom',
+  'France',
+  'Germany',
+  'Netherlands',
+  'Belgium',
+  'Sweden',
+  'Norway',
+  'Denmark',
+  'Spain',
+  'Italy',
+  'Ireland',
+  'Portugal',
+  // Americas
+  'United States',
+  'Canada',
+  'Brazil',
+  'Jamaica',
+  'Trinidad & Tobago',
+  'Barbados',
+  // Middle East
+  'United Arab Emirates',
+  'Saudi Arabia',
+  'Israel',
+  // Asia
+  'Singapore',
+  'Malaysia',
+  'India',
+  // Oceania
+  'Australia',
+  'New Zealand',
+] as const
+
+export type Country = typeof COUNTRY_LIST[number]
+
 export const CATEGORY_COLORS: Record<string, string> = {
   worship:    'bg-purple-100 text-purple-800',
   prayer:     'bg-blue-100 text-blue-800',

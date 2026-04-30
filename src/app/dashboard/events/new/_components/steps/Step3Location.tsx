@@ -1,6 +1,6 @@
 'use client'
 
-import { NIGERIAN_STATES } from '@/lib/utils'
+import { NIGERIAN_STATES, COUNTRY_LIST } from '@/lib/utils'
 
 interface StepProps {
   formData: any
@@ -37,7 +37,10 @@ export default function Step3Location({ formData, updateForm, errors }: StepProp
     updateForm('address', '')
     updateForm('city', '')
     updateForm('state', '')
+    updateForm('country', 'Nigeria')
   }
+
+  const isNigeria = (formData.country || 'Nigeria') === 'Nigeria'
 
   return (
     <div className="bg-white rounded-2xl p-6 space-y-5">
@@ -72,6 +75,24 @@ export default function Step3Location({ formData, updateForm, errors }: StepProp
       {/* Physical Location Fields */}
       {!formData.is_online && (
         <div className="space-y-4">
+          {/* Country */}
+          <div>
+            <label className={labelCls}>Country *</label>
+            <select
+              value={formData.country || 'Nigeria'}
+              onChange={(e) => {
+                updateForm('country', e.target.value)
+                updateForm('state', '')
+              }}
+              className={inputCls}
+            >
+              {COUNTRY_LIST.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            {errors.country && <p className={errorCls}>{errors.country}</p>}
+          </div>
+
           <div>
             <label className={labelCls}>Location Name *</label>
             <input
@@ -101,26 +122,36 @@ export default function Step3Location({ formData, updateForm, errors }: StepProp
               type="text"
               value={formData.city}
               onChange={(e) => updateForm('city', e.target.value)}
-              placeholder="e.g., Lagos, Ibadan, Abuja"
+              placeholder={isNigeria ? 'e.g., Lagos, Ibadan, Abuja' : 'e.g., London, Houston'}
               className={inputCls}
             />
             {errors.city && <p className={errorCls}>{errors.city}</p>}
           </div>
 
           <div>
-            <label className={labelCls}>State *</label>
-            <select
-              value={formData.state}
-              onChange={(e) => updateForm('state', e.target.value)}
-              className={inputCls}
-            >
-              <option value="">Select a state</option>
-              {NIGERIAN_STATES.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
-            </select>
+            <label className={labelCls}>
+              {isNigeria ? 'State *' : 'State / Province / Region *'}
+            </label>
+            {isNigeria ? (
+              <select
+                value={formData.state}
+                onChange={(e) => updateForm('state', e.target.value)}
+                className={inputCls}
+              >
+                <option value="">Select a state</option>
+                {NIGERIAN_STATES.map((st) => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={formData.state}
+                onChange={(e) => updateForm('state', e.target.value)}
+                placeholder="e.g., England, Texas, Ontario"
+                className={inputCls}
+              />
+            )}
             {errors.state && <p className={errorCls}>{errors.state}</p>}
           </div>
         </div>

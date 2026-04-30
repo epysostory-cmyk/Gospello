@@ -16,7 +16,7 @@ interface AdminEventInput {
   form: {
     title: string; description: string; category: string
     is_online: boolean; online_platform: string; online_link: string
-    location_name: string; address: string; city: string; state: string
+    location_name: string; address: string; city: string; state: string; country: string
     registration_type: 'free_no_registration' | 'free_registration' | 'paid'
     price: string; currency: string; payment_link: string
     capacity: string; tags: string[]
@@ -65,7 +65,7 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
       address:           form.is_online ? null : (form.address.trim() || null),
       city:              form.is_online ? 'Online' : (form.city.trim() || 'Lagos'),
       state:             form.is_online ? 'Online' : form.state,
-      country:           'Nigeria',
+      country:           form.is_online ? 'Online' : (form.country || 'Nigeria'),
       registration_type: form.registration_type,
       is_free:           form.registration_type !== 'paid',
       price:             form.registration_type === 'paid' && form.price ? parseFloat(form.price) : null,
@@ -121,6 +121,7 @@ export async function updateAdminEvent(input: AdminEventUpdateInput): Promise<{ 
       address:           form.is_online ? null : (form.address.trim() || null),
       city:              form.is_online ? 'Online' : (form.city.trim() || 'Lagos'),
       state:             form.is_online ? 'Online' : form.state,
+      country:           form.is_online ? 'Online' : (form.country || 'Nigeria'),
       registration_type: form.registration_type,
       is_free:           form.registration_type !== 'paid',
       price:             form.registration_type === 'paid' && form.price ? parseFloat(form.price) : null,

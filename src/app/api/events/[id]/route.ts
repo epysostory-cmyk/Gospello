@@ -46,6 +46,7 @@ export async function PUT(
       address: body.address || null,
       city: body.city || null,
       state: body.state || null,
+      country: body.country || 'Nigeria',
       is_free: body.is_free,
       price: body.price || null,
       currency: body.currency || 'NGN',

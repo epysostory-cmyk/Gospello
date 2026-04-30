@@ -37,6 +37,7 @@ interface FormState {
   address: string
   city: string
   state: string
+  country: string
   registration_type: RegistrationType
   is_free: boolean
   price: string
@@ -72,6 +73,7 @@ const INITIAL_FORM_STATE: FormState = {
   address: '',
   city: '',
   state: '',
+  country: 'Nigeria',
   registration_type: 'free_no_registration',
   is_free: true,
   price: '',
@@ -130,6 +132,7 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         address: initialEvent.address || '',
         city: initialEvent.city || '',
         state: initialEvent.state || '',
+        country: initialEvent.country || 'Nigeria',
         registration_type: (initialEvent as any).registration_type || (
           !initialEvent.is_free ? 'paid'
           : initialEvent.rsvp_required ? 'free_registration'
@@ -313,6 +316,7 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         address: !formData.is_online ? formData.address : null,
         city: !formData.is_online ? formData.city : 'Online',
         state: !formData.is_online ? formData.state : 'Online',
+        country: !formData.is_online ? (formData.country || 'Nigeria') : 'Online',
         registration_type: formData.registration_type,
         is_free: formData.is_free,
         price: !formData.is_free ? parseFloat(formData.price) : null,

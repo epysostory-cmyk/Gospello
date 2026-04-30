@@ -5,7 +5,7 @@ import type { DaySchedule } from '@/types/database'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Search, ArrowLeft, ChevronDown, Upload, Loader2 } from 'lucide-react'
-import { NIGERIAN_STATES } from '@/lib/utils'
+import { NIGERIAN_STATES, COUNTRY_LIST } from '@/lib/utils'
 import { getVisibleCategories, type CategoryRow } from '@/app/actions/categories'
 import { createAdminEvent } from './actions'
 import TimezoneSelector from '@/components/ui/TimezoneSelector'
@@ -78,7 +78,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
     title: '', description: '', category: '',
     start_date: '', start_time: '', end_date: '', end_time: '',
     is_online: false, online_platform: '', online_link: '',
-    location_name: '', address: '', city: '', state: 'Lagos',
+    location_name: '', address: '', city: '', state: 'Lagos', country: 'Nigeria',
     registration_type: 'free_no_registration' as 'free_no_registration'|'free_registration'|'paid',
     price: '', currency: 'NGN', payment_link: '',
     capacity: '', tags: [] as string[],
@@ -242,7 +242,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
                 title: '', description: '', category: categories[0]?.slug || '',
                 start_date: '', start_time: '', end_date: '', end_time: '',
                 is_online: false, online_platform: '', online_link: '',
-                location_name: '', address: '', city: '', state: 'Lagos',
+                location_name: '', address: '', city: '', state: 'Lagos', country: 'Nigeria',
                 registration_type: 'free_no_registration',
                 price: '', currency: 'NGN', payment_link: '',
                 capacity: '', tags: [],
@@ -596,6 +596,12 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
           ) : (
             <div className="space-y-3">
               <div>
+                <label className={labelCls}>Country</label>
+                <select value={form.country} onChange={e => { set('country', e.target.value); set('state', '') }} className={inputCls}>
+                  {COUNTRY_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
                 <label className={labelCls}>Venue Name</label>
                 <input value={form.location_name} onChange={e => set('location_name', e.target.value)} placeholder="e.g. National Stadium Surulere" className={inputCls} />
               </div>
@@ -606,13 +612,18 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>City</label>
-                  <input value={form.city} onChange={e => set('city', e.target.value)} placeholder="Lagos" className={inputCls} />
+                  <input value={form.city} onChange={e => set('city', e.target.value)} placeholder={form.country === 'Nigeria' ? 'Lagos' : 'e.g. London'} className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>State</label>
-                  <select value={form.state} onChange={e => set('state', e.target.value)} className={inputCls}>
-                    {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <label className={labelCls}>{form.country === 'Nigeria' ? 'State' : 'State / Province'}</label>
+                  {form.country === 'Nigeria' ? (
+                    <select value={form.state} onChange={e => set('state', e.target.value)} className={inputCls}>
+                      <option value="">Select state</option>
+                      {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  ) : (
+                    <input value={form.state} onChange={e => set('state', e.target.value)} placeholder="e.g. England" className={inputCls} />
+                  )}
                 </div>
               </div>
             </div>

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
-import { NIGERIAN_STATES, formatDate, formatTime } from '@/lib/utils'
+import { NIGERIAN_STATES, COUNTRY_LIST, formatDate, formatTime } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import { Search, MapPin, X } from 'lucide-react'
@@ -19,6 +19,7 @@ export const revalidate = 60
 interface SearchParams {
   q?: string
   city?: string
+  country?: string
   category?: string
   timeframe?: 'today' | 'week' | 'weekend'
   page?: string
@@ -73,6 +74,9 @@ async function getEvents(params: SearchParams) {
   }
   if (params.city) {
     query = query.ilike('city', `%${params.city}%`)
+  }
+  if (params.country) {
+    query = query.eq('country', params.country)
   }
   if (params.category) {
     query = query.eq('category', params.category)
@@ -155,7 +159,7 @@ export default async function EventsPage({
     return `/events?${qs.toString()}`
   }
 
-  const hasFilters = !!(params.q || params.city || params.category || params.timeframe)
+  const hasFilters = !!(params.q || params.city || params.country || params.category || params.timeframe)
   const activeCategoryLabel = params.category
     ? categoryOptions.find(c => c.slug === params.category)?.name
     : null
@@ -287,7 +291,7 @@ export default async function EventsPage({
             ))}
           </div>
 
-          {/* City filter */}
+          {/* Country filter */}
           <form method="GET" action="/events" className="flex items-center gap-1">
             {params.q && <input type="hidden" name="q" value={params.q} />}
             {params.category && <input type="hidden" name="category" value={params.category} />}
@@ -295,12 +299,12 @@ export default async function EventsPage({
             <div className="relative flex items-center bg-white rounded-xl border border-gray-200 overflow-hidden">
               <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
               <select
-                name="city"
-                defaultValue={params.city ?? ''}
+                name="country"
+                defaultValue={params.country ?? ''}
                 className="pl-8 pr-3 py-2 text-xs font-semibold text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
               >
-                <option value="">All Cities</option>
-                {NIGERIAN_STATES.map((c) => <option key={c} value={c}>{c}</option>)}
+                <option value="">All Countries</option>
+                {COUNTRY_LIST.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <button type="submit" className="px-3 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors">Go</button>
@@ -321,6 +325,12 @@ export default async function EventsPage({
             <span className="flex items-center gap-1 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-full">
               &quot;{params.q}&quot;
               <Link href={buildUrl({ q: undefined })} className="hover:text-indigo-900 ml-0.5">×</Link>
+            </span>
+          )}
+          {params.country && (
+            <span className="flex items-center gap-1 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 px-3 py-1.5 rounded-full">
+              🌍 {params.country}
+              <Link href={buildUrl({ country: undefined })} className="hover:text-rose-900 ml-0.5">×</Link>
             </span>
           )}
           {params.city && (

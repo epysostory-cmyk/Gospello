@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       address: body.address || null,
       city: body.city || null,
       state: body.state || null,
-      country: 'Nigeria',
+      country: body.country || 'Nigeria',
       is_free: body.is_free !== false,
       price: body.price || null,
       currency: body.currency || 'NGN',
