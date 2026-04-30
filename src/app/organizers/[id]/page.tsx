@@ -19,8 +19,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { data: p } = await supabase.from('profiles').select('display_name').eq('id', id).single()
   if (p) return { title: p.display_name }
   const adminClient = createAdminClient()
-  const { data: s } = await adminClient.from('seeded_organizers').select('name').or(`id.eq.${id},slug.eq.${id}`).limit(1).single()
-  if (s) return { title: s.name }
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  const { data: bySlug } = await adminClient.from('seeded_organizers').select('name').eq('slug', id).maybeSingle()
+  if (bySlug) return { title: bySlug.name }
+  if (isUuid) {
+    const { data: byId } = await adminClient.from('seeded_organizers').select('name').eq('id', id).maybeSingle()
+    if (byId) return { title: byId.name }
+  }
   return {}
 }
 
@@ -47,16 +52,19 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
     .eq('account_type', 'organizer')
     .single()
 
-  // Then try seeded organizer — match by either id or slug (links may use either)
-  const { data: seededData } = profileData
-    ? { data: null }
-    : await adminClient
-        .from('seeded_organizers')
-        .select('*')
-        .eq('is_hidden', false)
-        .or(`id.eq.${id},slug.eq.${id}`)
-        .limit(1)
-        .single()
+  // Then try seeded organizer — match by slug first, fall back to id if it looks like a UUID
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  let seededData: SeededOrganizer | null = null
+  if (!profileData) {
+    const q = adminClient.from('seeded_organizers').select('*').eq('is_hidden', false)
+    const { data: bySlug } = await q.eq('slug', id).maybeSingle()
+    if (bySlug) {
+      seededData = bySlug as SeededOrganizer
+    } else if (isUuid) {
+      const { data: byId } = await adminClient.from('seeded_organizers').select('*').eq('is_hidden', false).eq('id', id).maybeSingle()
+      seededData = byId as SeededOrganizer | null
+    }
+  }
 
   if (!profileData && !seededData) notFound()
 
