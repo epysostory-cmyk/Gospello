@@ -281,6 +281,24 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
     setIsSubmitting(true)
 
     try {
+      // Get UTC offset string (e.g. "+01:00") from the selected timezone
+      function tzOffset(tz: string, dateStr: string): string {
+        try {
+          const parts = new Intl.DateTimeFormat('en', {
+            timeZone: tz, timeZoneName: 'shortOffset',
+          }).formatToParts(new Date(dateStr + 'T12:00:00'))
+          const gmt = parts.find(p => p.type === 'timeZoneName')?.value ?? 'GMT'
+          const match = gmt.match(/GMT([+-]\d{1,2}):?(\d{2})?/)
+          if (!match) return 'Z'
+          const sign = match[1].startsWith('-') ? '-' : '+'
+          const hrs  = Math.abs(parseInt(match[1])).toString().padStart(2, '0')
+          const mins = (match[2] ?? '00').padStart(2, '0')
+          return `${sign}${hrs}:${mins}`
+        } catch { return 'Z' }
+      }
+
+      const tz = formData.timezone || 'Africa/Lagos'
+
       // Compute start/end datetimes and daily_schedule
       let startDatetime: string
       let endDatetime: string | null
@@ -290,13 +308,15 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         const sched: DaySchedule[] = formData.daily_schedule
         const first = sched[0]
         const last  = sched[sched.length - 1]
-        startDatetime = `${first.date}T${first.start_time}:00`
-        endDatetime   = `${last.date}T${last.end_time || '23:59'}:00`
+        const offset = tzOffset(tz, first.date)
+        startDatetime = `${first.date}T${first.start_time}:00${offset}`
+        endDatetime   = `${last.date}T${last.end_time || '23:59'}:00${offset}`
         daily_schedule = sched
       } else {
-        startDatetime = `${formData.start_date}T${formData.start_time}:00`
+        const offset = tzOffset(tz, formData.start_date)
+        startDatetime = `${formData.start_date}T${formData.start_time}:00${offset}`
         endDatetime   = formData.end_time
-          ? `${formData.start_date}T${formData.end_time}:00`
+          ? `${formData.start_date}T${formData.end_time}:00${offset}`
           : null
       }
 

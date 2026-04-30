@@ -172,6 +172,23 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
     if (!selectedProfile)   { setError('Please select a profile'); return }
     if (!form.title.trim()) { setError('Event title is required'); return }
 
+    function tzOffset(tz: string, dateStr: string): string {
+      try {
+        const parts = new Intl.DateTimeFormat('en', {
+          timeZone: tz, timeZoneName: 'shortOffset',
+        }).formatToParts(new Date(dateStr + 'T12:00:00'))
+        const gmt = parts.find(p => p.type === 'timeZoneName')?.value ?? 'GMT'
+        const match = gmt.match(/GMT([+-]\d{1,2}):?(\d{2})?/)
+        if (!match) return 'Z'
+        const sign = match[1].startsWith('-') ? '-' : '+'
+        const hrs  = Math.abs(parseInt(match[1])).toString().padStart(2, '0')
+        const mins = (match[2] ?? '00').padStart(2, '0')
+        return `${sign}${hrs}:${mins}`
+      } catch { return 'Z' }
+    }
+
+    const tz = form.timezone || 'Africa/Lagos'
+
     let startDatetime: string
     let endDatetime: string | null
     let daily_schedule: DaySchedule[] | null = null
@@ -189,14 +206,16 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
         start_time: scheduleMap[d].start_time,
         end_time: scheduleMap[d].end_time || null,
       }))
-      startDatetime = `${dateRange[0]}T${scheduleMap[dateRange[0]].start_time}:00+01:00`
+      const offset = tzOffset(tz, dateRange[0])
+      startDatetime = `${dateRange[0]}T${scheduleMap[dateRange[0]].start_time}:00${offset}`
       const lastD = dateRange[dateRange.length - 1]
-      endDatetime = `${lastD}T${scheduleMap[lastD].end_time || '23:59'}:00+01:00`
+      endDatetime = `${lastD}T${scheduleMap[lastD].end_time || '23:59'}:00${offset}`
     } else {
       if (!form.start_date) { setError('Start date is required'); return }
       if (!form.start_time) { setError('Start time is required'); return }
-      startDatetime = `${form.start_date}T${form.start_time}:00+01:00`
-      endDatetime = form.end_time ? `${form.start_date}T${form.end_time}:00+01:00` : null
+      const offset = tzOffset(tz, form.start_date)
+      startDatetime = `${form.start_date}T${form.start_time}:00${offset}`
+      endDatetime = form.end_time ? `${form.start_date}T${form.end_time}:00${offset}` : null
     }
 
     setIsPending(true)
