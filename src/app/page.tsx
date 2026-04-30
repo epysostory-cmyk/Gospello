@@ -52,7 +52,7 @@ async function getHomepageData() {
         .or(`featured_until.is.null,featured_until.gte.${now}`)
         .order('start_date', { ascending: true })
         .limit(4),
-      // Upcoming events: next 90 days, ordered by soonest first
+      // Upcoming events: recently added first
       supabase
         .from('events')
         .select('*, churches(*)')
@@ -60,7 +60,7 @@ async function getHomepageData() {
         .eq('visibility', 'public')
         .gte('start_date', now)
         .lte('start_date', in90Days)
-        .order('start_date', { ascending: true })
+        .order('created_at', { ascending: false })
         .limit(100),
       supabase.from('churches').select('*').eq('is_featured', true).limit(6),
       supabase.from('events').select('id', { count: 'exact', head: true }),
