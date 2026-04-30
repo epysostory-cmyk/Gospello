@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useTransition, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ArrowLeft, Upload, Loader2 } from 'lucide-react'
@@ -8,6 +8,7 @@ import { NIGERIAN_STATES } from '@/lib/utils'
 import type { CategoryRow } from '@/app/actions/categories'
 import type { DaySchedule } from '@/types/database'
 import { updateAdminEvent } from '../../new/actions'
+import TimezoneSelector from '@/components/ui/TimezoneSelector'
 
 /* ── Schedule helpers ─────────────────────────────────── */
 function fmt12(t: string): string {
@@ -62,7 +63,7 @@ interface Props {
 
 export default function AdminEditEventForm({ adminId, event, categories }: Props) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
   const bannerRef = useRef<HTMLInputElement>(null)
@@ -114,6 +115,8 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
     notes:         event.notes ?? '',
     source_url:    event.source_url ?? '',
     daily_schedule: (event.daily_schedule ?? null) as DaySchedule[] | null,
+    timezone:      event.timezone ?? 'Africa/Lagos',
+    livestream_url: event.livestream_url ?? '',
   })
 
   const set = (k: string, v: string | boolean | string[] | DaySchedule[] | null) =>
@@ -188,7 +191,8 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
       endDatetime   = form.end_time ? `${form.start_date}T${form.end_time}:00+01:00` : null
     }
 
-    startTransition(async () => {
+    setIsPending(true)
+    try {
       const result = await updateAdminEvent({
         eventId: event.id,
         form: { ...form, daily_schedule },
@@ -198,7 +202,9 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
       if (result.error) { setError(result.error); return }
       setSaved(true)
       router.push('/admin/events')
-    })
+    } finally {
+      setIsPending(false)
+    }
   }
 
   const inputCls = 'w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/20 bg-white'
@@ -505,6 +511,20 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
               </div>
             </div>
           )}
+        </div>
+
+        {/* Timezone */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-2">
+          <label className={labelCls}>Timezone</label>
+          <TimezoneSelector value={form.timezone} onChange={(tz: string) => set('timezone', tz)} inputCls={inputCls} />
+          <p className="text-xs text-gray-400">Select the timezone where this event takes place.</p>
+        </div>
+
+        {/* Livestream URL */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-2">
+          <label className={labelCls}>Livestream URL <span className="text-gray-400 font-normal normal-case">(optional)</span></label>
+          <input value={form.livestream_url} onChange={e => set('livestream_url', e.target.value)} placeholder="e.g. https://youtube.com/live/..." className={inputCls} />
+          <p className="text-xs text-gray-400">Add a livestream link even if this is a physical event.</p>
         </div>
 
         {/* Registration */}

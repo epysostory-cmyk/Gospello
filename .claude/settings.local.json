@@ -90,7 +90,8 @@
       "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
       "Bash(grep -E \"\\\\.\\(sql|ts\\)$\")",
       "Bash(node -e \"const l = require\\('./node_modules/lucide-react'\\); const names = Object.keys\\(l\\).filter\\(k => /gram|face|twit|tube|social|share/i.test\\(k\\)\\); console.log\\(names\\)\")",
-      "Bash(find /c/Users/Hi/Desktop/Gospello/src/app/events/[slug] -name \"*\" -type f)"
+      "Bash(find /c/Users/Hi/Desktop/Gospello/src/app/events/[slug] -name \"*\" -type f)",
+      "Bash(gh pr create --title 'fix: seed-profile events no longer bleed into organizer dashboard' --body ' *)"
     ]
   }
 }

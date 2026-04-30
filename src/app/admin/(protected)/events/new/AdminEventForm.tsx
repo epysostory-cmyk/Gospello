@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useTransition, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import type { DaySchedule } from '@/types/database'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -8,6 +8,7 @@ import { Search, ArrowLeft, ChevronDown, Upload, Loader2 } from 'lucide-react'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import { getVisibleCategories, type CategoryRow } from '@/app/actions/categories'
 import { createAdminEvent } from './actions'
+import TimezoneSelector from '@/components/ui/TimezoneSelector'
 
 /* ── Schedule helpers ─────────────────────────────────── */
 function fmt12(t: string): string {
@@ -50,6 +51,8 @@ type ProfileType = 'church' | 'seeded_org'
 interface Profile { id: string; name: string; city: string; state: string; logo_url: string|null; profileType: ProfileType }
 interface Props { adminId: string; profiles: Profile[] }
 
+const DRAFT_KEY = 'gospello_admin_event_draft'
+
 async function uploadBanner(file: File): Promise<string> {
   const body = new FormData()
   body.append('file', file)
@@ -63,7 +66,7 @@ async function uploadBanner(file: File): Promise<string> {
 
 export default function AdminEventForm({ adminId, profiles }: Props) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState('')
   const [categories, setCategories] = useState<CategoryRow[]>([])
 
@@ -86,6 +89,8 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
     child_friendly: false,
     notes: '',
     source_url: '',
+    timezone: 'Africa/Lagos',
+    livestream_url: '',
   })
 
   const [eventType, setEventType] = useState<'single' | 'multi'>('single')
@@ -94,6 +99,24 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const bannerRef = useRef<HTMLInputElement>(null)
+
+  /* Load draft from localStorage on mount */
+  useEffect(() => {
+    const saved = localStorage.getItem(DRAFT_KEY)
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        setForm(p => ({ ...p, ...parsed }))
+        if (parsed._eventType) setEventType(parsed._eventType)
+        if (parsed._scheduleMap) setScheduleMap(parsed._scheduleMap)
+      } catch { /* ignore corrupt draft */ }
+    }
+  }, [])
+
+  /* Auto-save form to localStorage on every change */
+  useEffect(() => {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...form, _eventType: eventType, _scheduleMap: scheduleMap }))
+  }, [form, eventType, scheduleMap])
 
   /* Sync scheduleMap when date range changes in multi mode */
   useEffect(() => {
@@ -176,7 +199,8 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
       endDatetime = form.end_time ? `${form.start_date}T${form.end_time}:00+01:00` : null
     }
 
-    startTransition(async () => {
+    setIsPending(true)
+    try {
       const result = await createAdminEvent({
         adminId, selectedProfile,
         form: { ...form, daily_schedule },
@@ -184,8 +208,11 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
         endDatetime,
       })
       if (result.error) { setError(result.error); return }
+      localStorage.removeItem(DRAFT_KEY)
       router.push('/admin/events')
-    })
+    } finally {
+      setIsPending(false)
+    }
   }
 
   const inputCls = 'w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/20 bg-white'
@@ -201,6 +228,44 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
           <h1 className="text-xl font-bold text-gray-900">Create Event</h1>
           <p className="text-sm text-gray-500 mt-0.5">Create an event under any profile</p>
         </div>
+      </div>
+
+      {/* Draft indicator + Start Over */}
+      <div className="flex items-center justify-between mb-2 px-1">
+        <p className="text-xs text-gray-400">Draft auto-saved</p>
+        <button
+          type="button"
+          onClick={() => {
+            if (confirm('Clear all form data and start over?')) {
+              localStorage.removeItem(DRAFT_KEY)
+              setForm({
+                title: '', description: '', category: categories[0]?.slug || '',
+                start_date: '', start_time: '', end_date: '', end_time: '',
+                is_online: false, online_platform: '', online_link: '',
+                location_name: '', address: '', city: '', state: 'Lagos',
+                registration_type: 'free_no_registration',
+                price: '', currency: 'NGN', payment_link: '',
+                capacity: '', tags: [],
+                banner_url: '',
+                visibility: 'public',
+                speakers: '',
+                parking_available: false,
+                child_friendly: false,
+                notes: '',
+                source_url: '',
+                timezone: 'Africa/Lagos',
+                livestream_url: '',
+              })
+              setEventType('single')
+              setScheduleMap({})
+              setSelectedProfile(null)
+              setError('')
+            }
+          }}
+          className="text-xs text-red-400 hover:text-red-600 font-medium transition-colors"
+        >
+          Start Over
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -494,6 +559,17 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
           )}
         </div>
 
+        {/* Timezone */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-2">
+          <label className={labelCls}>Timezone</label>
+          <TimezoneSelector
+            value={form.timezone}
+            onChange={(tz: string) => set('timezone', tz)}
+            inputCls={inputCls}
+          />
+          <p className="text-xs text-gray-400">Select the timezone where this event takes place.</p>
+        </div>
+
         {/* Location */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
           <div className="flex items-center justify-between">
@@ -541,6 +617,13 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Livestream URL */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-2">
+          <label className={labelCls}>Livestream URL <span className="text-gray-400 font-normal normal-case">(optional)</span></label>
+          <input value={form.livestream_url} onChange={e => set('livestream_url', e.target.value)} placeholder="e.g. https://youtube.com/live/..." className={inputCls} />
+          <p className="text-xs text-gray-400">Add a livestream link even if this is a physical event.</p>
         </div>
 
         {/* Registration */}

@@ -51,6 +51,8 @@ interface FormState {
   parking_available: boolean
   child_friendly: boolean
   notes: string
+  timezone: string
+  livestream_url: string
 }
 
 const INITIAL_FORM_STATE: FormState = {
@@ -84,6 +86,8 @@ const INITIAL_FORM_STATE: FormState = {
   parking_available: false,
   child_friendly: false,
   notes: '',
+  timezone: 'Africa/Lagos',
+  livestream_url: '',
 }
 
 interface Props {
@@ -144,6 +148,8 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         parking_available: initialEvent.parking_available || false,
         child_friendly: initialEvent.child_friendly || false,
         notes: initialEvent.notes || '',
+        timezone: (initialEvent as any).timezone || 'Africa/Lagos',
+        livestream_url: (initialEvent as any).livestream_url || '',
       })
     } else {
       // Load from localStorage (creation mode)
@@ -323,6 +329,8 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         parking_available: formData.parking_available,
         child_friendly: formData.child_friendly,
         notes: formData.notes || null,
+        timezone: formData.timezone || 'Africa/Lagos',
+        livestream_url: formData.livestream_url || null,
       }
 
       if (isEditMode && initialEvent?.id) {
@@ -402,10 +410,26 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         {/* Progress Bar */}
         <StepperProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
 
-        {/* Auto-save indicator */}
+        {/* Auto-save indicator + Start Over */}
         {!isEditMode && (
-          <div className="mt-4 text-center">
+          <div className="mt-4 flex items-center justify-between px-1">
             <p className="text-xs text-gray-500">{getFormattedLastSaved() || 'Ready to save'}</p>
+            {(formData.title || formData.description) && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('Clear all form data and start over?')) {
+                    localStorage.removeItem(DRAFT_KEY)
+                    setFormData(INITIAL_FORM_STATE)
+                    setCurrentStep(1)
+                    setErrors({})
+                  }
+                }}
+                className="text-xs text-red-400 hover:text-red-600 font-medium transition-colors"
+              >
+                Start Over
+              </button>
+            )}
           </div>
         )}
 

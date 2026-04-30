@@ -61,6 +61,8 @@ export async function PUT(
       child_friendly: body.child_friendly,
       notes: body.notes || null,
       daily_schedule: body.daily_schedule || null,
+      timezone: body.timezone || 'Africa/Lagos',
+      livestream_url: body.livestream_url || null,
     }
 
     const { data, error } = await adminClient
