@@ -205,9 +205,11 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
   const labelCls = 'block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5'
 
   /* ── Who hosts this event (read-only) ── */
-  const hostName = event.churches?.name ?? event.profiles?.display_name ?? 'Unknown'
+  const hostName = event.churches?.name ?? event.seeded_organizers?.name ?? event.profiles?.display_name ?? 'Unknown'
   const hostSub  = event.churches
     ? `${event.churches.city}, ${event.churches.state} · Church`
+    : event.seeded_organizers
+    ? `${event.seeded_organizers.city ?? ''}, ${event.seeded_organizers.state ?? ''} · Organizer`
     : event.profiles
     ? `${event.profiles.city ?? ''}, ${event.profiles.state ?? ''} · Organizer`
     : ''

@@ -142,7 +142,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   const { data: event } = await supabase
     .from('events')
-    .select('*, churches(*), profiles(*)')
+    .select('*, churches(*), profiles(*), seeded_organizers(*)')
     .eq('slug', slug)
     .eq('status', 'approved')
     .single()
@@ -188,6 +188,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           .from('events')
           .select('id', { count: 'exact', head: true })
           .eq('church_id', e.church_id)
+          .eq('status', 'approved')
+      : e.seeded_organizer_id
+      ? adminClient
+          .from('events')
+          .select('id', { count: 'exact', head: true })
+          .eq('seeded_organizer_id', e.seeded_organizer_id)
           .eq('status', 'approved')
       : adminClient
           .from('events')
@@ -586,6 +592,37 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     </p>
                     {e.churches.city && (
                       <p className="text-xs text-gray-500 mt-0.5">{e.churches.city}, {e.churches.state}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-0.5">{organizerEventCount ?? 0} events on Gospello</p>
+                  </div>
+                  <span className="text-xs text-indigo-500 font-medium group-hover:underline">View Profile →</span>
+                </Link>
+              ) : e.seeded_organizers ? (
+                <Link
+                  href={`/organizers/seeded/${e.seeded_organizers.slug}`}
+                  className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-indigo-200 transition-colors group"
+                >
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {e.seeded_organizers.logo_url ? (
+                      <Image
+                        src={e.seeded_organizers.logo_url}
+                        alt=""
+                        width={56}
+                        height={56}
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="font-black text-indigo-600 text-xl">
+                        {e.seeded_organizers.name?.[0]?.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                      {e.seeded_organizers.name}
+                    </p>
+                    {e.seeded_organizers.city && (
+                      <p className="text-xs text-gray-500 mt-0.5">{e.seeded_organizers.city}, {e.seeded_organizers.state}</p>
                     )}
                     <p className="text-xs text-gray-400 mt-0.5">{organizerEventCount ?? 0} events on Gospello</p>
                   </div>

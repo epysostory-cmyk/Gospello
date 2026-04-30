@@ -17,7 +17,7 @@ export default async function AdminEditEventPage({ params }: { params: Promise<{
 
   const { data: event } = await adminClient
     .from('events')
-    .select('*, churches(id, name, city, state), profiles(id, display_name, city, state)')
+    .select('*, churches(id, name, city, state), profiles(id, display_name, city, state), seeded_organizers(id, name, city, state)')
     .eq('id', id)
     .single()
 
