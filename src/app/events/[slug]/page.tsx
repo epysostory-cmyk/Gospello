@@ -970,6 +970,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         attendanceCount={safeAttendance}
         registrationType={e.registration_type}
         isOrganizer={!!currentUser && currentUser.id === e.organizer_id}
+        initialAttended={initialAttended}
       />
     </div>
   )

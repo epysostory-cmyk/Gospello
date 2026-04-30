@@ -15,6 +15,7 @@ interface Props {
   attendanceCount?: number
   registrationType?: RegistrationType
   isOrganizer?: boolean
+  initialAttended?: boolean
 }
 
 export default function EventQuickActions({
@@ -25,17 +26,19 @@ export default function EventQuickActions({
   attendanceCount = 0,
   registrationType,
   isOrganizer = false,
+  initialAttended = false,
 }: Props) {
-  const [attended, setAttended] = useState(false)
+  const [attended, setAttended] = useState(initialAttended)
 
-  // Check localStorage on mount to know if user already registered/attended
+  // Check localStorage on mount to restore guest/form-registered state
   useEffect(() => {
+    if (initialAttended) return
     const attendedKey = `gospello_attended_${eventId}`
     const regIdKey    = `gospello_regid_${eventId}`
     if (localStorage.getItem(attendedKey) || localStorage.getItem(regIdKey)) {
       setAttended(true)
     }
-  }, [eventId])
+  }, [eventId, initialAttended])
 
   // Sync with AttendButton when attendance is recorded in the same tab
   useEffect(() => {
