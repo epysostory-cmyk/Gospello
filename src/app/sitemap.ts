@@ -1,11 +1,10 @@
 import type { MetadataRoute } from 'next'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
+const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = await createClient()
+  // Use admin client for all queries — sitemap is fetched by Google with no auth context
   const adminClient = createAdminClient()
 
   const [
@@ -14,20 +13,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { data: authOrganizers },
     { data: seededOrganizers },
   ] = await Promise.all([
-    supabase
+    adminClient
       .from('events')
       .select('slug, updated_at')
       .eq('status', 'approved')
       .gte('start_date', new Date().toISOString())
       .order('start_date', { ascending: true })
       .limit(500),
-    supabase
+    adminClient
       .from('churches')
       .select('slug, updated_at')
       .eq('is_hidden', false)
       .order('name', { ascending: true })
       .limit(200),
-    supabase
+    adminClient
       .from('profiles')
       .select('id, updated_at')
       .eq('account_type', 'organizer')
