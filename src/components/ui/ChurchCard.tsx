@@ -66,14 +66,14 @@ export default function ChurchCard({ church }: ChurchCardProps) {
           )}
         </div>
 
-        {/* Dark gradient at bottom for logo overlap area */}
-        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black/20 to-transparent" />
+        {/* Subtle gradient at bottom for logo overlap area */}
+        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black/8 to-transparent" />
       </div>
 
       {/* Logo overlapping banner */}
       <div className="px-4 pb-4">
         <div className="relative -mt-8 mb-3 flex items-end justify-between">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-4 border-white bg-white shadow-md overflow-hidden flex-shrink-0 flex items-center justify-center">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-4 border-white bg-white shadow-md overflow-hidden flex-shrink-0 flex items-center justify-center">
             {church.logo_url ? (
               <Image src={church.logo_url} alt={church.name} width={64} height={64} className="object-cover w-full h-full" />
             ) : (
