@@ -35,6 +35,7 @@ function gradientForName(name: string) {
 
 interface OrganizerEntry {
   id: string
+  slug: string
   name: string
   avatarUrl: string | null
   eventCount: number
@@ -75,11 +76,11 @@ export default async function OrganizersPage({
   const eventCountMap: Record<string, number> = {}
 
   if (authOrganizers.length > 0) {
+    // Match the profile page filter: organizer_id match + no seeded_organizer_id (excludes admin-seeded events)
     const { data: rows } = await adminClient
       .from('events')
       .select('organizer_id, start_date, end_date')
       .eq('status', 'approved')
-      .is('church_id', null)
       .is('seeded_organizer_id', null)
       .in('organizer_id', authOrganizers.map(o => o.id))
     for (const r of rows ?? []) {
@@ -93,7 +94,6 @@ export default async function OrganizersPage({
       .from('events')
       .select('seeded_organizer_id, start_date, end_date')
       .eq('status', 'approved')
-      .is('church_id', null)
       .in('seeded_organizer_id', seededOrganizers.map(o => o.id))
     for (const r of rows ?? []) {
       if (r.seeded_organizer_id && getEventLifecycle(r.start_date, r.end_date) !== 'ended')
@@ -105,6 +105,7 @@ export default async function OrganizersPage({
   let entries: OrganizerEntry[] = [
     ...authOrganizers.map(o => ({
       id: o.id,
+      slug: o.id, // auth organizers use id in URL
       name: o.display_name,
       avatarUrl: o.avatar_url,
       eventCount: eventCountMap[o.id] ?? 0,
@@ -116,6 +117,7 @@ export default async function OrganizersPage({
     })),
     ...seededOrganizers.map(o => ({
       id: o.id,
+      slug: o.slug, // seeded organizers use slug in URL
       name: o.name,
       avatarUrl: o.logo_url,
       eventCount: eventCountMap[o.id] ?? 0,
@@ -226,7 +228,7 @@ export default async function OrganizersPage({
             {paginated.map((entry) => {
               const gradient = gradientForName(entry.name)
               const initial = entry.name?.[0]?.toUpperCase() ?? '?'
-              const href = `/organizers/${entry.id}`
+              const href = `/organizers/${entry.slug}`
 
               return (
                 <Link
