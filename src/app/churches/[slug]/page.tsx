@@ -11,10 +11,35 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
   const supabase = await createClient()
-  const { data } = await supabase.from('churches').select('name, description').eq('slug', slug).single()
+  const { data } = await supabase.from('churches').select('name, description, logo_url, city, state').eq('slug', slug).maybeSingle()
   if (!data) return {}
-  return { title: data.name, description: data.description?.substring(0, 160) }
+
+  const description = data.description
+    ? data.description.slice(0, 160)
+    : `Discover events by ${data.name}${data.city ? ` in ${data.city}` : ''} on Gospello.`
+  const pageUrl = `${siteUrl}/churches/${slug}`
+
+  return {
+    title: data.name,
+    description,
+    openGraph: {
+      title: `${data.name} | Gospello`,
+      description,
+      url: pageUrl,
+      type: 'profile',
+      siteName: 'Gospello',
+      images: data.logo_url ? [{ url: data.logo_url, width: 400, height: 400, alt: data.name }] : [],
+    },
+    twitter: {
+      card: 'summary',
+      site: '@gospello',
+      title: `${data.name} | Gospello`,
+      description,
+      images: data.logo_url ? [data.logo_url] : [],
+    },
+  }
 }
 
 const BANNER_GRADIENTS: Record<number, string> = {
@@ -53,9 +78,31 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
   const gradientKey = (c.name.charCodeAt(0) ?? 0) % 6
   const bannerGradient = BANNER_GRADIENTS[gradientKey]
   const initial = c.name[0]?.toUpperCase() ?? '?'
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Church',
+    name: c.name,
+    description: c.description ?? undefined,
+    url: `${siteUrl}/churches/${c.slug}`,
+    logo: c.logo_url ?? undefined,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: c.address ?? undefined,
+      addressLocality: c.city ?? undefined,
+      addressRegion: c.state ?? undefined,
+      addressCountry: 'NG',
+    },
+    sameAs: [c.website_url, c.instagram, c.facebook].filter(Boolean),
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* ── FULL-WIDTH HERO ─────────────────────────────────────── */}
       <div className={`relative w-full min-h-[280px] max-h-[480px] overflow-hidden bg-slate-900`}>

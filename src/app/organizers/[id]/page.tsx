@@ -14,19 +14,53 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
   const supabase = await createClient()
-  // Try auth profile first, then seeded
-  const { data: p } = await supabase.from('profiles').select('display_name').eq('id', id).single()
-  if (p) return { title: p.display_name }
   const adminClient = createAdminClient()
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
-  const { data: bySlug } = await adminClient.from('seeded_organizers').select('name').eq('slug', id).maybeSingle()
-  if (bySlug) return { title: bySlug.name }
-  if (isUuid) {
-    const { data: byId } = await adminClient.from('seeded_organizers').select('name').eq('id', id).maybeSingle()
-    if (byId) return { title: byId.name }
+
+  let name: string | null = null
+  let bio: string | null = null
+  let logo: string | null = null
+  let city: string | null = null
+
+  const { data: p } = await supabase.from('profiles').select('display_name, bio, avatar_url, city').eq('id', id).maybeSingle()
+  if (p) { name = p.display_name; bio = p.bio; logo = p.avatar_url; city = p.city }
+
+  if (!name) {
+    const { data: bySlug } = await adminClient.from('seeded_organizers').select('name, description, logo_url, city').eq('slug', id).maybeSingle()
+    if (bySlug) { name = bySlug.name; bio = bySlug.description; logo = bySlug.logo_url; city = bySlug.city }
   }
-  return {}
+  if (!name && isUuid) {
+    const { data: byId } = await adminClient.from('seeded_organizers').select('name, description, logo_url, city').eq('id', id).maybeSingle()
+    if (byId) { name = byId.name; bio = byId.description; logo = byId.logo_url; city = byId.city }
+  }
+  if (!name) return {}
+
+  const description = bio
+    ? bio.slice(0, 160)
+    : `Discover events by ${name}${city ? ` in ${city}` : ''} on Gospello.`
+  const pageUrl = `${siteUrl}/organizers/${id}`
+
+  return {
+    title: name,
+    description,
+    openGraph: {
+      title: `${name} | Gospello`,
+      description,
+      url: pageUrl,
+      type: 'profile',
+      siteName: 'Gospello',
+      images: logo ? [{ url: logo, width: 400, height: 400, alt: name }] : [],
+    },
+    twitter: {
+      card: logo ? 'summary' : 'summary',
+      site: '@gospello',
+      title: `${name} | Gospello`,
+      description,
+      images: logo ? [logo] : [],
+    },
+  }
 }
 
 const BANNER_GRADIENTS: Record<number, string> = {
@@ -121,9 +155,26 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
   const gradientKey = (displayName?.charCodeAt(0) ?? 0) % 6
   const bannerGradient = BANNER_GRADIENTS[gradientKey]
   const initial = displayName?.[0]?.toUpperCase() ?? '?'
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
+  const profileUrl = `${siteUrl}/organizers/${id}`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: displayName,
+    description: bioText ?? undefined,
+    url: profileUrl,
+    logo: avatarUrl ?? undefined,
+    address: locationStr ? { '@type': 'PostalAddress', addressLocality: locationStr } : undefined,
+    sameAs: [instagramUrl, facebookUrl, websiteUrl].filter(Boolean),
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       <div className="max-w-6xl mx-auto px-4 pt-4">
         <BackButton />

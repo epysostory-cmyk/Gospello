@@ -253,8 +253,53 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const shareEventDate = formatDate(e.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
   const shareEventLocation = e.is_online ? 'Online Event' : `${e.location_name}, ${e.city}`
 
+  const hostName = e.churches?.name ?? e.seeded_organizers?.name ?? e.profiles?.display_name ?? 'Gospello'
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: e.title,
+    description: e.description ?? undefined,
+    startDate: e.start_date,
+    endDate: e.end_date ?? undefined,
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: e.is_online
+      ? 'https://schema.org/OnlineEventAttendanceMode'
+      : 'https://schema.org/OfflineEventAttendanceMode',
+    location: e.is_online
+      ? { '@type': 'VirtualLocation', url: e.online_link ?? eventUrl }
+      : {
+          '@type': 'Place',
+          name: e.location_name,
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: e.address ?? undefined,
+            addressLocality: e.city,
+            addressRegion: e.state,
+            addressCountry: e.country,
+          },
+        },
+    image: e.banner_url ? [e.banner_url] : undefined,
+    organizer: {
+      '@type': 'Organization',
+      name: hostName,
+      url: eventUrl,
+    },
+    offers: {
+      '@type': 'Offer',
+      price: e.is_free ? '0' : String(e.price ?? 0),
+      priceCurrency: e.currency ?? 'NGN',
+      availability: 'https://schema.org/InStock',
+      url: e.payment_link ?? eventUrl,
+    },
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-[var(--font-plus-jakarta)]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* Main content wrapper */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 pt-4 lg:pt-6">

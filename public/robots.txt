@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Block private/admin areas
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /auth/
+Disallow: /api/
+
+# Block draft/hidden content
+Disallow: /*?*visibility=draft
+
+Sitemap: https://www.gospello.com/sitemap.xml

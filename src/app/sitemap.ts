@@ -1,26 +1,45 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
-  // Fetch approved upcoming events
-  const { data: events } = await supabase
-    .from('events')
-    .select('slug, updated_at')
-    .eq('status', 'approved')
-    .gte('start_date', new Date().toISOString())
-    .order('start_date', { ascending: true })
-    .limit(500)
-
-  // Fetch churches
-  const { data: churches } = await supabase
-    .from('churches')
-    .select('slug, updated_at')
-    .order('name', { ascending: true })
-    .limit(200)
+  const [
+    { data: events },
+    { data: churches },
+    { data: authOrganizers },
+    { data: seededOrganizers },
+  ] = await Promise.all([
+    supabase
+      .from('events')
+      .select('slug, updated_at')
+      .eq('status', 'approved')
+      .gte('start_date', new Date().toISOString())
+      .order('start_date', { ascending: true })
+      .limit(500),
+    supabase
+      .from('churches')
+      .select('slug, updated_at')
+      .eq('is_hidden', false)
+      .order('name', { ascending: true })
+      .limit(200),
+    supabase
+      .from('profiles')
+      .select('id, updated_at')
+      .eq('account_type', 'organizer')
+      .eq('is_hidden', false)
+      .limit(200),
+    adminClient
+      .from('seeded_organizers')
+      .select('slug, updated_at')
+      .eq('is_hidden', false)
+      .order('name', { ascending: true })
+      .limit(200),
+  ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: SITE, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
@@ -44,5 +63,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  return [...staticRoutes, ...eventRoutes, ...churchRoutes]
+  const authOrgRoutes: MetadataRoute.Sitemap = (authOrganizers ?? []).map((o) => ({
+    url: `${SITE}/organizers/${o.id}`,
+    lastModified: new Date(o.updated_at),
+    changeFrequency: 'weekly',
+    priority: 0.7,
+  }))
+
+  const seededOrgRoutes: MetadataRoute.Sitemap = (seededOrganizers ?? []).map((o) => ({
+    url: `${SITE}/organizers/${o.slug}`,
+    lastModified: new Date(o.updated_at),
+    changeFrequency: 'weekly',
+    priority: 0.7,
+  }))
+
+  return [...staticRoutes, ...eventRoutes, ...churchRoutes, ...authOrgRoutes, ...seededOrgRoutes]
 }
