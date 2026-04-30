@@ -262,10 +262,10 @@ export default async function OrganizersPage({
                             alt={entry.name}
                             width={72}
                             height={72}
-                            className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-2xl object-cover ring-4 ring-white shadow-md"
+                            className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full object-cover ring-4 ring-white shadow-md"
                           />
                         ) : (
-                          <div className={`w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center ring-4 ring-white shadow-md`}>
+                          <div className={`w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center ring-4 ring-white shadow-md`}>
                             <span className="text-white font-black text-2xl drop-shadow-sm">{initial}</span>
                           </div>
                         )}
