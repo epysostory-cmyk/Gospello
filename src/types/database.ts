@@ -125,7 +125,7 @@ export interface ClaimRequest {
 
 export interface Event {
   id: string
-  organizer_id: string
+  organizer_id: string | null
   church_id: string | null
   seeded_organizer_id: string | null
   title: string
@@ -175,8 +175,9 @@ export interface Event {
   created_at: string
   updated_at: string
   // joined relations
-  profiles?: Profile
+  profiles?: Profile | null
   churches?: Church | null
+  seeded_organizers?: SeededOrganizer | null
   attendances?: Attendance[]
 }
 
