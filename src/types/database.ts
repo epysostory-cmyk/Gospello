@@ -168,6 +168,8 @@ export interface Event {
   created_by_admin: boolean
   source_url: string | null
   daily_schedule: DaySchedule[] | null
+  timezone: string
+  livestream_url: string | null
   // admin fields
   rejection_reason: string | null
   approved_at: string | null
