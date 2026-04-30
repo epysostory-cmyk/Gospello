@@ -168,6 +168,8 @@ export interface Event {
   created_by_admin: boolean
   source_url: string | null
   daily_schedule: DaySchedule[] | null
+  timezone: string
+  livestream_url: string | null
   // admin fields
   rejection_reason: string | null
   approved_at: string | null
@@ -175,8 +177,9 @@ export interface Event {
   created_at: string
   updated_at: string
   // joined relations
-  profiles?: Profile
+  profiles?: Profile | null
   churches?: Church | null
+  seeded_organizers?: SeededOrganizer | null
   attendances?: Attendance[]
 }
 

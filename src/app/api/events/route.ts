@@ -61,6 +61,8 @@ export async function POST(request: NextRequest) {
       child_friendly: body.child_friendly || false,
       notes: body.notes || null,
       daily_schedule: body.daily_schedule || null,
+      timezone: body.timezone || 'Africa/Lagos',
+      livestream_url: body.livestream_url || null,
       is_featured: false,
       featured_until: null,
       views_count: 0,

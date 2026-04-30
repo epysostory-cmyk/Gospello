@@ -158,6 +158,21 @@ export default function Step3Location({ formData, updateForm, errors }: StepProp
           </div>
         </div>
       )}
+
+      {/* Livestream URL — always shown */}
+      <div className="pt-2 border-t border-gray-100">
+        <label className={labelCls}>
+          Livestream URL <span className="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <input
+          type="url"
+          value={formData.livestream_url}
+          onChange={(e) => updateForm('livestream_url', e.target.value)}
+          placeholder="e.g., https://youtube.com/live/..."
+          className={inputCls}
+        />
+        <p className="text-xs text-gray-400 mt-1">Add a livestream link even if this is a physical event.</p>
+      </div>
     </div>
   )
 }

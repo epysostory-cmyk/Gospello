@@ -1,6 +1,7 @@
 'use client'
 
 import type { DaySchedule } from '@/types/database'
+import TimezoneSelector from '@/components/ui/TimezoneSelector'
 
 interface StepProps {
   formData: any
@@ -375,6 +376,16 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
           )}
         </>
       )}
+
+      {/* Timezone */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Timezone</p>
+        <TimezoneSelector
+          value={formData.timezone || 'Africa/Lagos'}
+          onChange={(tz: string) => updateForm('timezone', tz)}
+        />
+        <p className="text-xs text-gray-400">Select the timezone where this event takes place.</p>
+      </div>
 
       {/* Bottom tip */}
       <div className="flex items-start gap-3 bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3.5">

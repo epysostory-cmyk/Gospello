@@ -40,6 +40,7 @@ import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
 import AddToCalendar from './_components/AddToCalendar'
 import ReadMoreText from './_components/ReadMoreText'
 import { EventStatusBadge, EventDaysChip } from './_components/EventStatusBadge'
+import EventTimezone from './_components/EventTimezone'
 import { checkUserAttended } from '@/app/actions/attendance'
 import { checkEventSaved } from '@/app/actions/saved-events'
 
@@ -365,6 +366,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   </a>
                 </>
               )}
+              {e.timezone && e.timezone !== 'UTC' && (
+                <EventTimezone timezone={e.timezone} startDate={e.start_date} />
+              )}
               {e.is_online && (
                 <>
                   <span className="text-gray-300 font-normal">·</span>
@@ -446,6 +450,20 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 </div>
               )}
             </div>
+
+            {/* Livestream link — shown for any event that has one */}
+            {e.livestream_url && (
+              <div className="flex items-start gap-3 p-4 bg-sky-50 border border-sky-100 rounded-xl">
+                <Globe className="w-4 h-4 text-sky-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Watch Live</p>
+                  <a href={e.livestream_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors mt-1">
+                    <Globe className="w-3 h-3" /> Join Livestream
+                  </a>
+                </div>
+              </div>
+            )}
 
             {/* Tags */}
             {e.tags && e.tags.length > 0 && (

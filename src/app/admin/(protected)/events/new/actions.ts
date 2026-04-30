@@ -28,6 +28,8 @@ interface AdminEventInput {
     notes: string
     source_url: string
     daily_schedule: DaySchedule[] | null
+    timezone: string
+    livestream_url: string
   }
 }
 
@@ -81,6 +83,8 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
       notes:             form.notes || null,
       created_by_admin:  true,
       source_url:        form.source_url || null,
+      timezone:          form.timezone || 'Africa/Lagos',
+      livestream_url:    form.livestream_url || null,
     }).select('id').single()
 
     if (error) return { error: error.message }
@@ -132,6 +136,8 @@ export async function updateAdminEvent(input: AdminEventUpdateInput): Promise<{ 
       child_friendly:    form.child_friendly,
       notes:             form.notes || null,
       source_url:        form.source_url || null,
+      timezone:          form.timezone || 'Africa/Lagos',
+      livestream_url:    form.livestream_url || null,
     }).eq('id', eventId)
 
     if (error) return { error: error.message }
