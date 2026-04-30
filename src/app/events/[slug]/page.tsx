@@ -599,7 +599,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 </Link>
               ) : e.seeded_organizers ? (
                 <Link
-                  href={`/organizers/seeded/${e.seeded_organizers.slug}`}
+                  href={`/organizers/${e.seeded_organizers.slug}`}
                   className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-indigo-200 transition-colors group"
                 >
                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
