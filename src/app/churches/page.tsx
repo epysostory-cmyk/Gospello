@@ -39,8 +39,24 @@ async function getChurches(params: SearchParams) {
   if (params.city) query = query.ilike('city', `%${params.city}%`)
 
   const { data, count } = await query
+  const churches = (data ?? []) as Church[]
+
+  // Fetch event counts for all churches on this page
+  let eventCountMap: Record<string, number> = {}
+  if (churches.length > 0) {
+    const { data: eventRows } = await supabase
+      .from('events')
+      .select('church_id')
+      .eq('status', 'approved')
+      .in('church_id', churches.map(c => c.id))
+    for (const row of eventRows ?? []) {
+      if (row.church_id) eventCountMap[row.church_id] = (eventCountMap[row.church_id] ?? 0) + 1
+    }
+  }
+
   return {
-    churches: (data ?? []) as Church[],
+    churches,
+    eventCountMap,
     total: count ?? 0,
     page,
     pages: Math.ceil((count ?? 0) / PAGE_SIZE),
@@ -53,7 +69,7 @@ export default async function ChurchesPage({
   searchParams: Promise<SearchParams>
 }) {
   const params = await searchParams
-  const { churches, total, page, pages } = await getChurches(params)
+  const { churches, eventCountMap, total, page, pages } = await getChurches(params)
   const hasFilters = !!(params.q || params.city)
 
   function buildUrl(overrides: Partial<SearchParams>) {
@@ -161,7 +177,7 @@ export default async function ChurchesPage({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {churches.map((church) => (
-              <ChurchCard key={church.id} church={church} />
+              <ChurchCard key={church.id} church={church} eventCount={eventCountMap[church.id]} />
             ))}
           </div>
         )}

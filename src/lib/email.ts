@@ -15,7 +15,7 @@ interface EmailOptions {
 
 export async function sendEmail({ to, subject, html, attachments }: EmailOptions): Promise<boolean> {
   if (!RESEND_API_KEY) {
-    console.error('[sendEmail] RESEND_API_KEY is not set — email not sent to', to)
+    console.error('[sendEmail] RESEND_API_KEY is not set — email not sent to', to, '| subject:', subject)
     return false
   }
   try {
@@ -28,14 +28,19 @@ export async function sendEmail({ to, subject, html, attachments }: EmailOptions
     })
     if (!res.ok) {
       const errBody = await res.text()
-      console.error(`[sendEmail] Resend API error ${res.status} sending to ${to}:`, errBody)
+      console.error(`[sendEmail] Resend API error ${res.status} to=${to} subject="${subject}":`, errBody)
       return false
     }
     return true
   } catch (err) {
-    console.error('[sendEmail] Network error sending to', to, err)
+    console.error('[sendEmail] Network error to', to, '| subject:', subject, err)
     return false
   }
+}
+
+export async function sendEmailOrThrow(opts: EmailOptions): Promise<void> {
+  const ok = await sendEmail(opts)
+  if (!ok) throw new Error(`Failed to send email to ${opts.to} — subject: ${opts.subject}`)
 }
 
 /* ─── Shared layout ─────────────────────────────────────────────────── */

@@ -61,12 +61,10 @@ export default async function CategoriesPage() {
             {cats.map((cat) => {
               const count = countMap[cat.slug] ?? 0
               const hex = cat.color ?? '#6B7280'
-              return (
-                <Link
-                  key={cat.slug}
-                  href={`/events?category=${cat.slug}`}
-                  className="group relative bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                >
+              const hasEvents = count > 0
+
+              const cardContent = (
+                <>
                   {/* Top color bar */}
                   <div className="h-2 w-full" style={{ backgroundColor: hex }} />
 
@@ -74,21 +72,24 @@ export default async function CategoriesPage() {
                     {/* Icon circle */}
                     <div
                       className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-md mb-5"
-                      style={{ backgroundColor: hex }}
+                      style={{ backgroundColor: hex, opacity: hasEvents ? 1 : 0.5 }}
                     >
                       {cat.icon}
                     </div>
 
                     {/* Name + count */}
                     <div className="flex items-center justify-between mb-3">
-                      <h2 className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                      <h2 className={`text-xl font-bold transition-colors ${hasEvents ? 'text-gray-900 group-hover:text-indigo-600' : 'text-gray-400'}`}>
                         {cat.name}
                       </h2>
                       <span
                         className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                        style={{ backgroundColor: hex + '18', color: hex }}
+                        style={hasEvents
+                          ? { backgroundColor: hex + '18', color: hex }
+                          : { backgroundColor: '#F3F4F6', color: '#9CA3AF' }
+                        }
                       >
-                        {count > 0 ? `${count} event${count === 1 ? '' : 's'}` : 'Coming soon'}
+                        {hasEvents ? `${count} event${count === 1 ? '' : 's'}` : 'Coming soon'}
                       </span>
                     </div>
 
@@ -100,15 +101,36 @@ export default async function CategoriesPage() {
                     )}
 
                     {/* CTA */}
-                    <div
-                      className="flex items-center gap-1.5 text-sm font-semibold group-hover:gap-2.5 transition-all"
-                      style={{ color: hex }}
-                    >
-                      Browse {cat.name} Events
-                      <ArrowRight className="w-4 h-4" />
-                    </div>
+                    {hasEvents ? (
+                      <div
+                        className="flex items-center gap-1.5 text-sm font-semibold group-hover:gap-2.5 transition-all"
+                        style={{ color: hex }}
+                      >
+                        Browse {cat.name} Events
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">No events yet — check back soon</p>
+                    )}
                   </div>
+                </>
+              )
+
+              return hasEvents ? (
+                <Link
+                  key={cat.slug}
+                  href={`/events?category=${cat.slug}`}
+                  className="group relative bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                >
+                  {cardContent}
                 </Link>
+              ) : (
+                <div
+                  key={cat.slug}
+                  className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden opacity-70 cursor-default"
+                >
+                  {cardContent}
+                </div>
               )
             })}
           </div>

@@ -4,7 +4,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Use admin client for all queries — sitemap is fetched by Google with no auth context
   const adminClient = createAdminClient()
 
   const [
@@ -17,35 +16,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .from('events')
       .select('slug, updated_at')
       .eq('status', 'approved')
-      .gte('start_date', new Date().toISOString())
       .order('start_date', { ascending: true })
-      .limit(500),
+      .range(0, 9999),
     adminClient
       .from('churches')
       .select('slug, updated_at')
       .eq('is_hidden', false)
       .order('name', { ascending: true })
-      .limit(200),
+      .range(0, 9999),
     adminClient
       .from('profiles')
       .select('id, updated_at')
       .eq('account_type', 'organizer')
       .eq('is_hidden', false)
-      .limit(200),
+      .range(0, 9999),
     adminClient
       .from('seeded_organizers')
       .select('slug, updated_at')
       .eq('is_hidden', false)
       .order('name', { ascending: true })
-      .limit(200),
+      .range(0, 9999),
   ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: SITE, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
-    { url: `${SITE}/events`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
-    { url: `${SITE}/churches`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
-    { url: `${SITE}/categories`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${SITE}/organizers`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.6 },
+    { url: SITE,                   lastModified: new Date(), changeFrequency: 'daily',  priority: 1   },
+    { url: `${SITE}/events`,       lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${SITE}/churches`,     lastModified: new Date(), changeFrequency: 'daily',  priority: 0.8 },
+    { url: `${SITE}/categories`,   lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE}/organizers`,   lastModified: new Date(), changeFrequency: 'daily',  priority: 0.6 },
   ]
 
   const eventRoutes: MetadataRoute.Sitemap = (events ?? []).map((e) => ({

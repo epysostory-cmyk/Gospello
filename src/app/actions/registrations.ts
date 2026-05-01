@@ -252,12 +252,15 @@ export async function confirmPayment(registrationId: string, registrantEmail: st
       isPaid: true,
     })
 
-    await sendEmail({
+    const emailSent = await sendEmail({
       to: reg.email,
       subject,
       html,
       attachments: [{ filename: `ticket-${String(reg.ticket_number).padStart(4, '0')}.pdf`, content: pdfBase64 }],
     })
+    if (!emailSent) {
+      console.error('[confirmPayment] Ticket email failed for registration', reg.id, 'to', reg.email)
+    }
 
     return { success: true, ticketPdfBase64: pdfBase64, ticketNumber: reg.ticket_number }
   } catch (err) {
@@ -412,12 +415,15 @@ export async function confirmEmailCode(
       isPaid: false,
     })
 
-    await sendEmail({
+    const emailSent = await sendEmail({
       to: reg.email,
       subject,
       html,
       attachments: [{ filename: `ticket-${String(reg.ticket_number).padStart(4, '0')}.pdf`, content: pdfBase64 }],
     })
+    if (!emailSent) {
+      console.error('[confirmEmailCode] Ticket email failed for registration', reg.id, 'to', reg.email)
+    }
 
     return { success: true, ticketPdfBase64: pdfBase64, ticketNumber: reg.ticket_number }
   } catch (err) {

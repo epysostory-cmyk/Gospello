@@ -21,6 +21,8 @@ async function getHomepageData() {
     const adminClient = createAdminClient()
     const now = new Date().toISOString()
     const in90Days = new Date(Date.now() + NINETY_DAYS).toISOString()
+    // Include ongoing events: treat no end_date as start + 3h
+    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
 
     const [
       heroSettingsRes,
@@ -48,17 +50,17 @@ async function getHomepageData() {
         .eq('status', 'approved')
         .eq('visibility', 'public')
         .eq('is_featured', true)
-        .gte('start_date', now)
+        .or(`end_date.gte.${now},and(end_date.is.null,start_date.gte.${threeHoursAgo})`)
         .or(`featured_until.is.null,featured_until.gte.${now}`)
         .order('start_date', { ascending: true })
         .limit(4),
-      // Upcoming events: recently added first
+      // Upcoming + ongoing events: recently added first
       supabase
         .from('events')
         .select('*, churches(*)')
         .eq('status', 'approved')
         .eq('visibility', 'public')
-        .gte('start_date', now)
+        .or(`end_date.gte.${now},and(end_date.is.null,start_date.gte.${threeHoursAgo})`)
         .lte('start_date', in90Days)
         .order('created_at', { ascending: false })
         .limit(100),
@@ -204,10 +206,26 @@ async function getHomepageData() {
       if (parsed && typeof parsed === 'object') churchCta = parsed as CtaShape
     }
 
+    const featuredChurches = (churchesRes.data ?? []) as Church[]
+
+    // Fetch event counts for featured churches
+    let churchEventCountMap: Record<string, number> = {}
+    if (featuredChurches.length > 0) {
+      const { data: churchEventRows } = await adminClient
+        .from('events')
+        .select('church_id')
+        .eq('status', 'approved')
+        .in('church_id', featuredChurches.map(c => c.id))
+      for (const row of churchEventRows ?? []) {
+        if (row.church_id) churchEventCountMap[row.church_id] = (churchEventCountMap[row.church_id] ?? 0) + 1
+      }
+    }
+
     return {
       featuredEvents,
       upcomingEvents,
-      featuredChurches: (churchesRes.data ?? []) as Church[],
+      featuredChurches,
+      churchEventCountMap,
       // Slice to 6 for the homepage category grid; pass full list to filter dropdown
       categories: rawCategories,
       catMap,
@@ -228,6 +246,7 @@ async function getHomepageData() {
       featuredEvents: [],
       upcomingEvents: [],
       featuredChurches: [],
+      churchEventCountMap: {} as Record<string, number>,
       categories: [],
       catMap: {} as Record<string, { name: string; icon: string | null; color: string | null }>,
       stats: { events: 0, churches: 0, organizers: 0, cities: 0 },
@@ -245,6 +264,7 @@ export default async function HomePage() {
     featuredEvents,
     upcomingEvents,
     featuredChurches,
+    churchEventCountMap,
     categories,
     catMap,
     stats,
@@ -526,7 +546,7 @@ export default async function HomePage() {
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {featuredChurches.map((church) => (
-                <ChurchCard key={church.id} church={church} />
+                <ChurchCard key={church.id} church={church} eventCount={churchEventCountMap[church.id]} />
               ))}
             </div>
           </section>

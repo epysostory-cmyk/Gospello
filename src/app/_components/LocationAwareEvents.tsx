@@ -294,11 +294,15 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
 
   const filteredEvents = allEvents.filter(event => {
     const eDate = event.start_date.split('T')[0]
-    if (dateFilter === 'today' && eDate !== today) return false
+    const eEndDate = event.end_date ? event.end_date.split('T')[0] : eDate
+    if (dateFilter === 'today') {
+      // Include multi-day events that span today (started on or before today, end on or after today)
+      if (eDate > today || eEndDate < today) return false
+    }
     if (dateFilter === 'tomorrow' && eDate !== tomorrow) return false
     if (dateFilter === 'weekend' && (eDate < weekend.sat || eDate > weekend.sun)) return false
     if (dateFilter === 'custom') {
-      if (appliedFrom && eDate < appliedFrom) return false
+      if (appliedFrom && eEndDate < appliedFrom) return false
       if (appliedTo && eDate > appliedTo) return false
     }
     if (stateFilter && event.state?.toLowerCase() !== stateFilter.toLowerCase()) return false

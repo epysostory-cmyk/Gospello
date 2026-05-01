@@ -339,9 +339,9 @@ function SignUpForm() {
           <div className="text-5xl mb-4">📧</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
           <p className="text-gray-500 mb-4">
-            We&apos;ve sent a confirmation link to <strong>{email}</strong>. Click the link to verify your account.
+            We&apos;ve sent a confirmation link to <strong>{email}</strong>. Click the link to verify your account, then sign in.
           </p>
-          <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-8 text-left">
+          <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-6 text-left">
             <p className="text-sm font-semibold text-purple-800 mb-1">
               {accountType === 'church' ? '⛪ Church account created' : '🎤 Organizer account created'}
             </p>
@@ -351,9 +351,19 @@ function SignUpForm() {
                 : 'After confirming your email, you can start posting gospel events right away.'}
             </p>
           </div>
-          <Link href="/auth/login" className="text-[#7C3AED] font-medium hover:text-[#6D28D9]">
-            Back to sign in
+          <ol className="text-left text-sm text-gray-600 mb-8 space-y-2 bg-white border border-gray-100 rounded-xl p-4">
+            <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#7C3AED] text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">1</span> Open the email we sent to <strong>{email}</strong></li>
+            <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#7C3AED] text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">2</span> Click the confirmation link inside</li>
+            <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#7C3AED] text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">3</span> Sign in to access your dashboard</li>
+          </ol>
+          <Link
+            href="/auth/login"
+            className="block w-full h-[52px] rounded-xl text-white text-[16px] font-semibold flex items-center justify-center"
+            style={{ backgroundColor: '#7C3AED' }}
+          >
+            Go to Sign In
           </Link>
+          <p className="text-xs text-gray-400 mt-4">Didn&apos;t get the email? Check your spam folder.</p>
         </div>
       </div>
     )

@@ -45,13 +45,15 @@ const TIMEFRAME_OPTIONS = [
 
 function scoreEvent(event: Event, now: Date): number {
   let score = 0
+  const lifecycle = getEventLifecycle(event.start_date, event.end_date)
+  if (lifecycle === 'ongoing') return 200 + (event.is_featured ? 40 : 0)
+  if (lifecycle === 'ended') return -100
   const daysUntil = (new Date(event.start_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
   if (daysUntil <= 7) score += 50
   else if (daysUntil <= 14) score += 30
   else if (daysUntil <= 30) score += 15
   score += Math.min((event.views_count ?? 0) / 10, 20)
   if (event.is_featured) score += 40
-  if (daysUntil < 0) score -= 100
   return score
 }
 
@@ -64,11 +66,10 @@ async function getEvents(params: SearchParams) {
 
   let query = supabase
     .from('events')
-    .select('*, churches(*)', { count: 'exact' })
+    .select('*, churches(*)')
     .eq('status', 'approved')
     .eq('visibility', 'public')
     .order('created_at', { ascending: false })
-    .range(from, to)
 
   if (params.q) {
     query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%,location_name.ilike.%${params.q}%`)
@@ -85,7 +86,10 @@ async function getEvents(params: SearchParams) {
   if (params.timeframe === 'today') {
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
     const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999)
-    query = query.gte('start_date', todayStart.toISOString()).lte('start_date', todayEnd.toISOString())
+    // Include events that start today OR started before today but end today or later (multi-day)
+    query = query
+      .lte('start_date', todayEnd.toISOString())
+      .or(`end_date.gte.${todayStart.toISOString()},and(end_date.is.null,start_date.gte.${todayStart.toISOString()})`)
   }
   if (params.timeframe === 'weekend') {
     const now = new Date()
@@ -106,9 +110,11 @@ async function getEvents(params: SearchParams) {
     query = query.gte('start_date', sunday.toISOString()).lte('start_date', saturday.toISOString())
   }
 
-  const { data, count } = await query
+  const { data } = await query
   const now = new Date()
-  const events = ((data ?? []) as Event[]).sort((a, b) => scoreEvent(b, now) - scoreEvent(a, now))
+  const allSorted = ((data ?? []) as Event[]).sort((a, b) => scoreEvent(b, now) - scoreEvent(a, now))
+  const total = allSorted.length
+  const events = allSorted.slice(from, to + 1)
 
   // Batch fetch attendance counts
   let attendanceCountMap: Record<string, number> = {}
@@ -124,9 +130,9 @@ async function getEvents(params: SearchParams) {
 
   return {
     events,
-    total: count ?? 0,
+    total,
     page,
-    pages: Math.ceil((count ?? 0) / PAGE_SIZE),
+    pages: Math.ceil(total / PAGE_SIZE),
     attendanceCountMap,
   }
 }

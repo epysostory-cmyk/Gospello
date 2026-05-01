@@ -43,7 +43,7 @@ export default async function DashboardPage() {
     .select('*')
     .eq('organizer_id', user.id)
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(20)
 
   const { data: allEvents } = await supabase
     .from('events')
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
       {/* Recent events */}
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900">Recent Events</h2>
+          <h2 className="font-semibold text-gray-900">Your Events</h2>
           <Link href="/dashboard/events" className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
             View all <ArrowRight className="w-3.5 h-3.5" />
           </Link>

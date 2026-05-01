@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Clock, CheckCircle, Star, ShieldCheck } from 'lucide-react'
+import { MapPin, Clock, CheckCircle, Star, ShieldCheck, Calendar } from 'lucide-react'
 import type { Church } from '@/types/database'
 
 interface ChurchCardProps {
   church: Church
+  eventCount?: number
 }
 
 // Deterministic gradient from church name initial
@@ -23,7 +24,7 @@ function gradientFor(name: string) {
   return GRADIENTS[(name.charCodeAt(0) ?? 0) % GRADIENTS.length]
 }
 
-export default function ChurchCard({ church }: ChurchCardProps) {
+export default function ChurchCard({ church, eventCount }: ChurchCardProps) {
   const gradient = gradientFor(church.name)
   const initial = church.name[0]?.toUpperCase() ?? '?'
 
@@ -103,6 +104,12 @@ export default function ChurchCard({ church }: ChurchCardProps) {
             <div className="flex items-center gap-1.5 text-xs text-gray-500">
               <Clock className="w-3 h-3 text-indigo-400 flex-shrink-0" />
               <span className="truncate">{church.service_times}</span>
+            </div>
+          )}
+          {eventCount != null && eventCount > 0 && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <Calendar className="w-3 h-3 text-violet-400 flex-shrink-0" />
+              <span>{eventCount} event{eventCount === 1 ? '' : 's'} on Gospello</span>
             </div>
           )}
         </div>

@@ -64,7 +64,9 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
           </p>
           <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
             <Calendar className="w-3 h-3 text-indigo-400" />
-            {formatDate(event.start_date, { month: 'short', day: 'numeric' })}
+            {event.end_date && event.end_date.split('T')[0] !== event.start_date.split('T')[0]
+              ? `${formatDate(event.start_date, { month: 'short', day: 'numeric' })} – ${formatDate(event.end_date, { month: 'short', day: 'numeric' })}`
+              : formatDate(event.start_date, { month: 'short', day: 'numeric' })}
           </p>
           <p className="text-xs text-gray-500 flex items-center gap-1">
             {event.is_online
@@ -125,7 +127,9 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-sm text-white/70">
             <span className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-amber-400" />
-              {formatDate(event.start_date, { month: 'short', day: 'numeric' })}
+              {event.end_date && event.end_date.split('T')[0] !== event.start_date.split('T')[0]
+                ? `${formatDate(event.start_date, { month: 'short', day: 'numeric' })} – ${formatDate(event.end_date, { month: 'short', day: 'numeric' })}`
+                : formatDate(event.start_date, { month: 'short', day: 'numeric' })}
             </span>
             {event.is_online ? (
               <span className="flex items-center gap-1.5">
@@ -220,7 +224,13 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
         <div className="mt-3 space-y-1.5">
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <Calendar className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-            <span>{formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}</span>
+            {event.end_date && event.end_date.split('T')[0] !== event.start_date.split('T')[0] ? (
+              <span>
+                {formatDate(event.start_date, { month: 'short', day: 'numeric' })} – {formatDate(event.end_date, { month: 'short', day: 'numeric' })}
+              </span>
+            ) : (
+              <span>{formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}</span>
+            )}
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             {event.is_online ? (

@@ -66,7 +66,7 @@ function LoginPage() {
     if (error) {
       const msg = error.message.toLowerCase()
       if (msg.includes('invalid login credentials') || msg.includes('invalid credentials') || msg.includes('user not found')) {
-        setError('No account found with these details. It may have been removed. Contact support@gospello.com if you need help.')
+        setError('Incorrect email or password. Please try again.')
       } else {
         setError(error.message)
       }
