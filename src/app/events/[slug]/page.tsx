@@ -46,6 +46,16 @@ import { checkEventSaved } from '@/app/actions/saved-events'
 
 export const dynamic = 'force-dynamic'
 
+type EventWithRelations = Event & {
+  seeded_organizers?: {
+    slug: string
+    name: string
+    logo_url?: string | null
+    city?: string | null
+    state?: string | null
+  } | null
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
@@ -150,7 +160,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   if (!event) notFound()
 
-  const e = event as Event
+  const e = event as EventWithRelations
 
   // Parallel data fetches
   const [

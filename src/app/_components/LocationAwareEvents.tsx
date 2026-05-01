@@ -192,11 +192,11 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   // Refs for trigger elements and dropdown panels
-  const stateRef = useRef<HTMLDivElement>(null)
-  const categoryRef = useRef<HTMLDivElement>(null)
+  const stateRef = useRef<HTMLDivElement | null>(null)
+  const categoryRef = useRef<HTMLDivElement | null>(null)
   const stateSearchRef = useRef<HTMLInputElement>(null)
-  const statePanelRef = useRef<HTMLDivElement>(null)
-  const categoryPanelRef = useRef<HTMLDivElement>(null)
+  const statePanelRef = useRef<HTMLDivElement | null>(null)
+  const categoryPanelRef = useRef<HTMLDivElement | null>(null)
 
   // Close dropdowns on outside click/touch — panels are fixed so check both trigger + panel
   useEffect(() => {
