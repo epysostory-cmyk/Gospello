@@ -226,7 +226,7 @@ export function getEventLifecycle(startDate: string, endDate?: string | null): E
   const end = endDate ? new Date(endDate) : null
   if (now < start) return 'upcoming'
   if (end && now > end) return 'ended'
-  if (!end && now > new Date(start.getTime() + 3 * 60 * 60 * 1000)) return 'ended'
+  if (!end && now > new Date(start.getTime() + 6 * 60 * 60 * 1000)) return 'ended'
   return 'ongoing'
 }
 
