@@ -131,7 +131,7 @@ function DropdownPanel({
 }: {
   anchorRect: DOMRect | null
   children: React.ReactNode
-  panelRef: React.RefObject<HTMLDivElement | null>
+  panelRef: React.Ref<HTMLDivElement>
 }) {
   if (!anchorRect) return null
   const PANEL_W = 232
@@ -192,11 +192,11 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   // Refs for trigger elements and dropdown panels
-  const stateRef = useRef<HTMLDivElement | null>(null)
-  const categoryRef = useRef<HTMLDivElement | null>(null)
+  const stateRef = useRef<HTMLDivElement>(null)
+  const categoryRef = useRef<HTMLDivElement>(null)
   const stateSearchRef = useRef<HTMLInputElement>(null)
-  const statePanelRef = useRef<HTMLDivElement | null>(null)
-  const categoryPanelRef = useRef<HTMLDivElement | null>(null)
+  const statePanelRef = useRef<HTMLDivElement>(null)
+  const categoryPanelRef = useRef<HTMLDivElement>(null)
 
   // Close dropdowns on outside click/touch — panels are fixed so check both trigger + panel
   useEffect(() => {
