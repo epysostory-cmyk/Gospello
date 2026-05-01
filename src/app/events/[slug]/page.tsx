@@ -660,9 +660,22 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                      {e.churches.name}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                        {e.churches.name}
+                      </p>
+                      {e.churches.verified_badge ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 flex-shrink-0">
+                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                          Verified
+                        </span>
+                      ) : e.churches.is_claimed ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex-shrink-0">
+                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          Claimed
+                        </span>
+                      ) : null}
+                    </div>
                     {e.churches.city && (
                       <p className="text-xs text-gray-500 mt-0.5">{e.churches.city}, {e.churches.state}</p>
                     )}
@@ -722,9 +735,15 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                      {e.profiles.display_name}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                        {e.profiles.display_name}
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 flex-shrink-0">
+                        <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                        Verified Organizer
+                      </span>
+                    </div>
                     <p className="text-xs text-gray-500 mt-0.5 capitalize">{e.profiles.account_type}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{organizerEventCount ?? 0} events on Gospello</p>
                   </div>

@@ -136,6 +136,19 @@ async function getHomepageData() {
       rawCategories.map(c => [c.slug, { name: c.name, icon: c.icon ?? null, color: c.color ?? '#6B7280' }])
     )
 
+    // Count approved events per category slug
+    const { data: categoryEventRows } = await adminClient
+      .from('events')
+      .select('category')
+      .eq('status', 'approved')
+      .not('category', 'is', null)
+    const categoryEventCount: Record<string, number> = {}
+    for (const row of categoryEventRows ?? []) {
+      if (row.category) categoryEventCount[row.category] = (categoryEventCount[row.category] ?? 0) + 1
+    }
+    // Only keep categories that have at least one approved event
+    const categoriesWithEvents = rawCategories.filter(c => (categoryEventCount[c.slug] ?? 0) > 0)
+
     // IDs of organizers/churches with at least one approved event
     const approvedOrganizerIds = new Set(
       (eventOrganizerIdsRes.data ?? []).map((r: { organizer_id: string | null }) => r.organizer_id).filter(Boolean)
@@ -227,7 +240,7 @@ async function getHomepageData() {
       featuredChurches,
       churchEventCountMap,
       // Slice to 6 for the homepage category grid; pass full list to filter dropdown
-      categories: rawCategories,
+      categories: categoriesWithEvents,
       catMap,
       stats: {
         events: statsEventsRes.count ?? 0,
