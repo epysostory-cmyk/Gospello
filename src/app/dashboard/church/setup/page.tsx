@@ -112,42 +112,50 @@ export default function ChurchSetupPage() {
     setSaving(true)
     setError('')
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { setSaving(false); return }
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setSaving(false); return }
 
-    const slug = slugify(form.name)
+      // Make slug unique to avoid conflicts
+      const baseSlug = slugify(form.name)
+      const slug = `${baseSlug}-${Date.now().toString(36)}`
 
-    const { error: insertError } = await supabase.from('churches').insert({
-      profile_id: session.user.id,
-      name: form.name.trim(),
-      slug,
-      lead_pastor: form.lead_pastor.trim(),
-      denomination: form.denomination || null,
-      logo_url: logoUrl,
-      description: form.description.trim() || null,
-      address: form.address.trim(),
-      city: form.city.trim(),
-      state: form.state,
-      country: 'Nigeria',
-      service_times: filledTimes.join('\n'),
-      website_url: form.website_url.trim() || null,
-      phone: form.phone.trim() || null,
-      instagram: form.instagram.trim() || null,
-      facebook: form.facebook.trim() || null,
-    })
+      const { error: insertError } = await supabase.from('churches').insert({
+        profile_id: session.user.id,
+        name: form.name.trim(),
+        slug,
+        lead_pastor: form.lead_pastor.trim(),
+        denomination: form.denomination || null,
+        logo_url: logoUrl,
+        description: form.description.trim() || null,
+        address: form.address.trim(),
+        city: form.city.trim(),
+        state: form.state,
+        country: 'Nigeria',
+        service_times: filledTimes.join('\n'),
+        website_url: form.website_url.trim() || null,
+        phone: form.phone.trim() || null,
+        instagram: form.instagram.trim() || null,
+        facebook: form.facebook.trim() || null,
+      })
 
-    if (insertError) {
-      setError(insertError.message)
+      if (insertError) {
+        setError(insertError.message)
+        setSaving(false)
+        return
+      }
+
+      await supabase
+        .from('profiles')
+        .update({ display_name: form.name.trim(), profile_completed: true })
+        .eq('id', session.user.id)
+
+      router.push('/dashboard')
+    } catch (err) {
+      console.error('[church-setup] unexpected error:', err)
+      setError('Something went wrong. Please try again.')
       setSaving(false)
-      return
     }
-
-    await supabase
-      .from('profiles')
-      .update({ display_name: form.name.trim(), profile_completed: true })
-      .eq('id', session.user.id)
-
-    router.push('/dashboard')
   }
 
   if (checking) return (
