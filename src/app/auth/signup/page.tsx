@@ -276,8 +276,10 @@ function SignUpForm() {
       return
     }
 
+    // Fire profile setup in the background — no need to await, the DB trigger
+    // also handles this and the endpoint tolerates duplicates gracefully.
     if (data.user) {
-      await fetch('/api/auth/setup-profile', {
+      fetch('/api/auth/setup-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -288,7 +290,7 @@ function SignUpForm() {
           state: state || undefined,
           ministryType: ministryTypes.length > 0 ? ministryTypes.join(', ') : undefined,
         }),
-      })
+      }).catch(() => {})
     }
 
     setSuccess(true)
