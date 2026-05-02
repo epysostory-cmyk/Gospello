@@ -454,6 +454,7 @@ export default async function EventsPage({
                   key={event.id}
                   event={event}
                   categoryInfo={catMap[event.category]}
+                  attendanceCount={attendanceCountMap[event.id]}
                 />
               ))}
             </div>

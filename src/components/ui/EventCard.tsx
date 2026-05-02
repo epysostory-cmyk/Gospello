@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, MapPin, Zap, Star, Globe } from 'lucide-react'
+import { Calendar, MapPin, Zap, Star, Globe, Users } from 'lucide-react'
 import { formatDate, formatTime, cn } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
@@ -243,10 +243,18 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
 
         {/* Footer */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-          {event.churches
-            ? <p className="text-xs font-semibold text-indigo-600 truncate">{event.churches.name}</p>
-            : <span />
-          }
+          <div className="flex items-center gap-2 min-w-0">
+            {event.churches
+              ? <p className="text-xs font-semibold text-indigo-600 truncate">{event.churches.name}</p>
+              : <span />
+            }
+            {attendanceCount != null && attendanceCount > 0 && (
+              <span className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
+                <Users className="w-3 h-3" />
+                {attendanceCount}
+              </span>
+            )}
+          </div>
           {/* Free / Paid price badge */}
           {event.is_free ? (
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">Free</span>
