@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
           email,
           account_type: accountType,
           display_name: displayName || email.split('@')[0],
-          profile_completed: true,
+          profile_completed: false,
           ...(state       ? { state }         : {}),
           ...(ministryType ? { ministry_type: ministryType } : {}),
         },
