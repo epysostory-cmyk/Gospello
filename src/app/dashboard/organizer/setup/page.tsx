@@ -153,30 +153,37 @@ export default function OrganizerSetupPage() {
 
     setSaving(true)
     setError('')
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { setSaving(false); return }
 
-    const { error: err } = await supabase.from('profiles').update({
-      display_name:    form.display_name.trim(),
-      contact_person:  form.contact_person.trim() || null,
-      ministry_types:  form.ministry_types.length > 0 ? form.ministry_types : null,
-      state:           form.state,
-      city:            form.city || null,
-      address:         form.address.trim() || null,
-      phone:           form.phone.trim() || null,
-      whatsapp:        form.whatsapp.trim() || null,
-      website:         form.website.trim() || null,
-      instagram:       form.instagram.trim() || null,
-      facebook:        form.facebook.trim() || null,
-      twitter:         form.twitter.trim() || null,
-      youtube:         form.youtube.trim() || null,
-      bio:             form.bio.trim() || null,
-      profile_completed: true,
-    }).eq('id', session.user.id)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setSaving(false); return }
 
-    if (err) { setError(err.message); setSaving(false); return }
-    localStorage.removeItem(DRAFT_KEY)
-    router.push('/dashboard')
+      const { error: err } = await supabase.from('profiles').update({
+        display_name:    form.display_name.trim(),
+        contact_person:  form.contact_person.trim() || null,
+        ministry_types:  form.ministry_types.length > 0 ? form.ministry_types : null,
+        state:           form.state,
+        city:            form.city || null,
+        address:         form.address.trim() || null,
+        phone:           form.phone.trim() || null,
+        whatsapp:        form.whatsapp.trim() || null,
+        website:         form.website.trim() || null,
+        instagram:       form.instagram.trim() || null,
+        facebook:        form.facebook.trim() || null,
+        twitter:         form.twitter.trim() || null,
+        youtube:         form.youtube.trim() || null,
+        bio:             form.bio.trim() || null,
+        profile_completed: true,
+      }).eq('id', session.user.id)
+
+      if (err) { setError(err.message); setSaving(false); return }
+      localStorage.removeItem(DRAFT_KEY)
+      router.push('/dashboard')
+    } catch (err) {
+      console.error('[organizer-setup] unexpected error:', err)
+      setError('Something went wrong. Please try again.')
+      setSaving(false)
+    }
   }
 
   if (checking) return (
