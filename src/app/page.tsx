@@ -431,8 +431,27 @@ export default async function HomePage() {
           <p className="text-gray-500 mt-1 text-sm sm:text-base">Find events that match your spiritual interests</p>
         </div>
 
-        {/* Category grid — 2 cols mobile, 3 cols sm, 6 cols lg */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Mobile: horizontal scroll slider — sm+: grid */}
+        <div className="sm:hidden flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide snap-x snap-mandatory">
+          {displayCategories.map((cat, i) => (
+            <Link
+              key={cat.slug}
+              href={`/events?category=${cat.slug}`}
+              className="group snap-start flex-shrink-0 w-[44vw] max-w-[180px] animate-fadeInUp"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden shadow-sm active:scale-[0.97] transition-all duration-200 flex flex-col">
+                <div className="h-1.5 w-full flex-shrink-0" style={{ backgroundColor: cat.color ?? '#6B7280' }} />
+                <div className="px-4 py-4">
+                  <span className="text-[13px] font-semibold text-gray-800 leading-snug">{cat.name}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* sm+: grid */}
+        <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-6 gap-3 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {displayCategories.map((cat, i) => (
             <Link
               key={cat.slug}
@@ -441,9 +460,7 @@ export default async function HomePage() {
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div className="h-full rounded-2xl bg-white border border-gray-100 overflow-hidden shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 flex flex-col">
-                {/* Colored top bar */}
                 <div className="h-1.5 w-full flex-shrink-0" style={{ backgroundColor: cat.color ?? '#6B7280' }} />
-                {/* Name */}
                 <div className="px-4 py-4 flex-1 flex items-center">
                   <span className="text-[13px] font-semibold text-gray-800 leading-snug group-hover:text-gray-900 transition-colors">
                     {cat.name}
