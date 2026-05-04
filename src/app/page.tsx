@@ -431,32 +431,8 @@ export default async function HomePage() {
           <p className="text-gray-500 mt-1 text-sm sm:text-base">Find events that match your spiritual interests</p>
         </div>
 
-        {/* Mobile: swipe carousel (2.5 visible) */}
-        <div
-          className="md:hidden flex gap-3 overflow-x-auto pl-4 pr-4 pb-2 snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
-          style={{ scrollbarWidth: 'none' }}
-        >
-          {displayCategories.map((cat, i) => (
-            <Link
-              key={cat.slug}
-              href={`/events?category=${cat.slug}`}
-              className="flex-shrink-0 snap-start"
-              style={{ width: 'calc(40% - 6px)', animationDelay: `${i * 60}ms` }}
-            >
-              <div
-                className="h-[100px] rounded-2xl bg-white border border-gray-100 p-4 flex flex-col items-center justify-center gap-2 active:scale-[0.97] transition-transform duration-150 animate-fadeInUp"
-                style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)', borderLeft: `3px solid ${cat.color ?? '#6B7280'}` }}
-              >
-                <span className="text-[13px] font-semibold text-gray-900 text-center leading-tight line-clamp-2 w-full">
-                  {cat.name}
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* Desktop: 6-column static grid */}
-        <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Category grid — 2 cols mobile, 3 cols sm, 6 cols lg */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {displayCategories.map((cat, i) => (
             <Link
               key={cat.slug}
@@ -465,12 +441,19 @@ export default async function HomePage() {
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div
-                className="h-[120px] rounded-2xl bg-white border border-gray-100 p-5 flex flex-col items-center justify-center gap-2.5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `3px solid ${cat.color ?? '#6B7280'}` }}
+                className="rounded-2xl bg-white border border-gray-100 overflow-hidden hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
+                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(0,0,0,0.10)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
               >
-                <span className="text-sm font-semibold text-gray-900 text-center leading-tight line-clamp-2 w-full">
-                  {cat.name}
-                </span>
+                {/* Colored top bar */}
+                <div className="h-1.5 w-full" style={{ backgroundColor: cat.color ?? '#6B7280' }} />
+                {/* Name */}
+                <div className="px-4 py-4">
+                  <span className="text-[13px] font-semibold text-gray-800 leading-snug group-hover:text-gray-900 transition-colors">
+                    {cat.name}
+                  </span>
+                </div>
               </div>
             </Link>
           ))}
