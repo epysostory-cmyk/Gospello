@@ -267,7 +267,7 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                   <p className="text-xs text-amber-600">A claim request is under review</p>
                 </div>
               </div>
-            ) : (
+            ) : c.created_by_admin ? (
               <div className="px-4 py-4 rounded-2xl bg-gray-50 border border-gray-200">
                 <p className="text-sm font-bold text-gray-900 mb-1">Is this your church or ministry?</p>
                 <p className="text-xs text-gray-500 mb-3">Claim this profile to manage events, update info, and get verified.</p>
@@ -279,7 +279,7 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                   Claim this Profile
                 </Link>
               </div>
-            )}
+            ) : null}
 
             <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4 shadow-sm">
               <h2 className="font-bold text-gray-900">Church Info</h2>
