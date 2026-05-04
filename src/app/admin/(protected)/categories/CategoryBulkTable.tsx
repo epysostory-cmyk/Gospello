@@ -177,15 +177,13 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
                     />
                   </td>
 
-                  {/* Icon + Name */}
+                  {/* Color swatch + Name */}
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                        style={{ backgroundColor: (cat.color ?? '#6B7280') + '25' }}
-                      >
-                        {cat.icon || '⛪'}
-                      </div>
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: cat.color ?? '#6B7280' }}
+                      />
                       <div>
                         <p className="text-gray-900 font-semibold text-sm">{cat.name}</p>
                         {cat.description && (

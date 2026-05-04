@@ -415,7 +415,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
             <div className="flex-shrink-0 snap-start" ref={categoryRef}>
               <Chip active={!!categoryFilter} onClick={toggleCategoryDropdown}>
                 {selectedCategory
-                  ? <>{selectedCategory.icon && <span>{selectedCategory.icon}</span>}{selectedCategory.name}</>
+                  ? <>{selectedCategory.name}</>
                   : 'All Categories'
                 }
                 <ChevronDown className="w-3 h-3" />
@@ -499,7 +499,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
                   style={{ background: '#EDE9FE', color: '#7C3AED' }}
                 >
-                  {selectedCategory.icon} {selectedCategory.name}
+                  {selectedCategory.name}
                   <button onClick={() => removeFilter('category')} className="hover:opacity-70 flex items-center">
                     <X className="w-3 h-3" />
                   </button>
@@ -584,7 +584,6 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
                   touchAction: 'manipulation',
                 } as React.CSSProperties}
               >
-                {c.icon && <span>{c.icon}</span>}
                 {c.name}
               </button>
             ))}
@@ -631,15 +630,11 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
                         />
                       ) : (
                         <div
-                          className="w-full h-full flex flex-col items-center justify-center gap-1"
-                          style={{ background: 'linear-gradient(135deg, #4F1787, #7C3AED)' }}
+                          className="w-full h-full flex items-center justify-center"
+                          style={{ background: categoryInfo?.color ? categoryInfo.color + 'cc' : 'linear-gradient(135deg, #4F1787, #7C3AED)' }}
                         >
-                          <span className="text-2xl leading-none">{categoryInfo?.icon ?? '🎵'}</span>
-                          <span
-                            className="text-white font-bold text-center leading-tight px-1"
-                            style={{ fontSize: 8, letterSpacing: '1px' }}
-                          >
-                            {categoryInfo?.name ?? event.category}
+                          <span className="text-white font-black text-2xl opacity-80">
+                            {event.title[0]}
                           </span>
                         </div>
                       )}
@@ -664,7 +659,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
                         </span>
                         {categoryInfo && (
                           <span className="text-[11px] text-[#6B7280] truncate">
-                            {categoryInfo.icon} {categoryInfo.name}
+                            {categoryInfo.name}
                           </span>
                         )}
                       </div>

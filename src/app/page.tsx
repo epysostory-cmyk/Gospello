@@ -447,8 +447,7 @@ export default async function HomePage() {
                 className="h-[100px] rounded-2xl bg-white border border-gray-100 p-4 flex flex-col items-center justify-center gap-2 active:scale-[0.97] transition-transform duration-150 animate-fadeInUp"
                 style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)', borderLeft: `3px solid ${cat.color ?? '#6B7280'}` }}
               >
-                <span className="text-3xl leading-none">{cat.icon}</span>
-                <span className="text-[13px] font-semibold text-gray-900 text-center leading-tight line-clamp-1 w-full">
+                <span className="text-[13px] font-semibold text-gray-900 text-center leading-tight line-clamp-2 w-full">
                   {cat.name}
                 </span>
               </div>
@@ -469,7 +468,6 @@ export default async function HomePage() {
                 className="h-[120px] rounded-2xl bg-white border border-gray-100 p-5 flex flex-col items-center justify-center gap-2.5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                 style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `3px solid ${cat.color ?? '#6B7280'}` }}
               >
-                <span className="text-4xl leading-none">{cat.icon}</span>
                 <span className="text-sm font-semibold text-gray-900 text-center leading-tight line-clamp-2 w-full">
                   {cat.name}
                 </span>
