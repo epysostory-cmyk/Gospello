@@ -440,12 +440,7 @@ export default async function HomePage() {
               className="group animate-fadeInUp"
               style={{ animationDelay: `${i * 60}ms` }}
             >
-              <div
-                className="rounded-2xl bg-white border border-gray-100 overflow-hidden hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
-                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(0,0,0,0.10)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
-              >
+              <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200">
                 {/* Colored top bar */}
                 <div className="h-1.5 w-full" style={{ backgroundColor: cat.color ?? '#6B7280' }} />
                 {/* Name */}
