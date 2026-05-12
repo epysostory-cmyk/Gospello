@@ -67,52 +67,56 @@ export default function ChurchProfileForm({ church, userId }: Props) {
     setError('')
     setSuccess(false)
 
-    let logo_url = currentLogoUrl
-    let banner_url = currentBannerUrl
+    try {
+      let logo_url = currentLogoUrl
+      let banner_url = currentBannerUrl
 
-    if (logoFile) {
-      const url = await uploadImage(logoFile, `${userId}/logo.${logoFile.name.split('.').pop()}`)
-      if (!url) { setSaving(false); return }
-      logo_url = url
-    }
+      if (logoFile) {
+        const url = await uploadImage(logoFile, `${userId}/logo.${logoFile.name.split('.').pop()}`)
+        if (!url) return
+        logo_url = url
+      }
 
-    if (bannerFile) {
-      const url = await uploadImage(bannerFile, `${userId}/banner.${bannerFile.name.split('.').pop()}`)
-      if (!url) { setSaving(false); return }
-      banner_url = url
-    }
+      if (bannerFile) {
+        const url = await uploadImage(bannerFile, `${userId}/banner.${bannerFile.name.split('.').pop()}`)
+        if (!url) return
+        banner_url = url
+      }
 
-    const { error: updateError } = await supabase
-      .from('churches')
-      .update({
-        name: form.name.trim(),
-        description: form.description.trim() || null,
-        address: form.address.trim() || null,
-        city: form.city,
-        state: form.state,
-        country: form.country,
-        service_times: serviceTimes.filter(t => t.trim()).join('\n') || null,
-        website_url: form.website_url.trim() || null,
-        phone: form.phone.trim() || null,
-        logo_url,
-        banner_url,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', church.id)
+      const { error: updateError } = await supabase
+        .from('churches')
+        .update({
+          name: form.name.trim(),
+          description: form.description.trim() || null,
+          address: form.address.trim() || null,
+          city: form.city,
+          state: form.state,
+          country: form.country,
+          service_times: serviceTimes.filter(t => t.trim()).join('\n') || null,
+          website_url: form.website_url.trim() || null,
+          phone: form.phone.trim() || null,
+          logo_url,
+          banner_url,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('profile_id', userId)
 
-    await supabase.from('profiles').update({ display_name: form.name.trim() }).eq('id', userId)
+      await supabase.from('profiles').update({ display_name: form.name.trim() }).eq('id', userId)
 
-    setSaving(false)
-
-    if (updateError) {
-      setError(updateError.message)
-    } else {
-      setCurrentLogoUrl(logo_url)
-      setCurrentBannerUrl(banner_url)
-      setLogoFile(null); setLogoPreview(null)
-      setBannerFile(null); setBannerPreview(null)
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 4000)
+      if (updateError) {
+        setError(updateError.message)
+      } else {
+        setCurrentLogoUrl(logo_url)
+        setCurrentBannerUrl(banner_url)
+        setLogoFile(null); setLogoPreview(null)
+        setBannerFile(null); setBannerPreview(null)
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 4000)
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    } finally {
+      setSaving(false)
     }
   }
 
