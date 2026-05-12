@@ -33,19 +33,19 @@ const DEFAULTS: FooterSettings = {
     {
       heading: 'Explore',
       links: [
-        { label: 'Events', url: '/events' },
+        { label: 'Events',     url: '/events' },
         { label: 'Categories', url: '/categories' },
-        { label: 'Churches', url: '/churches' },
+        { label: 'Churches',   url: '/churches' },
         { label: 'Organizers', url: '/organizers' },
       ],
     },
     {
       heading: 'Company',
       links: [
-        { label: 'About Us', url: '/about' },
-        { label: 'Contact Us', url: '/contact' },
+        { label: 'About Us',       url: '/about' },
+        { label: 'Contact Us',     url: '/contact' },
         { label: 'Privacy Policy', url: '/privacy' },
-        { label: 'Terms of Use', url: '/terms' },
+        { label: 'Terms of Use',   url: '/terms' },
       ],
     },
   ],
@@ -54,7 +54,7 @@ const DEFAULTS: FooterSettings = {
   footer_contact_email: '',
   footer_bottom_links: [
     { label: 'Privacy Policy', url: '/privacy' },
-    { label: 'Terms of Use', url: '/terms' },
+    { label: 'Terms of Use',   url: '/terms' },
   ],
   footer_badges: ['🇳🇬 Nigeria', '⛪ Churches', '🙏 Est. 2025'],
 }
@@ -82,27 +82,27 @@ async function getFooterData(): Promise<FooterSettings> {
     }
 
     return {
-      footer_logo_url: (map['footer_logo_url'] as string | null) ?? null,
-      footer_tagline: parse<string>(map['footer_tagline'], DEFAULTS.footer_tagline),
-      footer_columns: parse<FooterColumn[]>(map['footer_columns'], DEFAULTS.footer_columns),
-      footer_social: parse<FooterSettings['footer_social']>(map['footer_social'], DEFAULTS.footer_social),
-      footer_copyright: parse<string>(map['footer_copyright'], DEFAULTS.footer_copyright),
+      footer_logo_url:      (map['footer_logo_url'] as string | null) ?? null,
+      footer_tagline:       parse<string>(map['footer_tagline'], DEFAULTS.footer_tagline),
+      footer_columns:       parse<FooterColumn[]>(map['footer_columns'], DEFAULTS.footer_columns),
+      footer_social:        parse<FooterSettings['footer_social']>(map['footer_social'], DEFAULTS.footer_social),
+      footer_copyright:     parse<string>(map['footer_copyright'], DEFAULTS.footer_copyright),
       footer_contact_email: parse<string>(map['footer_contact_email'], DEFAULTS.footer_contact_email),
-      footer_bottom_links: parse<{ label: string; url: string }[]>(map['footer_bottom_links'], DEFAULTS.footer_bottom_links),
-      footer_badges: parse<string[]>(map['footer_badges'], DEFAULTS.footer_badges),
+      footer_bottom_links:  parse<{ label: string; url: string }[]>(map['footer_bottom_links'], DEFAULTS.footer_bottom_links),
+      footer_badges:        parse<string[]>(map['footer_badges'], DEFAULTS.footer_badges),
     }
   } catch {
     return DEFAULTS
   }
 }
 
-const SOCIAL_ICONS: Record<string, string> = {
-  instagram: '📸',
-  twitter: '🐦',
-  facebook: '👍',
-  youtube: '▶️',
-  tiktok: '🎵',
-  whatsapp: '💬',
+const SOCIAL_LABELS: Record<string, string> = {
+  instagram: 'Instagram',
+  twitter:   'X / Twitter',
+  facebook:  'Facebook',
+  youtube:   'YouTube',
+  tiktok:    'TikTok',
+  whatsapp:  'WhatsApp',
 }
 
 export default async function Footer() {
@@ -113,42 +113,38 @@ export default async function Footer() {
   const resolvedLogoUrl = settings.footer_logo_url
 
   return (
-    <footer className="relative bg-slate-950 text-slate-400 overflow-hidden">
-
-      {/* Ambient glow */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-700/8 rounded-full blur-[100px] pointer-events-none" />
+    <footer className="bg-gray-50 border-t border-gray-200">
 
       {/* ── MAIN FOOTER BODY ──────────────────────────────────────── */}
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
 
-          {/* Brand — spans 2 cols on lg */}
+          {/* Brand */}
           <div className="sm:col-span-2">
-            {/* Logo */}
-            <Link href="/" className="inline-flex items-center gap-2.5 mb-5 group">
+            <Link href="/" className="inline-flex items-center gap-2 mb-4">
               {resolvedLogoUrl ? (
-                <Image src={resolvedLogoUrl} alt="Gospello logo" width={100} height={60} className="object-contain" />
+                <Image src={resolvedLogoUrl} alt="Gospello logo" width={100} height={40} className="object-contain h-8 w-auto" />
               ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-700 group-hover:from-indigo-400 group-hover:to-indigo-600 rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-900/50">
-                  <span className="text-white font-black text-base tracking-tight">G</span>
-                </div>
+                <>
+                  <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">G</span>
+                  </div>
+                  <span className="text-base font-bold text-gray-900">Gospello</span>
+                </>
               )}
-              <span className="relative flex h-2 w-2 ml-0.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
-              </span>
             </Link>
 
-            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
+            <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
               {settings.footer_tagline}
             </p>
 
-            {/* Trust badges */}
+            {/* Badges */}
             {settings.footer_badges.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {settings.footer_badges.map((badge, i) => (
-                  <span key={i} className="text-xs text-slate-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">{badge}</span>
+                  <span key={i} className="text-xs text-gray-500 bg-white border border-gray-200 px-2.5 py-1 rounded-full">
+                    {badge}
+                  </span>
                 ))}
               </div>
             )}
@@ -162,10 +158,9 @@ export default async function Footer() {
                     href={url.startsWith('http') ? url : `https://${url}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-slate-500 bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 px-2.5 py-1 rounded-full transition-colors capitalize"
+                    className="text-xs text-gray-500 hover:text-gray-900 bg-white border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-full transition-colors"
                   >
-                    <span>{SOCIAL_ICONS[platform] ?? '🔗'}</span>
-                    {platform}
+                    {SOCIAL_LABELS[platform] ?? platform}
                   </a>
                 ))}
               </div>
@@ -174,7 +169,7 @@ export default async function Footer() {
             {/* CTA */}
             <Link
               href="/auth/signup"
-              className="inline-flex items-center gap-2 mt-6 bg-amber-400 hover:bg-amber-300 text-gray-900 text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-amber-900/20 hover:shadow-amber-900/30 hover:-translate-y-0.5"
+              className="inline-flex items-center gap-1.5 mt-6 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
             >
               Post an Event →
             </Link>
@@ -183,13 +178,13 @@ export default async function Footer() {
           {/* Dynamic columns */}
           {settings.footer_columns.slice(0, 2).map((col) => (
             <div key={col.heading}>
-              <h3 className="text-white font-bold text-sm uppercase tracking-widest mb-5">{col.heading}</h3>
-              <ul className="space-y-1">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">{col.heading}</h3>
+              <ul className="space-y-0.5">
                 {col.links.map((link) => (
                   <li key={link.url + link.label}>
                     <Link
                       href={link.url}
-                      className="block text-sm text-slate-400 hover:text-white py-1.5 transition-colors hover:translate-x-0.5 transform duration-150"
+                      className="block text-sm text-gray-500 hover:text-gray-900 py-1.5 transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -203,15 +198,15 @@ export default async function Footer() {
       </div>
 
       {/* ── BOTTOM BAR ────────────────────────────────────────────── */}
-      <div className="relative border-t border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-            <p className="text-xs text-slate-600">{copyright}</p>
+      <div className="border-t border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+            <p className="text-xs text-gray-400">{copyright}</p>
             <div className="flex items-center gap-4">
               {settings.footer_bottom_links.map((lnk, i) => (
                 <span key={lnk.url + i} className="flex items-center gap-4">
-                  {i > 0 && <span className="text-slate-700">·</span>}
-                  <Link href={lnk.url} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
+                  {i > 0 && <span className="text-gray-300">·</span>}
+                  <Link href={lnk.url} className="text-xs text-gray-400 hover:text-gray-700 transition-colors">
                     {lnk.label}
                   </Link>
                 </span>
