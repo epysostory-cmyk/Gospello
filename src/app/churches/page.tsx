@@ -9,7 +9,7 @@ import type { Church } from '@/types/database'
 import { Search, MapPin, X } from 'lucide-react'
 import Link from 'next/link'
 import { NIGERIAN_STATES } from '@/lib/utils'
-import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
+import ListYourChurchCTA from '@/components/ui/ListYourChurchCTA'
 
 interface SearchParams {
   q?: string
@@ -175,7 +175,7 @@ export default async function ChurchesPage({
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {churches.map((church) => (
               <ChurchCard key={church.id} church={church} eventCount={eventCountMap[church.id]} />
             ))}
@@ -208,7 +208,7 @@ export default async function ChurchesPage({
             )}
           </div>
         )}
-        <HaveAnEventCTA />
+        <ListYourChurchCTA />
       </div>
     </div>
   )
