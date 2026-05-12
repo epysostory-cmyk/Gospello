@@ -1,8 +1,20 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function ListYourChurchCTA() {
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      setLoggedIn(!!data.user)
+    })
+  }, [])
+
+  const href = loggedIn ? '/dashboard/church/setup' : '/auth/signup?redirect=/dashboard/church/setup'
+
   return (
     <div className="mt-16 mb-8 mx-auto max-w-2xl">
       <div
@@ -17,14 +29,19 @@ export default function ListYourChurchCTA() {
           Get your church in front of thousands looking for a place to worship. Free to list — takes 2 minutes.
         </p>
         <Link
-          href="/auth/signup?redirect=/dashboard/church/setup"
+          href={href}
           className="inline-flex items-center gap-2 bg-white text-purple-900 font-bold px-7 py-3.5 rounded-2xl text-sm sm:text-base hover:bg-purple-50 transition-colors"
         >
           List Your Church — It&apos;s Free →
         </Link>
-        <p className="mt-4 text-purple-400 text-xs">
-          Already listed? <Link href="/auth/login" className="text-purple-200 underline underline-offset-2">Sign in to manage your profile</Link>
-        </p>
+        {!loggedIn && (
+          <p className="mt-4 text-purple-400 text-xs">
+            Already listed?{' '}
+            <Link href="/auth/login" className="text-purple-200 underline underline-offset-2">
+              Sign in to manage your profile
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   )
