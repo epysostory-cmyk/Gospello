@@ -282,6 +282,7 @@ export default async function HomePage() {
 
   const displayCategories = categories.slice(0, 8)
 
+  const heroHeadline = heroSettings?.hero_headline_1 ?? 'Find gospel events near you'
   const heroSubheadline = heroSettings?.hero_subheadline ?? 'Worship nights, conferences, prayer gatherings, youth programs and more — across all 36 Nigerian states.'
   const popularSearches: string[] = (heroSettings?.hero_popular_searches ?? 'Worship,Lagos,Conference,Prayer,Youth')
     .split(',')
@@ -301,7 +302,7 @@ export default async function HomePage() {
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-14 pb-12 sm:pt-20 sm:pb-16 text-center">
 
           <h1 className="text-[2.6rem] sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-[1.08]">
-            Find gospel events<br />near you
+            {heroHeadline}
           </h1>
 
           <p className="mt-4 text-base sm:text-lg text-gray-500 leading-relaxed max-w-lg mx-auto">

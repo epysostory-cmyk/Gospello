@@ -6,15 +6,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { saveHeroSettings } from './actions'
 
 const DEFAULTS = {
-  hero_badge:             "Nigeria's Gospel Event Platform",
-  hero_headline_1:        'Discover Every',
-  hero_headline_gradient: 'Gospel Event',
-  hero_headline_3:        'Near You',
-  hero_subheadline:       'Worship nights, conferences, prayer gatherings, youth programs and more — across all 36 Nigerian states and beyond.',
-  hero_popular_searches:  'Worship,Lagos,Conference,Prayer,Youth',
-  hero_cta_primary:       'Explore Events',
-  hero_cta_secondary:     'Post an Event',
-  footer_tagline:         "Nigeria's home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond.",
+  hero_headline_1:       'Find gospel events near you',
+  hero_subheadline:      'Worship nights, conferences, prayer gatherings, youth programs and more — across all 36 Nigerian states.',
+  hero_popular_searches: 'Worship,Lagos,Conference,Prayer,Youth',
+  footer_tagline:        "Nigeria's home for Christian events — worship nights, conferences, prayer gatherings and more, across all 36 states and beyond.",
 }
 
 const INPUT_CLS =
@@ -31,22 +26,15 @@ export default async function HeroSettingsPage({
   const adminClient = createAdminClient()
   const { data } = await adminClient
     .from('platform_settings')
-    .select(
-      'hero_badge, hero_headline_1, hero_headline_gradient, hero_headline_3, hero_subheadline, hero_popular_searches, hero_cta_primary, hero_cta_secondary, footer_tagline',
-    )
+    .select('hero_headline_1, hero_subheadline, hero_popular_searches, footer_tagline')
     .eq('id', 'default')
     .single()
 
   const s = {
-    hero_badge:             data?.hero_badge             ?? DEFAULTS.hero_badge,
-    hero_headline_1:        data?.hero_headline_1        ?? DEFAULTS.hero_headline_1,
-    hero_headline_gradient: data?.hero_headline_gradient ?? DEFAULTS.hero_headline_gradient,
-    hero_headline_3:        data?.hero_headline_3        ?? DEFAULTS.hero_headline_3,
-    hero_subheadline:       data?.hero_subheadline       ?? DEFAULTS.hero_subheadline,
-    hero_popular_searches:  data?.hero_popular_searches  ?? DEFAULTS.hero_popular_searches,
-    hero_cta_primary:       data?.hero_cta_primary       ?? DEFAULTS.hero_cta_primary,
-    hero_cta_secondary:     data?.hero_cta_secondary     ?? DEFAULTS.hero_cta_secondary,
-    footer_tagline:         data?.footer_tagline         ?? DEFAULTS.footer_tagline,
+    hero_headline_1:       data?.hero_headline_1       ?? DEFAULTS.hero_headline_1,
+    hero_subheadline:      data?.hero_subheadline      ?? DEFAULTS.hero_subheadline,
+    hero_popular_searches: data?.hero_popular_searches ?? DEFAULTS.hero_popular_searches,
+    footer_tagline:        data?.footer_tagline        ?? DEFAULTS.footer_tagline,
   }
 
   const popularTags = s.hero_popular_searches.split(',').map((t: string) => t.trim()).filter(Boolean)
@@ -67,68 +55,36 @@ export default async function HeroSettingsPage({
         <Link
           href="/"
           target="_blank"
-          className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+          className="text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
         >
           Preview Site →
         </Link>
       </div>
 
-      {/* Success banner */}
       {saved && (
-        <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
-          Hero settings saved successfully.
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          Hero settings saved.
         </div>
       )}
 
       <form action={saveHeroSettings} className="space-y-5">
 
-        {/* Badge & Headline */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-gray-900">Badge &amp; Headline</h2>
+        {/* Headline & Copy */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-900">Headline &amp; Copy</h2>
 
-          {/* Badge */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">Badge Text</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Headline</label>
             <input
               type="text"
-              name="hero_badge"
-              defaultValue={s.hero_badge}
+              name="hero_headline_1"
+              defaultValue={s.hero_headline_1}
               className={INPUT_CLS}
+              placeholder="Find gospel events near you"
             />
+            <p className="text-xs text-gray-400 mt-1">The large heading shown at the top of the homepage.</p>
           </div>
 
-          {/* Headline lines */}
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Headline Line 1 (white)</label>
-              <input
-                type="text"
-                name="hero_headline_1"
-                defaultValue={s.hero_headline_1}
-                className={INPUT_CLS}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Headline Line 2 (gold gradient)</label>
-              <input
-                type="text"
-                name="hero_headline_gradient"
-                defaultValue={s.hero_headline_gradient}
-                className={INPUT_CLS}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Headline Line 3 (light grey)</label>
-              <input
-                type="text"
-                name="hero_headline_3"
-                defaultValue={s.hero_headline_3}
-                className={INPUT_CLS}
-              />
-            </div>
-          </div>
-
-          {/* Subheadline */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1.5">Subheadline</label>
             <textarea
@@ -136,38 +92,15 @@ export default async function HeroSettingsPage({
               rows={3}
               defaultValue={s.hero_subheadline}
               className={INPUT_CLS}
+              placeholder="Worship nights, conferences..."
             />
-          </div>
-        </div>
-
-        {/* CTA Buttons */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-gray-900">CTA Buttons</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Primary Button (gold)</label>
-              <input
-                type="text"
-                name="hero_cta_primary"
-                defaultValue={s.hero_cta_primary}
-                className={INPUT_CLS}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Secondary Button (ghost)</label>
-              <input
-                type="text"
-                name="hero_cta_secondary"
-                defaultValue={s.hero_cta_secondary}
-                className={INPUT_CLS}
-              />
-            </div>
+            <p className="text-xs text-gray-400 mt-1">The smaller description text below the headline.</p>
           </div>
         </div>
 
         {/* Popular Searches */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-gray-900">Popular Searches</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-900">Quick Search Tags</h2>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1.5">Tags (comma-separated)</label>
             <input
@@ -175,21 +108,19 @@ export default async function HeroSettingsPage({
               name="hero_popular_searches"
               defaultValue={s.hero_popular_searches}
               className={INPUT_CLS}
+              placeholder="Worship,Lagos,Conference,Prayer,Youth"
             />
-            <p className="text-xs text-gray-600 mt-1.5">
-              These appear as quick-search pills below the search bar
-            </p>
+            <p className="text-xs text-gray-400 mt-1">Appear as quick-tap links below the search bar. e.g. Worship,Lagos,Conference</p>
           </div>
         </div>
 
         {/* Footer Brand */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">Footer Brand Text</h2>
-            <p className="text-xs text-gray-500 mt-0.5">The description shown in the bottom-left of the footer</p>
+            <h2 className="text-sm font-semibold text-gray-900">Footer Tagline</h2>
+            <p className="text-xs text-gray-500 mt-0.5">The brand description shown in the footer.</p>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">Footer Tagline</label>
             <textarea
               name="footer_tagline"
               rows={3}
@@ -201,65 +132,33 @@ export default async function HeroSettingsPage({
         </div>
 
         {/* Live Preview */}
-        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-gray-900">Live Preview</h2>
-          <div className="bg-slate-950 rounded-xl p-6 space-y-3 overflow-hidden">
-            {/* Badge pill */}
-            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-xs px-3 py-1.5 rounded-full">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
-              </span>
-              <span className="text-slate-300">{s.hero_badge}</span>
-            </div>
-
-            {/* Headline */}
-            <div className="text-2xl font-black leading-tight tracking-tight">
-              <span className="text-white">{s.hero_headline_1}</span>
-              <br />
-              <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent">
-                {s.hero_headline_gradient}
-              </span>
-              <br />
-              <span className="text-slate-300">{s.hero_headline_3}</span>
-            </div>
-
-            {/* Subheadline */}
-            <p className="text-sm text-slate-400 max-w-sm leading-relaxed">{s.hero_subheadline}</p>
-
-            {/* CTA buttons */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              <span className="inline-flex items-center bg-amber-400 text-gray-900 font-bold px-4 py-2 rounded-lg text-xs">
-                {s.hero_cta_primary}
-              </span>
-              <span className="inline-flex items-center bg-white/8 text-white font-semibold px-4 py-2 rounded-lg text-xs border border-white/10">
-                {s.hero_cta_secondary}
-              </span>
-            </div>
-
-            {/* Tags */}
-            <div className="flex items-center gap-1.5 flex-wrap pt-1">
-              <span className="text-xs text-slate-600">Popular:</span>
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-gray-900">Preview</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-8 text-center space-y-3 overflow-hidden">
+            <p className="text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              {s.hero_headline_1}
+            </p>
+            <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">{s.hero_subheadline}</p>
+            <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+              <span className="text-xs text-gray-400">Try:</span>
               {popularTags.map((tag: string) => (
-                <span
-                  key={tag}
-                  className="text-xs text-slate-400 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10"
-                >
-                  {tag}
-                </span>
+                <span key={tag} className="text-xs font-medium text-indigo-600">{tag}</span>
               ))}
             </div>
+            <p className="text-xs text-gray-400 pt-1">
+              Running an event? <span className="text-indigo-600 font-semibold">Post it free →</span>
+            </p>
           </div>
         </div>
 
-        {/* Save button */}
+        {/* Save */}
         <div className="flex justify-end">
           <button
             type="submit"
             className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm"
           >
             <Save className="w-4 h-4" />
-            Save Hero Settings
+            Save Settings
           </button>
         </div>
       </form>
