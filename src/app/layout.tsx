@@ -46,21 +46,21 @@ export const metadata: Metadata = {
     locale: 'en_NG',
     siteName: 'Gospello',
     url: siteUrl,
-    title: 'Gospello — Discover Christian Events Near You',
-    description: 'Discover Christian events, churches, and spiritual gatherings happening near you. Lagos-first, globally accessible.',
+    title: 'Gospello | Gospel Events, Churches & Organizers in Nigeria',
+    description: 'Find gospel events, churches and organizers across Nigeria — worship nights, conferences, prayer gatherings and more.',
     images: [
       {
         url: '/opengraph-image',
         width: 1200,
         height: 630,
-        alt: 'Gospello — Discover Christian Events Near You',
+        alt: 'Gospello | Gospel Events, Churches & Organizers in Nigeria',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Gospello — Discover Christian Events Near You',
-    description: 'Discover Christian events, churches, and spiritual gatherings happening near you. Lagos-first, globally accessible.',
+    title: 'Gospello | Gospel Events, Churches & Organizers in Nigeria',
+    description: 'Find gospel events, churches and organizers across Nigeria — worship nights, conferences, prayer gatherings and more.',
     images: ['/twitter-image'],
   },
 }
@@ -75,7 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="icon" href={settings.site_favicon_url ?? '/favicon.ico'} sizes="any" />
         <link rel="apple-touch-icon" href={settings.site_favicon_url ?? '/favicon.ico'} />
       </head>
-      <body className={`min-h-full flex flex-col bg-gray-50 ${inter.variable} ${plusJakartaSans.variable} ${playfairDisplay.variable}`}>
+      <body className={`min-h-full flex flex-col bg-white ${inter.variable} ${plusJakartaSans.variable} ${playfairDisplay.variable}`}>
         <ScrollToTop />
         <SavedEventsMigrator />
         <ConditionalLayout
