@@ -131,6 +131,7 @@ export default function ChurchSetupPage() {
 
       const { error: insertError } = await supabase.from('churches').insert({
         profile_id: session.user.id,
+        is_claimed: true,
         name: form.name.trim(),
         slug,
         pastor_name: form.leader_name.trim(),
