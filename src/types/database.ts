@@ -64,6 +64,8 @@ export interface Church {
   is_hidden: boolean
   denomination: string | null
   pastor_name: string | null
+  leader_title: string | null
+  founder: string | null
   instagram: string | null
   facebook: string | null
   created_at: string

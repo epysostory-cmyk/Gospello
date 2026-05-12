@@ -16,11 +16,18 @@ const DENOMINATIONS = [
   'Non-denominational', 'Other',
 ]
 
+const LEADERSHIP_TITLES = [
+  'General Overseer', 'Senior Pastor', 'Lead Pastor', 'General Superintendent',
+  'Bishop', 'Archbishop', 'Apostle', 'Prophet', 'Overseer', 'President',
+  'Reverend (Rev.)', 'Canon', 'Rector', 'Vicar', 'Dean', 'Monsignor', 'Cardinal', 'Other',
+]
+
 interface ChurchProfile {
   id: string; name: string; logo_url: string | null; description: string | null
   address: string | null; city: string; state: string; phone: string | null
   website_url: string | null; instagram: string | null; facebook: string | null
-  pastor_name: string | null; denomination: string | null; service_times: string | null
+  pastor_name: string | null; leader_title: string | null; founder: string | null
+  denomination: string | null; service_times: string | null
   source_url: string | null; is_hidden: boolean; slug: string
 }
 
@@ -84,6 +91,8 @@ export default function EditProfileForm({ type, profile }: Props) {
     description:   church!.description ?? '',
     source_url:    church!.source_url ?? '',
     pastor_name:   church!.pastor_name ?? '',
+    leader_title:  church!.leader_title ?? '',
+    founder:       church!.founder ?? '',
     denomination:  church!.denomination ?? '',
     service_times: church!.service_times ? church!.service_times.split('\n') : [''],
     whatsapp: '', twitter: '', youtube: '', contact_person: '', ministry_type: '',
@@ -104,7 +113,7 @@ export default function EditProfileForm({ type, profile }: Props) {
     source_url:     org!.source_url ?? '',
     contact_person: org!.contact_person ?? '',
     ministry_type:  org!.ministry_type ?? '',
-    pastor_name: '', denomination: '', service_times: [''],
+    pastor_name: '', leader_title: '', founder: '', denomination: '', service_times: [''],
     is_hidden: org!.is_hidden,
   })
 
@@ -140,7 +149,8 @@ export default function EditProfileForm({ type, profile }: Props) {
             name: form.name, city: form.city, state: form.state, address: form.address,
             phone: form.phone, website: form.website, instagram: form.instagram, facebook: form.facebook,
             description: form.description, source_url: form.source_url,
-            pastor_name: form.pastor_name, denomination: form.denomination,
+            pastor_name: form.pastor_name, leader_title: form.leader_title,
+            founder: form.founder, denomination: form.denomination,
             service_times: form.service_times, is_hidden: form.is_hidden,
           },
         })
@@ -248,8 +258,19 @@ export default function EditProfileForm({ type, profile }: Props) {
           </Field>
           {isChurch && (
             <>
-              <Field label="Lead Pastor">
-                <input className={inputCls} value={form.pastor_name} onChange={e => set('pastor_name', e.target.value)} placeholder="Pastor's name" />
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Leadership Title">
+                  <select className={inputCls} value={form.leader_title} onChange={e => set('leader_title', e.target.value)}>
+                    <option value="">— Select title —</option>
+                    {LEADERSHIP_TITLES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </Field>
+                <Field label="Leader's Name">
+                  <input className={inputCls} value={form.pastor_name} onChange={e => set('pastor_name', e.target.value)} placeholder="e.g. John Doe" />
+                </Field>
+              </div>
+              <Field label="Founder (optional)">
+                <input className={inputCls} value={form.founder} onChange={e => set('founder', e.target.value)} placeholder="e.g. Late Archbishop Benson Idahosa" />
               </Field>
               <Field label="Denomination">
                 <select className={inputCls} value={form.denomination} onChange={e => set('denomination', e.target.value)}>

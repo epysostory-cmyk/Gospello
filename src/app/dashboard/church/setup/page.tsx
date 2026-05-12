@@ -31,9 +31,17 @@ export default function ChurchSetupPage() {
     'Non-denominational','Other',
   ]
 
+  const LEADERSHIP_TITLES = [
+    'General Overseer', 'Senior Pastor', 'Lead Pastor', 'General Superintendent',
+    'Bishop', 'Archbishop', 'Apostle', 'Prophet', 'Overseer', 'President',
+    'Reverend (Rev.)', 'Canon', 'Rector', 'Vicar', 'Dean', 'Monsignor', 'Cardinal', 'Other',
+  ]
+
   const [form, setForm] = useState({
     name: '',
-    lead_pastor: '',
+    leader_title: '',
+    leader_name: '',
+    founder: '',
     denomination: '',
     address: '',
     city: 'Lagos',
@@ -103,7 +111,8 @@ export default function ChurchSetupPage() {
     e.preventDefault()
     if (!logoUrl) { setError('Church logo is required'); return }
     if (!form.name.trim()) { setError('Church name is required'); return }
-    if (!form.lead_pastor.trim()) { setError('Lead pastor name is required'); return }
+    if (!form.leader_title) { setError('Leadership title is required'); return }
+    if (!form.leader_name.trim()) { setError('Leader name is required'); return }
     if (!form.address.trim()) { setError('Church address is required'); return }
     if (!form.city.trim()) { setError('City is required'); return }
     const filledTimes = serviceTimes.filter(t => t.trim())
@@ -124,7 +133,9 @@ export default function ChurchSetupPage() {
         profile_id: session.user.id,
         name: form.name.trim(),
         slug,
-        lead_pastor: form.lead_pastor.trim(),
+        pastor_name: form.leader_name.trim(),
+        leader_title: form.leader_title || null,
+        founder: form.founder.trim() || null,
         denomination: form.denomination || null,
         logo_url: logoUrl,
         description: form.description.trim() || null,
@@ -228,13 +239,35 @@ export default function ChurchSetupPage() {
               placeholder="e.g. Daystar Christian Centre" className={inputCls} required />
           </div>
 
-          {/* Lead pastor */}
+          {/* Leadership title + name */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Leadership Title <span className="text-red-400">*</span>
+              </label>
+              <select value={form.leader_title} onChange={e => update('leader_title', e.target.value)}
+                className={inputCls + ' bg-white'} required>
+                <option value="">— Select title —</option>
+                {LEADERSHIP_TITLES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Leader's Name <span className="text-red-400">*</span>
+              </label>
+              <input type="text" value={form.leader_name} onChange={e => update('leader_name', e.target.value)}
+                placeholder="e.g. Sam Adeyemi" className={inputCls} />
+            </div>
+          </div>
+
+          {/* Founder */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Lead Pastor / Founder <span className="text-red-400">*</span>
+              Founder <span className="text-gray-400 font-normal">(optional)</span>
             </label>
-            <input type="text" value={form.lead_pastor} onChange={e => update('lead_pastor', e.target.value)}
-              placeholder="e.g. Pastor Sam Adeyemi" className={inputCls} required />
+            <input type="text" value={form.founder} onChange={e => update('founder', e.target.value)}
+              placeholder="e.g. Late Archbishop Benson Idahosa" className={inputCls} />
+            <p className="text-xs text-gray-400 mt-1">Leave blank if the founder is still the current leader</p>
           </div>
 
           {/* Denomination */}

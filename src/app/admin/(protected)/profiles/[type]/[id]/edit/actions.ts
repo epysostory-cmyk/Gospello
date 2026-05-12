@@ -9,7 +9,8 @@ interface UpdateChurchInput {
     name: string; city: string; state: string; address: string
     phone: string; website: string; instagram: string; facebook: string
     description: string; source_url: string
-    pastor_name: string; denomination: string; service_times: string[]
+    pastor_name: string; leader_title: string; founder: string
+    denomination: string; service_times: string[]
     is_hidden: boolean
   }
 }
@@ -44,6 +45,8 @@ export async function updateAdminChurch(input: UpdateChurchInput): Promise<{ err
       instagram:     form.instagram.trim() || null,
       facebook:      form.facebook.trim() || null,
       pastor_name:   form.pastor_name.trim() || null,
+      leader_title:  form.leader_title.trim() || null,
+      founder:       form.founder.trim() || null,
       denomination:  form.denomination.trim() || null,
       service_times: form.service_times.filter(Boolean).length > 0 ? form.service_times.filter(Boolean).join('\n') : null,
       source_url:    form.source_url.trim() || null,

@@ -20,6 +20,12 @@ const DENOMINATIONS = [
   'Non-denominational', 'Other',
 ]
 
+const LEADERSHIP_TITLES = [
+  'General Overseer', 'Senior Pastor', 'Lead Pastor', 'General Superintendent',
+  'Bishop', 'Archbishop', 'Apostle', 'Prophet', 'Overseer', 'President',
+  'Reverend (Rev.)', 'Canon', 'Rector', 'Vicar', 'Dean', 'Monsignor', 'Cardinal', 'Other',
+]
+
 const DRAFT_KEY = 'gospello_admin_profile_draft'
 
 const ORG_STEPS = [
@@ -54,7 +60,7 @@ export default function CreateProfileForm({ adminId }: Props) {
     twitter: '', youtube: '',
     description: '', source_url: '',
     // church-specific
-    pastor_name: '', denomination: '',
+    pastor_name: '', leader_title: '', founder: '', denomination: '',
     service_times: [''],
     // organizer-specific
     contact_person: '', ministry_types: [] as string[],
@@ -155,7 +161,8 @@ export default function CreateProfileForm({ adminId }: Props) {
     setError('')
     if (!form.name.trim()) { setError('Profile name is required'); return }
     if (!logoUrl) { setError('Profile photo is required — upload a logo or photo before saving'); return }
-    if (accountType === 'church' && !form.pastor_name.trim()) { setError('Lead pastor name is required'); return }
+    if (accountType === 'church' && !form.leader_title) { setError('Leadership title is required'); return }
+    if (accountType === 'church' && !form.pastor_name.trim()) { setError('Leader name is required'); return }
     if (accountType !== 'church' && !form.city) { setError('City is required'); return }
 
     startTransition(async () => {
@@ -191,11 +198,28 @@ export default function CreateProfileForm({ adminId }: Props) {
             className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/20" />
           {form.slug && <p className="text-xs text-gray-400 mt-1">gospello.com/churches/{form.slug}</p>}
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Leadership Title <span className="text-red-500">*</span></label>
+            <select value={form.leader_title} onChange={e => set('leader_title', e.target.value)}
+              className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] bg-white">
+              <option value="">— Select title —</option>
+              {LEADERSHIP_TITLES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Leader's Name <span className="text-red-500">*</span></label>
+            <input value={form.pastor_name} onChange={e => set('pastor_name', e.target.value)}
+              placeholder="e.g. John Doe"
+              className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED]" />
+          </div>
+        </div>
         <div>
-          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Lead Pastor / Founder <span className="text-red-500">*</span></label>
-          <input value={form.pastor_name} onChange={e => set('pastor_name', e.target.value)}
-            placeholder="e.g. Pastor John Doe"
+          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Founder <span className="text-xs font-normal text-gray-400 lowercase tracking-normal">(optional)</span></label>
+          <input value={form.founder} onChange={e => set('founder', e.target.value)}
+            placeholder="e.g. Late Archbishop Benson Idahosa"
             className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED]" />
+          <p className="text-xs text-gray-400 mt-1">Leave blank if founder is still the current leader</p>
         </div>
         <div>
           <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Denomination</label>

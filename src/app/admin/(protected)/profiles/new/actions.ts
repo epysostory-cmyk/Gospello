@@ -13,7 +13,7 @@ interface CreateProfileInput {
     facebook: string; twitter: string; youtube: string
     description: string; source_url: string
     // church
-    pastor_name: string; denomination: string; service_times: string[]
+    pastor_name: string; leader_title: string; founder: string; denomination: string; service_times: string[]
     // organizer
     contact_person: string; ministry_types: string[]
   }
@@ -43,6 +43,8 @@ export async function createAdminProfile(input: CreateProfileInput): Promise<{ e
         instagram:        form.instagram.trim() || null,
         facebook:         form.facebook.trim() || null,
         pastor_name:      form.pastor_name.trim() || null,
+        leader_title:     form.leader_title.trim() || null,
+        founder:          form.founder.trim() || null,
         denomination:     form.denomination.trim() || null,
         service_times:    form.service_times.length > 0 ? form.service_times.join('\n') : null,
         source:           'admin_seed',
