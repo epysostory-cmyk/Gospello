@@ -23,16 +23,16 @@ export default function AddAdminFormNew() {
   const [state, formAction] = useActionState(addAdminUser, null)
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-      <h2 className="text-sm font-semibold text-white mb-4">Add New Admin</h2>
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5">
+      <h2 className="text-sm font-semibold text-gray-900 mb-4">Add New Admin</h2>
       <form action={formAction} className="flex flex-wrap gap-3 items-start">
         {state?.error && (
-          <p className="w-full text-sm text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg">
+          <p className="w-full text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 rounded-lg">
             {state.error}
           </p>
         )}
         {state?.success && (
-          <p className="w-full text-sm text-green-400 bg-green-500/10 border border-green-500/20 px-3 py-2 rounded-lg">
+          <p className="w-full text-sm text-green-700 bg-green-50 border border-green-100 px-3 py-2 rounded-lg">
             Admin added successfully.
           </p>
         )}
@@ -43,19 +43,19 @@ export default function AddAdminFormNew() {
             name="email"
             required
             placeholder="admin@example.com"
-            className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
-          <p className="text-xs text-gray-500 mt-1">User must already have a Gospello account</p>
+          <p className="text-xs text-gray-400 mt-1">User must already have a Gospello account</p>
         </div>
 
         <select
           name="role"
           defaultValue="moderator"
-          className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer"
+          className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
         >
-          <option value="moderator" className="bg-[#0D0D14]">Moderator</option>
-          <option value="admin" className="bg-[#0D0D14]">Admin</option>
-          <option value="super_admin" className="bg-[#0D0D14]">Super Admin</option>
+          <option value="moderator">Moderator</option>
+          <option value="admin">Admin</option>
+          <option value="super_admin">Super Admin</option>
         </select>
 
         <SubmitButton />
