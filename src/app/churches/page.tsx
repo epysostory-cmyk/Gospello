@@ -184,28 +184,29 @@ export default async function ChurchesPage({
 
         {/* Pagination */}
         {pages > 1 && (
-          <div className="flex justify-center gap-2 mt-12">
-            {page > 1 && (
-              <Link href={buildUrl({ page: String(page - 1) })} className="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                ← Previous
-              </Link>
-            )}
-            {Array.from({ length: Math.min(pages, 5) }, (_, i) => i + 1).map((p) => (
-              <Link
-                key={p}
-                href={buildUrl({ page: String(p) })}
-                className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors ${
-                  p === page ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                {p}
-              </Link>
-            ))}
-            {page < pages && (
-              <Link href={buildUrl({ page: String(page + 1) })} className="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                Next →
-              </Link>
-            )}
+          <div className="flex flex-col items-center gap-3 mt-12">
+            <p className="text-sm text-gray-400">
+              Page {page} of {pages} · {total} church{total !== 1 ? 'es' : ''}
+            </p>
+            <div className="flex gap-3">
+              {page > 1 && (
+                <Link
+                  href={buildUrl({ page: String(page - 1) })}
+                  className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  ← Previous
+                </Link>
+              )}
+              {page < pages && (
+                <Link
+                  href={buildUrl({ page: String(page + 1) })}
+                  className="px-6 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors"
+                  style={{ background: '#4F46E5' }}
+                >
+                  Next {page * PAGE_SIZE < total ? `(${Math.min(PAGE_SIZE, total - page * PAGE_SIZE)} more)` : ''} →
+                </Link>
+              )}
+            </div>
           </div>
         )}
         <ListYourChurchCTA />
