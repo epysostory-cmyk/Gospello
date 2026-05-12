@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, ChevronLeft } from 'lucide-react'
 
 export interface OrganizerCard {
   id: string
@@ -23,7 +23,10 @@ interface Props {
 
 export default function DiscoverOrganizers({ organizers }: Props) {
   const sectionRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
 
   useEffect(() => {
     const el = sectionRef.current
@@ -36,22 +39,63 @@ export default function DiscoverOrganizers({ organizers }: Props) {
     return () => observer.disconnect()
   }, [])
 
+  const updateScrollState = () => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 8)
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 8)
+  }
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    el.addEventListener('scroll', updateScrollState, { passive: true })
+    updateScrollState()
+    return () => el.removeEventListener('scroll', updateScrollState)
+  }, [])
+
+  const scroll = (dir: 'left' | 'right') => {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollBy({ left: dir === 'right' ? 380 : -380, behavior: 'smooth' })
+  }
+
   if (organizers.length === 0) return null
 
   return (
     <section ref={sectionRef} className="py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 flex items-start justify-between gap-4">
+      {/* Header row */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 flex items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Meet the Organizers</h2>
           <p className="text-gray-500 mt-1 text-sm sm:text-base">Ministries and organizers bringing gospel events to life</p>
         </div>
-        <Link href="/organizers" className="flex-shrink-0 flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-1">
-          See all <ChevronRight className="w-4 h-4" />
-        </Link>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => scroll('left')}
+            disabled={!canScrollLeft}
+            className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 bg-white shadow-sm transition-opacity disabled:opacity-30"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <button
+            onClick={() => scroll('right')}
+            disabled={!canScrollRight}
+            className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 bg-white shadow-sm transition-opacity disabled:opacity-30"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-600" />
+          </button>
+          <Link href="/organizers" className="flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+            See all <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
 
       {/* Scroll container */}
       <div
+        ref={scrollRef}
         className="flex gap-3 overflow-x-auto pl-4 sm:pl-6 lg:pl-8 pr-4 pb-2 snap-x snap-mandatory"
         style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
