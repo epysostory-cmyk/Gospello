@@ -27,8 +27,8 @@ export default async function ProfilePage() {
     const { data: church } = await supabase
       .from('churches')
       .select('logo_url')
-      .eq('created_by', user.id)
-      .single()
+      .eq('profile_id', user.id)
+      .maybeSingle()
     resolvedAvatarUrl = church?.logo_url ?? null
   }
 

@@ -207,7 +207,8 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
       {/* Profile form */}
       <form onSubmit={handleSave} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900">Public Profile</h2>
+          <h2 className="font-semibold text-gray-900">{isChurch ? 'Account' : 'Public Profile'}</h2>
+          {isChurch && <p className="text-xs text-gray-400 mt-0.5">Your name and photo shown on your account</p>}
         </div>
 
         <div className="px-6 py-6 space-y-6">
