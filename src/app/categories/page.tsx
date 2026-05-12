@@ -3,13 +3,12 @@ export const metadata: Metadata = { title: 'Categories' }
 
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 export default async function CategoriesPage() {
   const admin = createAdminClient()
-  // Fetch visible categories + all approved event categories in parallel
   const [{ data: categories }, { data: eventRows }] = await Promise.all([
     admin
       .from('categories')
@@ -22,115 +21,92 @@ export default async function CategoriesPage() {
       .eq('status', 'approved'),
   ])
 
-  // Count events per category slug
   const countMap: Record<string, number> = {}
   for (const ev of eventRows ?? []) {
     if (ev.category) countMap[ev.category] = (countMap[ev.category] ?? 0) + 1
   }
 
   const cats = categories ?? []
+  const totalEvents = Object.values(countMap).reduce((a, b) => a + b, 0)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
+
       {/* Header */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
-          <h1 className="text-4xl font-extrabold text-gray-900">All Categories</h1>
-          <p className="text-gray-500 mt-2 text-lg">
-            Explore gospel events by type — find what speaks to your spirit
+      <section className="bg-white border-b border-gray-200">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+          <p className="text-xs font-semibold tracking-widest uppercase text-indigo-600 mb-1">Browse</p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-none">
+            Categories
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm">
+            {totalEvents > 0
+              ? `${totalEvents.toLocaleString()} gospel events across ${cats.filter(c => (countMap[c.slug] ?? 0) > 0).length} categories`
+              : 'Find gospel events by type'}
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* List */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {cats.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
-            <p className="text-lg">No categories yet.</p>
-            <p className="text-sm mt-1">Check back soon.</p>
+            <p>No categories yet — check back soon.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="divide-y divide-gray-100">
             {cats.map((cat) => {
               const count = countMap[cat.slug] ?? 0
-              const hex = cat.color ?? '#6B7280'
               const hasEvents = count > 0
+              const hex = cat.color ?? '#6B7280'
 
-              const cardContent = (
-                <>
-                  {/* Top color bar */}
-                  <div className="h-2 w-full" style={{ backgroundColor: hex }} />
-
-                  <div className="p-7">
-                    {/* Icon circle */}
+              if (!hasEvents) {
+                return (
+                  <div key={cat.slug} className="flex items-center gap-4 py-4 opacity-50 cursor-default">
                     <div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-md mb-5"
-                      style={{ backgroundColor: hex, opacity: hasEvents ? 1 : 0.5 }}
+                      className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                      style={{ backgroundColor: hex + '18' }}
                     >
                       {cat.icon}
                     </div>
-
-                    {/* Name + count */}
-                    <div className="flex items-center justify-between mb-3">
-                      <h2 className={`text-xl font-bold transition-colors ${hasEvents ? 'text-gray-900 group-hover:text-indigo-600' : 'text-gray-400'}`}>
-                        {cat.name}
-                      </h2>
-                      <span
-                        className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                        style={hasEvents
-                          ? { backgroundColor: hex + '18', color: hex }
-                          : { backgroundColor: '#F3F4F6', color: '#9CA3AF' }
-                        }
-                      >
-                        {hasEvents ? `${count} event${count === 1 ? '' : 's'}` : 'Coming soon'}
-                      </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-700 text-sm">{cat.name}</p>
+                      {cat.description && (
+                        <p className="text-xs text-gray-400 mt-0.5 truncate">{cat.description}</p>
+                      )}
                     </div>
-
-                    {/* Description */}
-                    {cat.description && (
-                      <p className="text-sm text-gray-500 leading-relaxed mb-5">
-                        {cat.description}
-                      </p>
-                    )}
-
-                    {/* CTA */}
-                    {hasEvents ? (
-                      <div
-                        className="flex items-center gap-1.5 text-sm font-semibold group-hover:gap-2.5 transition-all"
-                        style={{ color: hex }}
-                      >
-                        Browse {cat.name} Events
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-400">No events yet — check back soon</p>
-                    )}
+                    <span className="text-xs text-gray-400 flex-shrink-0">No events yet</span>
                   </div>
-                </>
-              )
+                )
+              }
 
-              return hasEvents ? (
+              return (
                 <Link
                   key={cat.slug}
                   href={`/events?category=${cat.slug}`}
-                  className="group relative bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  className="flex items-center gap-4 py-4 group hover:bg-gray-50 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 transition-colors rounded-lg"
                 >
-                  {cardContent}
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                    style={{ backgroundColor: hex + '18' }}
+                  >
+                    {cat.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm group-hover:text-indigo-600 transition-colors">
+                      {cat.name}
+                    </p>
+                    {cat.description && (
+                      <p className="text-xs text-gray-500 mt-0.5 truncate">{cat.description}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs font-semibold text-gray-500">
+                      {count} event{count === 1 ? '' : 's'}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 transition-colors" />
+                  </div>
                 </Link>
-              ) : (
-                <div
-                  key={cat.slug}
-                  className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden opacity-70 cursor-default"
-                >
-                  {cardContent}
-                </div>
               )
             })}
           </div>
