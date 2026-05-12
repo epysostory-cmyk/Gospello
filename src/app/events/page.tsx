@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
-import { NIGERIAN_STATES, COUNTRY_LIST, formatDate, formatTime } from '@/lib/utils'
+import { formatDate, formatTime } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import { Search, MapPin, X } from 'lucide-react'
@@ -19,6 +19,7 @@ export const revalidate = 60
 interface SearchParams {
   q?: string
   city?: string
+  state?: string
   country?: string
   category?: string
   timeframe?: 'today' | 'week' | 'weekend'
@@ -76,6 +77,9 @@ async function getEvents(params: SearchParams) {
   }
   if (params.city) {
     query = query.ilike('city', `%${params.city}%`)
+  }
+  if (params.state) {
+    query = query.eq('state', params.state)
   }
   if (params.country) {
     query = query.eq('country', params.country)
@@ -137,6 +141,19 @@ async function getEvents(params: SearchParams) {
   }
 }
 
+async function getLocationOptions() {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('events')
+    .select('country, state')
+    .eq('status', 'approved')
+    .eq('visibility', 'public')
+  const rows = data ?? []
+  const countries = [...new Set(rows.map(r => r.country).filter(Boolean))].sort() as string[]
+  const states = [...new Set(rows.map(r => r.state).filter(Boolean))].sort() as string[]
+  return { countries, states }
+}
+
 export default async function EventsPage({
   searchParams,
 }: {
@@ -144,14 +161,16 @@ export default async function EventsPage({
 }) {
   const params = await searchParams
   const adminClient = createAdminClient()
-  const [{ events, total, page, pages, attendanceCountMap }, categoriesRes] = await Promise.all([
+  const [{ events, total, page, pages, attendanceCountMap }, categoriesRes, locationOptions] = await Promise.all([
     getEvents(params),
     adminClient
       .from('categories')
       .select('id, name, slug, icon, color')
       .eq('is_visible', true)
       .order('sort_order', { ascending: true }),
+    getLocationOptions(),
   ])
+  const { countries: availableCountries, states: availableStates } = locationOptions
   const categoryOptions = categoriesRes.data?.length ? categoriesRes.data : FALLBACK_CATEGORIES
 
   // Build catMap for EventCard badges
@@ -166,7 +185,7 @@ export default async function EventsPage({
     return `/events?${qs.toString()}`
   }
 
-  const hasFilters = !!(params.q || params.city || params.country || params.category || params.timeframe)
+  const hasFilters = !!(params.q || params.city || params.state || params.country || params.category || params.timeframe)
   const activeCategoryLabel = params.category
     ? categoryOptions.find(c => c.slug === params.category)?.name
     : null
@@ -175,10 +194,10 @@ export default async function EventsPage({
     <div className="min-h-screen bg-gray-50">
 
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <section style={{ background: '#0C0A1A' }} className="relative text-white overflow-hidden">
-        {/* Single centered glow — one light source, intentional */}
+      <section style={{ background: '#0C0A1A' }} className="relative text-white">
+        {/* Single centered glow */}
         <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none"
+          className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none overflow-hidden"
           style={{ width: 700, height: 260, background: 'radial-gradient(ellipse at 50% 0%, rgba(99,82,220,0.28) 0%, transparent 70%)' }}
         />
 
@@ -211,7 +230,7 @@ export default async function EventsPage({
           {/* Search bar — white bg, prominent */}
           <form method="GET" action="/events">
             <div
-              className="flex items-center gap-0 rounded-2xl overflow-hidden"
+              className="flex items-center rounded-2xl overflow-hidden"
               style={{ background: 'white', boxShadow: '0 2px 24px rgba(0,0,0,0.35)' }}
             >
               <Search className="flex-shrink-0 ml-4 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -219,11 +238,12 @@ export default async function EventsPage({
                 type="text"
                 name="q"
                 defaultValue={params.q}
-                placeholder="Search events, churches, cities…"
+                placeholder="Search by event name, category, church or organizer…"
                 className="flex-1 pl-3 pr-2 py-4 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none bg-transparent"
               />
               {params.category && <input type="hidden" name="category" value={params.category} />}
               {params.city && <input type="hidden" name="city" value={params.city} />}
+              {params.state && <input type="hidden" name="state" value={params.state} />}
               {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
               <button
                 type="submit"
@@ -234,37 +254,37 @@ export default async function EventsPage({
               </button>
             </div>
           </form>
+        </div>
 
-          {/* Category chips */}
-          <div
-            className="flex gap-2 mt-5 overflow-x-auto pb-0.5 -mx-4 px-4 sm:mx-0 sm:px-0"
-            style={{ scrollbarWidth: 'none' }}
+        {/* Category chips — full-bleed row so they scroll edge-to-edge */}
+        <div
+          className="flex gap-2 pb-5 overflow-x-auto px-4 sm:px-6 lg:px-8"
+          style={{ scrollbarWidth: 'none', marginTop: 16 }}
+        >
+          <Link
+            href={buildUrl({ category: undefined, page: undefined })}
+            className="flex-shrink-0 flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-1.5 rounded-full transition-all"
+            style={!params.category
+              ? { background: 'white', color: '#111827' }
+              : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)' }
+            }
           >
+            All
+          </Link>
+          {categoryOptions.map((cat) => (
             <Link
-              href={buildUrl({ category: undefined, page: undefined })}
+              key={cat.slug}
+              href={buildUrl({ category: cat.slug, page: undefined })}
               className="flex-shrink-0 flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-1.5 rounded-full transition-all"
-              style={!params.category
+              style={params.category === cat.slug
                 ? { background: 'white', color: '#111827' }
-                : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
+                : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)' }
               }
             >
-              All
+              <span>{cat.icon}</span>
+              {cat.name}
             </Link>
-            {categoryOptions.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={buildUrl({ category: cat.slug, page: undefined })}
-                className="flex-shrink-0 flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-1.5 rounded-full transition-all"
-                style={params.category === cat.slug
-                  ? { background: 'white', color: '#111827' }
-                  : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
-                }
-              >
-                <span>{cat.icon}</span>
-                {cat.name}
-              </Link>
-            ))}
-          </div>
+          ))}
         </div>
       </section>
 
@@ -296,22 +316,36 @@ export default async function EventsPage({
             ))}
           </div>
 
-          {/* Country filter */}
-          <form method="GET" action="/events" className="flex items-center gap-1">
+          {/* Location filters */}
+          <form method="GET" action="/events" className="flex items-center gap-1.5">
             {params.q && <input type="hidden" name="q" value={params.q} />}
             {params.category && <input type="hidden" name="category" value={params.category} />}
             {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
-            <div className="relative flex items-center bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
-              <select
-                name="country"
-                defaultValue={params.country ?? ''}
-                className="pl-8 pr-3 py-2 text-xs font-semibold text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
-              >
-                <option value="">All Countries</option>
-                {COUNTRY_LIST.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+            {availableStates.length > 0 && (
+              <div className="relative flex items-center bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
+                <select
+                  name="state"
+                  defaultValue={params.state ?? ''}
+                  className="pl-8 pr-3 py-2 text-xs font-semibold text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
+                >
+                  <option value="">All States</option>
+                  {availableStates.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
+            {availableCountries.length > 1 && (
+              <div className="relative flex items-center bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <select
+                  name="country"
+                  defaultValue={params.country ?? ''}
+                  className="px-3 py-2 text-xs font-semibold text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
+                >
+                  <option value="">All Countries</option>
+                  {availableCountries.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            )}
             <button type="submit" className="px-3 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors">Go</button>
           </form>
 
@@ -336,6 +370,12 @@ export default async function EventsPage({
             <span className="flex items-center gap-1 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 px-3 py-1.5 rounded-full">
               🌍 {params.country}
               <Link href={buildUrl({ country: undefined })} className="hover:text-rose-900 ml-0.5">×</Link>
+            </span>
+          )}
+          {params.state && (
+            <span className="flex items-center gap-1 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 px-3 py-1.5 rounded-full">
+              📍 {params.state}
+              <Link href={buildUrl({ state: undefined })} className="hover:text-rose-900 ml-0.5">×</Link>
             </span>
           )}
           {params.city && (
