@@ -258,7 +258,7 @@ export default function EditProfileForm({ type, profile }: Props) {
           </Field>
           {isChurch && (
             <>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Leadership Title">
                   <select className={inputCls} value={form.leader_title} onChange={e => set('leader_title', e.target.value)}>
                     <option value="">— Select title —</option>

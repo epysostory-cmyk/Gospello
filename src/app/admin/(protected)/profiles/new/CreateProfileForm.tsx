@@ -198,7 +198,7 @@ export default function CreateProfileForm({ adminId }: Props) {
             className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/20" />
           {form.slug && <p className="text-xs text-gray-400 mt-1">gospello.com/churches/{form.slug}</p>}
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Leadership Title <span className="text-red-500">*</span></label>
             <select value={form.leader_title} onChange={e => set('leader_title', e.target.value)}
