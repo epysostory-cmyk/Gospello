@@ -6,14 +6,15 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import ChurchCard from '@/components/ui/ChurchCard'
 import type { Church } from '@/types/database'
-import { Search, MapPin, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import ListYourChurchCTA from '@/components/ui/ListYourChurchCTA'
+import NearMeButton from '@/components/ui/NearMeButton'
 
 interface SearchParams {
   q?: string
-  city?: string
+  state?: string
   page?: string
 }
 
@@ -35,8 +36,8 @@ async function getChurches(params: SearchParams) {
     .order('name', { ascending: true })
     .range(from, to)
 
-  if (params.q) query = query.or(`name.ilike.%${params.q}%,description.ilike.%${params.q}%`)
-  if (params.city) query = query.ilike('city', `%${params.city}%`)
+  if (params.q) query = query.or(`name.ilike.%${params.q}%,description.ilike.%${params.q}%,city.ilike.%${params.q}%,state.ilike.%${params.q}%`)
+  if (params.state) query = query.ilike('state', `%${params.state}%`)
 
   const { data, count } = await query
   const churches = (data ?? []) as Church[]
@@ -70,7 +71,7 @@ export default async function ChurchesPage({
 }) {
   const params = await searchParams
   const { churches, eventCountMap, total, page, pages } = await getChurches(params)
-  const hasFilters = !!(params.q || params.city)
+  const hasFilters = !!(params.q || params.state)
 
   function buildUrl(overrides: Partial<SearchParams>) {
     const merged = { ...params, ...overrides }
@@ -109,53 +110,84 @@ export default async function ChurchesPage({
             {total > 0 && (
               <p className="text-slate-400 mt-1.5 text-sm">
                 {total} church{total !== 1 ? 'es' : ''} listed
-                {params.city ? ` in ${params.city}` : ''}
+                {params.state ? ` in ${params.state}` : ''}
                 {params.q ? ` matching "${params.q}"` : ''}
               </p>
             )}
           </div>
 
-          {/* Search + city */}
-          <form method="GET" action="/churches" className="flex flex-col sm:flex-row gap-2 max-w-2xl">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                name="q"
-                defaultValue={params.q}
-                placeholder="Search churches..."
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white/15 transition-colors"
-              />
-              {params.city && <input type="hidden" name="city" value={params.city} />}
-            </div>
-            <div className="relative flex items-center bg-white/10 border border-white/10 rounded-2xl overflow-hidden sm:w-40">
-              <MapPin className="w-4 h-4 text-gray-400 absolute left-3 pointer-events-none" />
-              <select
-                name="city"
-                defaultValue={params.city ?? ''}
-                className="w-full pl-9 pr-3 py-3.5 bg-transparent text-sm text-white focus:outline-none appearance-none cursor-pointer"
-              >
-                <option value="" className="text-gray-900">All Cities</option>
-                {NIGERIAN_STATES.map((c) => (
-                  <option key={c} value={c} className="text-gray-900">{c}</option>
+          {/* Search */}
+          <div className="flex flex-col gap-3 max-w-2xl">
+            {/* Name search — standalone */}
+            <form method="GET" action="/churches" className="flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={params.q}
+                  placeholder="Search by church name, city, or description…"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white/15 transition-colors"
+                />
+                {params.state && <input type="hidden" name="state" value={params.state} />}
+              </div>
+              <button type="submit" className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 rounded-2xl transition-colors text-sm">
+                Search
+              </button>
+            </form>
+
+            {/* State filter + Near Me — row */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* State chips — horizontal scroll */}
+              <div className="flex gap-1.5 overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
+                <Link
+                  href={buildUrl({ state: undefined, page: undefined })}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                  style={!params.state
+                    ? { background: 'white', color: '#111827' }
+                    : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)' }
+                  }
+                >
+                  All States
+                </Link>
+                {NIGERIAN_STATES.map((s) => (
+                  <Link
+                    key={s}
+                    href={buildUrl({ state: s, page: undefined })}
+                    className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap"
+                    style={params.state === s
+                      ? { background: 'white', color: '#111827' }
+                      : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)' }
+                    }
+                  >
+                    {s}
+                  </Link>
                 ))}
-              </select>
+              </div>
+              <NearMeButton />
             </div>
-            <button
-              type="submit"
-              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-3.5 rounded-2xl transition-colors text-sm"
-            >
-              Search
-            </button>
+
+            {/* Active filter pills */}
             {hasFilters && (
-              <Link
-                href="/churches"
-                className="flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-slate-300 text-sm font-medium transition-colors border border-white/10"
-              >
-                <X className="w-3.5 h-3.5" /> Clear
-              </Link>
+              <div className="flex items-center gap-2 flex-wrap">
+                {params.q && (
+                  <span className="flex items-center gap-1 text-xs font-semibold bg-white/10 text-slate-300 border border-white/10 px-3 py-1.5 rounded-full">
+                    &quot;{params.q}&quot;
+                    <Link href={buildUrl({ q: undefined })} className="hover:text-white ml-0.5">×</Link>
+                  </span>
+                )}
+                {params.state && (
+                  <span className="flex items-center gap-1 text-xs font-semibold bg-white/10 text-slate-300 border border-white/10 px-3 py-1.5 rounded-full">
+                    📍 {params.state}
+                    <Link href={buildUrl({ state: undefined })} className="hover:text-white ml-0.5">×</Link>
+                  </span>
+                )}
+                <Link href="/churches" className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300">
+                  <X className="w-3 h-3" /> Clear all
+                </Link>
+              </div>
             )}
-          </form>
+          </div>
         </div>
       </section>
 
