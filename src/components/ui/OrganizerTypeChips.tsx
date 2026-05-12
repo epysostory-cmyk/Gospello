@@ -23,6 +23,10 @@ interface Props {
 
 export default function OrganizerTypeChips({ value, onChange, max = 3 }: Props) {
   const [query, setQuery] = useState('')
+  const [customOther, setCustomOther] = useState('')
+
+  const hasOther = value.includes('Other')
+
   const filtered = query.trim()
     ? ALL_TYPES.filter(t => t.toLowerCase().includes(query.toLowerCase()))
     : ALL_TYPES
@@ -30,9 +34,17 @@ export default function OrganizerTypeChips({ value, onChange, max = 3 }: Props) 
   function toggle(type: string) {
     if (value.includes(type)) {
       onChange(value.filter(v => v !== type))
+      if (type === 'Other') setCustomOther('')
     } else if (value.length < max) {
       onChange([...value, type])
     }
+  }
+
+  function handleCustomOtherChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const text = e.target.value
+    setCustomOther(text)
+    // Replace 'Other' in the value array with the custom text (or keep 'Other' if empty)
+    onChange(value.map(v => v === 'Other' ? (text.trim() || 'Other') : v))
   }
 
   return (
@@ -81,6 +93,22 @@ export default function OrganizerTypeChips({ value, onChange, max = 3 }: Props) 
           <p className="text-xs text-gray-400 py-2">No results for &quot;{query}&quot;</p>
         )}
       </div>
+
+      {/* Custom input shown when "Other" is selected */}
+      {hasOther && (
+        <div className="mt-3">
+          <input
+            type="text"
+            value={customOther}
+            onChange={handleCustomOtherChange}
+            placeholder="Describe your ministry type..."
+            maxLength={60}
+            className="w-full px-3.5 py-2 rounded-xl border border-[#7C3AED] text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
+            autoFocus
+          />
+          <p className="text-xs text-gray-400 mt-1">Tell us what best describes you</p>
+        </div>
+      )}
     </div>
   )
 }

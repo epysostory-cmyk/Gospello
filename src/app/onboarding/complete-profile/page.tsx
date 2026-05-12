@@ -57,9 +57,18 @@ export default function CompleteProfilePage() {
         return
       }
 
-      // Pre-fill name from Google
-      const gName = meta?.full_name || meta?.name || ''
-      if (gName) setDisplayName(gName)
+      // Pre-fill name: prefer existing DB value, then Google metadata
+      if (profile?.display_name) {
+        setDisplayName(profile.display_name)
+      } else {
+        const gName = meta?.full_name || meta?.name || ''
+        if (gName) setDisplayName(gName)
+      }
+
+      // Pre-fill account type if already set
+      if (profile?.account_type) {
+        setAccountType(profile.account_type as AccountType)
+      }
 
       setLoading(false)
     }

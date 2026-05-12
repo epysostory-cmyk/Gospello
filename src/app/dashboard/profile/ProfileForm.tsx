@@ -115,48 +115,54 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     setSuccess(false)
 
     if (!form.display_name.trim()) { setError('Display name is required'); setSaving(false); return }
+    if (!form.bio.trim()) { setError('Short description is required — help people know who you are'); setSaving(false); return }
 
-    let newAvatarUrl = avatarUrl
-    if (avatarFile) {
-      const uploaded = await uploadAvatar()
-      if (uploaded === null) { setSaving(false); return }
-      newAvatarUrl = uploaded
-    }
+    try {
+      let newAvatarUrl = avatarUrl
+      if (avatarFile) {
+        const uploaded = await uploadAvatar()
+        if (uploaded === null) { setSaving(false); return }
+        newAvatarUrl = uploaded
+      }
 
-    const updatePayload: Record<string, unknown> = {
-      display_name: form.display_name.trim(),
-      church_name:  form.account_type === 'church' ? form.church_name.trim() || null : null,
-      bio:          form.bio.trim() || null,
-      state:        form.state || null,
-      city:         form.city || null,
-      address:      form.address.trim() || null,
-      phone:        form.phone.trim() || null,
-      website:      form.website.trim() || null,
-      avatar_url:   newAvatarUrl,
-      updated_at:   new Date().toISOString(),
-    }
+      const updatePayload: Record<string, unknown> = {
+        display_name: form.display_name.trim(),
+        church_name:  form.account_type === 'church' ? form.church_name.trim() || null : null,
+        bio:          form.bio.trim(),
+        state:        form.state || null,
+        city:         form.city || null,
+        address:      form.address.trim() || null,
+        phone:        form.phone.trim() || null,
+        website:      form.website.trim() || null,
+        avatar_url:   newAvatarUrl,
+        updated_at:   new Date().toISOString(),
+      }
 
-    if (isOrganizer) {
-      updatePayload.contact_person  = form.contact_person.trim() || null
-      updatePayload.ministry_types  = form.ministry_types.length > 0 ? form.ministry_types : null
-      updatePayload.whatsapp        = form.whatsapp.trim() || null
-      updatePayload.instagram       = form.instagram.trim() || null
-      updatePayload.facebook        = form.facebook.trim() || null
-      updatePayload.twitter         = form.twitter.trim() || null
-      updatePayload.youtube         = form.youtube.trim() || null
-    }
+      if (isOrganizer) {
+        updatePayload.contact_person  = form.contact_person.trim() || null
+        updatePayload.ministry_types  = form.ministry_types.length > 0 ? form.ministry_types : null
+        updatePayload.whatsapp        = form.whatsapp.trim() || null
+        updatePayload.instagram       = form.instagram.trim() || null
+        updatePayload.facebook        = form.facebook.trim() || null
+        updatePayload.twitter         = form.twitter.trim() || null
+        updatePayload.youtube         = form.youtube.trim() || null
+      }
 
-    const { error: updateError } = await supabase.from('profiles').update(updatePayload).eq('id', userId)
-    setSaving(false)
+      const { error: updateError } = await supabase.from('profiles').update(updatePayload).eq('id', userId)
 
-    if (updateError) {
-      setError(updateError.message)
-    } else {
-      setAvatarUrl(newAvatarUrl)
-      setAvatarFile(null)
-      setAvatarPreview(null)
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 4000)
+      if (updateError) {
+        setError(updateError.message)
+      } else {
+        setAvatarUrl(newAvatarUrl)
+        setAvatarFile(null)
+        setAvatarPreview(null)
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 4000)
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -276,7 +282,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
           {/* Bio */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              {isOrganizer ? 'Short Description' : 'Bio'} <span className="text-gray-400 font-normal">(optional)</span>
+              {isOrganizer ? 'Short Description' : 'Bio'} <span className="text-red-400">*</span>
             </label>
             <textarea
               value={form.bio}
