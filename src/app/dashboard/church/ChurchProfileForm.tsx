@@ -1,19 +1,18 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import { Loader2, Camera, CheckCircle, AlertCircle, Plus, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import type { Church } from '@/types/database'
+import { saveChurchProfile, uploadChurchImage } from './actions'
 
 interface Props {
   church: Church
   userId: string
 }
 
-export default function ChurchProfileForm({ church, userId }: Props) {
-  const supabase = createClient()
+export default function ChurchProfileForm({ church }: Props) {
   const logoRef = useRef<HTMLInputElement>(null)
   const bannerRef = useRef<HTMLInputElement>(null)
 
@@ -21,12 +20,12 @@ export default function ChurchProfileForm({ church, userId }: Props) {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
-  const [logoFile, setLogoFile] = useState<File | null>(null)
-  const [logoPreview, setLogoPreview] = useState<string | null>(null)
-  const [bannerFile, setBannerFile] = useState<File | null>(null)
-  const [bannerPreview, setBannerPreview] = useState<string | null>(null)
   const [currentLogoUrl, setCurrentLogoUrl] = useState(church.logo_url)
   const [currentBannerUrl, setCurrentBannerUrl] = useState(church.banner_url)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [bannerFile, setBannerFile] = useState<File | null>(null)
 
   const [serviceTimes, setServiceTimes] = useState<string[]>(
     church.service_times ? church.service_times.split('\n').filter(Boolean) : ['']
@@ -55,12 +54,6 @@ export default function ChurchProfileForm({ church, userId }: Props) {
     else { setBannerFile(file); setBannerPreview(preview) }
   }
 
-  const uploadImage = async (file: File, path: string): Promise<string | null> => {
-    const { error } = await supabase.storage.from('church-assets').upload(path, file, { upsert: true })
-    if (error) { setError('Upload failed: ' + error.message); return null }
-    return supabase.storage.from('church-assets').getPublicUrl(path).data.publicUrl
-  }
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -68,53 +61,45 @@ export default function ChurchProfileForm({ church, userId }: Props) {
     setSuccess(false)
 
     try {
-      let logo_url = currentLogoUrl
-      let banner_url = currentBannerUrl
-
+      // Upload images first if changed
       if (logoFile) {
-        const url = await uploadImage(logoFile, `${userId}/logo.${logoFile.name.split('.').pop()}`)
-        if (!url) return
-        logo_url = url
+        const fd = new FormData()
+        fd.append('file', logoFile)
+        const { url, error: uploadErr } = await uploadChurchImage(fd, 'logo')
+        if (uploadErr) { setError(uploadErr); return }
+        setCurrentLogoUrl(url)
+        setLogoFile(null); setLogoPreview(null)
       }
 
       if (bannerFile) {
-        const url = await uploadImage(bannerFile, `${userId}/banner.${bannerFile.name.split('.').pop()}`)
-        if (!url) return
-        banner_url = url
+        const fd = new FormData()
+        fd.append('file', bannerFile)
+        const { url, error: uploadErr } = await uploadChurchImage(fd, 'banner')
+        if (uploadErr) { setError(uploadErr); return }
+        setCurrentBannerUrl(url)
+        setBannerFile(null); setBannerPreview(null)
       }
 
-      const { error: updateError } = await supabase
-        .from('churches')
-        .update({
-          name: form.name.trim(),
-          description: form.description.trim() || null,
-          address: form.address.trim() || null,
-          city: form.city,
-          state: form.state,
-          country: form.country,
-          service_times: serviceTimes.filter(t => t.trim()).join('\n') || null,
-          website_url: form.website_url.trim() || null,
-          phone: form.phone.trim() || null,
-          logo_url,
-          banner_url,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('profile_id', userId)
+      const result = await saveChurchProfile({
+        name: form.name.trim(),
+        description: form.description.trim(),
+        address: form.address.trim(),
+        city: form.city,
+        state: form.state,
+        country: form.country,
+        service_times: serviceTimes.filter(t => t.trim()).join('\n'),
+        website_url: form.website_url.trim(),
+        phone: form.phone.trim(),
+      })
 
-      await supabase.from('profiles').update({ display_name: form.name.trim() }).eq('id', userId)
-
-      if (updateError) {
-        setError(updateError.message)
+      if (result.error) {
+        setError(result.error)
       } else {
-        setCurrentLogoUrl(logo_url)
-        setCurrentBannerUrl(banner_url)
-        setLogoFile(null); setLogoPreview(null)
-        setBannerFile(null); setBannerPreview(null)
         setSuccess(true)
         setTimeout(() => setSuccess(false), 4000)
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
       setSaving(false)
     }
@@ -270,7 +255,7 @@ export default function ChurchProfileForm({ church, userId }: Props) {
           )}
           {success && (
             <div className="flex items-center gap-2 text-green-700 text-sm bg-green-50 px-4 py-3 rounded-xl">
-              <CheckCircle className="w-4 h-4 flex-shrink-0" />Church profile saved successfully
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />Changes saved
             </div>
           )}
         </div>
