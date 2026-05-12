@@ -9,7 +9,7 @@ import EventCard from '@/components/ui/EventCard'
 import { formatDate, formatTime } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
-import { Search, MapPin, X } from 'lucide-react'
+import { Search, MapPin, X, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
@@ -28,7 +28,6 @@ interface SearchParams {
 
 const PAGE_SIZE = 12
 
-// Hardcoded fallback — overridden by DB fetch below
 const FALLBACK_CATEGORIES = [
   { slug: 'worship',    name: 'Worship',    icon: '🙏' },
   { slug: 'prayer',     name: 'Prayer',     icon: '✨' },
@@ -72,25 +71,15 @@ async function getEvents(params: SearchParams) {
     .eq('visibility', 'public')
     .order('created_at', { ascending: false })
 
-  if (params.q) {
-    query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%,location_name.ilike.%${params.q}%`)
-  }
-  if (params.city) {
-    query = query.ilike('city', `%${params.city}%`)
-  }
-  if (params.state) {
-    query = query.eq('state', params.state)
-  }
-  if (params.country) {
-    query = query.eq('country', params.country)
-  }
-  if (params.category) {
-    query = query.eq('category', params.category)
-  }
+  if (params.q)        query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%,location_name.ilike.%${params.q}%`)
+  if (params.city)     query = query.ilike('city', `%${params.city}%`)
+  if (params.state)    query = query.eq('state', params.state)
+  if (params.country)  query = query.eq('country', params.country)
+  if (params.category) query = query.eq('category', params.category)
+
   if (params.timeframe === 'today') {
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
-    const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999)
-    // Include events that start today OR started before today but end today or later (multi-day)
+    const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999)
     query = query
       .lte('start_date', todayEnd.toISOString())
       .or(`end_date.gte.${todayStart.toISOString()},and(end_date.is.null,start_date.gte.${todayStart.toISOString()})`)
@@ -103,24 +92,18 @@ async function getEvents(params: SearchParams) {
     query = query.gte('start_date', friday.toISOString()).lte('start_date', sunday.toISOString())
   }
   if (params.timeframe === 'week') {
-    // Sunday–Saturday of the current week
-    const now = new Date()
-    const sunday = new Date(now)
-    sunday.setDate(now.getDate() - now.getDay())
-    sunday.setHours(0, 0, 0, 0)
-    const saturday = new Date(sunday)
-    saturday.setDate(sunday.getDate() + 6)
-    saturday.setHours(23, 59, 59, 999)
+    const now    = new Date()
+    const sunday = new Date(now); sunday.setDate(now.getDate() - now.getDay()); sunday.setHours(0, 0, 0, 0)
+    const saturday = new Date(sunday); saturday.setDate(sunday.getDate() + 6); saturday.setHours(23, 59, 59, 999)
     query = query.gte('start_date', sunday.toISOString()).lte('start_date', saturday.toISOString())
   }
 
   const { data } = await query
   const now = new Date()
   const allSorted = ((data ?? []) as Event[]).sort((a, b) => scoreEvent(b, now) - scoreEvent(a, now))
-  const total = allSorted.length
+  const total  = allSorted.length
   const events = allSorted.slice(from, to + 1)
 
-  // Batch fetch attendance counts
   let attendanceCountMap: Record<string, number> = {}
   if (events.length > 0) {
     const { data: attendanceRows } = await adminClient
@@ -132,13 +115,7 @@ async function getEvents(params: SearchParams) {
     }
   }
 
-  return {
-    events,
-    total,
-    page,
-    pages: Math.ceil(total / PAGE_SIZE),
-    attendanceCountMap,
-  }
+  return { events, total, page, pages: Math.ceil(total / PAGE_SIZE), attendanceCountMap }
 }
 
 async function getLocationOptions() {
@@ -150,7 +127,7 @@ async function getLocationOptions() {
     .eq('visibility', 'public')
   const rows = data ?? []
   const countries = [...new Set(rows.map(r => r.country).filter(Boolean))].sort() as string[]
-  const states = [...new Set(rows.map(r => r.state).filter(Boolean))].sort() as string[]
+  const states    = [...new Set(rows.map(r => r.state).filter(Boolean))].sort() as string[]
   return { countries, states }
 }
 
@@ -170,10 +147,9 @@ export default async function EventsPage({
       .order('sort_order', { ascending: true }),
     getLocationOptions(),
   ])
+
   const { countries: availableCountries, states: availableStates } = locationOptions
   const categoryOptions = categoriesRes.data?.length ? categoriesRes.data : FALLBACK_CATEGORIES
-
-  // Build catMap for EventCard badges
   const catMap = Object.fromEntries(
     (categoriesRes.data ?? []).map(c => [c.slug, { name: c.name, icon: c.icon ?? null, color: c.color ?? '#6B7280' }])
   )
@@ -191,114 +167,109 @@ export default async function EventsPage({
     : null
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
 
-      {/* ── HERO ─────────────────────────────────────────────── */}
-      <section style={{ background: '#0C0A1A' }} className="relative text-white">
-        {/* Single centered glow */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none overflow-hidden"
-          style={{ width: 700, height: 260, background: 'radial-gradient(ellipse at 50% 0%, rgba(99,82,220,0.28) 0%, transparent 70%)' }}
-        />
+      {/* ── HEADER ───────────────────────────────────────────────────
+          Same pattern as churches/organizers directory pages.
+          White, clean, search front and centre.
+      ──────────────────────────────────────────────────────────── */}
+      <section className="bg-white border-b border-gray-200">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-0">
 
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10 sm:pt-20 sm:pb-14">
+          {/* Title row */}
+          <div className="mb-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600 mb-1.5">
+              {activeCategoryLabel ? activeCategoryLabel : 'Gospel Events · Nigeria'}
+            </p>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
+                {activeCategoryLabel ? `${activeCategoryLabel} events` : 'Gospel events'}
+              </h1>
+              {total > 0 && (
+                <p className="text-sm text-gray-400 sm:pb-0.5">
+                  {total.toLocaleString()} event{total !== 1 ? 's' : ''}
+                  {params.city ? ` in ${params.city}` : params.state ? ` in ${params.state}` : ''}
+                </p>
+              )}
+            </div>
+          </div>
 
-          {/* Eyebrow */}
-          <p className="text-xs font-semibold tracking-[0.18em] uppercase text-indigo-400 mb-5 text-center sm:text-left">
-            {params.category && activeCategoryLabel ? activeCategoryLabel : 'Gospel Events · Nigeria'}
-          </p>
-
-          {/* Heading */}
-          <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-[1.08] mb-4 text-center sm:text-left">
-            {params.category && activeCategoryLabel ? (
-              <>{activeCategoryLabel} Events</>
-            ) : (
-              <>
-                Find Events That<br />
-                <span style={{ color: '#A78BFA' }}>Feed Your Faith</span>
-              </>
-            )}
-          </h1>
-
-          <p className="text-slate-400 text-[15px] sm:text-base mb-8 text-center sm:text-left leading-relaxed">
-            {total > 0
-              ? <>{total.toLocaleString()} event{total !== 1 ? 's' : ''} — worship nights, conferences, seminars and more{params.city ? ` in ${params.city}` : ' across Nigeria'}.</>
-              : <>Worship nights, conferences, youth programs and seminars — across every state.</>
-            }
-          </p>
-
-          {/* Search bar — white bg, prominent */}
-          <form method="GET" action="/events">
-            <div
-              className="flex items-center rounded-2xl overflow-hidden"
-              style={{ background: 'white', boxShadow: '0 2px 24px rgba(0,0,0,0.35)' }}
-            >
-              <Search className="flex-shrink-0 ml-4 w-4 h-4 text-gray-400 pointer-events-none" />
+          {/* Search */}
+          <form method="GET" action="/events" className="flex gap-2 max-w-xl">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
                 type="text"
                 name="q"
                 defaultValue={params.q}
-                placeholder="Search by event name, category, church or organizer…"
-                className="flex-1 pl-3 pr-2 py-4 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none bg-transparent"
+                placeholder="Search events, churches, cities…"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
-              {params.category && <input type="hidden" name="category" value={params.category} />}
-              {params.city && <input type="hidden" name="city" value={params.city} />}
-              {params.state && <input type="hidden" name="state" value={params.state} />}
-              {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
-              <button
-                type="submit"
-                className="flex-shrink-0 m-1.5 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors"
-                style={{ background: '#4F46E5' }}
-              >
-                Search
-              </button>
             </div>
-          </form>
-        </div>
-
-        {/* Category chips — full-bleed row so they scroll edge-to-edge */}
-        <div
-          className="flex gap-2 pb-5 overflow-x-auto px-4 sm:px-6 lg:px-8"
-          style={{ scrollbarWidth: 'none', marginTop: 16 }}
-        >
-          <Link
-            href={buildUrl({ category: undefined, page: undefined })}
-            className="flex-shrink-0 flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-1.5 rounded-full transition-all"
-            style={!params.category
-              ? { background: 'white', color: '#111827' }
-              : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)' }
-            }
-          >
-            All
-          </Link>
-          {categoryOptions.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={buildUrl({ category: cat.slug, page: undefined })}
-              className="flex-shrink-0 flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-1.5 rounded-full transition-all"
-              style={params.category === cat.slug
-                ? { background: 'white', color: '#111827' }
-                : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)' }
-              }
+            {params.category && <input type="hidden" name="category" value={params.category} />}
+            {params.state    && <input type="hidden" name="state"    value={params.state} />}
+            {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
+            <button
+              type="submit"
+              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors"
             >
-              <span>{cat.icon}</span>
-              {cat.name}
+              Search
+            </button>
+            {params.q && (
+              <Link
+                href={buildUrl({ q: undefined, page: undefined })}
+                className="flex-shrink-0 flex items-center px-3 py-2.5 rounded-lg border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
+                Clear
+              </Link>
+            )}
+          </form>
+
+          {/* Category chips */}
+          <div
+            className="flex gap-2 overflow-x-auto pt-4 pb-0 -mx-4 px-4 sm:mx-0 sm:px-0"
+            style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+          >
+            <Link
+              href={buildUrl({ category: undefined, page: undefined })}
+              className={`flex-shrink-0 text-sm font-medium px-4 py-2 rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${
+                !params.category
+                  ? 'text-indigo-600 border-indigo-600 bg-indigo-50/50'
+                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              All
             </Link>
-          ))}
+            {categoryOptions.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={buildUrl({ category: cat.slug, page: undefined })}
+                className={`flex-shrink-0 flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${
+                  params.category === cat.slug
+                    ? 'text-indigo-600 border-indigo-600 bg-indigo-50/50'
+                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <span>{cat.icon}</span>
+                {cat.name}
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── FILTERS & RESULTS ────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* ── FILTERS & RESULTS ──────────────────────────────────────── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
 
-        {/* Secondary filter bar */}
+        {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-2 mb-6">
+
           {/* Timeframe pills */}
-          <div className="flex items-center gap-1.5 bg-white rounded-xl border border-gray-200 p-1">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
             <Link
               href={buildUrl({ timeframe: undefined, page: undefined })}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-                !params.timeframe ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'
+              className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+                !params.timeframe ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Any time
@@ -307,8 +278,8 @@ export default async function EventsPage({
               <Link
                 key={tf.value}
                 href={buildUrl({ timeframe: tf.value, page: undefined })}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
-                  params.timeframe === tf.value ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-700'
+                className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${
+                  params.timeframe === tf.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 {tf.label}
@@ -316,18 +287,18 @@ export default async function EventsPage({
             ))}
           </div>
 
-          {/* Location filters */}
+          {/* Location filter */}
           <form method="GET" action="/events" className="flex items-center gap-1.5">
-            {params.q && <input type="hidden" name="q" value={params.q} />}
+            {params.q        && <input type="hidden" name="q"        value={params.q} />}
             {params.category && <input type="hidden" name="category" value={params.category} />}
             {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
             {availableStates.length > 0 && (
-              <div className="relative flex items-center bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
+              <div className="relative flex items-center bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 pointer-events-none" />
                 <select
                   name="state"
                   defaultValue={params.state ?? ''}
-                  className="pl-8 pr-3 py-2 text-xs font-semibold text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
+                  className="pl-8 pr-3 py-2 text-xs font-medium text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
                 >
                   <option value="">All States</option>
                   {availableStates.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -335,82 +306,85 @@ export default async function EventsPage({
               </div>
             )}
             {availableCountries.length > 1 && (
-              <div className="relative flex items-center bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="relative flex items-center bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <select
                   name="country"
                   defaultValue={params.country ?? ''}
-                  className="px-3 py-2 text-xs font-semibold text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
+                  className="px-3 py-2 text-xs font-medium text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
                 >
                   <option value="">All Countries</option>
                   {availableCountries.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             )}
-            <button type="submit" className="px-3 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors">Go</button>
+            <button
+              type="submit"
+              className="px-3 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Go
+            </button>
           </form>
 
-          {/* Clear all filters */}
+          {/* Clear all */}
           {hasFilters && (
             <Link
               href="/events"
-              className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-500 bg-white rounded-xl border border-gray-200 px-3 py-2 transition-colors"
+              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-red-500 bg-white rounded-lg border border-gray-200 px-3 py-2 transition-colors"
             >
-              <X className="w-3 h-3" /> Clear filters
+              <X className="w-3 h-3" /> Clear all
             </Link>
           )}
 
           {/* Active filter chips */}
           {params.q && (
-            <span className="flex items-center gap-1 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-full">
+            <span className="flex items-center gap-1 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-full">
               &quot;{params.q}&quot;
-              <Link href={buildUrl({ q: undefined })} className="hover:text-indigo-900 ml-0.5">×</Link>
-            </span>
-          )}
-          {params.country && (
-            <span className="flex items-center gap-1 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 px-3 py-1.5 rounded-full">
-              🌍 {params.country}
-              <Link href={buildUrl({ country: undefined })} className="hover:text-rose-900 ml-0.5">×</Link>
+              <Link href={buildUrl({ q: undefined })} className="hover:text-indigo-900 ml-0.5 leading-none">×</Link>
             </span>
           )}
           {params.state && (
-            <span className="flex items-center gap-1 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 px-3 py-1.5 rounded-full">
+            <span className="flex items-center gap-1 text-xs font-medium bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
               📍 {params.state}
-              <Link href={buildUrl({ state: undefined })} className="hover:text-rose-900 ml-0.5">×</Link>
+              <Link href={buildUrl({ state: undefined })} className="hover:text-gray-900 ml-0.5 leading-none">×</Link>
             </span>
           )}
           {params.city && (
-            <span className="flex items-center gap-1 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 px-3 py-1.5 rounded-full">
+            <span className="flex items-center gap-1 text-xs font-medium bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
               📍 {params.city}
-              <Link href={buildUrl({ city: undefined })} className="hover:text-rose-900 ml-0.5">×</Link>
+              <Link href={buildUrl({ city: undefined })} className="hover:text-gray-900 ml-0.5 leading-none">×</Link>
+            </span>
+          )}
+          {params.country && (
+            <span className="flex items-center gap-1 text-xs font-medium bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
+              🌍 {params.country}
+              <Link href={buildUrl({ country: undefined })} className="hover:text-gray-900 ml-0.5 leading-none">×</Link>
             </span>
           )}
         </div>
 
-        {/* Events grid */}
+        {/* Results */}
         {events.length === 0 ? (
-          <div className="text-center py-24">
-            <div className="text-6xl mb-5">🔍</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {params.category ? `No ${activeCategoryLabel} events found` : 'No events found'}
+          <div className="text-center py-20">
+            <p className="text-4xl mb-4">🔍</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">
+              {activeCategoryLabel ? `No ${activeCategoryLabel} events found` : 'No events found'}
             </h3>
-            <p className="text-gray-500 mb-6 text-sm max-w-xs mx-auto">
-              {hasFilters
-                ? 'Try adjusting your filters or search terms'
-                : 'Check back soon — new events are added regularly'}
+            <p className="text-gray-500 mb-6 text-sm">
+              {hasFilters ? 'Try adjusting your filters or search terms' : 'Check back soon — new events are added regularly'}
             </p>
             {hasFilters && (
               <Link
                 href="/events"
-                className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors"
+                className="inline-flex items-center gap-1.5 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors"
               >
-                Browse all events
+                Browse all events <ChevronRight className="w-4 h-4" />
               </Link>
             )}
           </div>
         ) : (
           <>
             {/* Mobile: compact list */}
-            <div className="flex flex-col md:hidden" style={{ gap: 10 }}>
+            <div className="flex flex-col md:hidden gap-2.5">
               {events.map(event => {
                 const categoryInfo = catMap[event.category]
                 const hasEnded = getEventLifecycle(event.start_date, event.end_date) === 'ended'
@@ -418,66 +392,51 @@ export default async function EventsPage({
                   <Link
                     key={event.id}
                     href={`/events/${event.slug}`}
-                    className="flex gap-3 p-3 rounded-2xl bg-white active:bg-[#F9FAFB] active:scale-[0.99] transition-all duration-100"
-                    style={{ border: '0.5px solid #E5E7EB', opacity: hasEnded ? 0.6 : 1 }}
+                    className="flex gap-3 p-3 rounded-xl bg-white border border-gray-200 hover:border-gray-300 active:bg-gray-50 transition-colors"
+                    style={{ opacity: hasEnded ? 0.6 : 1 }}
                   >
-                    <div className="flex-shrink-0 rounded-xl overflow-hidden relative" style={{ width: 90, height: 90 }}>
+                    {/* Thumbnail */}
+                    <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden relative bg-gray-100">
                       {event.banner_url ? (
                         <Image
                           src={event.banner_url}
                           alt={event.title}
-                          width={90}
-                          height={90}
-                          className={`object-cover object-center w-full h-full${hasEnded ? ' grayscale' : ''}`}
+                          width={80}
+                          height={80}
+                          className={`object-cover w-full h-full${hasEnded ? ' grayscale' : ''}`}
                         />
                       ) : (
-                        <div
-                          className={`w-full h-full flex flex-col items-center justify-center gap-1${hasEnded ? ' grayscale' : ''}`}
-                          style={{ background: 'linear-gradient(135deg, #4F1787, #7C3AED)' }}
-                        >
-                          <span className="text-2xl leading-none">{categoryInfo?.icon ?? '🎵'}</span>
-                          <span className="text-white font-bold text-center leading-tight px-1" style={{ fontSize: 8, letterSpacing: '1px' }}>
-                            {categoryInfo?.name ?? event.category}
-                          </span>
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-indigo-100">
+                          <span className="text-xl leading-none">{categoryInfo?.icon ?? '🎵'}</span>
                         </div>
                       )}
                       {hasEnded && (
-                        <div className="absolute inset-0 bg-gray-900/30 rounded-xl flex items-center justify-center">
-                          <span className="text-[10px] font-bold text-white bg-gray-800/80 px-2 py-0.5 rounded-full">Ended</span>
+                        <div className="absolute inset-0 bg-gray-900/30 flex items-center justify-center">
+                          <span className="text-[10px] font-bold text-white bg-gray-800/80 px-1.5 py-0.5 rounded-full">Ended</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {hasEnded ? (
-                          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap bg-gray-200 text-gray-500">
-                            Ended
-                          </span>
-                        ) : (
-                          <span
-                            className="text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
-                            style={{ background: event.is_free ? '#059669' : '#2563EB', color: 'white' }}
-                          >
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        {!hasEnded && (
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full text-white ${event.is_free ? 'bg-emerald-500' : 'bg-indigo-500'}`}>
                             {event.is_free ? 'Free' : event.price != null ? `₦${event.price.toLocaleString()}` : 'Paid'}
                           </span>
                         )}
                         {categoryInfo && (
-                          <span className="text-[11px] text-[#6B7280] truncate">
-                            {categoryInfo.icon} {categoryInfo.name}
-                          </span>
+                          <span className="text-[11px] text-gray-400">{categoryInfo.icon} {categoryInfo.name}</span>
                         )}
                       </div>
-                      <p className="mt-1 font-medium text-[#111827] leading-snug line-clamp-2" style={{ fontSize: 14 }}>
-                        {event.title}
-                      </p>
-                      <p className="mt-1.5 text-[12px] text-[#6B7280]">
+                      <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">{event.title}</p>
+                      <p className="text-xs text-gray-400 mt-1">
                         {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}
                       </p>
-                      <p className="mt-1 text-[12px] text-[#6B7280] truncate">
+                      <p className="text-xs text-gray-400 truncate">
                         {event.is_online
                           ? 'Online'
-                          : [event.location_name, event.city].filter(Boolean).join(' · ') || event.state || ''
-                        }
+                          : [event.location_name, event.city].filter(Boolean).join(' · ') || event.state || ''}
                       </p>
                     </div>
                   </Link>
@@ -501,11 +460,11 @@ export default async function EventsPage({
 
         {/* Pagination */}
         {pages > 1 && (
-          <div className="flex justify-center gap-2 mt-12">
+          <div className="flex justify-center gap-2 mt-10">
             {page > 1 && (
               <Link
                 href={buildUrl({ page: String(page - 1) })}
-                className="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 ← Previous
               </Link>
@@ -514,9 +473,9 @@ export default async function EventsPage({
               <Link
                 key={p}
                 href={buildUrl({ page: String(p) })}
-                className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                   p === page
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                    ? 'bg-indigo-600 text-white'
                     : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50'
                 }`}
               >
@@ -526,7 +485,7 @@ export default async function EventsPage({
             {page < pages && (
               <Link
                 href={buildUrl({ page: String(page + 1) })}
-                className="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Next →
               </Link>
