@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Eye, EyeOff, Loader2, Check } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 function GoogleIcon() {
   return (
@@ -19,7 +19,11 @@ function GoogleIcon() {
 
 export default function LoginPageWrapper() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#7C3AED]" /></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
+      </div>
+    }>
       <LoginPage />
     </Suspense>
   )
@@ -29,6 +33,7 @@ function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+
   const [email, setEmail]               = useState('')
   const [password, setPassword]         = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -38,20 +43,15 @@ function LoginPage() {
 
   const reason = searchParams.get('reason')
 
-  // If already signed in, skip the login page entirely.
-  // Also clears any orphaned OAuth state (e.g. after user presses Back from Google).
   useEffect(() => {
     if (reason === 'deleted') return
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) { router.replace('/dashboard'); return }
-      // No valid session — wipe any leftover PKCE / partial OAuth tokens
       try {
         const keysToRemove: string[] = []
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i)
-          if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
-            keysToRemove.push(key)
-          }
+          if (key && (key.startsWith('sb-') || key.includes('supabase'))) keysToRemove.push(key)
         }
         keysToRemove.forEach(k => localStorage.removeItem(k))
       } catch { /* ignore */ }
@@ -73,15 +73,12 @@ function LoginPage() {
       setLoading(false)
       return
     }
-
-    // Block unverified accounts — sign them out immediately and prompt to verify
     if (data.user && !data.user.email_confirmed_at) {
       await supabase.auth.signOut()
-      setError('Please verify your email before signing in. Check your inbox for the confirmation link we sent when you signed up.')
+      setError('Please verify your email before signing in. Check your inbox for the confirmation link.')
       setLoading(false)
       return
     }
-
     router.push('/dashboard')
     router.refresh()
   }
@@ -95,188 +92,126 @@ function LoginPage() {
     setGoogleLoading(false)
   }
 
-  const formContent = (
-    <div className="w-full max-w-[420px] mx-auto">
-      {reason === 'deleted' && (
-        <div className="mb-4 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
-          <p className="font-semibold mb-0.5">Your account no longer exists.</p>
-          <p className="text-red-600">If you think this is a mistake, please contact <a href="mailto:support@gospello.com" className="underline font-medium">support@gospello.com</a></p>
-        </div>
-      )}
-      {error && (
-        <div className="mb-4 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleLogin} className="space-y-4">
-        {/* Email */}
-        <div>
-          <label htmlFor="email" className="block text-[13px] font-medium text-[#374151] mb-1.5">
-            Email Address
-          </label>
-          <input
-            id="email" type="email" value={email}
-            onChange={e => setEmail(e.target.value)}
-            required autoComplete="email"
-            placeholder="Enter your email address"
-            className="w-full h-[52px] px-4 rounded-xl border-[1.5px] border-[#E5E7EB] text-[15px]
-              placeholder:text-gray-400 outline-none
-              focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE]
-              transition-all duration-150"
-            style={{ fontFamily: 'var(--font-plus-jakarta), sans-serif' }}
-          />
-        </div>
-
-        {/* Password */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="password" className="block text-[13px] font-medium text-[#374151]">
-              Password
-            </label>
-            <Link href="/auth/forgot-password" className="text-[12px] text-[#7C3AED] hover:underline">
-              Forgot password?
-            </Link>
-          </div>
-          <div className="relative">
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required autoComplete="current-password"
-              placeholder="Enter your password"
-              className="w-full h-[52px] px-4 pr-12 rounded-xl border-[1.5px] border-[#E5E7EB] text-[15px]
-                placeholder:text-gray-400 outline-none
-                focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE]
-                transition-all duration-150"
-              style={{ fontFamily: 'var(--font-plus-jakarta), sans-serif' }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(v => !v)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-gray-600 transition-colors"
-            >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full h-[52px] rounded-xl text-white text-[16px] font-semibold
-            flex items-center justify-center gap-2
-            transition-all duration-150 active:scale-[0.98] disabled:opacity-80"
-          style={{ backgroundColor: '#7C3AED' }}
-          onMouseOver={e => { if (!loading) (e.currentTarget.style.backgroundColor = '#6D28D9') }}
-          onMouseOut={e => { (e.currentTarget.style.backgroundColor = '#7C3AED') }}
-        >
-          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
-        </button>
-      </form>
-
-      {/* Divider */}
-      <div className="flex items-center gap-3 my-5">
-        <div className="flex-1 h-px bg-[#E5E7EB]" />
-        <span className="text-[13px] text-[#9CA3AF] bg-white px-3">or</span>
-        <div className="flex-1 h-px bg-[#E5E7EB]" />
-      </div>
-
-      {/* Google */}
-      <button
-        type="button"
-        onClick={handleGoogleSignIn}
-        disabled={googleLoading}
-        className="w-full h-[52px] rounded-xl border-[1.5px] border-[#E5E7EB] bg-white
-          flex items-center justify-center gap-[10px]
-          text-[15px] font-medium text-[#374151]
-          hover:bg-[#F9FAFB] hover:border-[#D1D5DB]
-          transition-all duration-150 disabled:opacity-60"
-      >
-        {googleLoading ? <Loader2 className="w-5 h-5 animate-spin text-gray-400" /> : <GoogleIcon />}
-        Continue with Google
-      </button>
-
-      {/* Sign up link */}
-      <p className="text-center text-[14px] text-[#6B7280] mt-6 pb-12 md:pb-0">
-        Don&apos;t have an account?{' '}
-        <Link href="/auth/signup" className="text-[#7C3AED] font-semibold hover:text-[#6D28D9]">
-          Sign up free
-        </Link>
-      </p>
-    </div>
-  )
+  const INPUT_CLS = `w-full h-[52px] px-4 rounded-lg border border-gray-300 text-sm text-gray-900
+    placeholder:text-gray-400 bg-white outline-none
+    focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100
+    transition-colors`
 
   return (
-    <>
-      {/* Mobile */}
-      <div className="md:hidden min-h-screen bg-white px-5 pt-12 overflow-y-auto">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#7C3AED' }}>
-              <span className="text-white font-black text-base">G</span>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-lg mx-auto px-5 pt-16 pb-16">
+
+        {/* Logo */}
+        <div className="mb-10">
+          <Link href="/" className="inline-flex items-center gap-2">
+            <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center">
+              <span className="text-white font-bold text-sm">G</span>
             </div>
-            <span className="text-xl font-black text-gray-900">Gospello</span>
+            <span className="text-base font-bold text-gray-900">Gospello</span>
           </Link>
-          <h1 className="text-[24px] font-bold text-[#111827]">Welcome back</h1>
-          <p className="text-[14px] text-[#6B7280] mt-1">Sign in to manage your events</p>
         </div>
-        {formContent}
-      </div>
 
-      {/* Desktop */}
-      <div className="hidden md:flex min-h-screen">
-        {/* Left panel */}
-        <div
-          className="w-[45%] flex-shrink-0 relative flex flex-col"
-          style={{ background: 'linear-gradient(160deg, #4F1787 0%, #6D28D9 55%, #7C3AED 100%)' }}
+        {/* Heading */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Sign in</h1>
+          <p className="text-sm text-gray-500 mt-1">Enter your email and password to continue.</p>
+        </div>
+
+        {/* Error banners */}
+        {reason === 'deleted' && (
+          <div className="mb-5 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg border border-red-200">
+            <p className="font-semibold mb-0.5">Your account no longer exists.</p>
+            <p className="text-red-600">If you think this is a mistake, contact <a href="mailto:support@gospello.com" className="underline font-medium">support@gospello.com</a></p>
+          </div>
+        )}
+        {error && (
+          <div className="mb-5 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg border border-red-200">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+              Email Address
+            </label>
+            <input
+              id="email" type="email" value={email}
+              onChange={e => setEmail(e.target.value)}
+              required autoComplete="email"
+              placeholder="Enter your email"
+              className={INPUT_CLS}
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <Link href="/auth/forgot-password" className="text-xs text-indigo-600 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required autoComplete="current-password"
+                placeholder="Enter your password"
+                className={`${INPUT_CLS} pr-12`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-[52px] rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold
+              flex items-center justify-center gap-2 transition-colors disabled:opacity-70"
+          >
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
+          </button>
+        </form>
+
+        <div className="flex items-center gap-3 my-5">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400">or</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={googleLoading}
+          className="w-full h-[52px] rounded-lg border border-gray-300 bg-white
+            flex items-center justify-center gap-2.5
+            text-sm font-medium text-gray-700
+            hover:bg-gray-50 transition-colors disabled:opacity-60"
         >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at 60% 80%, rgba(167,139,250,0.18) 0%, transparent 70%)' }}
-          />
-          <div className="px-10 pt-10 z-10">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                <span className="text-white font-black text-sm">G</span>
-              </div>
-              <span className="text-lg font-black text-white">Gospello</span>
-            </Link>
-          </div>
-          <div className="flex-1 flex flex-col justify-center px-12 z-10">
-            <h2 className="text-[32px] font-bold text-white leading-[1.3] mb-8">
-              Welcome back to Nigeria&apos;s gospel events platform
-            </h2>
-            <div className="space-y-3">
-              {[
-                'Manage all your events in one place',
-                'Track registrations and attendance',
-                'Share events directly to WhatsApp',
-              ].map(benefit => (
-                <div key={benefit} className="flex items-center gap-3">
-                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                  </span>
-                  <span className="text-[15px] text-white/85">{benefit}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+          {googleLoading ? <Loader2 className="w-5 h-5 animate-spin text-gray-400" /> : <GoogleIcon />}
+          Continue with Google
+        </button>
 
-        {/* Right panel */}
-        <div className="flex-1 flex items-center justify-center px-10 py-12 bg-white overflow-y-auto">
-          <div className="w-full max-w-[420px]">
-            <div className="mb-8">
-              <h1 className="text-[28px] font-bold text-[#111827]">Welcome back</h1>
-              <p className="text-[15px] text-[#6B7280] mt-1">Sign in to manage your events</p>
-            </div>
-            {formContent}
-          </div>
-        </div>
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Don&apos;t have an account?{' '}
+          <Link href="/auth/signup" className="text-indigo-600 font-semibold hover:underline">
+            Sign up free
+          </Link>
+        </p>
+
       </div>
-    </>
+    </div>
   )
 }

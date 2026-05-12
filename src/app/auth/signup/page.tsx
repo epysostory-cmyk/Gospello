@@ -9,7 +9,6 @@ import { Eye, EyeOff, Loader2, Check, ChevronLeft } from 'lucide-react'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import type { AccountType } from '@/types/database'
 
-/* ─── Ministry types (curated for signup) ───────────────────── */
 const SIGNUP_MINISTRY_TYPES = [
   'Pastor', 'Youth Pastor', 'Evangelist', 'Prophet', 'Apostle', 'Bishop',
   'Worship Leader', 'Gospel Artist', 'Event Organizer', 'Conference Host',
@@ -17,7 +16,6 @@ const SIGNUP_MINISTRY_TYPES = [
   'Campus Fellowship', 'Other',
 ]
 
-/* ─── Name validation ───────────────────────────────────────── */
 function validateFullName(name: string): string | null {
   const trimmed = name.trim()
   if (!trimmed) return 'Please enter your full name'
@@ -42,7 +40,6 @@ function validateChurchName(name: string): string | null {
   return null
 }
 
-/* ─── Password strength ─────────────────────────────────────── */
 function getStrength(pw: string): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: '', color: '' }
   let score = 0
@@ -60,7 +57,6 @@ function getStrength(pw: string): { score: number; label: string; color: string 
   return { score, ...map[score] }
 }
 
-/* ─── Google logo SVG ────────────────────────────────────────── */
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -72,83 +68,22 @@ function GoogleIcon() {
   )
 }
 
-/* ─── Input component ────────────────────────────────────────── */
-function Field({
-  id, label, type = 'text', value, onChange, placeholder, required, autoComplete,
-  rightSlot, shake,
-}: {
-  id: string; label: string; type?: string; value: string
-  onChange: (v: string) => void; placeholder: string; required?: boolean
-  autoComplete?: string; rightSlot?: React.ReactNode; shake?: boolean
-}) {
-  return (
-    <div className={shake ? 'animate-shake' : ''}>
-      <label htmlFor={id} className="block text-[13px] font-medium text-[#374151] mb-1.5">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          id={id}
-          type={type}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          required={required}
-          autoComplete={autoComplete}
-          placeholder={placeholder}
-          className="w-full h-[52px] px-4 rounded-xl border-[1.5px] border-[#E5E7EB] text-[15px] text-gray-900
-            placeholder:text-gray-400 bg-white outline-none
-            focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE]
-            transition-all duration-150"
-          style={{ fontFamily: 'var(--font-plus-jakarta), sans-serif' }}
-        />
-        {rightSlot && (
-          <div className="absolute right-3.5 top-1/2 -translate-y-1/2">{rightSlot}</div>
-        )}
-      </div>
-    </div>
-  )
-}
+const INPUT_CLS = `w-full h-[52px] px-4 rounded-lg border border-gray-300 text-sm text-gray-900
+  placeholder:text-gray-400 bg-white outline-none
+  focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100
+  transition-colors`
 
-/* ─── Select component ───────────────────────────────────────── */
-function SelectField({
-  id, label, value, onChange, options, placeholder, disabled,
-}: {
-  id: string; label: string; value: string
-  onChange: (v: string) => void
-  options: string[]; placeholder: string; disabled?: boolean
-}) {
-  return (
-    <div>
-      <label htmlFor={id} className="block text-[13px] font-medium text-[#374151] mb-1.5">
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        disabled={disabled}
-        className="w-full h-[52px] px-4 rounded-xl border-[1.5px] border-[#E5E7EB] text-[15px] text-gray-900
-          bg-white outline-none appearance-none
-          focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE]
-          disabled:bg-gray-50 disabled:text-gray-400
-          transition-all duration-150"
-        style={{ fontFamily: 'var(--font-plus-jakarta), sans-serif' }}
-      >
-        <option value="">{placeholder}</option>
-        {options.map(opt => (
-          <option key={opt} value={opt}>{opt}</option>
-        ))}
-      </select>
-    </div>
-  )
-}
+const SELECT_CLS = `w-full h-[52px] px-4 rounded-lg border border-gray-300 text-sm text-gray-900
+  bg-white outline-none appearance-none
+  focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100
+  disabled:bg-gray-50 disabled:text-gray-400
+  transition-colors`
 
-/* ─── Main page ──────────────────────────────────────────────── */
 export default function SignUpPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-[#7C3AED]" />
+        <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
       </div>
     }>
       <SignUpForm />
@@ -161,7 +96,6 @@ function SignUpForm() {
   const router = useRouter()
   const supabase = createClient()
 
-  // Site logo
   const [siteLogoUrl, setSiteLogoUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -175,45 +109,39 @@ function SignUpForm() {
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // On mount: clean up any ghost/orphaned Supabase auth state.
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user) {
-        router.replace('/dashboard')
-        return
-      }
+      if (user) { router.replace('/dashboard'); return }
       try {
         const keysToRemove: string[] = []
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i)
-          if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
-            keysToRemove.push(key)
-          }
+          if (key && (key.startsWith('sb-') || key.includes('supabase'))) keysToRemove.push(key)
         }
         keysToRemove.forEach(k => localStorage.removeItem(k))
-      } catch { /* localStorage unavailable */ }
+      } catch { /* ignore */ }
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [accountType, setAccountType] = useState<AccountType>(
     (searchParams.get('type') as AccountType) ?? 'organizer'
   )
-  const [fullName, setFullName]               = useState('')
-  const [churchName, setChurchName]           = useState('')
-  const [email, setEmail]                     = useState('')
-  const [password, setPassword]               = useState('')
-  const [showPassword, setShowPassword]       = useState(false)
-  const [state, setState]                     = useState('')
-  const [city, setCity]                       = useState('')
-  const [ministryTypes, setMinistryTypes]     = useState<string[]>([])
-  const [loading, setLoading]                 = useState(false)
-  const [googleLoading, setGoogleLoading]     = useState(false)
-  const [error, setError]                     = useState('')
-  const [emailError, setEmailError]           = useState('')
-  const [success, setSuccess]                 = useState(false)
-  const [shake, setShake]                     = useState(false)
+  const [fullName, setFullName]           = useState('')
+  const [churchName, setChurchName]       = useState('')
+  const [email, setEmail]                 = useState('')
+  const [password, setPassword]           = useState('')
+  const [showPassword, setShowPassword]   = useState(false)
+  const [state, setState]                 = useState('')
+  const [city, setCity]                   = useState('')
+  const [ministryTypes, setMinistryTypes] = useState<string[]>([])
+  const [loading, setLoading]             = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [error, setError]                 = useState('')
+  const [emailError, setEmailError]       = useState('')
+  const [success, setSuccess]             = useState(false)
+  const [shake, setShake]                 = useState(false)
 
-  const strength   = getStrength(password)
+  const strength = getStrength(password)
   useEffect(() => { setCity('') }, [state])
 
   const triggerShake = () => {
@@ -229,28 +157,23 @@ function SignUpForm() {
     )
   }
 
-  /* ── Email sign-up ── */
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-
     const nameError = accountType === 'church'
       ? validateChurchName(churchName)
       : validateFullName(fullName)
     if (nameError) { setError(nameError); triggerShake(); return }
-
     if (accountType === 'organizer' && ministryTypes.length === 0) {
       setError('Please select at least one ministry type')
       triggerShake()
       return
     }
-
     if (password.length < 6) { setError('Password must be at least 6 characters'); triggerShake(); return }
     setLoading(true)
     setError('')
     setEmailError('')
 
     const displayName = accountType === 'church' ? churchName.trim() : fullName.trim()
-
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -263,11 +186,7 @@ function SignUpForm() {
       },
     })
 
-    if (signUpError) {
-      setError(signUpError.message)
-      setLoading(false)
-      return
-    }
+    if (signUpError) { setError(signUpError.message); setLoading(false); return }
 
     if (data.user && (data.user.identities?.length ?? 1) === 0) {
       await supabase.auth.signOut()
@@ -276,8 +195,6 @@ function SignUpForm() {
       return
     }
 
-    // Fire profile setup in the background — no need to await, the DB trigger
-    // also handles this and the endpoint tolerates duplicates gracefully.
     if (data.user) {
       fetch('/api/auth/setup-profile', {
         method: 'POST',
@@ -297,7 +214,6 @@ function SignUpForm() {
     setLoading(false)
   }
 
-  /* ── Google OAuth ── */
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true)
     await supabase.auth.signInWithOAuth({
@@ -307,61 +223,47 @@ function SignUpForm() {
     setGoogleLoading(false)
   }
 
-  /* ── Logo component ── */
-  const LogoBlock = ({ dark = false }: { dark?: boolean }) => (
-    <Link href="/" className="inline-flex items-center gap-2.5">
+  const Logo = () => (
+    <Link href="/" className="inline-flex items-center gap-2">
       {siteLogoUrl ? (
-        <Image
-          src={siteLogoUrl}
-          alt="Gospello"
-          width={120}
-          height={36}
-          className="h-8 w-auto object-contain"
-          style={dark ? { filter: 'brightness(0) invert(1)' } : {}}
-        />
+        <Image src={siteLogoUrl} alt="Gospello" width={120} height={36} className="h-8 w-auto object-contain" />
       ) : (
         <>
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: dark ? 'rgba(255,255,255,0.2)' : '#7C3AED' }}
-          >
-            <span className="text-white font-black text-sm">G</span>
+          <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center flex-shrink-0">
+            <span className="text-white font-bold text-sm">G</span>
           </div>
-          <span className={`text-lg font-black ${dark ? 'text-white' : 'text-gray-900'}`}>Gospello</span>
+          <span className="text-base font-bold text-gray-900">Gospello</span>
         </>
       )}
     </Link>
   )
 
-  /* ── Success screen ── */
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <div className="w-full max-w-md text-center">
           <div className="text-5xl mb-4">📧</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
-          <p className="text-gray-500 mb-4">
-            We&apos;ve sent a confirmation link to <strong>{email}</strong>. Click the link to verify your account, then sign in.
+          <p className="text-gray-500 mb-6 text-sm leading-relaxed">
+            We sent a confirmation link to <strong className="text-gray-700">{email}</strong>. Click it to verify your account, then sign in.
           </p>
-          <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-6 text-left">
-            <p className="text-sm font-semibold text-purple-800 mb-1">
-              {accountType === 'church' ? '⛪ Church account created' : '🎤 Organizer account created'}
-            </p>
-            <p className="text-xs text-purple-700">
-              {accountType === 'church'
-                ? "After confirming your email, you'll set up your church profile."
-                : 'After confirming your email, you can start posting gospel events right away.'}
-            </p>
-          </div>
-          <ol className="text-left text-sm text-gray-600 mb-8 space-y-2 bg-white border border-gray-100 rounded-xl p-4">
-            <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#7C3AED] text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">1</span> Open the email we sent to <strong>{email}</strong></li>
-            <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#7C3AED] text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">2</span> Click the confirmation link inside</li>
-            <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#7C3AED] text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">3</span> Sign in to access your dashboard</li>
+          <ol className="text-left text-sm text-gray-600 mb-6 space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-5">
+            <li className="flex items-start gap-3">
+              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">1</span>
+              Open the email we sent to <strong>{email}</strong>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">2</span>
+              Click the confirmation link inside
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">3</span>
+              Sign in to access your dashboard
+            </li>
           </ol>
           <Link
             href="/auth/login"
-            className="block w-full h-[52px] rounded-xl text-white text-[16px] font-semibold flex items-center justify-center"
-            style={{ backgroundColor: '#7C3AED' }}
+            className="block w-full h-[52px] rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold flex items-center justify-center transition-colors"
           >
             Go to Sign In
           </Link>
@@ -371,27 +273,21 @@ function SignUpForm() {
     )
   }
 
-  /* ── Form content ── */
   const formContent = (
     <div className="w-full max-w-[420px] mx-auto">
 
-      {/* Error banner */}
       {error && (
-        <div className="mb-4 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
+        <div className="mb-4 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg border border-red-200">
           {error}
         </div>
       )}
 
-      {/* Account type label */}
-      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
-        Account Type
-      </p>
-
-      {/* Account type cards */}
+      {/* Account type */}
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Account type</p>
       <div className="flex gap-3 mb-6">
         {([
-          { type: 'organizer' as AccountType, icon: '🎤', title: 'Organizer', desc: 'Post gospel events and reach believers' },
-          { type: 'church'    as AccountType, icon: '⛪', title: 'Church',    desc: 'Post events and get your church discovered' },
+          { type: 'organizer' as AccountType, icon: '🎤', title: 'Organizer', desc: 'Post events and reach believers' },
+          { type: 'church'    as AccountType, icon: '⛪', title: 'Church',    desc: 'List your church and post events' },
         ]).map(({ type, icon, title, desc }) => {
           const active = accountType === type
           return (
@@ -399,107 +295,75 @@ function SignUpForm() {
               key={type}
               type="button"
               onClick={() => setAccountType(type)}
-              className="relative flex-1 text-left p-4 rounded-2xl border-2 transition-all duration-200"
-              style={{
-                borderColor: active ? '#7C3AED' : '#E5E7EB',
-                background:  active ? '#FAF5FF' : '#FFFFFF',
-              }}
+              className={`relative flex-1 text-left p-4 rounded-xl border-2 transition-colors ${
+                active ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
             >
               {active && (
-                <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#7C3AED] flex items-center justify-center">
+                <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center">
                   <Check className="w-3 h-3 text-white" strokeWidth={3} />
                 </span>
               )}
-              <span className="text-3xl block mb-2">{icon}</span>
-              <span
-                className="block text-[15px] font-bold leading-tight"
-                style={{ color: active ? '#7C3AED' : '#111827' }}
-              >
-                {title}
-              </span>
-              <span className="block text-[12px] text-[#6B7280] mt-1 leading-snug">{desc}</span>
+              <span className="text-2xl block mb-2">{icon}</span>
+              <span className={`block text-sm font-semibold ${active ? 'text-indigo-600' : 'text-gray-900'}`}>{title}</span>
+              <span className="block text-xs text-gray-500 mt-0.5 leading-snug">{desc}</span>
             </button>
           )
         })}
       </div>
 
-      {/* Form fields */}
-      <form onSubmit={handleSignUp} className="space-y-4">
+      <form onSubmit={handleSignUp} className={`space-y-4 ${shake ? 'animate-shake' : ''}`}>
 
-        {/* Full Name — organizer only */}
-        <div
-          className="overflow-hidden transition-all duration-200 ease-in-out"
-          style={{
-            maxHeight: accountType === 'organizer' ? '110px' : '0',
-            opacity:   accountType === 'organizer' ? 1 : 0,
-          }}
-        >
-          <Field
-            id="fullName" label="Full Name" value={fullName}
-            onChange={setFullName} placeholder="e.g. Tunde Bello"
-            autoComplete="name" shake={shake}
-          />
-          <p className="text-[11px] text-gray-400 mt-1.5 px-1">Enter your first and last name</p>
+        {/* Full name — organizer */}
+        <div className="overflow-hidden transition-all duration-200" style={{ maxHeight: accountType === 'organizer' ? '110px' : '0', opacity: accountType === 'organizer' ? 1 : 0 }}>
+          <div>
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+            <input id="fullName" type="text" value={fullName} onChange={e => setFullName(e.target.value)}
+              placeholder="e.g. Tunde Bello" autoComplete="name" className={INPUT_CLS} />
+            <p className="text-xs text-gray-400 mt-1">First and last name</p>
+          </div>
         </div>
 
-        {/* Church name — church only */}
-        <div
-          className="overflow-hidden transition-all duration-200 ease-in-out"
-          style={{
-            maxHeight: accountType === 'church' ? '110px' : '0',
-            opacity:   accountType === 'church' ? 1 : 0,
-          }}
-        >
-          <Field
-            id="churchName" label="Church Name" value={churchName}
-            onChange={setChurchName}
-            placeholder="e.g. Redeemed Christian Church Lagos"
-            autoComplete="organization" shake={shake}
-          />
-          <p className="text-[11px] text-gray-400 mt-1.5 px-1">Enter the full official name of your church</p>
+        {/* Church name — church */}
+        <div className="overflow-hidden transition-all duration-200" style={{ maxHeight: accountType === 'church' ? '110px' : '0', opacity: accountType === 'church' ? 1 : 0 }}>
+          <div>
+            <label htmlFor="churchName" className="block text-sm font-medium text-gray-700 mb-1.5">Church Name</label>
+            <input id="churchName" type="text" value={churchName} onChange={e => setChurchName(e.target.value)}
+              placeholder="e.g. Redeemed Christian Church Lagos" autoComplete="organization" className={INPUT_CLS} />
+            <p className="text-xs text-gray-400 mt-1">Full official name of your church</p>
+          </div>
         </div>
 
         {/* Email */}
         <div>
-          <Field
-            id="email" label="Email Address" type="email" value={email}
-            onChange={v => { setEmail(v); setEmailError('') }}
-            placeholder="Enter your email address"
-            required autoComplete="email" shake={shake && !!emailError}
-          />
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+          <input id="email" type="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError('') }}
+            required autoComplete="email" placeholder="Enter your email" className={INPUT_CLS} />
           {emailError === 'exists' && (
-            <p className="mt-1.5 text-[13px] text-red-600">
+            <p className="mt-1.5 text-xs text-red-600">
               An account with this email already exists.{' '}
-              <Link href="/auth/login" className="font-semibold underline text-red-700">Sign in instead?</Link>
+              <Link href="/auth/login" className="font-semibold underline">Sign in instead?</Link>
             </p>
           )}
         </div>
 
-        {/* Ministry Types — organizer only */}
-        <div
-          className="overflow-hidden transition-all duration-300 ease-in-out"
-          style={{
-            maxHeight: accountType === 'organizer' ? '360px' : '0',
-            opacity:   accountType === 'organizer' ? 1 : 0,
-          }}
-        >
+        {/* Ministry types — organizer */}
+        <div className="overflow-hidden transition-all duration-300" style={{ maxHeight: accountType === 'organizer' ? '360px' : '0', opacity: accountType === 'organizer' ? 1 : 0 }}>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[13px] font-medium text-[#374151]">
-                Ministry Type <span className="text-red-400 text-[11px] font-normal">* required</span>
+              <p className="text-sm font-medium text-gray-700">
+                Ministry Type <span className="text-red-400 text-xs font-normal">* required</span>
               </p>
-              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                ministryTypes.length === 0
-                  ? 'bg-gray-100 text-gray-400'
-                  : ministryTypes.length < 3
-                  ? 'bg-violet-100 text-violet-600'
-                  : 'bg-violet-600 text-white'
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                ministryTypes.length === 0 ? 'bg-gray-100 text-gray-400'
+                : ministryTypes.length < 3 ? 'bg-indigo-100 text-indigo-600'
+                : 'bg-indigo-600 text-white'
               }`}>
                 {ministryTypes.length}/3
               </span>
             </div>
             {ministryTypes.length === 0 && accountType === 'organizer' && (
-              <p className="text-[11px] text-gray-400 mb-2">Pick at least 1, up to 3</p>
+              <p className="text-xs text-gray-400 mb-2">Pick at least 1, up to 3</p>
             )}
             <div className="flex flex-wrap gap-2">
               {SIGNUP_MINISTRY_TYPES.map(type => {
@@ -511,20 +375,13 @@ function SignUpForm() {
                     type="button"
                     disabled={disabled}
                     onClick={() => toggleMinistryType(type)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-medium border transition-all duration-150 active:scale-95"
-                    style={{
-                      borderColor: selected ? '#7C3AED' : disabled ? '#F3F4F6' : '#E5E7EB',
-                      background:  selected ? '#7C3AED' : disabled ? '#F9FAFB' : '#FFFFFF',
-                      color:       selected ? '#FFFFFF'  : disabled ? '#C4C4C4' : '#374151',
-                      cursor:      disabled ? 'not-allowed' : 'pointer',
-                      boxShadow:   selected ? '0 1px 4px rgba(124,58,237,0.25)' : 'none',
-                    }}
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      selected ? 'bg-indigo-600 border-indigo-600 text-white'
+                      : disabled ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+                      : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                    }`}
                   >
-                    {selected && (
-                      <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 12 12">
-                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
+                    {selected && <Check className="w-3 h-3 flex-shrink-0" strokeWidth={3} />}
                     {type}
                   </button>
                 )
@@ -534,47 +391,38 @@ function SignUpForm() {
         </div>
 
         {/* State */}
-        <SelectField
-          id="state"
-          label="State"
-          value={state}
-          onChange={setState}
-          options={NIGERIAN_STATES}
-          placeholder="Select your state"
-        />
+        <div>
+          <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1.5">State</label>
+          <select id="state" value={state} onChange={e => setState(e.target.value)} className={SELECT_CLS}>
+            <option value="">Select your state</option>
+            {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
 
         {/* City */}
-        <Field
-          id="city" label="City" value={city}
-          onChange={setCity} placeholder="e.g. Lekki"
-          shake={shake}
-        />
+        <div>
+          <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1.5">City</label>
+          <input id="city" type="text" value={city} onChange={e => setCity(e.target.value)}
+            placeholder="e.g. Lekki" className={INPUT_CLS} />
+        </div>
 
         {/* Password */}
-        <div className={shake ? 'animate-shake' : ''}>
-          <label htmlFor="password" className="block text-[13px] font-medium text-[#374151] mb-1.5">
-            Password
-          </label>
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
           <div className="relative">
             <input
               id="password"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={e => setPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-              placeholder="Create a strong password"
-              className="w-full h-[52px] px-4 pr-12 rounded-xl border-[1.5px] border-[#E5E7EB] text-[15px]
-                placeholder:text-gray-400 outline-none
-                focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE]
-                transition-all duration-150"
-              style={{ fontFamily: 'var(--font-plus-jakarta), sans-serif' }}
+              required minLength={6} autoComplete="new-password"
+              placeholder="Create a password (min. 6 characters)"
+              className={`${INPUT_CLS} pr-12`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(v => !v)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-gray-600 transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
@@ -583,71 +431,55 @@ function SignUpForm() {
             <div className="mt-2">
               <div className="flex gap-1">
                 {[1,2,3,4].map(i => (
-                  <div
-                    key={i}
-                    className="h-1 flex-1 rounded-full transition-all duration-300"
-                    style={{ background: i <= strength.score ? strength.color : '#E5E7EB' }}
-                  />
+                  <div key={i} className="h-1 flex-1 rounded-full transition-all duration-300"
+                    style={{ background: i <= strength.score ? strength.color : '#E5E7EB' }} />
                 ))}
               </div>
-              <p className="text-[11px] mt-1 font-medium" style={{ color: strength.color }}>
-                {strength.label}
-              </p>
+              <p className="text-xs mt-1 font-medium" style={{ color: strength.color }}>{strength.label}</p>
             </div>
           )}
         </div>
 
         {/* Terms */}
-        <p className="text-[12px] text-[#6B7280] text-center leading-relaxed">
+        <p className="text-xs text-gray-400 text-center leading-relaxed">
           By creating an account you agree to our{' '}
-          <Link href="/terms" className="text-[#7C3AED] hover:underline">Terms of Service</Link>
+          <Link href="/terms" className="text-indigo-600 hover:underline">Terms</Link>
           {' '}and{' '}
-          <Link href="/privacy" className="text-[#7C3AED] hover:underline">Privacy Policy</Link>
+          <Link href="/privacy" className="text-indigo-600 hover:underline">Privacy Policy</Link>
         </p>
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-[52px] rounded-xl text-white text-[16px] font-semibold
-            flex items-center justify-center gap-2
-            transition-all duration-150 active:scale-[0.98] disabled:opacity-80"
-          style={{ backgroundColor: '#7C3AED' }}
-          onMouseOver={e => { if (!loading) (e.currentTarget.style.backgroundColor = '#6D28D9') }}
-          onMouseOut={e => { (e.currentTarget.style.backgroundColor = '#7C3AED') }}
+          className="w-full h-[52px] rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold
+            flex items-center justify-center gap-2 transition-colors disabled:opacity-70"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Account'}
         </button>
       </form>
 
-      {/* Divider */}
       <div className="flex items-center gap-3 my-5">
-        <div className="flex-1 h-px bg-[#E5E7EB]" />
-        <span className="text-[13px] text-[#9CA3AF] bg-white px-3">or</span>
-        <div className="flex-1 h-px bg-[#E5E7EB]" />
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-xs text-gray-400">or</span>
+        <div className="flex-1 h-px bg-gray-200" />
       </div>
 
-      {/* Google */}
       <button
         type="button"
         onClick={handleGoogleSignIn}
         disabled={googleLoading}
-        className="w-full h-[52px] rounded-xl border-[1.5px] border-[#E5E7EB] bg-white
-          flex items-center justify-center gap-[10px]
-          text-[15px] font-medium text-[#374151]
-          hover:bg-[#F9FAFB] hover:border-[#D1D5DB]
-          transition-all duration-150 disabled:opacity-60"
+        className="w-full h-[52px] rounded-lg border border-gray-300 bg-white
+          flex items-center justify-center gap-2.5
+          text-sm font-medium text-gray-700
+          hover:bg-gray-50 transition-colors disabled:opacity-60"
       >
         {googleLoading ? <Loader2 className="w-5 h-5 animate-spin text-gray-400" /> : <GoogleIcon />}
         Continue with Google
       </button>
 
-      {/* Sign in link */}
-      <p className="text-center text-[14px] text-[#6B7280] mt-6 pb-12 md:pb-0">
+      <p className="text-center text-sm text-gray-500 mt-6 pb-12 md:pb-0">
         Already have an account?{' '}
-        <Link href="/auth/login" className="text-[#7C3AED] font-semibold hover:text-[#6D28D9]">
-          Sign in
-        </Link>
+        <Link href="/auth/login" className="text-indigo-600 font-semibold hover:underline">Sign in</Link>
       </p>
     </div>
   )
@@ -665,83 +497,25 @@ function SignUpForm() {
         .animate-shake { animation: shake 0.5s ease-in-out; }
       `}</style>
 
-      {/* ── MOBILE layout ── */}
-      <div className="md:hidden min-h-screen bg-white px-5 pt-8 overflow-y-auto">
-        {/* Back to homepage */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-6 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to homepage
-        </Link>
+      <div className="min-h-screen bg-white">
+        <div className="max-w-lg mx-auto px-5 pt-8 pb-16">
 
-        {/* Brand header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-5">
-            <LogoBlock />
-          </div>
-          <h1 className="text-[24px] font-bold text-[#111827] leading-tight">Join Gospello</h1>
-          <p className="text-[14px] text-[#6B7280] mt-1">Nigeria&apos;s home for gospel events</p>
-        </div>
-
-        {formContent}
-      </div>
-
-      {/* ── DESKTOP layout ── */}
-      <div className="hidden md:flex min-h-screen">
-
-        {/* Left panel */}
-        <div
-          className="w-[45%] flex-shrink-0 relative flex flex-col"
-          style={{ background: 'linear-gradient(160deg, #4F1787 0%, #6D28D9 55%, #7C3AED 100%)' }}
-        >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at 60% 80%, rgba(167,139,250,0.18) 0%, transparent 70%)' }}
-          />
-
-          {/* Logo top-left */}
-          <div className="px-10 pt-10 z-10">
-            <LogoBlock dark />
+          {/* Top nav */}
+          <div className="flex items-center justify-between mb-10">
+            <Logo />
+            <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+              Back
+            </Link>
           </div>
 
-          {/* Center content */}
-          <div className="flex-1 flex flex-col justify-center px-12 z-10">
-            <h2 className="text-[32px] font-bold text-white leading-[1.3] mb-8">
-              Connecting believers to every gospel event in Nigeria
-            </h2>
-            <div className="space-y-3">
-              {[
-                'Free to post events',
-                'Reach believers across all 36 states',
-                'WhatsApp sharing built in',
-              ].map(benefit => (
-                <div key={benefit} className="flex items-center gap-3">
-                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                  </span>
-                  <span className="text-[15px] text-white/85">{benefit}</span>
-                </div>
-              ))}
-            </div>
+          {/* Heading */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
+            <p className="text-sm text-gray-500 mt-1">Free to join. Start posting events in minutes.</p>
           </div>
-        </div>
 
-        {/* Right panel */}
-        <div className="flex-1 flex flex-col px-10 py-12 bg-white overflow-y-auto">
-          {/* Back to homepage */}
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-8 self-start transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Back to homepage
-          </Link>
-
-          <div className="flex-1 flex items-start justify-center">
-            {formContent}
-          </div>
+          {formContent}
         </div>
       </div>
     </>
