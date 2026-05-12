@@ -21,6 +21,17 @@ export default async function ProfilePage() {
     .eq('id', user.id)
     .single()
 
+  // For church accounts, fall back to church logo_url if profile avatar_url is not set
+  let resolvedAvatarUrl = profile?.avatar_url ?? null
+  if ((profile?.account_type === 'church') && !resolvedAvatarUrl) {
+    const { data: church } = await supabase
+      .from('churches')
+      .select('logo_url')
+      .eq('created_by', user.id)
+      .single()
+    resolvedAvatarUrl = church?.logo_url ?? null
+  }
+
   return (
     <>
       <BackButton />
@@ -44,7 +55,7 @@ export default async function ProfilePage() {
         youtube:        (profile as any)?.youtube ?? '',
         contact_person: (profile as any)?.contact_person ?? '',
         ministry_types: (profile as any)?.ministry_types ?? [],
-        avatar_url:     profile?.avatar_url ?? null,
+        avatar_url:     resolvedAvatarUrl,
       }}
     />
     </>
