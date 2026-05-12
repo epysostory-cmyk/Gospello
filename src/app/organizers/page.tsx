@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Profile, SeededOrganizer } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
-import { Search, Calendar, Users, ShieldCheck, CheckCircle } from 'lucide-react'
+import { Search, ShieldCheck, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
@@ -151,80 +151,71 @@ export default async function OrganizersPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
 
-      {/* ── DARK HERO ───────────────────────────────────────────── */}
-      <section className="relative bg-slate-950 text-white overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-[80px]" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-700/15 rounded-full blur-[80px]" />
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-              backgroundSize: '28px 28px',
-            }}
-          />
-        </div>
+      {/* ── HERO ─────────────────────────────────────────────────── */}
+      <section className="border-b border-gray-200 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-10 sm:pt-16 sm:pb-14">
-          <div className="mb-7 text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-xs font-medium px-3 py-1.5 rounded-full mb-4 text-slate-400">
-              <Users className="w-3.5 h-3.5" />
-              Gospel event organizers across Nigeria
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
-              <span className="text-white">Meet Our </span>
-              <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">Organizers</span>
+          <div className="mb-6">
+            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600 mb-2">Directory</p>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              Gospel event organizers
             </h1>
+            <p className="text-gray-500 mt-2 text-base max-w-lg">
+              Browse churches, ministries, and event hosts putting on gospel events across Nigeria. Click any to see their upcoming programmes.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <form method="GET" action="/organizers" className="flex gap-2 w-full sm:max-w-md">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={params.q}
+                  placeholder="Search by name…"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <button type="submit" className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors">
+                Search
+              </button>
+              {params.q && (
+                <Link href="/organizers" className="flex-shrink-0 flex items-center px-3 py-2.5 rounded-lg border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors">
+                  Clear
+                </Link>
+              )}
+            </form>
+
             {total > 0 && (
-              <p className="text-slate-400 mt-1.5 text-sm">
-                {total} organizer{total !== 1 ? 's' : ''} hosting gospel events
-                {params.q ? ` matching "${params.q}"` : ''}
+              <p className="text-sm text-gray-400 whitespace-nowrap">
+                {total} organizer{total !== 1 ? 's' : ''}
+                {params.q ? ` for "${params.q}"` : ''}
               </p>
             )}
           </div>
-
-          <form method="GET" action="/organizers" className="flex gap-2 max-w-xl">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                name="q"
-                defaultValue={params.q}
-                placeholder="Search organizers..."
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white/15 transition-colors"
-              />
-            </div>
-            <button type="submit" className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-3.5 rounded-2xl transition-colors text-sm">
-              Search
-            </button>
-            {params.q && (
-              <Link href="/organizers" className="flex-shrink-0 flex items-center px-4 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-slate-300 text-sm font-medium transition-colors border border-white/10">
-                Clear
-              </Link>
-            )}
-          </form>
         </div>
       </section>
 
       {/* ── ORGANIZER GRID ──────────────────────────────────────── */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {paginated.length === 0 ? (
-          <div className="text-center py-24">
-            <div className="text-6xl mb-5">🎤</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No organizers found</h3>
-            <p className="text-gray-500 mb-6 text-sm">
+          <div className="text-center py-20">
+            <p className="text-4xl mb-4">🎤</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">No organizers found</h3>
+            <p className="text-gray-500 text-sm mb-5">
               {params.q ? `No results for "${params.q}"` : 'Check back soon'}
             </p>
             {params.q && (
-              <Link href="/organizers" className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors">
+              <Link href="/organizers" className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors">
                 Clear search
               </Link>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {paginated.map((entry) => {
               const gradient = gradientForName(entry.name)
               const initial = entry.name?.[0]?.toUpperCase() ?? '?'
@@ -234,72 +225,44 @@ export default async function OrganizersPage({
                 <Link
                   key={entry.id}
                   href={href}
-                  className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:-translate-y-1 transition-all duration-300"
-                  style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+                  className="group bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3 hover:border-indigo-300 hover:shadow-sm transition-all"
                 >
-                  <div className={`relative h-12 bg-gradient-to-br ${gradient}`}>
-                    <div
-                      className="absolute inset-0 opacity-10"
-                      style={{
-                        backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-                        backgroundSize: '14px 14px',
-                      }}
-                    />
-                    {entry.eventCount > 0 && (
-                      <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-full">
-                        <Calendar className="w-2.5 h-2.5" />
-                        {entry.eventCount}
+                  {/* Avatar row */}
+                  <div className="flex items-center justify-between">
+                    {entry.avatarUrl ? (
+                      <Image
+                        src={entry.avatarUrl}
+                        alt={entry.name}
+                        width={48}
+                        height={48}
+                        className="w-11 h-11 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0`}>
+                        <span className="text-white font-bold text-lg">{initial}</span>
                       </div>
                     )}
+
+                    {entry.isVerified ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                        <ShieldCheck className="w-2.5 h-2.5" />Verified
+                      </span>
+                    ) : entry.isClaimed ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                        <CheckCircle className="w-2.5 h-2.5" />Active
+                      </span>
+                    ) : null}
                   </div>
 
-                  <div className="px-4 pb-4">
-                    <div className="relative -mt-9 mb-3 flex items-end justify-between">
-                      <div>
-                        {entry.avatarUrl ? (
-                          <Image
-                            src={entry.avatarUrl}
-                            alt={entry.name}
-                            width={72}
-                            height={72}
-                            className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full object-cover ring-4 ring-white shadow-md"
-                          />
-                        ) : (
-                          <div className={`w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center ring-4 ring-white shadow-md`}>
-                            <span className="text-white font-black text-2xl drop-shadow-sm">{initial}</span>
-                          </div>
-                        )}
-                      </div>
-                      {/* Badge */}
-                      <div className="mb-1">
-                        {entry.isVerified ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-                            <ShieldCheck className="w-2.5 h-2.5" />Verified
-                          </span>
-                        ) : entry.isClaimed ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                            <CheckCircle className="w-2.5 h-2.5" />Claimed
-                          </span>
-                        ) : entry.hasPendingClaim ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
-                            Pending
-                          </span>
-                        ) : entry.isSeeded ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                            Unverified
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors text-sm leading-tight line-clamp-2">
+                  {/* Name + event count */}
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-indigo-700 transition-colors">
                       {entry.name}
                     </h3>
-                    <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                      <Users className="w-3 h-3" />
+                    <p className="text-xs text-gray-400 mt-1">
                       {entry.eventCount > 0
                         ? `${entry.eventCount} upcoming event${entry.eventCount !== 1 ? 's' : ''}`
-                        : 'Event organizer'}
+                        : 'No upcoming events'}
                     </p>
                   </div>
                 </Link>
@@ -309,9 +272,9 @@ export default async function OrganizersPage({
         )}
 
         {pages > 1 && (
-          <div className="flex justify-center gap-2 mt-12">
+          <div className="flex justify-center gap-2 mt-10">
             {page > 1 && (
-              <Link href={buildUrl({ page: String(page - 1) })} className="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+              <Link href={buildUrl({ page: String(page - 1) })} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 ← Previous
               </Link>
             )}
@@ -319,9 +282,9 @@ export default async function OrganizersPage({
               <Link
                 key={p}
                 href={buildUrl({ page: String(p) })}
-                className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                   p === page
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                    ? 'bg-indigo-600 text-white'
                     : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50'
                 }`}
               >
@@ -329,7 +292,7 @@ export default async function OrganizersPage({
               </Link>
             ))}
             {page < pages && (
-              <Link href={buildUrl({ page: String(page + 1) })} className="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+              <Link href={buildUrl({ page: String(page + 1) })} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 Next →
               </Link>
             )}
