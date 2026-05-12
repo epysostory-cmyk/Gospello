@@ -73,6 +73,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const [pwError, setPwError] = useState('')
 
   const isOrganizer = form.account_type === 'organizer'
+  const isChurch = form.account_type === 'church'
   function setField<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm(f => {
       const next = { ...f, [k]: v }
@@ -115,7 +116,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     setSuccess(false)
 
     if (!form.display_name.trim()) { setError('Display name is required'); setSaving(false); return }
-    if (!form.bio.trim()) { setError('Short description is required — help people know who you are'); setSaving(false); return }
+    if (!isChurch && !form.bio.trim()) { setError('Short description is required — help people know who you are'); setSaving(false); return }
     if (!avatarUrl && !avatarFile) { setError('Profile photo is required — please upload a photo'); setSaving(false); return }
 
     try {
@@ -128,15 +129,18 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
 
       const updatePayload: Record<string, unknown> = {
         display_name: form.display_name.trim(),
-        church_name:  form.account_type === 'church' ? form.church_name.trim() || null : null,
-        bio:          form.bio.trim(),
-        state:        form.state || null,
-        city:         form.city || null,
-        address:      form.address.trim() || null,
-        phone:        form.phone.trim() || null,
-        website:      form.website.trim() || null,
         avatar_url:   newAvatarUrl,
         updated_at:   new Date().toISOString(),
+      }
+
+      if (!isChurch) {
+        updatePayload.church_name  = null
+        updatePayload.bio          = form.bio.trim()
+        updatePayload.state        = form.state || null
+        updatePayload.city         = form.city || null
+        updatePayload.address      = form.address.trim() || null
+        updatePayload.phone        = form.phone.trim() || null
+        updatePayload.website      = form.website.trim() || null
       }
 
       if (isOrganizer) {
@@ -251,16 +255,6 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
             />
           </div>
 
-          {/* Church name */}
-          {form.account_type === 'church' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Church Name</label>
-              <input type="text" value={form.church_name} onChange={e => setField('church_name', e.target.value)}
-                placeholder="e.g. Grace Community Church"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" maxLength={100} />
-            </div>
-          )}
-
           {/* Organizer-only fields */}
           {isOrganizer && (
             <>
@@ -279,116 +273,109 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
                 </label>
                 <OrganizerTypeChips value={form.ministry_types} onChange={v => setField('ministry_types', v)} />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Short Description <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={form.bio}
+                  onChange={e => setField('bio', e.target.value)}
+                  placeholder="Brief description of this organizer..."
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] resize-none"
+                  maxLength={300}
+                />
+                <p className="text-xs text-gray-400 mt-1">{form.bio.length}/300</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">State</label>
+                  <select value={form.state} onChange={e => setField('state', e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] bg-white">
+                    <option value="">Select state</option>
+                    {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    City <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <input type="text" value={form.city ?? ''} onChange={e => setField('city', e.target.value)}
+                    placeholder="e.g. Lekki"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Address <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input type="text" value={form.address} onChange={e => setField('address', e.target.value)}
+                  placeholder="e.g. 14 Bode Thomas Street, Surulere"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-sm font-medium text-gray-700">Contact &amp; Social <span className="text-gray-400 font-normal">(optional)</span></p>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Phone</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input type="tel" value={form.phone} onChange={e => setField('phone', e.target.value)}
+                      placeholder="+234 800 000 0000"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">WhatsApp</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input type="tel" value={form.whatsapp} onChange={e => setField('whatsapp', e.target.value)}
+                      placeholder="+234 800 000 0000"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Website</label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input type="url" value={form.website} onChange={e => setField('website', e.target.value)}
+                      placeholder="https://yourwebsite.com"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
+                  </div>
+                </div>
+                {([
+                  { key: 'instagram' as const, label: 'Instagram',   placeholder: '@handle or full URL' },
+                  { key: 'facebook'  as const, label: 'Facebook',    placeholder: 'facebook.com/page' },
+                  { key: 'twitter'   as const, label: 'Twitter / X', placeholder: '@handle or full URL' },
+                  { key: 'youtube'   as const, label: 'YouTube',     placeholder: 'youtube.com/channel' },
+                ]).map(({ key, label, placeholder }) => (
+                  <div key={key}>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{label}</label>
+                    <div className="relative">
+                      <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type="text" value={form[key]} onChange={e => setField(key, e.target.value)}
+                        placeholder={placeholder}
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </>
           )}
 
-          {/* Bio */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              {isOrganizer ? 'Short Description' : 'Bio'} <span className="text-red-400">*</span>
-            </label>
-            <textarea
-              value={form.bio}
-              onChange={e => setField('bio', e.target.value)}
-              placeholder={isOrganizer ? 'Brief description of this organizer...' : 'Tell the community about yourself or your ministry'}
-              rows={3}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] resize-none"
-              maxLength={300}
-            />
-            <p className="text-xs text-gray-400 mt-1">{form.bio.length}/300</p>
-          </div>
-
-          {/* State */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">State</label>
-              <select value={form.state} onChange={e => setField('state', e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] bg-white">
-                <option value="">Select state</option>
-                {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                City <span className="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <input
-                type="text"
-                value={form.city ?? ''} onChange={e => setField('city', e.target.value)}
-                placeholder="e.g. Lekki"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]"
-              />
-            </div>
-          </div>
-
-          {/* Address */}
-          {isOrganizer && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Address <span className="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <input type="text" value={form.address} onChange={e => setField('address', e.target.value)}
-                placeholder="e.g. 14 Bode Thomas Street, Surulere"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
+          {/* Church users: nudge to Church Profile for all public details */}
+          {isChurch && (
+            <div className="flex items-start gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+              <span className="text-lg mt-0.5">⛪</span>
+              <div className="text-sm">
+                <p className="font-medium text-indigo-900">Your church details live in Church Profile</p>
+                <p className="text-indigo-700 mt-0.5 text-xs">Name, location, service times, description and more are managed from your Church Profile page.</p>
+              </div>
             </div>
           )}
-
-          {/* Contact & Social */}
-          <div className="space-y-4">
-            <p className="text-sm font-medium text-gray-700">Contact &amp; Social <span className="text-gray-400 font-normal">(optional)</span></p>
-
-            {isOrganizer && (
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Phone</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="tel" value={form.phone} onChange={e => setField('phone', e.target.value)}
-                    placeholder="+234 800 000 0000"
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
-                </div>
-              </div>
-            )}
-
-            {isOrganizer && (
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">WhatsApp</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="tel" value={form.whatsapp} onChange={e => setField('whatsapp', e.target.value)}
-                    placeholder="+234 800 000 0000"
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Website</label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input type="url" value={form.website} onChange={e => setField('website', e.target.value)}
-                  placeholder="https://yourwebsite.com"
-                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
-              </div>
-            </div>
-
-            {isOrganizer && ([
-              { key: 'instagram' as const, label: 'Instagram',   placeholder: '@handle or full URL' },
-              { key: 'facebook'  as const, label: 'Facebook',    placeholder: 'facebook.com/page' },
-              { key: 'twitter'   as const, label: 'Twitter / X', placeholder: '@handle or full URL' },
-              { key: 'youtube'   as const, label: 'YouTube',     placeholder: 'youtube.com/channel' },
-            ]).map(({ key, label, placeholder }) => (
-              <div key={key}>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{label}</label>
-                <div className="relative">
-                  <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="text" value={form[key]} onChange={e => setField(key, e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]" />
-                </div>
-              </div>
-            ))}
-          </div>
 
           {/* Email (read-only) */}
           <div>
