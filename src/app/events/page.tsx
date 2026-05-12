@@ -174,81 +174,79 @@ export default async function EventsPage({
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* ── DARK HERO WITH SEARCH ─────────────────────────────── */}
-      <section className="relative bg-slate-950 text-white overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-[80px]" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-700/15 rounded-full blur-[80px]" />
-          <div
-            className="absolute inset-0 opacity-[0.035]"
-            style={{
-              backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-              backgroundSize: '28px 28px',
-            }}
-          />
-        </div>
+      {/* ── HERO ─────────────────────────────────────────────── */}
+      <section style={{ background: '#0C0A1A' }} className="relative text-white overflow-hidden">
+        {/* Single centered glow — one light source, intentional */}
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none"
+          style={{ width: 700, height: 260, background: 'radial-gradient(ellipse at 50% 0%, rgba(99,82,220,0.28) 0%, transparent 70%)' }}
+        />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-10 sm:pt-16 sm:pb-14">
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10 sm:pt-20 sm:pb-14">
+
+          {/* Eyebrow */}
+          <p className="text-xs font-semibold tracking-[0.18em] uppercase text-indigo-400 mb-5 text-center sm:text-left">
+            {params.category && activeCategoryLabel ? activeCategoryLabel : 'Gospel Events · Nigeria'}
+          </p>
+
           {/* Heading */}
-          <div className="mb-7 text-center sm:text-left">
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
-              {params.category && activeCategoryLabel ? (
-                <>
-                  <span className="text-white">{activeCategoryLabel} </span>
-                  <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">Events</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-white">Explore </span>
-                  <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">Gospel Events</span>
-                </>
-              )}
-            </h1>
-            {total > 0 && (
-              <p className="text-slate-400 mt-1.5 text-sm">
-                {total} event{total !== 1 ? 's' : ''} found
-                {params.city ? ` in ${params.city}` : ''}
-                {params.q ? ` for "${params.q}"` : ''}
-              </p>
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-[1.08] mb-4 text-center sm:text-left">
+            {params.category && activeCategoryLabel ? (
+              <>{activeCategoryLabel} Events</>
+            ) : (
+              <>
+                Find Events That<br />
+                <span style={{ color: '#A78BFA' }}>Feed Your Faith</span>
+              </>
             )}
-          </div>
+          </h1>
 
-          {/* Search bar */}
-          <form method="GET" action="/events" className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <p className="text-slate-400 text-[15px] sm:text-base mb-8 text-center sm:text-left leading-relaxed">
+            {total > 0
+              ? <>{total.toLocaleString()} event{total !== 1 ? 's' : ''} — worship nights, conferences, seminars and more{params.city ? ` in ${params.city}` : ' across Nigeria'}.</>
+              : <>Worship nights, conferences, youth programs and seminars — across every state.</>
+            }
+          </p>
+
+          {/* Search bar — white bg, prominent */}
+          <form method="GET" action="/events">
+            <div
+              className="flex items-center gap-0 rounded-2xl overflow-hidden"
+              style={{ background: 'white', boxShadow: '0 2px 24px rgba(0,0,0,0.35)' }}
+            >
+              <Search className="flex-shrink-0 ml-4 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
                 type="text"
                 name="q"
                 defaultValue={params.q}
-                placeholder="Search events, churches, cities..."
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white/15 transition-colors"
+                placeholder="Search events, churches, cities…"
+                className="flex-1 pl-3 pr-2 py-4 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none bg-transparent"
               />
               {params.category && <input type="hidden" name="category" value={params.category} />}
               {params.city && <input type="hidden" name="city" value={params.city} />}
               {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
+              <button
+                type="submit"
+                className="flex-shrink-0 m-1.5 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors"
+                style={{ background: '#4F46E5' }}
+              >
+                Search
+              </button>
             </div>
-            <button
-              type="submit"
-              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-3.5 rounded-2xl transition-colors text-sm"
-            >
-              Search
-            </button>
           </form>
 
-          {/* Category pills */}
+          {/* Category chips */}
           <div
-            className="flex gap-2 mt-5 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap"
+            className="flex gap-2 mt-5 overflow-x-auto pb-0.5 -mx-4 px-4 sm:mx-0 sm:px-0"
             style={{ scrollbarWidth: 'none' }}
           >
             <Link
               href={buildUrl({ category: undefined, page: undefined })}
-              className={`flex-shrink-0 flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-all ${
-                !params.category
-                  ? 'bg-white text-gray-900 shadow-md'
-                  : 'bg-white/10 text-slate-300 hover:bg-white/15 border border-white/10'
-              }`}
+              className="flex-shrink-0 flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-1.5 rounded-full transition-all"
+              style={!params.category
+                ? { background: 'white', color: '#111827' }
+                : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
+              }
             >
               All
             </Link>
@@ -256,11 +254,11 @@ export default async function EventsPage({
               <Link
                 key={cat.slug}
                 href={buildUrl({ category: cat.slug, page: undefined })}
-                className={`flex-shrink-0 flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-all ${
-                  params.category === cat.slug
-                    ? 'bg-white text-gray-900 shadow-md'
-                    : 'bg-white/10 text-slate-300 hover:bg-white/15 border border-white/10'
-                }`}
+                className="flex-shrink-0 flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-1.5 rounded-full transition-all"
+                style={params.category === cat.slug
+                  ? { background: 'white', color: '#111827' }
+                  : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
+                }
               >
                 <span>{cat.icon}</span>
                 {cat.name}
