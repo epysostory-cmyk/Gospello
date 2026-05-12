@@ -46,6 +46,22 @@ export const metadata: Metadata = {
     locale: 'en_NG',
     siteName: 'Gospello',
     url: siteUrl,
+    title: 'Gospello — Discover Christian Events Near You',
+    description: 'Discover Christian events, churches, and spiritual gatherings happening near you. Lagos-first, globally accessible.',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Gospello — Discover Christian Events Near You',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Gospello — Discover Christian Events Near You',
+    description: 'Discover Christian events, churches, and spiritual gatherings happening near you. Lagos-first, globally accessible.',
+    images: ['/twitter-image'],
   },
 }
 
