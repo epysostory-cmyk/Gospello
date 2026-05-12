@@ -29,6 +29,7 @@ function StatusBadge({ church }: { church: Church }) {
       <ShieldCheck className="w-2.5 h-2.5" /> Verified
     </span>
   )
+  if (church.is_claimed) return null
   return (
     <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">
       Unclaimed
