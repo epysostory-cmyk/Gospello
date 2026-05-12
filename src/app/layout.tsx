@@ -32,11 +32,11 @@ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').tri
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Gospello — Discover Christian Events Near You',
+    default: 'Gospello | Gospel Events, Churches & Organizers in Nigeria',
     template: '%s | Gospello',
   },
   description:
-    'Discover Christian events, churches, and spiritual gatherings happening near you. Lagos-first, globally accessible.',
+    'Find gospel events, churches and organizers across Nigeria — worship nights, conferences, prayer gatherings and more.',
   keywords: ['christian events', 'church events', 'lagos', 'nigeria', 'worship', 'prayer', 'conference'],
   verification: {
     google: 'Au2OSU7tCEpEq0THkVnQy7eaTyBjhTttXgro1gJA4yw',
