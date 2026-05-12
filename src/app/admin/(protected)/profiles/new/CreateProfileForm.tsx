@@ -105,8 +105,8 @@ export default function CreateProfileForm({ adminId }: Props) {
     try {
       const fd = new FormData()
       fd.append('file', croppedFile)
-      fd.append('bucket', 'profile-logos')
-      fd.append('path', `${Date.now()}-photo.jpg`)
+      fd.append('bucket', 'avatars')
+      fd.append('folder', 'seeded-profiles')
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
       const json = await res.json()
       if (json.url) setLogoUrl(json.url)

@@ -58,8 +58,8 @@ const inputCls = 'w-full px-3 py-2 rounded-xl border border-gray-200 bg-white te
 async function uploadLogo(file: File): Promise<string> {
   const fd = new FormData()
   fd.append('file', file)
-  fd.append('bucket', 'profile-logos')
-  fd.append('folder', 'profile-logos')
+  fd.append('bucket', 'avatars')
+  fd.append('folder', 'seeded-profiles')
   const res = await fetch('/api/upload', { method: 'POST', body: fd })
   const json = await res.json()
   if (!res.ok || !json.url) throw new Error(json.error ?? 'Upload failed')
