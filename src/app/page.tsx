@@ -187,31 +187,40 @@ async function getHomepageData() {
     }))
 
     // Build discover organizers list (merge profiles + seeded, limit to 10)
-    const profileOrgs: OrganizerCard[] = (discoverProfileOrganizersRes.data ?? []).map((p: { id: string; display_name: string; avatar_url: string | null; state: string | null; ministry_type?: string | null }) => ({
-      id: p.id,
-      name: p.display_name,
-      slug: p.id,
-      logo_url: p.avatar_url,
-      ministry_type: (p as { ministry_type?: string | null }).ministry_type ?? null,
-      city: '',
-      state: p.state ?? '',
-      verified_badge: false,
-      source: 'profile' as const,
-    }))
-    const seededOrgs: OrganizerCard[] = (discoverSeededOrganizersRes.data ?? []).map((s: { id: string; name: string; slug: string; logo_url: string | null; ministry_type: string | null; city: string; state: string; verified_badge: boolean }) => ({
-      id: s.id,
-      name: s.name,
-      slug: s.slug,
-      logo_url: s.logo_url,
-      ministry_type: s.ministry_type,
-      city: s.city ?? '',
-      state: s.state ?? '',
-      verified_badge: s.verified_badge ?? false,
-      source: 'seeded' as const,
-    }))
+    // Only include organizers with a profile photo; prioritise those with events
+    const profileOrgs: OrganizerCard[] = (discoverProfileOrganizersRes.data ?? [])
+      .filter((p: { avatar_url: string | null }) => !!p.avatar_url)
+      .map((p: { id: string; display_name: string; avatar_url: string | null; state: string | null; ministry_type?: string | null }) => ({
+        id: p.id,
+        name: p.display_name,
+        slug: p.id,
+        logo_url: p.avatar_url,
+        ministry_type: (p as { ministry_type?: string | null }).ministry_type ?? null,
+        city: '',
+        state: p.state ?? '',
+        verified_badge: false,
+        source: 'profile' as const,
+      }))
+    const seededOrgs: OrganizerCard[] = (discoverSeededOrganizersRes.data ?? [])
+      .filter((s: { logo_url: string | null }) => !!s.logo_url)
+      .map((s: { id: string; name: string; slug: string; logo_url: string | null; ministry_type: string | null; city: string; state: string; verified_badge: boolean }) => ({
+        id: s.id,
+        name: s.name,
+        slug: s.slug,
+        logo_url: s.logo_url,
+        ministry_type: s.ministry_type,
+        city: s.city ?? '',
+        state: s.state ?? '',
+        verified_badge: s.verified_badge ?? false,
+        source: 'seeded' as const,
+      }))
+
+    // Organizers with events first, then rest (all have photos at this point)
     const allOrgs: OrganizerCard[] = [
       ...profileOrgs.filter(o => approvedOrganizerIds.has(o.id)),
       ...seededOrgs.filter(o => approvedSeededOrgIds.has(o.id)),
+      ...profileOrgs.filter(o => !approvedOrganizerIds.has(o.id)),
+      ...seededOrgs.filter(o => !approvedSeededOrgIds.has(o.id)),
     ].slice(0, 10)
 
     // Homepage CTA settings
