@@ -48,7 +48,7 @@ export default function ChurchProfilePage() {
         .from('churches')
         .select('*')
         .eq('profile_id', user.id)
-        .single()
+        .maybeSingle()
 
       if (!data) {
         router.replace('/dashboard/church/setup')
