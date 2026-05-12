@@ -299,8 +299,10 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
       // Include multi-day events that span today (started on or before today, end on or after today)
       if (eDate > today || eEndDate < today) return false
     }
-    if (dateFilter === 'tomorrow' && eDate !== tomorrow) return false
-    if (dateFilter === 'weekend' && (eDate < weekend.sat || eDate > weekend.sun)) return false
+    if (dateFilter === 'tomorrow') {
+      if (eDate > tomorrow || eEndDate < tomorrow) return false
+    }
+    if (dateFilter === 'weekend' && (eDate > weekend.sun || eEndDate < weekend.sat)) return false
     if (dateFilter === 'custom') {
       if (appliedFrom && eEndDate < appliedFrom) return false
       if (appliedTo && eDate > appliedTo) return false
