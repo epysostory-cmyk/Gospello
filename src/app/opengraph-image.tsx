@@ -59,24 +59,28 @@ export default function OgImage() {
           }}
         />
 
-        {/* Cross icon */}
+        {/* Logo */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 88,
-            height: 88,
-            borderRadius: 24,
-            background: 'rgba(255,255,255,0.12)',
+            width: 120,
+            height: 120,
+            borderRadius: 30,
+            background: 'white',
             marginBottom: 28,
-            border: '1.5px solid rgba(255,255,255,0.18)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
           }}
         >
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <rect x="20" y="4" width="8" height="40" rx="4" fill="white" />
-            <rect x="8" y="14" width="32" height="8" rx="4" fill="white" />
-          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://atrdstihzvnvbgxveplm.supabase.co/storage/v1/object/public/site-assets/logo/dccedb39-bf4b-4b4b-beec-fc285f57ad68/1777020281172.png"
+            alt="Gospello"
+            width={88}
+            height={88}
+            style={{ objectFit: 'contain' }}
+          />
         </div>
 
         {/* Site name */}
