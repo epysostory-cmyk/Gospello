@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate } from '@/lib/utils'
-import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, MessageCircle, User, Instagram, Facebook } from 'lucide-react'
+import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, MessageCircle, User } from 'lucide-react'
 import type { Profile, SeededOrganizer, Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import EventCard from '@/components/ui/EventCard'
@@ -431,7 +431,7 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-50 text-pink-600 text-xs font-semibold hover:bg-pink-100 transition-colors"
                       >
-                        <Instagram className="w-3 h-3" /> Instagram
+                        Instagram <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                     {facebookUrl && (
@@ -441,7 +441,7 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors"
                       >
-                        <Facebook className="w-3 h-3" /> Facebook
+                        Facebook <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                     {twitterUrl && (

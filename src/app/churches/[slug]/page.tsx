@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { MapPin, Clock, Globe, Phone, CheckCircle, ArrowLeft, Calendar, ExternalLink, ShieldCheck, AlertTriangle, Instagram, Facebook } from 'lucide-react'
+import { MapPin, Clock, Globe, Phone, CheckCircle, ArrowLeft, Calendar, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react'
 import EventCard from '@/components/ui/EventCard'
 import type { Church, Event } from '@/types/database'
 
@@ -334,7 +334,7 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-50 text-pink-600 text-xs font-semibold hover:bg-pink-100 transition-colors"
                       >
-                        <Instagram className="w-3 h-3" /> Instagram
+                        Instagram <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                     {c.facebook && (
@@ -344,7 +344,7 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors"
                       >
-                        <Facebook className="w-3 h-3" /> Facebook
+                        Facebook <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                   </div>
