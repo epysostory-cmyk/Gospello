@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { MapPin, Clock, Globe, Phone, CheckCircle, ArrowLeft, Calendar, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react'
+import { MapPin, Clock, Globe, Phone, CheckCircle, ArrowLeft, Calendar, ExternalLink, ShieldCheck, AlertTriangle, Instagram, Facebook } from 'lucide-react'
 import EventCard from '@/components/ui/EventCard'
 import type { Church, Event } from '@/types/database'
 
@@ -42,15 +42,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-const BANNER_GRADIENTS: Record<number, string> = {
-  0: 'from-violet-700 via-indigo-900 to-slate-900',
-  1: 'from-blue-700 via-cyan-900 to-slate-900',
-  2: 'from-emerald-700 via-teal-900 to-slate-900',
-  3: 'from-amber-600 via-orange-900 to-slate-900',
-  4: 'from-pink-700 via-rose-900 to-slate-900',
-  5: 'from-indigo-700 via-purple-900 to-slate-900',
-}
-
 export default async function ChurchPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const supabase = await createClient()
@@ -62,7 +53,6 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
   const adminClient = createAdminClient()
   const now = new Date().toISOString()
 
-  // Use adminClient to bypass RLS — public page needs all approved events
   const { data: eventsData } = await adminClient
     .from('events')
     .select('*, churches(*)')
@@ -75,8 +65,6 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
   const upcoming = allEvents.filter(e => e.start_date >= now).reverse()
   const past     = allEvents.filter(e => e.start_date < now)
 
-  const gradientKey = (c.name.charCodeAt(0) ?? 0) % 6
-  const bannerGradient = BANNER_GRADIENTS[gradientKey]
   const initial = c.name[0]?.toUpperCase() ?? '?'
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
 
@@ -98,89 +86,91 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* ── FULL-WIDTH HERO ─────────────────────────────────────── */}
-      <div className={`relative w-full min-h-[280px] max-h-[480px] overflow-hidden bg-slate-900`}>
-        {c.banner_url ? (
-          <>
+      {/* ── PROFILE HEADER ──────────────────────────────────────────
+          Clean. No gradient banner. Banner image shows clearly when
+          available. Name and key info instantly readable.
+      ──────────────────────────────────────────────────────────── */}
+      <div className="border-b border-gray-200">
+
+        {/* Banner image — only when it exists, no fake gradient replacement */}
+        {c.banner_url && (
+          <div className="relative w-full h-40 sm:h-52 bg-gray-100 overflow-hidden">
             <Image
               src={c.banner_url}
-              alt=""
-              fill
-              className="object-cover scale-110 blur-2xl opacity-20 pointer-events-none select-none"
-              aria-hidden
-              priority
-            />
-            <Image
-              src={c.banner_url}
-              alt={c.name}
+              alt={`${c.name} banner`}
               fill
               className="object-cover"
               priority
             />
-          </>
-        ) : (
-          <div className={`absolute inset-0 bg-gradient-to-br ${bannerGradient}`}>
-            <div
-              className="absolute inset-0 opacity-[0.06]"
-              style={{
-                backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-                backgroundSize: '24px 24px',
-              }}
-            />
           </div>
         )}
 
-        {/* Dark gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Back link */}
+          <div className={c.banner_url ? '-mt-4 pt-0' : 'pt-5'}>
+            <Link
+              href="/churches"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              All Churches
+            </Link>
+          </div>
 
-        {/* Back button */}
-        <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
-          <Link
-            href="/churches"
-            className="inline-flex items-center gap-1.5 text-white/90 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-sm px-3 py-2 rounded-full text-sm font-medium transition-all"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Churches
-          </Link>
-        </div>
-
-        {/* Church name + info at bottom of hero */}
-        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-6 pt-20">
-          <div className="flex items-end gap-4">
+          {/* Identity row */}
+          <div className="flex items-start gap-4 mt-4 pb-6">
             {/* Logo */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-4 border-white/20 bg-white/10 backdrop-blur-sm overflow-hidden flex-shrink-0 flex items-center justify-center shadow-xl">
+            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center border border-gray-200 ${c.banner_url ? '-mt-10 ring-4 ring-white' : ''}`}>
               {c.logo_url ? (
                 <Image src={c.logo_url} alt={c.name} width={80} height={80} className="object-cover w-full h-full" />
               ) : (
-                <span className="text-white font-black text-3xl drop-shadow">{initial}</span>
+                <span className="text-2xl font-bold text-gray-400">{initial}</span>
               )}
             </div>
-            <div className="pb-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                {c.is_verified && (
-                  <span className="flex items-center gap-1 text-xs font-semibold bg-indigo-500/80 text-white px-2.5 py-1 rounded-full backdrop-blur-sm">
-                    <CheckCircle className="w-3 h-3" /> Verified
+
+            {/* Name + meta */}
+            <div className="flex-1 min-w-0 pt-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                {c.verified_badge && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                    <ShieldCheck className="w-3 h-3" /> Verified
                   </span>
                 )}
                 {c.is_featured && (
-                  <span className="text-xs font-semibold bg-amber-500/90 text-white px-2.5 py-1 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                     Featured
                   </span>
                 )}
+                {c.is_claimed && !c.verified_badge && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                    <CheckCircle className="w-3 h-3" /> Active
+                  </span>
+                )}
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight drop-shadow-sm">
-                {c.name}
-              </h1>
-              <p className="text-sm text-white/70 mt-1 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                {c.city}, {c.state}
-              </p>
+
+              <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-tight">{c.name}</h1>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-sm text-gray-500">
+                {(c.city || c.state) && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                    {[c.city, c.state].filter(Boolean).join(', ')}
+                  </span>
+                )}
+                {c.denomination && (
+                  <span className="text-gray-400">{c.denomination}</span>
+                )}
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                  {upcoming.length} upcoming event{upcoming.length !== 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -190,11 +180,12 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* Left: description + events */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Left: about + events */}
+          <div className="lg:col-span-2 space-y-8">
+
             {c.description && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm">
-                <h2 className="text-base font-bold text-gray-900 mb-3">About {c.name}</h2>
+              <div>
+                <h2 className="text-base font-bold text-gray-900 mb-2">About</h2>
                 <p className="text-gray-600 leading-relaxed whitespace-pre-wrap text-sm sm:text-base">
                   {c.description}
                 </p>
@@ -203,14 +194,12 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
 
             {/* Upcoming events */}
             <section>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-xl font-black text-gray-900">Upcoming Events</h2>
-                  {upcoming.length > 0 && (
-                    <p className="text-sm text-gray-400 mt-0.5">{upcoming.length} event{upcoming.length !== 1 ? 's' : ''} coming up</p>
-                  )}
-                </div>
-              </div>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">
+                Upcoming Events
+                {upcoming.length > 0 && (
+                  <span className="ml-2 text-sm font-normal text-gray-400">{upcoming.length}</span>
+                )}
+              </h2>
               {upcoming.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {upcoming.map((event) => (
@@ -218,8 +207,8 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                   ))}
                 </div>
               ) : (
-                <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center shadow-sm">
-                  <Calendar className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+                <div className="border border-gray-200 rounded-xl p-10 text-center bg-gray-50">
+                  <Calendar className="w-7 h-7 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500 text-sm font-medium">No upcoming events</p>
                   <p className="text-gray-400 text-xs mt-1">Check back soon</p>
                 </div>
@@ -229,7 +218,10 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
             {/* Past events */}
             {past.length > 0 && (
               <section>
-                <h2 className="text-xl font-black text-gray-900 mb-4">Past Events</h2>
+                <h2 className="text-lg font-bold text-gray-900 mb-4">
+                  Past Events
+                  <span className="ml-2 text-sm font-normal text-gray-400">{past.length}</span>
+                </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {past.map((event) => (
                     <EventCard key={event.id} event={event} />
@@ -239,41 +231,41 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
             )}
           </div>
 
-          {/* Right: sidebar info */}
-          <div className="lg:sticky lg:top-6 self-start space-y-4">
+          {/* Right: sidebar */}
+          <div className="lg:sticky lg:top-6 self-start space-y-5">
 
-            {/* Claim state card */}
+            {/* Claim/verification state */}
             {c.verified_badge ? (
-              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-indigo-50 border border-indigo-200">
-                <ShieldCheck className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-50 border border-indigo-200">
+                <ShieldCheck className="w-4 h-4 text-indigo-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-bold text-indigo-900">Gospello Verified</p>
-                  <p className="text-xs text-indigo-600">This profile is officially verified</p>
+                  <p className="text-sm font-semibold text-indigo-900">Gospello Verified</p>
+                  <p className="text-xs text-indigo-600">Officially verified profile</p>
                 </div>
               </div>
             ) : c.is_claimed ? (
-              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200">
-                <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-bold text-emerald-900">Claimed Profile</p>
-                  <p className="text-xs text-emerald-600">Managed by the church leadership</p>
+                  <p className="text-sm font-semibold text-emerald-900">Claimed Profile</p>
+                  <p className="text-xs text-emerald-600">Managed by the church</p>
                 </div>
               </div>
             ) : c.claim_requested_at ? (
-              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
                 <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-bold text-amber-900">Claim Pending</p>
-                  <p className="text-xs text-amber-600">A claim request is under review</p>
+                  <p className="text-sm font-semibold text-amber-900">Claim Pending</p>
+                  <p className="text-xs text-amber-600">Claim request under review</p>
                 </div>
               </div>
             ) : !c.profile_id ? (
-              <div className="px-4 py-4 rounded-2xl bg-gray-50 border border-gray-200">
-                <p className="text-sm font-bold text-gray-900 mb-1">Is this your church or ministry?</p>
-                <p className="text-xs text-gray-500 mb-3">Claim this profile to manage events, update info, and get verified.</p>
+              <div className="px-4 py-4 rounded-xl bg-gray-50 border border-gray-200">
+                <p className="text-sm font-semibold text-gray-900 mb-1">Is this your church?</p>
+                <p className="text-xs text-gray-500 mb-3">Claim this profile to manage events, update your info, and get verified.</p>
                 <Link
                   href={`/claim/church/${c.id}`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#7C3AED] text-white text-xs font-semibold hover:bg-[#6D28D9] transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-colors"
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
                   Claim this Profile
@@ -281,68 +273,84 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
               </div>
             ) : null}
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4 shadow-sm">
-              <h2 className="font-bold text-gray-900">Church Info</h2>
+            {/* Church info */}
+            {(c.address || c.service_times || c.phone || c.website_url || c.instagram || c.facebook) && (
+              <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white">
+                <h2 className="text-sm font-bold text-gray-900">Church Info</h2>
 
-              {c.address && (
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-4 h-4 text-rose-500" />
-                  </div>
+                {c.address && (
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{c.address}</p>
-                    <p className="text-xs text-gray-500">{c.city}, {c.state}</p>
+                    <p className="text-xs text-gray-400 mb-0.5">Address</p>
+                    <p className="text-sm text-gray-700">{c.address}</p>
+                    <p className="text-xs text-gray-500">{[c.city, c.state].filter(Boolean).join(', ')}</p>
                     <a
                       href={`https://maps.google.com/?q=${encodeURIComponent(`${c.address} ${c.city} ${c.state}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-indigo-600 hover:underline mt-1 inline-flex items-center gap-1"
                     >
-                      <MapPin className="w-2.5 h-2.5" /> Open in Maps
+                      Open in Maps <ExternalLink className="w-2.5 h-2.5" />
                     </a>
                   </div>
-                </div>
-              )}
+                )}
 
-              {c.service_times && (
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-4 h-4 text-indigo-500" />
-                  </div>
+                {c.service_times && (
                   <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-0.5">Service Times</p>
-                    <p className="text-sm text-gray-900 whitespace-pre-wrap">{c.service_times}</p>
+                    <p className="text-xs text-gray-400 mb-0.5">Service Times</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.service_times}</p>
                   </div>
-                </div>
-              )}
+                )}
 
-              {c.phone && (
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-4 h-4 text-emerald-500" />
+                {c.phone && (
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Phone</p>
+                    <a href={`tel:${c.phone}`} className="text-sm font-medium text-indigo-600 hover:underline">
+                      {c.phone}
+                    </a>
                   </div>
-                  <a href={`tel:${c.phone}`} className="text-sm font-medium text-indigo-600 hover:underline">
-                    {c.phone}
-                  </a>
-                </div>
-              )}
+                )}
 
-              {c.website_url && (
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-4 h-4 text-sky-500" />
+                {c.website_url && (
+                  <div>
+                    <a
+                      href={c.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:underline"
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                      Visit Website
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
-                  <a
-                    href={c.website_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium text-indigo-600 hover:underline inline-flex items-center gap-1"
-                  >
-                    Visit Website <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              )}
-            </div>
+                )}
+
+                {(c.instagram || c.facebook) && (
+                  <div className="flex gap-2 pt-1">
+                    {c.instagram && (
+                      <a
+                        href={c.instagram.startsWith('http') ? c.instagram : `https://instagram.com/${c.instagram}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-50 text-pink-600 text-xs font-semibold hover:bg-pink-100 transition-colors"
+                      >
+                        <Instagram className="w-3 h-3" /> Instagram
+                      </a>
+                    )}
+                    {c.facebook && (
+                      <a
+                        href={c.facebook.startsWith('http') ? c.facebook : `https://facebook.com/${c.facebook}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors"
+                      >
+                        <Facebook className="w-3 h-3" /> Facebook
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
         </div>
