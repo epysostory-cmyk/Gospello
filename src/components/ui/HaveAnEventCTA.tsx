@@ -40,19 +40,14 @@ export default function HaveAnEventCTA({ compact = false }: Props) {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 my-10 flex justify-center">
+    <div className="mt-12 mb-4 rounded-2xl bg-amber-50 border border-amber-200 px-8 py-8 text-center max-w-xl mx-auto">
+      <p className="text-sm font-semibold text-gray-900 mb-1">Running a gospel event?</p>
+      <p className="text-sm text-gray-500 mb-4">List it free and reach thousands of believers across Nigeria.</p>
       <button
         onClick={handleClick}
-        className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-[15px] transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]"
-        style={{
-          background: 'linear-gradient(135deg, #4F1787 0%, #7C3AED 100%)',
-          color: 'white',
-          boxShadow: '0 4px 20px rgba(124, 58, 237, 0.35)',
-        }}
+        className="inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors"
       >
-        <span className="text-lg">✨</span>
-        Create Your Own Event
-        <span className="opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-150">→</span>
+        Post Your Event — It&apos;s Free →
       </button>
     </div>
   )

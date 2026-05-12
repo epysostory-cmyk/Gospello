@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Profile, SeededOrganizer } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
-import { Search, ShieldCheck, CheckCircle } from 'lucide-react'
+import { Search, ShieldCheck, CheckCircle, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
@@ -18,20 +18,6 @@ interface SearchParams {
 }
 
 const PAGE_SIZE = 24
-
-const AVATAR_GRADIENTS = [
-  'from-violet-600 to-indigo-700',
-  'from-blue-600 to-cyan-700',
-  'from-emerald-600 to-teal-700',
-  'from-amber-500 to-orange-600',
-  'from-pink-600 to-rose-700',
-  'from-indigo-600 to-purple-700',
-]
-
-function gradientForName(name: string) {
-  const idx = (name.charCodeAt(0) ?? 0) % AVATAR_GRADIENTS.length
-  return AVATAR_GRADIENTS[idx]
-}
 
 interface OrganizerEntry {
   id: string
@@ -72,11 +58,9 @@ export default async function OrganizersPage({
   const authOrganizers = (authRes.data ?? []) as Profile[]
   const seededOrganizers = (seededRes.data ?? []) as SeededOrganizer[]
 
-  // Batch event counts
   const eventCountMap: Record<string, number> = {}
 
   if (authOrganizers.length > 0) {
-    // Match the profile page filter: organizer_id match + no seeded_organizer_id (excludes admin-seeded events)
     const { data: rows } = await adminClient
       .from('events')
       .select('organizer_id, start_date, end_date')
@@ -101,11 +85,10 @@ export default async function OrganizersPage({
     }
   }
 
-  // Merge into one list with sort score: verified=3, claimed=2, pending=1, unclaimed=0
   let entries: OrganizerEntry[] = [
     ...authOrganizers.map(o => ({
       id: o.id,
-      slug: o.id, // auth organizers use id in URL
+      slug: o.id,
       name: o.display_name,
       avatarUrl: o.avatar_url,
       eventCount: eventCountMap[o.id] ?? 0,
@@ -117,7 +100,7 @@ export default async function OrganizersPage({
     })),
     ...seededOrganizers.map(o => ({
       id: o.id,
-      slug: o.slug, // seeded organizers use slug in URL
+      slug: o.slug,
       name: o.name,
       avatarUrl: o.logo_url,
       eventCount: eventCountMap[o.id] ?? 0,
@@ -129,13 +112,11 @@ export default async function OrganizersPage({
     })),
   ]
 
-  // Filter by search
   if (params.q) {
     const q = params.q.toLowerCase()
     entries = entries.filter(e => e.name.toLowerCase().includes(q))
   }
 
-  // Sort: score desc, then name asc
   entries.sort((a, b) => b.sortScore - a.sortScore || a.name.localeCompare(b.name))
 
   const total = entries.length
@@ -153,54 +134,49 @@ export default async function OrganizersPage({
   return (
     <div className="min-h-screen bg-white">
 
-      {/* ── HERO ─────────────────────────────────────────────────── */}
+      {/* Header */}
       <section className="border-b border-gray-200 bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-
-          <div className="mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600 mb-2">Directory</p>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
-              Gospel event organizers
-            </h1>
-            <p className="text-gray-500 mt-2 text-base max-w-lg">
-              Browse churches, ministries, and event hosts putting on gospel events across Nigeria. Click any to see their upcoming programmes.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-            <form method="GET" action="/organizers" className="flex gap-2 w-full sm:max-w-md">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input
-                  type="text"
-                  name="q"
-                  defaultValue={params.q}
-                  placeholder="Search by name…"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <button type="submit" className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors">
-                Search
-              </button>
-              {params.q && (
-                <Link href="/organizers" className="flex-shrink-0 flex items-center px-3 py-2.5 rounded-lg border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors">
-                  Clear
-                </Link>
-              )}
-            </form>
-
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+          <div className="flex items-end justify-between gap-4 mb-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600 mb-1">Directory</p>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-none">
+                Organizers
+              </h1>
+            </div>
             {total > 0 && (
-              <p className="text-sm text-gray-400 whitespace-nowrap">
+              <p className="text-sm text-gray-400 pb-1 shrink-0">
                 {total} organizer{total !== 1 ? 's' : ''}
-                {params.q ? ` for "${params.q}"` : ''}
+                {params.q ? ` · "${params.q}"` : ''}
               </p>
             )}
           </div>
+
+          <form method="GET" action="/organizers" className="flex gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                name="q"
+                defaultValue={params.q}
+                placeholder="Search by name…"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <button type="submit" className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+              Search
+            </button>
+            {params.q && (
+              <Link href="/organizers" className="flex-shrink-0 flex items-center px-4 py-2.5 rounded-lg border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors">
+                Clear
+              </Link>
+            )}
+          </form>
         </div>
       </section>
 
-      {/* ── ORGANIZER GRID ──────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* List */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {paginated.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-4xl mb-4">🎤</p>
@@ -215,9 +191,8 @@ export default async function OrganizersPage({
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="divide-y divide-gray-100">
             {paginated.map((entry) => {
-              const gradient = gradientForName(entry.name)
               const initial = entry.name?.[0]?.toUpperCase() ?? '?'
               const href = `/organizers/${entry.slug}`
 
@@ -225,77 +200,71 @@ export default async function OrganizersPage({
                 <Link
                   key={entry.id}
                   href={href}
-                  className="group bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3 hover:border-indigo-300 hover:shadow-sm transition-all"
+                  className="flex items-center gap-4 py-3.5 group hover:bg-gray-50 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 transition-colors rounded-lg"
                 >
-                  {/* Avatar row */}
-                  <div className="flex items-center justify-between">
-                    {entry.avatarUrl ? (
-                      <Image
-                        src={entry.avatarUrl}
-                        alt={entry.name}
-                        width={48}
-                        height={48}
-                        className="w-11 h-11 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0`}>
-                        <span className="text-white font-bold text-lg">{initial}</span>
-                      </div>
-                    )}
+                  {/* Avatar */}
+                  {entry.avatarUrl ? (
+                    <Image
+                      src={entry.avatarUrl}
+                      alt={entry.name}
+                      width={44}
+                      height={44}
+                      className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-gray-600 font-semibold text-base">{initial}</span>
+                    </div>
+                  )}
 
-                    {entry.isVerified ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-                        <ShieldCheck className="w-2.5 h-2.5" />Verified
-                      </span>
-                    ) : entry.isClaimed ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                        <CheckCircle className="w-2.5 h-2.5" />Active
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {/* Name + event count */}
-                  <div>
-                    <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-indigo-700 transition-colors">
-                      {entry.name}
-                    </h3>
-                    <p className="text-xs text-gray-400 mt-1">
+                  {/* Name + badge */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-gray-900 text-sm group-hover:text-indigo-600 transition-colors truncate">
+                        {entry.name}
+                      </p>
+                      {entry.isVerified ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 flex-shrink-0">
+                          <ShieldCheck className="w-2.5 h-2.5" /> Verified
+                        </span>
+                      ) : entry.isClaimed ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex-shrink-0">
+                          <CheckCircle className="w-2.5 h-2.5" /> Active
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">
                       {entry.eventCount > 0
                         ? `${entry.eventCount} upcoming event${entry.eventCount !== 1 ? 's' : ''}`
                         : 'No upcoming events'}
                     </p>
                   </div>
+
+                  <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 flex-shrink-0 transition-colors" />
                 </Link>
               )
             })}
           </div>
         )}
 
+        {/* Pagination */}
         {pages > 1 && (
-          <div className="flex justify-center gap-2 mt-10">
-            {page > 1 && (
-              <Link href={buildUrl({ page: String(page - 1) })} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                ← Previous
-              </Link>
-            )}
-            {Array.from({ length: Math.min(pages, 5) }, (_, i) => i + 1).map((p) => (
-              <Link
-                key={p}
-                href={buildUrl({ page: String(p) })}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  p === page
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                {p}
-              </Link>
-            ))}
-            {page < pages && (
-              <Link href={buildUrl({ page: String(page + 1) })} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                Next →
-              </Link>
-            )}
+          <div className="flex flex-col items-center gap-3 mt-10">
+            <p className="text-sm text-gray-400">
+              Page {page} of {pages} · {total} organizer{total !== 1 ? 's' : ''}
+            </p>
+            <div className="flex gap-3">
+              {page > 1 && (
+                <Link href={buildUrl({ page: String(page - 1) })} className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                  ← Previous
+                </Link>
+              )}
+              {page < pages && (
+                <Link href={buildUrl({ page: String(page + 1) })} className="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                  Next →
+                </Link>
+              )}
+            </div>
           </div>
         )}
 
