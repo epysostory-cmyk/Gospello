@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { NIGERIAN_STATES } from '@/lib/utils'
-import { Loader2, Camera, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react'
+import { Loader2, Camera, CheckCircle, AlertCircle, ExternalLink, Plus, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -27,6 +27,7 @@ export default function ChurchProfilePage() {
   const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [bannerPreview, setBannerPreview] = useState<string | null>(null)
 
+  const [serviceTimes, setServiceTimes] = useState<string[]>([''])
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -34,7 +35,6 @@ export default function ChurchProfilePage() {
     city: '',
     state: '',
     country: 'Nigeria',
-    service_times: '',
     website_url: '',
     phone: '',
   })
@@ -64,10 +64,11 @@ export default function ChurchProfilePage() {
         city: c.city,
         state: c.state,
         country: c.country,
-        service_times: c.service_times ?? '',
         website_url: c.website_url ?? '',
         phone: c.phone ?? '',
       })
+      const times = c.service_times ? c.service_times.split('\n').filter(Boolean) : ['']
+      setServiceTimes(times.length > 0 ? times : [''])
       setLoading(false)
     }
     load()
@@ -129,7 +130,7 @@ export default function ChurchProfilePage() {
         city: form.city,
         state: form.state,
         country: form.country,
-        service_times: form.service_times.trim() || null,
+        service_times: serviceTimes.filter(t => t.trim()).join('\n') || null,
         website_url: form.website_url.trim() || null,
         phone: form.phone.trim() || null,
         logo_url,
@@ -288,10 +289,32 @@ export default function ChurchProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Service times</label>
-              <input type="text" value={form.service_times} onChange={(e) => update('service_times', e.target.value)}
-                placeholder="e.g. Sundays 8am & 10:30am, Wednesdays 6pm"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-gray-700">Service times</label>
+                <button type="button" onClick={() => setServiceTimes(t => [...t, ''])}
+                  className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+                  <Plus className="w-3.5 h-3.5" /> Add time
+                </button>
+              </div>
+              <div className="space-y-2">
+                {serviceTimes.map((t, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={t}
+                      onChange={e => setServiceTimes(prev => prev.map((s, idx) => idx === i ? e.target.value : s))}
+                      placeholder="e.g. Sundays 8am & 10:30am"
+                      className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    {serviceTimes.length > 1 && (
+                      <button type="button" onClick={() => setServiceTimes(t => t.filter((_, idx) => idx !== i))}
+                        className="text-gray-400 hover:text-red-500 transition-colors p-1 flex-shrink-0">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
