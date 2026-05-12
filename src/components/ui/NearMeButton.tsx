@@ -30,8 +30,8 @@ export default function NearMeButton({ basePath = '/churches' }: Props) {
           const data = await res.json()
           const addr = data.address ?? {}
           // Nigerian states come back as state or state_district
-          const state: string =
-            addr.state ?? addr.state_district ?? addr.county ?? ''
+          const raw: string = addr.state ?? addr.state_district ?? addr.county ?? ''
+          const state = raw.replace(/\s+state$/i, '').replace(/\s+federal capital territory$/i, 'FCT').trim()
           if (state) {
             router.push(`${basePath}?state=${encodeURIComponent(state)}`)
           } else {
