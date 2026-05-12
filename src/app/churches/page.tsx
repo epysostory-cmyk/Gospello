@@ -82,7 +82,7 @@ export default async function ChurchesPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
 
       {/* ── HERO ────────────────────────────────────────────────── */}
       <section className="bg-white border-b border-gray-200">
@@ -92,7 +92,7 @@ export default async function ChurchesPage({
           <div className="flex items-end justify-between gap-4 mb-6">
             <div>
               <p className="text-xs font-semibold tracking-widest uppercase text-indigo-600 mb-1">Nigeria</p>
-              <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight leading-none">
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-none">
                 Churches
               </h1>
             </div>
@@ -114,13 +114,13 @@ export default async function ChurchesPage({
                 name="q"
                 defaultValue={params.q}
                 placeholder="Search by church name, city or description…"
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
               />
               {params.state && <input type="hidden" name="state" value={params.state} />}
             </div>
             <button
               type="submit"
-              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm"
+              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors text-sm"
             >
               Search
             </button>
@@ -151,15 +151,15 @@ export default async function ChurchesPage({
           {/* State tabs — full bleed, scroll on mobile */}
           <div
             className="flex gap-1 overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-0"
-            style={{ scrollbarWidth: 'none' }}
+            style={{ scrollbarWidth: 'none' } as React.CSSProperties}
           >
             <Link
               href={buildUrl({ state: undefined, page: undefined })}
-              className="flex-shrink-0 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap"
-              style={!params.state
-                ? { borderColor: '#4F46E5', color: '#4F46E5' }
-                : { borderColor: 'transparent', color: '#6B7280' }
-              }
+              className={`flex-shrink-0 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                !params.state
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-900'
+              }`}
             >
               All States
             </Link>
@@ -167,11 +167,11 @@ export default async function ChurchesPage({
               <Link
                 key={s}
                 href={buildUrl({ state: s, page: undefined })}
-                className="flex-shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap hover:text-gray-900"
-                style={params.state === s
-                  ? { borderColor: '#4F46E5', color: '#4F46E5' }
-                  : { borderColor: 'transparent', color: '#6B7280' }
-                }
+                className={`flex-shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  params.state === s
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-900'
+                }`}
               >
                 {s}
               </Link>
@@ -221,8 +221,7 @@ export default async function ChurchesPage({
               {page < pages && (
                 <Link
                   href={buildUrl({ page: String(page + 1) })}
-                  className="px-6 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors"
-                  style={{ background: '#4F46E5' }}
+                  className="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
                 >
                   Next {page * PAGE_SIZE < total ? `(${Math.min(PAGE_SIZE, total - page * PAGE_SIZE)} more)` : ''} →
                 </Link>
