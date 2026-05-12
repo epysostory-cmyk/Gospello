@@ -58,12 +58,12 @@ export default function NearMeButton({ basePath = '/churches' }: Props) {
         onClick={handleNearMe}
         disabled={loading}
         className="flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold transition-colors disabled:opacity-60"
-        style={{ background: 'rgba(255,255,255,0.10)', color: 'white', border: '1px solid rgba(255,255,255,0.12)' }}
+        style={{ background: '#F3F4F6', color: '#374151', border: '1px solid #E5E7EB' }}
       >
         <Navigation className={`w-4 h-4 ${loading ? 'animate-pulse' : ''}`} />
         {loading ? 'Detecting…' : 'Near Me'}
       </button>
-      {error && <p className="text-[11px] text-red-400 pl-1">{error}</p>}
+      {error && <p className="text-[11px] text-red-500 pl-1">{error}</p>}
     </div>
   )
 }

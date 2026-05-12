@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import ChurchCard from '@/components/ui/ChurchCard'
 import type { Church } from '@/types/database'
 import { Search, X } from 'lucide-react'
+
 import Link from 'next/link'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import ListYourChurchCTA from '@/components/ui/ListYourChurchCTA'
@@ -83,110 +84,98 @@ export default async function ChurchesPage({
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* ── DARK HERO ───────────────────────────────────────────── */}
-      <section className="relative bg-slate-950 text-white overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-[80px]" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-700/15 rounded-full blur-[80px]" />
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-              backgroundSize: '28px 28px',
-            }}
-          />
-        </div>
+      {/* ── HERO ────────────────────────────────────────────────── */}
+      <section className="bg-white border-b border-gray-200">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-0">
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-10 sm:pt-16 sm:pb-14">
-          <div className="mb-7 text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-xs font-medium px-3 py-1.5 rounded-full mb-4 text-slate-400">
-              <span>⛪</span>
-              Churches across all 36 Nigerian states
+          {/* Top row: title + count */}
+          <div className="flex items-end justify-between gap-4 mb-6">
+            <div>
+              <p className="text-xs font-semibold tracking-widest uppercase text-indigo-600 mb-1">Nigeria</p>
+              <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight leading-none">
+                Churches
+              </h1>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
-              <span className="text-white">Discover </span>
-              <span className="bg-gradient-to-r from-amber-300 to-amber-400 bg-clip-text text-transparent">Churches</span>
-            </h1>
             {total > 0 && (
-              <p className="text-slate-400 mt-1.5 text-sm">
-                {total} church{total !== 1 ? 'es' : ''} listed
-                {params.state ? ` in ${params.state}` : ''}
-                {params.q ? ` matching "${params.q}"` : ''}
+              <p className="text-sm text-gray-400 pb-1 shrink-0">
+                {total.toLocaleString()} listed
+                {params.state ? ` · ${params.state}` : ''}
+                {params.q ? ` · "${params.q}"` : ''}
               </p>
             )}
           </div>
 
-          {/* Search */}
-          <div className="flex flex-col gap-3 max-w-2xl">
-            {/* Name search — standalone */}
-            <form method="GET" action="/churches" className="flex gap-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input
-                  type="text"
-                  name="q"
-                  defaultValue={params.q}
-                  placeholder="Search by church name, city, or description…"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white/15 transition-colors"
-                />
-                {params.state && <input type="hidden" name="state" value={params.state} />}
-              </div>
-              <button type="submit" className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 rounded-2xl transition-colors text-sm">
-                Search
-              </button>
-            </form>
-
-            {/* State filter + Near Me — row */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* State chips — horizontal scroll */}
-              <div className="flex gap-1.5 overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
-                <Link
-                  href={buildUrl({ state: undefined, page: undefined })}
-                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-                  style={!params.state
-                    ? { background: 'white', color: '#111827' }
-                    : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)' }
-                  }
-                >
-                  All States
-                </Link>
-                {NIGERIAN_STATES.map((s) => (
-                  <Link
-                    key={s}
-                    href={buildUrl({ state: s, page: undefined })}
-                    className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap"
-                    style={params.state === s
-                      ? { background: 'white', color: '#111827' }
-                      : { background: 'rgba(255,255,255,0.08)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)' }
-                    }
-                  >
-                    {s}
-                  </Link>
-                ))}
-              </div>
-              <NearMeButton />
+          {/* Search bar */}
+          <form method="GET" action="/churches" className="flex gap-2 mb-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                name="q"
+                defaultValue={params.q}
+                placeholder="Search by church name, city or description…"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50"
+              />
+              {params.state && <input type="hidden" name="state" value={params.state} />}
             </div>
+            <button
+              type="submit"
+              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm"
+            >
+              Search
+            </button>
+            <NearMeButton />
+          </form>
 
-            {/* Active filter pills */}
-            {hasFilters && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {params.q && (
-                  <span className="flex items-center gap-1 text-xs font-semibold bg-white/10 text-slate-300 border border-white/10 px-3 py-1.5 rounded-full">
-                    &quot;{params.q}&quot;
-                    <Link href={buildUrl({ q: undefined })} className="hover:text-white ml-0.5">×</Link>
-                  </span>
-                )}
-                {params.state && (
-                  <span className="flex items-center gap-1 text-xs font-semibold bg-white/10 text-slate-300 border border-white/10 px-3 py-1.5 rounded-full">
-                    📍 {params.state}
-                    <Link href={buildUrl({ state: undefined })} className="hover:text-white ml-0.5">×</Link>
-                  </span>
-                )}
-                <Link href="/churches" className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300">
-                  <X className="w-3 h-3" /> Clear all
-                </Link>
-              </div>
-            )}
+          {/* Active filter chips — only shown when filters are on */}
+          {hasFilters && (
+            <div className="flex items-center gap-2 flex-wrap mb-4">
+              {params.q && (
+                <span className="flex items-center gap-1 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-full">
+                  &quot;{params.q}&quot;
+                  <Link href={buildUrl({ q: undefined })} className="hover:text-indigo-900 ml-0.5">×</Link>
+                </span>
+              )}
+              {params.state && (
+                <span className="flex items-center gap-1 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-full">
+                  📍 {params.state}
+                  <Link href={buildUrl({ state: undefined })} className="hover:text-indigo-900 ml-0.5">×</Link>
+                </span>
+              )}
+              <Link href="/churches" className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors">
+                <X className="w-3 h-3" /> Clear
+              </Link>
+            </div>
+          )}
+
+          {/* State tabs — full bleed, scroll on mobile */}
+          <div
+            className="flex gap-1 overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-0"
+            style={{ scrollbarWidth: 'none' }}
+          >
+            <Link
+              href={buildUrl({ state: undefined, page: undefined })}
+              className="flex-shrink-0 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap"
+              style={!params.state
+                ? { borderColor: '#4F46E5', color: '#4F46E5' }
+                : { borderColor: 'transparent', color: '#6B7280' }
+              }
+            >
+              All States
+            </Link>
+            {NIGERIAN_STATES.map((s) => (
+              <Link
+                key={s}
+                href={buildUrl({ state: s, page: undefined })}
+                className="flex-shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap hover:text-gray-900"
+                style={params.state === s
+                  ? { borderColor: '#4F46E5', color: '#4F46E5' }
+                  : { borderColor: 'transparent', color: '#6B7280' }
+                }
+              >
+                {s}
+              </Link>
+            ))}
           </div>
         </div>
       </section>
