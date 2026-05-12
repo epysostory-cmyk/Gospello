@@ -116,6 +116,7 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
 
     if (!form.display_name.trim()) { setError('Display name is required'); setSaving(false); return }
     if (!form.bio.trim()) { setError('Short description is required — help people know who you are'); setSaving(false); return }
+    if (form.account_type === 'church' && !avatarUrl && !avatarFile) { setError('Profile photo is required for churches — please upload a photo'); setSaving(false); return }
 
     try {
       let newAvatarUrl = avatarUrl
@@ -223,7 +224,9 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Profile photo</p>
+              <p className="text-sm font-medium text-gray-900">
+                Profile photo {form.account_type === 'church' && <span className="text-red-400">*</span>}
+              </p>
               <p className="text-xs text-gray-500 mt-0.5">JPG, PNG or WebP · max 10 MB</p>
               {avatarPreview && (
                 <button type="button" onClick={() => { setAvatarFile(null); setAvatarPreview(null) }} className="text-xs text-red-500 hover:text-red-700 mt-1">

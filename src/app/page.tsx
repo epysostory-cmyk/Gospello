@@ -160,27 +160,31 @@ async function getHomepageData() {
       (eventOrganizerIdsRes.data ?? []).map((r: { seeded_organizer_id?: string | null }) => r.seeded_organizer_id).filter(Boolean)
     )
 
-    // Fetch churches that have approved events
-    const discoverChurches = approvedChurchIds.size > 0
-      ? await adminClient
-          .from('churches')
-          .select('id, name, slug, logo_url, denomination, city, state, verified_badge')
-          .eq('is_hidden', false)
-          .in('id', [...approvedChurchIds])
-          .order('verified_badge', { ascending: false })
-          .order('created_at', { ascending: false })
-          .limit(10)
-          .then(r => (r.data ?? []).map(c => ({
-            id: c.id,
-            name: c.name,
-            slug: c.slug,
-            logo_url: c.logo_url,
-            denomination: c.denomination ?? null,
-            city: c.city ?? '',
-            state: c.state ?? '',
-            verified_badge: c.verified_badge ?? false,
-          })))
-      : []
+    // Fetch all churches with a profile photo (logo_url), prioritise those with events
+    const allChurchesWithPhoto = await adminClient
+      .from('churches')
+      .select('id, name, slug, logo_url, denomination, city, state, verified_badge')
+      .eq('is_hidden', false)
+      .not('logo_url', 'is', null)
+      .order('verified_badge', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(r => r.data ?? [])
+
+    // Sort: churches with approved events first, then the rest
+    const discoverChurches = [
+      ...allChurchesWithPhoto.filter(c => approvedChurchIds.has(c.id)),
+      ...allChurchesWithPhoto.filter(c => !approvedChurchIds.has(c.id)),
+    ].slice(0, 10).map(c => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      logo_url: c.logo_url,
+      denomination: c.denomination ?? null,
+      city: c.city ?? '',
+      state: c.state ?? '',
+      verified_badge: c.verified_badge ?? false,
+    }))
 
     // Build discover organizers list (merge profiles + seeded, limit to 10)
     const profileOrgs: OrganizerCard[] = (discoverProfileOrganizersRes.data ?? []).map((p: { id: string; display_name: string; avatar_url: string | null; state: string | null; ministry_type?: string | null }) => ({

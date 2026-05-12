@@ -154,6 +154,7 @@ export default function CreateProfileForm({ adminId }: Props) {
     e.preventDefault()
     setError('')
     if (!form.name.trim()) { setError('Profile name is required'); return }
+    if (accountType === 'church' && !logoUrl) { setError('Church profile photo is required — upload a logo or photo before saving'); return }
     if (accountType === 'church' && !form.pastor_name.trim()) { setError('Lead pastor name is required'); return }
     if (accountType !== 'church' && !form.city) { setError('City is required'); return }
 
@@ -510,7 +511,7 @@ export default function CreateProfileForm({ adminId }: Props) {
             {/* Logo upload */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5">
               <p className="text-sm font-semibold text-gray-900 mb-4">
-                {accountType === 'church' ? 'Church Logo' : 'Profile Image'}
+                {accountType === 'church' ? <>Church Logo <span className="text-red-500">*</span></> : 'Profile Image'}
               </p>
               <div className="flex flex-col items-center gap-3">
                 <button
