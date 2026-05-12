@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Clock, Calendar, ShieldCheck, CheckCircle, Star } from 'lucide-react'
+import { MapPin, Clock, Calendar, ShieldCheck, Star } from 'lucide-react'
 import type { Church } from '@/types/database'
 
 interface ChurchCardProps {
@@ -27,11 +27,6 @@ function StatusBadge({ church }: { church: Church }) {
   if (church.verified_badge) return (
     <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 whitespace-nowrap">
       <ShieldCheck className="w-2.5 h-2.5" /> Verified
-    </span>
-  )
-  if (church.is_claimed) return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 whitespace-nowrap">
-      <CheckCircle className="w-2.5 h-2.5" /> Claimed
     </span>
   )
   return (
