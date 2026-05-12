@@ -17,27 +17,24 @@ export default function ListYourChurchCTA() {
 
   return (
     <div className="mt-16 mb-8 mx-auto max-w-2xl">
-      <div
-        className="rounded-3xl px-8 py-10 text-center"
-        style={{ background: 'linear-gradient(135deg, #1e0a3c 0%, #3b0764 50%, #4c1d95 100%)' }}
-      >
+      <div className="rounded-2xl px-8 py-10 text-center bg-amber-50 border border-amber-200">
         <div className="text-4xl mb-3">⛪</div>
-        <h3 className="text-white text-xl sm:text-2xl font-bold mb-2">
+        <h3 className="text-gray-900 text-xl sm:text-2xl font-bold mb-2">
           Is your church on Gospello?
         </h3>
-        <p className="text-purple-200 text-sm sm:text-base mb-6 max-w-md mx-auto">
+        <p className="text-gray-600 text-sm sm:text-base mb-6 max-w-md mx-auto">
           Get your church in front of thousands looking for a place to worship. Free to list — takes 2 minutes.
         </p>
         <Link
           href={href}
-          className="inline-flex items-center gap-2 bg-white text-purple-900 font-bold px-7 py-3.5 rounded-2xl text-sm sm:text-base hover:bg-purple-50 transition-colors"
+          className="inline-flex items-center gap-2 bg-gray-900 text-white font-bold px-7 py-3.5 rounded-xl text-sm sm:text-base hover:bg-gray-800 transition-colors"
         >
           List Your Church — It&apos;s Free →
         </Link>
-        {!loggedIn && (
-          <p className="mt-4 text-purple-400 text-xs">
+        {loggedIn === false && (
+          <p className="mt-4 text-gray-400 text-xs">
             Already listed?{' '}
-            <Link href="/auth/login" className="text-purple-200 underline underline-offset-2">
+            <Link href="/auth/login" className="text-gray-600 underline underline-offset-2">
               Sign in to manage your profile
             </Link>
           </p>

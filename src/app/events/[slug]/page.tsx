@@ -306,7 +306,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-[var(--font-plus-jakarta)]">
+    <div className="min-h-screen bg-white font-[var(--font-plus-jakarta)]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -315,7 +315,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       {/* Main content wrapper */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 pt-4 lg:pt-6">
         <BackButton />
-        <div className="animate-fadeInUp flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-8">
 
           {/* LEFT COLUMN */}
           <div className="lg:w-[62%] min-w-0">
@@ -334,7 +334,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {e.banner_url ? (
                 <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-purple-900" />
+                <div className="absolute inset-0 bg-gray-100" />
               )}
               {almostFull && (
                 <div className="absolute top-3 right-3">
@@ -348,7 +348,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {e.banner_url ? (
                 <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-purple-900" />
+                <div className="absolute inset-0 bg-gray-100" />
               )}
               {almostFull && (
                 <div className="absolute top-3 right-3">
@@ -456,7 +456,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 <div className="space-y-2">
                   {e.daily_schedule.map((day: DaySchedule, idx: number) => (
                     <div key={day.date} className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
                         {idx + 1}
                       </div>
                       <div>
@@ -688,7 +688,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   href={`/organizers/${e.seeded_organizers.slug}`}
                   className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-indigo-200 transition-colors group"
                 >
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {e.seeded_organizers.logo_url ? (
                       <Image
                         src={e.seeded_organizers.logo_url}
@@ -698,7 +698,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                         className="object-cover"
                       />
                     ) : (
-                      <span className="font-black text-indigo-600 text-xl">
+                      <span className="font-bold text-indigo-600 text-xl">
                         {e.seeded_organizers.name?.[0]?.toUpperCase()}
                       </span>
                     )}
@@ -719,7 +719,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   href={`/organizers/${e.profiles.id}`}
                   className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-indigo-200 transition-colors group"
                 >
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {e.profiles.avatar_url ? (
                       <Image
                         src={e.profiles.avatar_url}
@@ -729,7 +729,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                         className="object-cover"
                       />
                     ) : (
-                      <span className="font-black text-indigo-600 text-xl">
+                      <span className="font-bold text-indigo-600 text-xl">
                         {e.profiles.display_name?.[0]?.toUpperCase()}
                       </span>
                     )}
@@ -771,10 +771,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                       <Link
                         key={ev.id}
                         href={`/events/${ev.slug}`}
-                        className="flex gap-3 p-3 rounded-2xl bg-white active:bg-gray-50 active:scale-[0.99] transition-all duration-100"
-                        style={{ border: '0.5px solid #E5E7EB' }}
+                        className="flex gap-3 p-3 rounded-2xl bg-white border border-gray-200 active:bg-gray-50 active:scale-[0.99] transition-all duration-100"
                       >
-                        <div className="flex-shrink-0 rounded-xl overflow-hidden" style={{ width: 80, height: 80 }}>
+                        <div className="flex-shrink-0 rounded-xl overflow-hidden w-20 h-20">
                           {ev.banner_url ? (
                             <Image
                               src={ev.banner_url}
@@ -784,19 +783,16 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                               className="object-cover object-center w-full h-full"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #4F1787, #7C3AED)' }}>
+                            <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
                               <span className="text-2xl">🎵</span>
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col justify-center">
-                          <span
-                            className="text-[11px] font-medium px-2 py-0.5 rounded-full w-fit mb-1"
-                            style={{ background: ev.is_free ? '#059669' : '#2563EB', color: 'white' }}
-                          >
+                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full w-fit mb-1 text-white ${ev.is_free ? 'bg-emerald-600' : 'bg-blue-600'}`}>
                             {ev.is_free ? 'Free' : 'Paid'}
                           </span>
-                          <p className="font-medium text-[#111827] leading-snug line-clamp-2" style={{ fontSize: 14 }}>
+                          <p className="font-medium text-gray-900 text-sm leading-snug line-clamp-2">
                             {ev.title}
                           </p>
                           <p className="mt-1 text-[12px] text-[#6B7280]">
@@ -813,7 +809,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
           {/* RIGHT COLUMN — sticky card */}
           <div className="hidden lg:block lg:w-[38%]">
-            <div className="sticky top-6 bg-white rounded-[20px] border border-gray-200 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.08)] space-y-4">
+            <div className="sticky top-6 bg-white rounded-xl border border-gray-200 p-6 space-y-4">
 
               {/* Price/type badge */}
               <div className={`w-full text-center py-2 rounded-full text-sm font-semibold ${sidebarPricePill.cls}`}>
@@ -832,7 +828,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   </div>
                   {e.daily_schedule.map((day: DaySchedule, idx: number) => (
                     <div key={day.date} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
-                      <div className="w-5 h-5 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
                         {idx + 1}
                       </div>
                       <div>
