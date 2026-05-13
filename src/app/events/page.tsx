@@ -71,7 +71,7 @@ async function getEvents(params: SearchParams) {
     .select('*, churches(*)')
     .eq('status', 'approved')
     .eq('visibility', 'public')
-    .or(`end_date.gte.${now},and(end_date.is.null,start_date.gte.${now})`)
+    .or(`end_date.gte.${now},start_date.gte.${now}`)
     .order('start_date', { ascending: true })
 
   if (params.q)        query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%,location_name.ilike.%${params.q}%`)
