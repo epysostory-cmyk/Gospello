@@ -173,6 +173,7 @@ async function getHomepageData() {
     }))
 
     const profileOrgs: OrganizerCard[] = (discoverProfileOrganizersRes.data ?? [])
+      .filter((p: { avatar_url: string | null }) => !!p.avatar_url)
       .map((p: { id: string; display_name: string; avatar_url: string | null; state: string | null; ministry_type?: string | null; description?: string | null }) => ({
         id: p.id,
         name: p.display_name,
@@ -186,6 +187,7 @@ async function getHomepageData() {
         source: 'profile' as const,
       }))
     const seededOrgs: OrganizerCard[] = (discoverSeededOrganizersRes.data ?? [])
+      .filter((s: { logo_url: string | null }) => !!s.logo_url)
       .map((s: { id: string; name: string; slug: string; logo_url: string | null; ministry_type: string | null; city: string; state: string; verified_badge: boolean; description?: string | null }) => ({
         id: s.id,
         name: s.name,
