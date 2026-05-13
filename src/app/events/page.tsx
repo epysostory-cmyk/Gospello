@@ -10,6 +10,7 @@ import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import { Search, MapPin, X } from 'lucide-react'
 import NearMeButton from '@/components/ui/NearMeButton'
+import CategoryDropdown from '@/components/ui/CategoryDropdown'
 import Link from 'next/link'
 import Image from 'next/image'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
@@ -228,32 +229,18 @@ export default async function EventsPage({
             )}
           </form>
 
-          {/* Category pills */}
-          <div className="flex gap-2 overflow-x-auto flex-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Link
-              href={buildUrl({ category: undefined, page: undefined })}
-              className={`flex-shrink-0 text-sm font-semibold px-4 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
-                !params.category
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-900'
-              }`}
-            >
-              All
-            </Link>
-            {categoryOptions.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={buildUrl({ category: cat.slug, page: undefined })}
-                className={`flex-shrink-0 text-sm font-semibold px-4 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
-                  params.category === cat.slug
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-900'
-                }`}
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
+          {/* Category dropdown */}
+          <CategoryDropdown
+            activeSlug={params.category}
+            activeLabel={activeCategoryLabel}
+            allUrl={buildUrl({ category: undefined, page: undefined })}
+            categories={categoryOptions.map(cat => ({
+              slug: cat.slug,
+              name: cat.name,
+              icon: cat.icon ?? null,
+              url: buildUrl({ category: cat.slug, page: undefined }),
+            }))}
+          />
         </div>
 
         {/* Timeframe + location filter bar */}
