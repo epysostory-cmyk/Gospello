@@ -69,7 +69,7 @@ async function getEvents(params: SearchParams) {
     .select('*, churches(*)')
     .eq('status', 'approved')
     .eq('visibility', 'public')
-    .order('created_at', { ascending: false })
+    .order('start_date', { ascending: true })
 
   if (params.q)        query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%,location_name.ilike.%${params.q}%`)
   if (params.city)     query = query.ilike('city', `%${params.city}%`)
