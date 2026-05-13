@@ -100,10 +100,16 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
     ))
   }
 
+  function getSessions(d: DaySchedule): EventSession[] {
+    if (d.sessions?.length) return d.sessions
+    if (d.start_time) return [{ title: null, start_time: d.start_time, end_time: d.end_time ?? null, speaker: null }]
+    return [emptySession()]
+  }
+
   function updateSession(date: string, idx: number, field: keyof EventSession, value: string) {
     updateForm('daily_schedule', schedule.map(d => {
       if (d.date !== date) return d
-      const sessions = d.sessions.map((s, i) =>
+      const sessions = getSessions(d).map((s, i) =>
         i === idx ? { ...s, [field]: value || null } : s
       )
       return { ...d, sessions }
@@ -112,14 +118,14 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
 
   function addSession(date: string) {
     updateForm('daily_schedule', schedule.map(d =>
-      d.date === date ? { ...d, sessions: [...(d.sessions ?? []), emptySession()] } : d
+      d.date === date ? { ...d, sessions: [...getSessions(d), emptySession()] } : d
     ))
   }
 
   function removeSession(date: string, idx: number) {
     updateForm('daily_schedule', schedule.map(d => {
       if (d.date !== date) return d
-      const sessions = d.sessions.filter((_, i) => i !== idx)
+      const sessions = getSessions(d).filter((_, i) => i !== idx)
       return { ...d, sessions: sessions.length ? sessions : [emptySession()] }
     }))
   }
@@ -316,7 +322,7 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
               )}
 
               {schedule.map((day, idx) => {
-                const sessions = day.sessions?.length ? day.sessions : [emptySession()]
+                const sessions = getSessions(day)
                 const hasContent = sessions.some(s => s.title || s.start_time)
                 return (
                   <div
