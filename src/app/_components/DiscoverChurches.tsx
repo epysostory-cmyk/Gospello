@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { ChevronRight, ChevronLeft } from 'lucide-react'
+import { ChevronRight, ChevronLeft, MapPin, Loader2 } from 'lucide-react'
 
 interface ChurchEntry {
   id: string
@@ -26,6 +26,47 @@ export default function DiscoverChurches({ churches }: Props) {
   const [canScrollRight, setCanScrollRight] = useState(true)
   const [stateFilter, setStateFilter] = useState<string | null>(null)
   const [denomFilter, setDenomFilter] = useState<string | null>(null)
+  const [nearMeState, setNearMeState] = useState<'idle' | 'loading' | 'found' | 'denied' | 'error'>('idle')
+  const [nearMeLabel, setNearMeLabel] = useState<string | null>(null)
+
+  const handleNearMe = () => {
+    if (!navigator.geolocation) { setNearMeState('error'); return }
+    setNearMeState('loading')
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { 'Accept-Language': 'en' } }
+          )
+          const data = await res.json()
+          const region: string =
+            data.address?.state ||
+            data.address?.region ||
+            data.address?.county ||
+            ''
+          if (!region) { setNearMeState('error'); return }
+          // Try to match against known states in the list
+          const match = churches.find(c =>
+            c.state && region.toLowerCase().includes(c.state.toLowerCase())
+          )?.state ?? region
+          setStateFilter(match)
+          setNearMeLabel(match)
+          setNearMeState('found')
+        } catch {
+          setNearMeState('error')
+        }
+      },
+      () => setNearMeState('denied')
+    )
+  }
+
+  const clearNearMe = () => {
+    setNearMeState('idle')
+    setNearMeLabel(null)
+    setStateFilter(null)
+  }
 
   const states = [...new Set(churches.map(c => c.state).filter(Boolean))].sort()
   const denoms = [...new Set(churches.map(c => c.denomination).filter(Boolean))].sort() as string[]
@@ -68,6 +109,30 @@ export default function DiscoverChurches({ churches }: Props) {
         <div>
           <h2 className="text-xl font-bold text-gray-900">Find a church near you</h2>
           <p className="text-gray-500 mt-0.5 text-sm">New to a city? Looking for where to worship?</p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {nearMeState === 'found' ? (
+            <button
+              onClick={clearNearMe}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-full text-[13px] font-medium bg-indigo-600 text-white border border-indigo-600 whitespace-nowrap"
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              {nearMeLabel}
+              <span className="ml-0.5 opacity-70">×</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleNearMe}
+              disabled={nearMeState === 'loading'}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-full text-[13px] font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-60"
+            >
+              {nearMeState === 'loading'
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+              }
+              {nearMeState === 'loading' ? 'Locating…' : nearMeState === 'denied' ? 'Location denied' : nearMeState === 'error' ? 'Try again' : 'Near me'}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
