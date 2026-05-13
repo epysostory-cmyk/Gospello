@@ -209,9 +209,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           }
           {/* Minimal back + save — transparent so image reads fully */}
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4">
-            <div className="bg-black/30 backdrop-blur-sm rounded-full">
-              <BackButton />
-            </div>
+            <BackButton />
             <div className="bg-black/30 backdrop-blur-sm rounded-full">
               <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={initialSaved}
                 serverUserId={user?.id ?? null} variant="icon" size="md" />
