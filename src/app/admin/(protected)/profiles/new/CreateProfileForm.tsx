@@ -562,7 +562,7 @@ export default function CreateProfileForm({ adminId }: Props) {
               <p className="text-sm font-semibold text-gray-900 mb-3">Account Type <span className="text-red-500">*</span></p>
               <div className="grid grid-cols-2 gap-3">
                 {([
-                  ['church',    '⛪', 'Church',    'For congregations and churches'] as const,
+                  ['church',    '⛪', 'Church',    'For churches and fellowships'] as const,
                   ['organizer', '🎤', 'Organizer', 'For individuals, ministries, and Christian organizations'] as const,
                 ]).map(([type, icon, label, desc]) => (
                   <button key={type} type="button" onClick={() => { setAccountType(type); setStep(0) }}
