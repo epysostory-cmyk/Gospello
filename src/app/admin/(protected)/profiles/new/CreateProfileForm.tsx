@@ -654,45 +654,45 @@ export default function CreateProfileForm({ adminId }: Props) {
           </div>
 
           {/* ── Right: live preview ── */}
-          <div className="hidden lg:block lg:col-span-2">
-            <div className="sticky top-6">
+          <div className="lg:col-span-2">
+            <div className="lg:sticky lg:top-6">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Live Preview</p>
               <div className="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden">
-                <div className="h-24 bg-gradient-to-br from-violet-700 via-indigo-800 to-slate-900 relative">
-                  <div className="absolute inset-0 opacity-[0.06]"
-                    style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '20px 20px' }} />
+                {/* Cover */}
+                <div className="h-20 bg-gradient-to-br from-violet-700 via-indigo-800 to-slate-900 relative">
                   <div className="absolute top-3 right-3 flex items-center gap-1 bg-gray-800/80 text-gray-300 text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                    <span>Unverified</span>
+                    Unverified
                   </div>
                 </div>
-                <div className="px-4 -mt-7 mb-3">
-                  <div className="w-14 h-14 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center text-2xl overflow-hidden">
+                {/* Avatar — sits on the border between cover and body */}
+                <div className="px-4 pt-0">
+                  <div className="w-14 h-14 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center text-2xl overflow-hidden -mt-7">
                     {(logoPreview || logoUrl) ? (
                       <Image src={logoPreview ?? logoUrl!} alt="Logo" width={56} height={56} className="w-full h-full object-cover" unoptimized={!!logoPreview} />
                     ) : (
-                      accountType === 'church' ? '⛪' : '🎤'
+                      <span className="text-2xl">{accountType === 'church' ? '⛪' : '🎤'}</span>
                     )}
                   </div>
                 </div>
-                <div className="px-4 pb-4">
+                <div className="px-4 pb-4 pt-2">
                   <h2 className="text-base font-bold text-gray-900 truncate">{form.name || 'Profile Name'}</h2>
                   {(form.city || form.state) && (
                     <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
                       <MapPin className="w-3 h-3" />{[form.city, form.state].filter(Boolean).join(', ')}
                     </p>
                   )}
-                  {form.description && <p className="text-xs text-gray-600 mt-2 line-clamp-3">{form.description}</p>}
+                  {form.description && <p className="text-xs text-gray-600 mt-2 line-clamp-2">{form.description}</p>}
                   {isOrg && form.ministry_types.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {form.ministry_types.map(t => (
-                        <span key={t} className="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">{t}</span>
+                        <span key={t} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{t}</span>
                       ))}
                     </div>
                   )}
-                  <div className="mt-3 p-3 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50">
-                    <p className="text-xs font-semibold text-violet-700">🎤 Is this your profile?</p>
-                    <p className="text-[10px] text-violet-600 mt-0.5">Take ownership of this profile and manage your events in one place.</p>
-                    <div className="mt-2 inline-block bg-[#7C3AED] text-white text-[10px] font-semibold px-3 py-1 rounded-lg">Claim This Profile →</div>
+                  <div className="mt-3 p-3 rounded-xl border border-dashed border-gray-200 bg-gray-50">
+                    <p className="text-xs font-semibold text-gray-700">Is this your profile?</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Claim it to manage your events.</p>
+                    <div className="mt-2 inline-block bg-gray-900 text-white text-[10px] font-semibold px-3 py-1 rounded-lg">Claim This Profile →</div>
                   </div>
                   <div className={`mt-3 flex items-center gap-1.5 text-[10px] font-medium ${visible ? 'text-green-600' : 'text-gray-400'}`}>
                     {visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
@@ -707,7 +707,7 @@ export default function CreateProfileForm({ adminId }: Props) {
                   {ORG_STEPS.map((_, i) => (
                     <button
                       key={i} type="button" onClick={() => setStep(i)}
-                      className={`w-2 h-2 rounded-full transition-all ${i === step ? 'bg-[#7C3AED] w-4' : i < step ? 'bg-[#7C3AED]/40' : 'bg-gray-200'}`}
+                      className={`w-2 h-2 rounded-full transition-all ${i === step ? 'bg-gray-900 w-4' : i < step ? 'bg-gray-400' : 'bg-gray-200'}`}
                     />
                   ))}
                 </div>
