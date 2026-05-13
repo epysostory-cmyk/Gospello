@@ -225,11 +225,8 @@ export default async function EventsPage({
             )}
           </form>
 
-          {/* Category chips */}
-          <div
-            className="flex gap-2 overflow-x-auto pt-4 pb-0 -mx-4 px-4 sm:mx-0 sm:px-0"
-            style={{ scrollbarWidth: 'none' } as React.CSSProperties}
-          >
+          {/* Category chips — scroll on mobile, wrap on desktop */}
+          <div className="flex gap-2 overflow-x-auto sm:overflow-visible flex-nowrap sm:flex-wrap pt-4 pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link
               href={buildUrl({ category: undefined, page: undefined })}
               className={`flex-shrink-0 text-sm font-medium px-4 py-2 rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${
