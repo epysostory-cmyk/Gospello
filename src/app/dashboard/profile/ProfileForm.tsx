@@ -99,14 +99,17 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const uploadAvatar = async (): Promise<string | null> => {
     if (!avatarFile) return avatarUrl
     setUploadingAvatar(true)
-    const path = `${userId}/avatar.jpg`
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(path, avatarFile, { upsert: true, contentType: 'image/jpeg' })
-    setUploadingAvatar(false)
-    if (uploadError) { setError('Avatar upload failed: ' + uploadError.message); return null }
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
-    return publicUrl
+    try {
+      const path = `${userId}/avatar.jpg`
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, avatarFile, { upsert: true, contentType: 'image/jpeg' })
+      if (uploadError) { setError('Avatar upload failed: ' + uploadError.message); return null }
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+      return publicUrl
+    } finally {
+      setUploadingAvatar(false)
+    }
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -153,10 +156,16 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
         updatePayload.youtube         = form.youtube.trim() || null
       }
 
-      const { error: updateError } = await supabase.from('profiles').update(updatePayload).eq('id', userId)
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out. Please check your connection and try again.')), 15000)
+      )
+      const { error: updateError } = await Promise.race([
+        supabase.from('profiles').update(updatePayload).eq('id', userId),
+        timeout,
+      ])
 
       if (updateError) {
-        setError(updateError.message)
+        setError('Save failed: ' + updateError.message)
       } else {
         setAvatarUrl(newAvatarUrl)
         setAvatarFile(null)
