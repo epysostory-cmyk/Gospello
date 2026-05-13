@@ -81,14 +81,14 @@ async function getHomepageData() {
         .eq('status', 'approved'),
       adminClient
         .from('profiles')
-        .select('id, display_name, avatar_url, state, ministry_type')
+        .select('id, display_name, avatar_url, state, ministry_type, description')
         .eq('account_type', 'organizer')
         .eq('is_hidden', false)
         .order('created_at', { ascending: false })
         .limit(20),
       adminClient
         .from('seeded_organizers')
-        .select('id, name, slug, logo_url, ministry_type, city, state, verified_badge')
+        .select('id, name, slug, logo_url, ministry_type, city, state, verified_badge, description')
         .eq('is_hidden', false)
         .order('created_at', { ascending: false })
         .limit(20),
@@ -174,12 +174,13 @@ async function getHomepageData() {
 
     const profileOrgs: OrganizerCard[] = (discoverProfileOrganizersRes.data ?? [])
       .filter((p: { avatar_url: string | null }) => !!p.avatar_url)
-      .map((p: { id: string; display_name: string; avatar_url: string | null; state: string | null; ministry_type?: string | null }) => ({
+      .map((p: { id: string; display_name: string; avatar_url: string | null; state: string | null; ministry_type?: string | null; description?: string | null }) => ({
         id: p.id,
         name: p.display_name,
         slug: p.id,
         logo_url: p.avatar_url,
-        ministry_type: (p as { ministry_type?: string | null }).ministry_type ?? null,
+        ministry_type: p.ministry_type ?? null,
+        description: p.description ?? null,
         city: '',
         state: p.state ?? '',
         verified_badge: false,
@@ -187,12 +188,13 @@ async function getHomepageData() {
       }))
     const seededOrgs: OrganizerCard[] = (discoverSeededOrganizersRes.data ?? [])
       .filter((s: { logo_url: string | null }) => !!s.logo_url)
-      .map((s: { id: string; name: string; slug: string; logo_url: string | null; ministry_type: string | null; city: string; state: string; verified_badge: boolean }) => ({
+      .map((s: { id: string; name: string; slug: string; logo_url: string | null; ministry_type: string | null; city: string; state: string; verified_badge: boolean; description?: string | null }) => ({
         id: s.id,
         name: s.name,
         slug: s.slug,
         logo_url: s.logo_url,
         ministry_type: s.ministry_type,
+        description: s.description ?? null,
         city: s.city ?? '',
         state: s.state ?? '',
         verified_badge: s.verified_badge ?? false,
