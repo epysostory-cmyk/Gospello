@@ -81,7 +81,7 @@ async function getHomepageData() {
         .eq('status', 'approved'),
       adminClient
         .from('profiles')
-        .select('id, display_name, avatar_url, state, ministry_type, description')
+        .select('id, display_name, avatar_url, state, ministry_type, bio')
         .eq('account_type', 'organizer')
         .neq('is_hidden', true)
         .order('created_at', { ascending: false })
@@ -174,13 +174,13 @@ async function getHomepageData() {
 
     const profileOrgs: OrganizerCard[] = (discoverProfileOrganizersRes.data ?? [])
       .filter((p: { avatar_url: string | null }) => !!p.avatar_url)
-      .map((p: { id: string; display_name: string; avatar_url: string | null; state: string | null; ministry_type?: string | null; description?: string | null }) => ({
+      .map((p: { id: string; display_name: string; avatar_url: string | null; state: string | null; ministry_type?: string | null; bio?: string | null }) => ({
         id: p.id,
         name: p.display_name,
         slug: p.id,
         logo_url: p.avatar_url,
         ministry_type: p.ministry_type ?? null,
-        description: p.description ?? null,
+        description: p.bio ?? null,
         city: '',
         state: p.state ?? '',
         verified_badge: false,
