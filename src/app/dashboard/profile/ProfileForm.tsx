@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { updateProfile } from './actions'
 import { Loader2, Camera, CheckCircle, AlertCircle, User, LogOut, Phone, Globe, Link2 } from 'lucide-react'
 import Image from 'next/image'
 import type { AccountType } from '@/types/database'
@@ -130,42 +131,32 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
         newAvatarUrl = uploaded
       }
 
-      const updatePayload: Record<string, unknown> = {
+      const updatePayload: Parameters<typeof updateProfile>[0] = {
         display_name: form.display_name.trim(),
         avatar_url:   newAvatarUrl,
-        updated_at:   new Date().toISOString(),
+        ...(!isChurch && {
+          bio:     form.bio.trim(),
+          state:   form.state,
+          city:    form.city,
+          address: form.address,
+          phone:   form.phone,
+          website: form.website,
+        }),
+        ...(isOrganizer && {
+          contact_person: form.contact_person,
+          ministry_types: form.ministry_types,
+          whatsapp:       form.whatsapp,
+          instagram:      form.instagram,
+          facebook:       form.facebook,
+          twitter:        form.twitter,
+          youtube:        form.youtube,
+        }),
       }
 
-      if (!isChurch) {
-        updatePayload.church_name  = null
-        updatePayload.bio          = form.bio.trim()
-        updatePayload.state        = form.state || null
-        updatePayload.city         = form.city || null
-        updatePayload.address      = form.address.trim() || null
-        updatePayload.phone        = form.phone.trim() || null
-        updatePayload.website      = form.website.trim() || null
-      }
+      const result = await updateProfile(updatePayload)
 
-      if (isOrganizer) {
-        updatePayload.contact_person  = form.contact_person.trim() || null
-        updatePayload.ministry_types  = form.ministry_types.length > 0 ? form.ministry_types : null
-        updatePayload.whatsapp        = form.whatsapp.trim() || null
-        updatePayload.instagram       = form.instagram.trim() || null
-        updatePayload.facebook        = form.facebook.trim() || null
-        updatePayload.twitter         = form.twitter.trim() || null
-        updatePayload.youtube         = form.youtube.trim() || null
-      }
-
-      const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Request timed out. Please check your connection and try again.')), 15000)
-      )
-      const { error: updateError } = await Promise.race([
-        supabase.from('profiles').update(updatePayload).eq('id', userId),
-        timeout,
-      ])
-
-      if (updateError) {
-        setError('Save failed: ' + updateError.message)
+      if (result.error) {
+        setError('Save failed: ' + result.error)
       } else {
         setAvatarUrl(newAvatarUrl)
         setAvatarFile(null)
