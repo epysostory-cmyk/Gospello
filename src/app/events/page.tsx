@@ -9,6 +9,7 @@ import { formatDate, formatTime } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import { Search, MapPin, X } from 'lucide-react'
+import NearMeButton from '@/components/ui/NearMeButton'
 import Link from 'next/link'
 import Image from 'next/image'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
@@ -272,27 +273,30 @@ export default async function EventsPage({
               </Link>
             ))}
 
-            {availableStates.length > 0 && (
-              <form method="GET" action="/events" className="flex items-center gap-1.5 ml-auto">
-                {params.q         && <input type="hidden" name="q"         value={params.q} />}
-                {params.category  && <input type="hidden" name="category"  value={params.category} />}
-                {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
-                <div className="relative flex items-center border border-gray-200 rounded-full overflow-hidden">
-                  <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
-                  <select
-                    name="state"
-                    defaultValue={params.state ?? ''}
-                    className="pl-8 pr-4 py-1.5 text-xs font-semibold text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="">All States</option>
-                    {availableStates.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <button type="submit" className="px-3 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-colors">
-                  Go
-                </button>
-              </form>
-            )}
+            <div className="flex items-center gap-2 ml-auto">
+              <NearMeButton basePath="/events" compact />
+              {availableStates.length > 0 && (
+                <form method="GET" action="/events" className="flex items-center gap-1.5">
+                  {params.q         && <input type="hidden" name="q"         value={params.q} />}
+                  {params.category  && <input type="hidden" name="category"  value={params.category} />}
+                  {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
+                  <div className="relative flex items-center border border-gray-200 rounded-full overflow-hidden">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
+                    <select
+                      name="state"
+                      defaultValue={params.state ?? ''}
+                      className="pl-8 pr-4 py-1.5 text-xs font-semibold text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">All States</option>
+                      {availableStates.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <button type="submit" className="px-3 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-colors">
+                    Go
+                  </button>
+                </form>
+              )}
+            </div>
 
             {hasFilters && (
               <Link href="/events" className="text-xs font-medium text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1">
