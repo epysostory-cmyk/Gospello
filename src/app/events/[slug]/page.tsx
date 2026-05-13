@@ -9,7 +9,7 @@ import { formatDate, formatTime, cn } from '@/lib/utils'
 import { getCategoryMap } from '@/lib/categories'
 import {
   Calendar, MapPin, Clock, Building2, Globe, ChevronRight, ChevronLeft,
-  Car, Baby, StickyNote, Mic, Ticket,
+  Car, Baby, StickyNote, Mic, Ticket, Users,
 } from 'lucide-react'
 import type { DaySchedule } from '@/types/database'
 
@@ -37,6 +37,7 @@ import ShareButton from '@/components/ui/ShareButton'
 import SaveFlyerButton from '@/components/ui/SaveFlyerButton'
 import EventQuickActions from './_components/EventQuickActions'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
+import CountdownTimer from '@/components/ui/CountdownTimer'
 import AddToCalendar from './_components/AddToCalendar'
 import ReadMoreText from './_components/ReadMoreText'
 import { EventStatusBadge, EventDaysChip } from './_components/EventStatusBadge'
@@ -305,292 +306,254 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     },
   }
 
+  /* ─── shared organizer card renderer ──────────────────────── */
+  function OrganizerCard() {
+    if (e.churches) {
+      return (
+        <Link href={`/churches/${e.churches.slug}`}
+          className="flex items-center gap-3.5 p-4 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:bg-gray-50/50 transition-all group">
+          <div className="w-[52px] h-[52px] rounded-full flex-shrink-0 overflow-hidden bg-indigo-50 ring-2 ring-white shadow">
+            {e.churches.logo_url
+              ? <Image src={e.churches.logo_url} alt="" width={52} height={52} className="object-cover w-full h-full" />
+              : <div className="w-full h-full flex items-center justify-center"><Building2 className="w-5 h-5 text-indigo-400" /></div>}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="font-bold text-sm text-gray-900 group-hover:text-indigo-600 transition-colors truncate">{e.churches.name}</p>
+              {e.churches.verified_badge
+                ? <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-.723 3.066 3.745 3.745 0 01-3.066.723A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.066-.723 3.745 3.745 0 01-.723-3.066A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 01.723-3.066 3.746 3.746 0 013.066-.723A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.066.723 3.746 3.746 0 01.723 3.066A3.745 3.745 0 0121 12z" /></svg>
+                : e.churches.is_claimed
+                ? <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                : null}
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {e.churches.city ? `${e.churches.city} · ` : ''}{organizerEventCount ?? 0} events
+            </p>
+          </div>
+          <span className="flex-shrink-0 text-xs font-bold text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-full group-hover:bg-indigo-100 transition-colors">View</span>
+        </Link>
+      )
+    }
+    if (e.seeded_organizers) {
+      return (
+        <Link href={`/organizers/${e.seeded_organizers.slug}`}
+          className="flex items-center gap-3.5 p-4 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:bg-gray-50/50 transition-all group">
+          <div className="w-[52px] h-[52px] rounded-full flex-shrink-0 overflow-hidden bg-indigo-50 ring-2 ring-white shadow">
+            {e.seeded_organizers.logo_url
+              ? <Image src={e.seeded_organizers.logo_url} alt="" width={52} height={52} className="object-cover w-full h-full" />
+              : <div className="w-full h-full flex items-center justify-center"><span className="font-black text-indigo-600 text-xl">{e.seeded_organizers.name?.[0]?.toUpperCase()}</span></div>}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm text-gray-900 group-hover:text-indigo-600 transition-colors truncate">{e.seeded_organizers.name}</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {e.seeded_organizers.city ? `${e.seeded_organizers.city} · ` : ''}{organizerEventCount ?? 0} events
+            </p>
+          </div>
+          <span className="flex-shrink-0 text-xs font-bold text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-full group-hover:bg-indigo-100 transition-colors">View</span>
+        </Link>
+      )
+    }
+    if (e.profiles) {
+      return (
+        <Link href={`/organizers/${e.profiles.id}`}
+          className="flex items-center gap-3.5 p-4 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:bg-gray-50/50 transition-all group">
+          <div className="w-[52px] h-[52px] rounded-full flex-shrink-0 overflow-hidden bg-indigo-50 ring-2 ring-white shadow">
+            {e.profiles.avatar_url
+              ? <Image src={e.profiles.avatar_url} alt="" width={52} height={52} className="object-cover w-full h-full" />
+              : <div className="w-full h-full flex items-center justify-center"><span className="font-black text-indigo-600 text-xl">{e.profiles.display_name?.[0]?.toUpperCase()}</span></div>}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="font-bold text-sm text-gray-900 group-hover:text-indigo-600 transition-colors truncate">{e.profiles.display_name}</p>
+              <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-.723 3.066 3.745 3.745 0 01-3.066.723A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.066-.723 3.745 3.745 0 01-.723-3.066A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 01.723-3.066 3.746 3.746 0 013.066-.723A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.066.723 3.746 3.746 0 01.723 3.066A3.745 3.745 0 0121 12z" /></svg>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5 capitalize">{e.profiles.account_type} · {organizerEventCount ?? 0} events</p>
+          </div>
+          <span className="flex-shrink-0 text-xs font-bold text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-full group-hover:bg-indigo-100 transition-colors">View</span>
+        </Link>
+      )
+    }
+    return null
+  }
+
+  /* ─── 2-col related events grid (shared mobile + desktop) ──── */
+  function RelatedGrid() {
+    if (!related.length) return null
+    return (
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">More You&apos;ll Love</p>
+          <Link href="/events" className="text-xs font-bold text-indigo-500 hover:underline flex items-center gap-0.5">
+            See all <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          {related.slice(0, 4).map(ev => (
+            <Link key={ev.id} href={`/events/${ev.slug}`}
+              className="rounded-2xl overflow-hidden border border-gray-100 active:scale-95 transition-transform block">
+              <div className="aspect-square relative bg-indigo-50">
+                {ev.banner_url
+                  ? <Image src={ev.banner_url} alt={ev.title} fill className="object-cover" />
+                  : <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center"><span className="text-3xl">🎵</span></div>}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${ev.is_free ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>
+                    {ev.is_free ? 'Free' : 'Paid'}
+                  </span>
+                  <p className="text-[11px] font-bold text-white leading-tight mt-1 line-clamp-2">{ev.title}</p>
+                  <p className="text-[10px] text-white/70 mt-0.5">{formatDate(ev.start_date, { month: 'short', day: 'numeric' })} · {ev.city}</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-white font-[var(--font-plus-jakarta)]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* Main content wrapper */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 pt-4 lg:pt-6">
-        <BackButton />
-        <div className="flex flex-col lg:flex-row gap-8">
+      {/* ════════════════════════════════════════════════════════════
+          MOBILE — full-screen hero + bottom sheet
+          ════════════════════════════════════════════════════════════ */}
+      <div className="lg:hidden">
 
-          {/* LEFT COLUMN */}
-          <div className="lg:w-[62%] min-w-0">
+        {/* ── Hero banner ── */}
+        <div className="relative -mx-4 sm:-mx-6 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)]"
+             style={{ height: 'min(75svh, 640px)' }}>
 
-            {/* Back navigation — desktop only */}
-            <Link
-              href="/events"
-              className="hidden lg:inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Back to Events
-            </Link>
+          {/* Background */}
+          <div className="absolute inset-0 overflow-hidden">
+            {e.banner_url
+              ? <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
+              : <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${categoryColor}44 0%, #1e1b4b 55%, #0f172a 100%)` }} />}
+            {/* top gradient: nav legibility */}
+            <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-black/65 to-transparent" />
+            {/* bottom gradient: title legibility */}
+            <div className="absolute bottom-0 left-0 right-0 h-[65%] bg-gradient-to-t from-black/92 via-black/55 to-transparent" />
+          </div>
 
-            {/* Banner — mobile (full-bleed, below nav) */}
-            <div className="lg:hidden relative aspect-video overflow-hidden bg-slate-900 -mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)]">
-              {e.banner_url ? (
-                <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
-              ) : (
-                <div className="absolute inset-0 bg-gray-100" />
-              )}
+          {/* Top row: back + badges */}
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+            <BackButton />
+            <div className="flex items-center gap-1.5 flex-wrap justify-end">
               {almostFull && (
-                <div className="absolute top-3 right-3">
-                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-500 text-white">Almost Full</span>
-                </div>
+                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-500 text-white shadow-md">🔥 Almost Full</span>
               )}
-            </div>
-
-            {/* Banner — desktop (rounded, in column) */}
-            <div className="hidden lg:block relative w-full aspect-video rounded-2xl overflow-hidden shadow-md mb-5">
-              {e.banner_url ? (
-                <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
-              ) : (
-                <div className="absolute inset-0 bg-gray-100" />
-              )}
-              {almostFull && (
-                <div className="absolute top-3 right-3">
-                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-500 text-white">Almost Full</span>
-                </div>
-              )}
-            </div>
-
-            {/* Badge row */}
-            <div className="flex gap-2 flex-wrap mt-4">
               <EventStatusBadge startDate={e.start_date} endDate={e.end_date} />
-              <span
-                className="rounded-full px-3 py-1 text-xs font-semibold text-white"
-                style={{ backgroundColor: categoryColor }}
-              >
-                {categoryIcon && <span className="mr-1">{categoryIcon}</span>}{categoryLabel}
+            </div>
+          </div>
+
+          {/* Floating save heart — top-right below badges */}
+          <div className="absolute right-4 top-16">
+            <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={initialSaved}
+              serverUserId={currentUser?.id ?? null} variant="icon" size="md" />
+          </div>
+
+          {/* Bottom: category pill + title + meta */}
+          <div className="absolute bottom-10 left-0 right-0 px-5">
+            <div className="flex gap-2 mb-3 flex-wrap">
+              <span className="rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-sm"
+                    style={{ backgroundColor: categoryColor }}>
+                {categoryIcon && <span className="mr-0.5">{categoryIcon}</span>}{categoryLabel}
               </span>
-              <span className={`rounded-full px-3 py-1 text-xs font-medium ${priceBadge.cls}`}>
+              <span className={`rounded-full px-2.5 py-1 text-xs font-medium shadow-sm ${priceBadge.cls}`}>
                 {priceBadge.label}
               </span>
-              {e.is_online ? (
-                <span className="rounded-full px-3 py-1 text-xs font-medium bg-sky-100 text-sky-700 flex items-center gap-1">
-                  <Globe className="w-3 h-3" /> Online Event
-                </span>
-              ) : (
-                <span className="rounded-full px-3 py-1 text-xs font-medium bg-rose-50 text-rose-600 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" /> In Person
-                </span>
-              )}
+              {e.is_online
+                ? <span className="rounded-full px-2.5 py-1 text-xs font-medium bg-sky-100/95 text-sky-800 shadow-sm">Online</span>
+                : <span className="rounded-full px-2.5 py-1 text-xs font-medium bg-white/20 text-white backdrop-blur-sm">In Person</span>}
             </div>
-
-            {/* Event title */}
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mt-3 leading-tight tracking-tight">
+            <h1 className="text-[27px] leading-tight font-black text-white drop-shadow-lg mb-2 tracking-tight">
               {e.title}
             </h1>
-
-            {/* Save Flyer — visible if banner exists */}
-            {e.banner_url && (
-              <SaveFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
-            )}
-
-            {/* Quick meta row */}
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 mt-2 flex-wrap">
+            <div className="flex items-center gap-2.5 text-[13px] text-white/85 flex-wrap">
               <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                <Calendar className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
                 {e.daily_schedule?.length
                   ? `${fmtScheduleDay(e.daily_schedule[0].date)} – ${fmtScheduleDay(e.daily_schedule[e.daily_schedule.length - 1].date)}`
-                  : formatDate(e.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
-                }
-              </span>
-              <span className="text-gray-300 font-normal">·</span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                {e.daily_schedule?.length
-                  ? fmt12(e.daily_schedule[0].start_time)
-                  : formatTime(e.start_date)
-                }
+                  : formatDate(e.start_date, { weekday: 'short', month: 'short', day: 'numeric' })}
               </span>
               {!e.is_online && e.city && (
                 <>
-                  <span className="text-gray-300 font-normal">·</span>
-                  <a
-                    href={`https://maps.google.com/?q=${mapsQuery}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors"
-                  >
-                    <MapPin className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
-                    {e.location_name}, {e.city}
-                  </a>
+                  <span className="text-white/35">·</span>
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-rose-300 flex-shrink-0" />
+                    {e.city}
+                  </span>
                 </>
-              )}
-              {e.timezone && e.timezone !== 'UTC' && (
-                <EventTimezone timezone={e.timezone} startDate={e.start_date} />
               )}
               {e.is_online && (
                 <>
-                  <span className="text-gray-300 font-normal">·</span>
+                  <span className="text-white/35">·</span>
                   <span className="flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
-                    Online Event
+                    <Globe className="w-3.5 h-3.5 text-sky-300 flex-shrink-0" />
+                    Online
                   </span>
                 </>
               )}
             </div>
+          </div>
 
-            {/* Stats row */}
-            <div className="flex gap-2 mt-3 flex-wrap">
-              <span className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-1.5">
-                <ViewCounter eventId={e.id} initialCount={e.views_count ?? 0} />
-              </span>
-              <span className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-1.5">
-                <EventDaysChip startDate={e.start_date} endDate={e.end_date} />
-              </span>
-            </div>
+          {/* Drag indicator */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/30" />
+        </div>
 
-            <hr className="border-gray-100 my-5" />
+        {/* ── Bottom sheet ── */}
+        <div className="relative z-10 -mt-7 bg-white rounded-t-[28px] shadow-[0_-6px_40px_rgba(0,0,0,0.13)] pb-36">
+          {/* Handle */}
+          <div className="flex justify-center pt-3 pb-0.5">
+            <div className="w-10 h-1.5 rounded-full bg-gray-200" />
+          </div>
 
-            {/* Mobile-only: Multi-day schedule card */}
-            {e.daily_schedule && e.daily_schedule.length > 0 && (
-              <div className="lg:hidden bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-5">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" /> Schedule · {e.daily_schedule.length} days
-                </p>
-                <div className="space-y-2">
-                  {e.daily_schedule.map((day: DaySchedule, idx: number) => (
-                    <div key={day.date} className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {idx + 1}
+          <div className="px-5 pt-4 space-y-5">
+
+            {/* Social proof */}
+            <div className="flex items-center justify-between">
+              {safeAttendance > 0 ? (
+                <div className="flex items-center gap-2.5">
+                  <div className="flex -space-x-2">
+                    {[...Array(Math.min(safeAttendance, 4))].map((_, i) => (
+                      <div key={i} className="w-7 h-7 rounded-full border-2 border-white bg-gradient-to-br from-indigo-400 to-purple-500 text-white text-[9px] font-black flex items-center justify-center flex-shrink-0">
+                        {['✝', '♪', '✦', '🙏'][i]}
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">{fmtScheduleDay(day.date)}</p>
-                        <p className="text-xs text-gray-500">
-                          {fmt12(day.start_time)}
-                          {day.end_time ? ` – ${fmt12(day.end_time)}` : ''}
-                        </p>
+                    ))}
+                    {safeAttendance > 4 && (
+                      <div className="w-7 h-7 rounded-full border-2 border-white bg-gray-100 text-gray-600 text-[9px] font-bold flex items-center justify-center flex-shrink-0">
+                        +{safeAttendance - 4}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Mobile-only: Location detail card (desktop shows in sidebar) */}
-            <div className="lg:hidden bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-5">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Location</p>
-              {e.is_online ? (
-                <div className="flex items-start gap-3">
-                  <Globe className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{e.online_platform ?? 'Online Event'}</p>
-                    <p className="text-xs text-gray-500">Online Event</p>
-                    {e.online_link && (
-                      <a href={e.online_link} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors mt-1">
-                        <Globe className="w-3 h-3" /> Join Event
-                      </a>
                     )}
                   </div>
+                  <p className="text-sm text-gray-700">
+                    <span className="font-bold">{safeAttendance.toLocaleString()}</span>
+                    {' '}{safeAttendance === 1 ? 'person' : 'people'} going
+                  </p>
                 </div>
               ) : (
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{e.location_name}</p>
-                    {e.address && <p className="text-xs text-gray-500">{e.address}</p>}
-                    <p className="text-xs text-gray-500">{e.city}, {e.state}</p>
-                    <a href={`https://maps.google.com/?q=${encodeURIComponent([e.location_name, e.address, e.city, e.state].filter(Boolean).join(', '))}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-blue-500 hover:underline mt-1 inline-block">
-                      Open in Google Maps →
-                    </a>
-                  </div>
-                </div>
+                <p className="text-sm text-gray-400 italic">Be the first to go ✨</p>
               )}
+              <div className="text-xs text-gray-400 flex-shrink-0">
+                <ViewCounter eventId={e.id} initialCount={e.views_count ?? 0} />
+              </div>
             </div>
 
-            {/* Livestream link — shown for any event that has one */}
-            {e.livestream_url && (
-              <div className="flex items-start gap-3 p-4 bg-sky-50 border border-sky-100 rounded-xl">
-                <Globe className="w-4 h-4 text-sky-500 flex-shrink-0 mt-0.5" />
+            {/* Countdown banner */}
+            {lifecycle === 'upcoming' && (
+              <div className="flex items-center gap-3 bg-indigo-50 rounded-2xl px-4 py-3 border border-indigo-100">
+                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-4 h-4 text-indigo-600" />
+                </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Watch Live</p>
-                  <a href={e.livestream_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors mt-1">
-                    <Globe className="w-3 h-3" /> Join Livestream
-                  </a>
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-0.5">Starts in</p>
+                  <CountdownTimer startDate={e.start_date} />
                 </div>
               </div>
             )}
 
-            {/* Tags */}
-            {e.tags && e.tags.length > 0 && (
-              <>
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tags</p>
-                  <div className="flex flex-wrap gap-2">
-                    {e.tags.map(tag => (
-                      <span
-                        key={tag}
-                        className="border border-gray-200 rounded-full px-3 py-1 text-xs text-gray-600 bg-white hover:bg-gray-50 transition-colors cursor-default"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <hr className="border-gray-100 my-5" />
-              </>
-            )}
-
-            {/* About this event */}
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">About this event</p>
-              <ReadMoreText text={e.description} limit={300} />
-            </div>
-
-            {/* Speakers */}
-            {e.speakers && (
-              <>
-                <hr className="border-gray-100 my-5" />
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Mic className="w-3.5 h-3.5" /> Featured Ministers &amp; Speakers
-                  </p>
-                  <p className="text-gray-600 text-sm leading-relaxed">{e.speakers}</p>
-                </div>
-              </>
-            )}
-
-            {/* Event info chips */}
-            {(e.parking_available || e.child_friendly || e.notes) && (
-              <>
-                <hr className="border-gray-100 my-5" />
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Event Information</p>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {e.parking_available && (
-                      <span className="flex items-center gap-1.5 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
-                        <Car className="w-3.5 h-3.5 text-gray-400" /> Parking available
-                      </span>
-                    )}
-                    {e.child_friendly && (
-                      <span className="flex items-center gap-1.5 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
-                        <Baby className="w-3.5 h-3.5 text-gray-400" /> Child friendly
-                      </span>
-                    )}
-                  </div>
-                  {e.notes && (
-                    <div className="flex items-start gap-2.5 text-sm text-gray-600 bg-amber-50 px-4 py-3 rounded-xl border border-amber-100">
-                      <StickyNote className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                      <p>{e.notes}</p>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-            <hr className="border-gray-100 my-5" />
-
-            {/* CTA — mobile only (desktop: right sidebar) */}
-            <div id="attend" className="lg:hidden space-y-2">
+            {/* Primary CTA */}
+            <div id="attend">
               {lifecycle !== 'ended' ? (
                 <RegistrationButton
                   event={{ id: e.id, registration_type: e.registration_type, price: e.price, payment_link: e.payment_link, rsvp_required: e.rsvp_required, is_free: e.is_free, title: e.title }}
@@ -605,335 +568,454 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   This event has ended
                 </div>
               )}
-              {lifecycle !== 'ended' && (
-                <SaveButton
-                  eventId={e.id}
-                  eventTitle={e.title}
-                  initialSaved={initialSaved}
-                  serverUserId={currentUser?.id ?? null}
-                  variant="button"
-                />
-              )}
-              <AddToCalendar
-                title={e.title}
-                startDate={e.start_date}
-                endDate={e.end_date}
-                location={shareEventLocation}
-                description={e.description}
-              />
+            </div>
+
+            {/* Quick detail grid */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="bg-gray-50 rounded-2xl p-3.5 border border-gray-100">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Date</p>
+                </div>
+                <p className="text-sm font-bold text-gray-900 leading-tight">
+                  {e.daily_schedule?.length
+                    ? fmtScheduleDay(e.daily_schedule[0].date)
+                    : formatDate(e.start_date, { weekday: 'short', month: 'short', day: 'numeric' })}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {e.daily_schedule?.length ? fmt12(e.daily_schedule[0].start_time) : formatTime(e.start_date)}
+                </p>
+                {(e.daily_schedule?.length ?? 0) > 1 && (
+                  <p className="text-[11px] text-indigo-500 font-semibold mt-0.5">{e.daily_schedule!.length} days</p>
+                )}
+              </div>
+              <div className="bg-gray-50 rounded-2xl p-3.5 border border-gray-100">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  {e.is_online ? <Globe className="w-3.5 h-3.5 text-sky-400" /> : <MapPin className="w-3.5 h-3.5 text-rose-400" />}
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{e.is_online ? 'Online' : 'Location'}</p>
+                </div>
+                {e.is_online ? (
+                  <>
+                    <p className="text-sm font-bold text-gray-900 leading-tight">{e.online_platform ?? 'Online Event'}</p>
+                    {e.online_link && (
+                      <a href={e.online_link} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-sky-500 font-semibold mt-0.5 hover:underline block">Join link →</a>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-bold text-gray-900 leading-tight line-clamp-1">{e.location_name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{e.city}, {e.state}</p>
+                    <a href={`https://maps.google.com/?q=${mapsQuery}`} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-blue-500 font-semibold mt-0.5 hover:underline block">Open Maps →</a>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Paid event price */}
+            {!e.is_free && e.price != null && (
+              <div className="flex items-center gap-3 bg-amber-50 rounded-2xl px-4 py-3 border border-amber-100">
+                <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                  <Ticket className="w-4 h-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">{e.currency} {e.price.toLocaleString()}</p>
+                  {e.payment_link && (
+                    <a href={e.payment_link} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-indigo-600 hover:underline">View payment page →</a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Capacity bar */}
+            {e.capacity != null && e.capacity > 0 && (
+              <div className="bg-gray-50 rounded-2xl px-4 py-3 border border-gray-100">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="font-bold text-gray-700 flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-gray-400" />Capacity</span>
+                  <span className={`font-bold ${capacityPct >= 90 ? 'text-red-500' : capacityPct >= 70 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                    {safeAttendance} / {e.capacity}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className={`h-2 rounded-full transition-all ${capacityBarColor}`} style={{ width: `${capacityPct}%` }} />
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1">{capacityPct}% full</p>
+              </div>
+            )}
+
+            {/* Livestream */}
+            {e.livestream_url && (
+              <div className="flex items-center gap-3 bg-sky-50 rounded-2xl px-4 py-3 border border-sky-100">
+                <div className="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center flex-shrink-0">
+                  <Globe className="w-4 h-4 text-sky-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-gray-900">Watch Live</p>
+                  <a href={e.livestream_url} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-sky-600 font-medium hover:underline">Join Livestream →</a>
+                </div>
+              </div>
+            )}
+
+            {/* Multi-day schedule */}
+            {(e.daily_schedule?.length ?? 0) > 0 && (
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" /> Schedule · {e.daily_schedule!.length} days
+                </p>
+                <div className="space-y-2">
+                  {e.daily_schedule!.map((day: DaySchedule, idx: number) => (
+                    <div key={day.date} className="flex items-center gap-3 py-2.5 px-3.5 bg-gray-50 rounded-xl border border-gray-100">
+                      <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-[10px] font-black flex items-center justify-center flex-shrink-0">{idx + 1}</div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-900">{fmtScheduleDay(day.date)}</p>
+                      </div>
+                      <p className="text-xs text-gray-500 tabular-nums">
+                        {fmt12(day.start_time)}{day.end_time ? ` – ${fmt12(day.end_time)}` : ''}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* About */}
+            {e.description && (
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">About</p>
+                <ReadMoreText text={e.description} limit={280} />
+              </div>
+            )}
+
+            {/* Tags */}
+            {(e.tags?.length ?? 0) > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {e.tags!.map(tag => (
+                  <span key={tag} className="px-3 py-1 rounded-full text-xs text-gray-600 border border-gray-200 bg-gray-50">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Speakers */}
+            {e.speakers && (
+              <div className="bg-indigo-50 rounded-2xl p-4 border border-indigo-100">
+                <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Mic className="w-3.5 h-3.5" /> Ministers &amp; Speakers
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">{e.speakers}</p>
+              </div>
+            )}
+
+            {/* Event info chips */}
+            {(e.parking_available || e.child_friendly || e.notes) && (
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap gap-2">
+                  {e.parking_available && (
+                    <span className="flex items-center gap-1.5 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
+                      <Car className="w-3.5 h-3.5 text-gray-400" /> Parking available
+                    </span>
+                  )}
+                  {e.child_friendly && (
+                    <span className="flex items-center gap-1.5 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
+                      <Baby className="w-3.5 h-3.5 text-gray-400" /> Child friendly
+                    </span>
+                  )}
+                </div>
+                {e.notes && (
+                  <div className="flex items-start gap-2.5 text-sm text-gray-700 bg-amber-50 px-4 py-3 rounded-xl border border-amber-100">
+                    <StickyNote className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <p>{e.notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Calendar + Flyer + Timezone row */}
+            <div className="space-y-2">
+              <AddToCalendar title={e.title} startDate={e.start_date} endDate={e.end_date}
+                location={shareEventLocation} description={e.description} />
+              <div className="flex items-center gap-2 flex-wrap">
+                {e.banner_url && <SaveFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />}
+                {e.timezone && e.timezone !== 'UTC' && <EventTimezone timezone={e.timezone} startDate={e.start_date} />}
+              </div>
+            </div>
+
+            {/* Share */}
+            <ShareButton eventTitle={e.title} eventUrl={eventUrl} eventDate={shareEventDate}
+              eventLocation={shareEventLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} />
+
+            <hr className="border-gray-100" />
+
+            {/* Organizer */}
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Hosted by</p>
+              {OrganizerCard()}
+            </div>
+
+            <hr className="border-gray-100" />
+
+            {/* Related events grid */}
+            {RelatedGrid()}
+
+            {/* HaveAnEvent */}
+            <HaveAnEventCTA />
+
+          </div>
+        </div>
+      </div>
+      {/* END MOBILE */}
+
+
+      {/* ════════════════════════════════════════════════════════════
+          DESKTOP — two-column layout
+          ════════════════════════════════════════════════════════════ */}
+      <div className="hidden lg:block max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-6">
+        <div className="flex gap-8">
+
+          {/* ── LEFT COLUMN ── */}
+          <div className="lg:w-[62%] min-w-0">
+            <Link href="/events"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors">
+              <ChevronLeft className="w-4 h-4" /> Back to Events
+            </Link>
+
+            {/* Desktop banner with gradient + title overlay */}
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg mb-5">
+              {e.banner_url
+                ? <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
+                : <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${categoryColor}44 0%, #1e1b4b 55%, #0f172a 100%)` }} />}
+              <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-black/50 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 h-[60%] bg-gradient-to-t from-black/88 via-black/45 to-transparent" />
+
+              {/* Top: badges */}
+              <div className="absolute top-4 left-5 right-5 flex items-center justify-between">
+                <div className="flex gap-2">
+                  <EventStatusBadge startDate={e.start_date} endDate={e.end_date} />
+                  {almostFull && <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500 text-white">🔥 Almost Full</span>}
+                </div>
+                <span className="rounded-full px-3 py-1 text-xs font-bold text-white shadow-sm"
+                      style={{ backgroundColor: categoryColor }}>
+                  {categoryIcon && <span className="mr-0.5">{categoryIcon}</span>}{categoryLabel}
+                </span>
+              </div>
+
+              {/* Bottom: title + meta */}
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="flex gap-2 mb-3 flex-wrap">
+                  <span className={`rounded-full px-3 py-1 text-xs font-medium shadow-sm ${priceBadge.cls}`}>{priceBadge.label}</span>
+                  {e.is_online
+                    ? <span className="rounded-full px-3 py-1 text-xs font-medium bg-sky-100/95 text-sky-800">Online Event</span>
+                    : <span className="rounded-full px-3 py-1 text-xs font-medium bg-white/20 text-white backdrop-blur-sm">In Person</span>}
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight tracking-tight drop-shadow-md mb-2">
+                  {e.title}
+                </h1>
+                <div className="flex items-center gap-2.5 text-sm font-medium text-white/85 flex-wrap">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-amber-300" />
+                    {e.daily_schedule?.length
+                      ? `${fmtScheduleDay(e.daily_schedule[0].date)} – ${fmtScheduleDay(e.daily_schedule[e.daily_schedule.length - 1].date)}`
+                      : formatDate(e.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                  <span className="text-white/30">·</span>
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-300" />
+                    {e.daily_schedule?.length ? fmt12(e.daily_schedule[0].start_time) : formatTime(e.start_date)}
+                  </span>
+                  {!e.is_online && e.city && (
+                    <>
+                      <span className="text-white/30">·</span>
+                      <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-rose-300" />{e.location_name}, {e.city}</span>
+                    </>
+                  )}
+                  {e.is_online && (
+                    <>
+                      <span className="text-white/30">·</span>
+                      <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-sky-300" />Online Event</span>
+                    </>
+                  )}
+                  {e.timezone && e.timezone !== 'UTC' && (
+                    <EventTimezone timezone={e.timezone} startDate={e.start_date} />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Social proof + countdown row */}
+            <div className="flex items-center justify-between gap-4 mb-1">
+              <div className="flex items-center gap-3">
+                {safeAttendance > 0 ? (
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex -space-x-1.5">
+                      {[...Array(Math.min(safeAttendance, 3))].map((_, i) => (
+                        <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gradient-to-br from-indigo-400 to-purple-500 text-white text-[8px] font-black flex items-center justify-center">
+                          {['✝', '♪', '✦'][i]}
+                        </div>
+                      ))}
+                    </div>
+                    <span className="text-sm font-bold text-gray-800">{safeAttendance.toLocaleString()}</span>
+                    <span className="text-sm text-gray-500">{safeAttendance === 1 ? 'person' : 'people'} going</span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-400 italic">Be the first to go ✨</span>
+                )}
+                <span className="text-gray-200">·</span>
+                <div className="text-sm text-gray-400">
+                  <ViewCounter eventId={e.id} initialCount={e.views_count ?? 0} />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {lifecycle === 'upcoming' && <CountdownTimer startDate={e.start_date} />}
+                {e.banner_url && <SaveFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />}
+              </div>
             </div>
 
             <hr className="border-gray-100 my-5" />
 
-            {/* Share buttons — mobile only (desktop: right sidebar) */}
-            <div className="lg:hidden">
-              <ShareButton
-                eventTitle={e.title}
-                eventUrl={eventUrl}
-                eventDate={shareEventDate}
-                eventLocation={shareEventLocation}
-                eventDescription={e.description ?? ''}
-                bannerUrl={e.banner_url}
-              />
-              <hr className="border-gray-100 my-5" />
-            </div>
-
-            {/* Organizer card */}
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Hosted by</p>
-              {e.churches ? (
-                <Link
-                  href={`/churches/${e.churches.slug}`}
-                  className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-indigo-200 transition-colors group"
-                >
-                  <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {e.churches.logo_url ? (
-                      <Image
-                        src={e.churches.logo_url}
-                        alt=""
-                        width={56}
-                        height={56}
-                        className="object-cover"
-                      />
-                    ) : (
-                      <Building2 className="w-6 h-6 text-indigo-500" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                        {e.churches.name}
-                      </p>
-                      {e.churches.verified_badge ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 flex-shrink-0">
-                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                          Verified
-                        </span>
-                      ) : e.churches.is_claimed ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex-shrink-0">
-                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                          Claimed
-                        </span>
-                      ) : null}
-                    </div>
-                    {e.churches.city && (
-                      <p className="text-xs text-gray-500 mt-0.5">{e.churches.city}, {e.churches.state}</p>
-                    )}
-                    <p className="text-xs text-gray-400 mt-0.5">{organizerEventCount ?? 0} events on Gospello</p>
-                  </div>
-                  <span className="text-xs text-indigo-500 font-medium group-hover:underline">View Profile →</span>
-                </Link>
-              ) : e.seeded_organizers ? (
-                <Link
-                  href={`/organizers/${e.seeded_organizers.slug}`}
-                  className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-indigo-200 transition-colors group"
-                >
-                  <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {e.seeded_organizers.logo_url ? (
-                      <Image
-                        src={e.seeded_organizers.logo_url}
-                        alt=""
-                        width={56}
-                        height={56}
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span className="font-bold text-indigo-600 text-xl">
-                        {e.seeded_organizers.name?.[0]?.toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                      {e.seeded_organizers.name}
-                    </p>
-                    {e.seeded_organizers.city && (
-                      <p className="text-xs text-gray-500 mt-0.5">{e.seeded_organizers.city}, {e.seeded_organizers.state}</p>
-                    )}
-                    <p className="text-xs text-gray-400 mt-0.5">{organizerEventCount ?? 0} events on Gospello</p>
-                  </div>
-                  <span className="text-xs text-indigo-500 font-medium group-hover:underline">View Profile →</span>
-                </Link>
-              ) : e.profiles ? (
-                <Link
-                  href={`/organizers/${e.profiles.id}`}
-                  className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-indigo-200 transition-colors group"
-                >
-                  <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {e.profiles.avatar_url ? (
-                      <Image
-                        src={e.profiles.avatar_url}
-                        alt=""
-                        width={56}
-                        height={56}
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span className="font-bold text-indigo-600 text-xl">
-                        {e.profiles.display_name?.[0]?.toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                        {e.profiles.display_name}
-                      </p>
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 flex-shrink-0">
-                        <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                        Verified Organizer
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5 capitalize">{e.profiles.account_type}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{organizerEventCount ?? 0} events on Gospello</p>
-                  </div>
-                  <span className="text-xs text-indigo-500 font-medium group-hover:underline">View Profile →</span>
-                </Link>
-              ) : null}
-            </div>
-
-            {/* Have an Event CTA */}
-            <HaveAnEventCTA />
-
-            {/* More Events You'll Love */}
-            {related.length > 0 && (
+            {/* Multi-day schedule */}
+            {(e.daily_schedule?.length ?? 0) > 0 && (
               <>
-                <hr className="border-gray-100 my-5" />
-                <section>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-semibold text-gray-900">More Events You&apos;ll Love</h2>
-                    <Link href="/events" className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
-                      See all <ChevronRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                  <div className="flex flex-col gap-2.5">
-                    {related.map((ev) => (
-                      <Link
-                        key={ev.id}
-                        href={`/events/${ev.slug}`}
-                        className="flex gap-3 p-3 rounded-2xl bg-white border border-gray-200 active:bg-gray-50 active:scale-[0.99] transition-all duration-100"
-                      >
-                        <div className="flex-shrink-0 rounded-xl overflow-hidden w-20 h-20">
-                          {ev.banner_url ? (
-                            <Image
-                              src={ev.banner_url}
-                              alt={ev.title}
-                              width={80}
-                              height={80}
-                              className="object-cover object-center w-full h-full"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
-                              <span className="text-2xl">🎵</span>
-                            </div>
-                          )}
+                <div className="mb-5">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" /> Schedule · {e.daily_schedule!.length} days
+                  </p>
+                  <div className="space-y-2">
+                    {e.daily_schedule!.map((day: DaySchedule, idx: number) => (
+                      <div key={day.date} className="flex items-center gap-3 py-2.5 px-3.5 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-[10px] font-black flex items-center justify-center flex-shrink-0">{idx + 1}</div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-gray-900">{fmtScheduleDay(day.date)}</p>
                         </div>
-                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full w-fit mb-1 text-white ${ev.is_free ? 'bg-emerald-600' : 'bg-blue-600'}`}>
-                            {ev.is_free ? 'Free' : 'Paid'}
-                          </span>
-                          <p className="font-medium text-gray-900 text-sm leading-snug line-clamp-2">
-                            {ev.title}
-                          </p>
-                          <p className="mt-1 text-[12px] text-[#6B7280]">
-                            {formatDate(ev.start_date, { month: 'short', day: 'numeric' })} · {ev.city}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              </>
-            )}
-          </div>
-
-          {/* RIGHT COLUMN — sticky card */}
-          <div className="hidden lg:block lg:w-[38%]">
-            <div className="sticky top-6 bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-
-              {/* Price/type badge */}
-              <div className={`w-full text-center py-2 rounded-full text-sm font-semibold ${sidebarPricePill.cls}`}>
-                {sidebarPricePill.label}
-              </div>
-
-              {/* Date & time */}
-              {e.daily_schedule?.length ? (
-                /* ── Multi-day: per-day schedule ── */
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">
-                      Schedule · {e.daily_schedule.length} days
-                    </p>
-                  </div>
-                  {e.daily_schedule.map((day: DaySchedule, idx: number) => (
-                    <div key={day.date} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
-                      <div className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {idx + 1}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">{fmtScheduleDay(day.date)}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {fmt12(day.start_time)}
-                          {day.end_time ? <> &ndash; {fmt12(day.end_time)}</> : ''}
+                        <p className="text-xs text-gray-500 tabular-nums">
+                          {fmt12(day.start_time)}{day.end_time ? ` – ${fmt12(day.end_time)}` : ''}
                         </p>
                       </div>
-                    </div>
+                    ))}
+                  </div>
+                </div>
+                <hr className="border-gray-100 my-5" />
+              </>
+            )}
+
+            {/* Livestream */}
+            {e.livestream_url && (
+              <>
+                <div className="flex items-center gap-3 bg-sky-50 rounded-2xl px-4 py-3.5 border border-sky-100 mb-5">
+                  <div className="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-4 h-4 text-sky-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-gray-900">Watch Live</p>
+                    <a href={e.livestream_url} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-sky-600 font-medium hover:underline">Join Livestream →</a>
+                  </div>
+                </div>
+                <hr className="border-gray-100 my-5" />
+              </>
+            )}
+
+            {/* About */}
+            {e.description && (
+              <>
+                <div className="mb-5">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">About this event</p>
+                  <ReadMoreText text={e.description} limit={300} />
+                </div>
+                <hr className="border-gray-100 my-5" />
+              </>
+            )}
+
+            {/* Tags */}
+            {(e.tags?.length ?? 0) > 0 && (
+              <>
+                <div className="flex flex-wrap gap-2 mb-5">
+                  {e.tags!.map(tag => (
+                    <span key={tag} className="px-3 py-1 rounded-full text-xs text-gray-600 border border-gray-200 bg-white hover:bg-gray-50">
+                      #{tag}
+                    </span>
                   ))}
                 </div>
-              ) : (
-                /* ── Single day ── */
-                <div className="space-y-2.5">
-                  <div className="flex items-center gap-3 text-sm font-bold text-gray-900">
-                    <Calendar className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                    {formatDate(e.start_date, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-gray-900">
-                    <Clock className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                    {formatTime(e.start_date)}{e.end_date ? ` – ${formatTime(e.end_date)}` : ''}
-                  </div>
-                </div>
-              )}
+                <hr className="border-gray-100 my-5" />
+              </>
+            )}
 
-              {/* Location */}
-              {e.is_online ? (
-                <div className="flex items-start gap-3">
-                  <Globe className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{e.online_platform ?? 'Online Event'}</p>
-                    <p className="text-xs text-gray-500">Online Event</p>
-                    {e.online_link && (
-                      <a
-                        href={e.online_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors mt-1"
-                      >
-                        <Globe className="w-3 h-3" /> Join Event
-                      </a>
+            {/* Speakers */}
+            {e.speakers && (
+              <>
+                <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100 mb-5">
+                  <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Mic className="w-3.5 h-3.5" /> Ministers &amp; Speakers
+                  </p>
+                  <p className="text-gray-700 text-sm leading-relaxed">{e.speakers}</p>
+                </div>
+                <hr className="border-gray-100 my-5" />
+              </>
+            )}
+
+            {/* Event info chips */}
+            {(e.parking_available || e.child_friendly || e.notes) && (
+              <>
+                <div className="space-y-3 mb-5">
+                  <div className="flex flex-wrap gap-2">
+                    {e.parking_available && (
+                      <span className="flex items-center gap-1.5 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
+                        <Car className="w-3.5 h-3.5 text-gray-400" /> Parking available
+                      </span>
+                    )}
+                    {e.child_friendly && (
+                      <span className="flex items-center gap-1.5 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
+                        <Baby className="w-3.5 h-3.5 text-gray-400" /> Child friendly
+                      </span>
                     )}
                   </div>
+                  {e.notes && (
+                    <div className="flex items-start gap-2.5 text-sm text-gray-700 bg-amber-50 px-4 py-3.5 rounded-xl border border-amber-100">
+                      <StickyNote className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                      <p>{e.notes}</p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{e.location_name}</p>
-                    {e.address && <p className="text-xs text-gray-500">{e.address}</p>}
-                    <p className="text-xs text-gray-500">{e.city}, {e.state}</p>
-                    <a
-                      href={`https://maps.google.com/?q=${mapsQuery}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-500 hover:underline mt-1 inline-block"
-                    >
-                      Open in Google Maps →
-                    </a>
-                  </div>
-                </div>
-              )}
+                <hr className="border-gray-100 my-5" />
+              </>
+            )}
 
-              {/* Price detail for paid events */}
-              {!e.is_free && e.price != null && (
-                <div className="flex items-center gap-3">
-                  <Ticket className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{e.currency} {e.price.toLocaleString()}</p>
-                    {e.payment_link && (
-                      <a
-                        href={e.payment_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-indigo-600 hover:underline"
-                      >
-                        View payment page →
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
+            {/* Organizer */}
+            <div className="mb-5">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Hosted by</p>
+              {OrganizerCard()}
+            </div>
 
-              <hr className="border-gray-100" />
+            <hr className="border-gray-100 my-5" />
 
-              {/* Capacity tracker */}
-              {e.capacity != null && e.capacity > 0 && (
-                <div>
-                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1.5">
-                    <span>Capacity</span>
-                    <span className="font-semibold">{safeAttendance} / {e.capacity}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div
-                      className={`h-2 rounded-full transition-all ${capacityBarColor}`}
-                      style={{ width: `${capacityPct}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">{capacityPct}% full</p>
-                </div>
-              )}
+            {/* Related events */}
+            {RelatedGrid()}
 
-              {/* CTA */}
-              <div className="space-y-2">
+            <HaveAnEventCTA />
+          </div>
+
+          {/* ── RIGHT COLUMN — sticky sidebar ── */}
+          <div className="lg:w-[38%]">
+            <div className="sticky top-6 rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+
+              {/* CTA block */}
+              <div className="p-5 space-y-2.5">
+                {safeAttendance > 0 && (
+                  <p className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <span className="flex -space-x-1">
+                      {[...Array(Math.min(safeAttendance, 3))].map((_, i) => (
+                        <div key={i} className="w-5 h-5 rounded-full border-2 border-white bg-gradient-to-br from-indigo-400 to-purple-500 text-white text-[7px] font-black flex items-center justify-center">
+                          {['✝', '♪', '✦'][i]}
+                        </div>
+                      ))}
+                    </span>
+                    {safeAttendance.toLocaleString()} {safeAttendance === 1 ? 'person' : 'people'} going
+                  </p>
+                )}
+
                 {lifecycle !== 'ended' ? (
                   <RegistrationButton
                     event={{ id: e.id, registration_type: e.registration_type, price: e.price, payment_link: e.payment_link, rsvp_required: e.rsvp_required, is_free: e.is_free, title: e.title }}
@@ -949,39 +1031,121 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   </div>
                 )}
                 {lifecycle !== 'ended' && (
-                  <SaveButton
-                    eventId={e.id}
-                    eventTitle={e.title}
-                    initialSaved={initialSaved}
-                    serverUserId={currentUser?.id ?? null}
-                    variant="button"
-                  />
+                  <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={initialSaved}
+                    serverUserId={currentUser?.id ?? null} variant="button" />
                 )}
-                <AddToCalendar
-                  title={e.title}
-                  startDate={e.start_date}
-                  endDate={e.end_date}
-                  location={shareEventLocation}
-                  description={e.description}
-                />
+                <AddToCalendar title={e.title} startDate={e.start_date} endDate={e.end_date}
+                  location={shareEventLocation} description={e.description} />
               </div>
 
               <hr className="border-gray-100" />
 
-              {/* Share — desktop only */}
-              <ShareButton
-                eventTitle={e.title}
-                eventUrl={eventUrl}
-                eventDate={shareEventDate}
-                eventLocation={shareEventLocation}
-                eventDescription={e.description ?? ''}
-                bannerUrl={e.banner_url}
-              />
+              {/* Details */}
+              <div className="p-5 space-y-4 bg-gray-50/40">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${sidebarPricePill.cls}`}>
+                    {sidebarPricePill.label}
+                  </span>
+                  {lifecycle === 'upcoming' && <CountdownTimer startDate={e.start_date} />}
+                </div>
+
+                {/* Date/time */}
+                {(e.daily_schedule?.length ?? 0) > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" /> Schedule · {e.daily_schedule!.length} days
+                    </p>
+                    {e.daily_schedule!.map((day: DaySchedule, idx: number) => (
+                      <div key={day.date} className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0">
+                        <div className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">{idx + 1}</div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">{fmtScheduleDay(day.date)}</p>
+                          <p className="text-xs text-gray-500">
+                            {fmt12(day.start_time)}{day.end_time ? ` – ${fmt12(day.end_time)}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2.5 text-sm font-bold text-gray-900">
+                      <Calendar className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                      {formatDate(e.start_date, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm font-bold text-gray-900">
+                      <Clock className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                      {formatTime(e.start_date)}{e.end_date ? ` – ${formatTime(e.end_date)}` : ''}
+                    </div>
+                  </div>
+                )}
+
+                {/* Location */}
+                {e.is_online ? (
+                  <div className="flex items-start gap-2.5">
+                    <Globe className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">{e.online_platform ?? 'Online Event'}</p>
+                      {e.online_link && (
+                        <a href={e.online_link} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-sky-600 hover:underline">Join link →</a>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2.5">
+                    <MapPin className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">{e.location_name}</p>
+                      {e.address && <p className="text-xs text-gray-500">{e.address}</p>}
+                      <p className="text-xs text-gray-500">{e.city}, {e.state}</p>
+                      <a href={`https://maps.google.com/?q=${mapsQuery}`} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-blue-500 hover:underline">Open in Google Maps →</a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Price */}
+                {!e.is_free && e.price != null && (
+                  <div className="flex items-center gap-2.5">
+                    <Ticket className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">{e.currency} {e.price.toLocaleString()}</p>
+                      {e.payment_link && (
+                        <a href={e.payment_link} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-indigo-600 hover:underline">View payment page →</a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Capacity */}
+                {e.capacity != null && e.capacity > 0 && (
+                  <div>
+                    <div className="flex justify-between text-xs text-gray-600 mb-1.5">
+                      <span className="font-semibold">Capacity</span>
+                      <span className="font-bold">{safeAttendance} / {e.capacity} · {capacityPct}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className={`h-2 rounded-full transition-all ${capacityBarColor}`} style={{ width: `${capacityPct}%` }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <hr className="border-gray-100" />
+
+              {/* Share */}
+              <div className="p-5">
+                <ShareButton eventTitle={e.title} eventUrl={eventUrl} eventDate={shareEventDate}
+                  eventLocation={shareEventLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} />
+              </div>
             </div>
           </div>
 
         </div>
       </div>
+      {/* END DESKTOP */}
 
       {/* Mobile sticky bottom bar */}
       <EventQuickActions

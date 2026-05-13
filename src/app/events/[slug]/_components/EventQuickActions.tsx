@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Heart, UserCheck, Ticket, CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Ticket, UserCheck, Heart } from 'lucide-react'
 import type { RegistrationType } from '@/types/database'
 
 interface Props {
@@ -23,14 +23,12 @@ export default function EventQuickActions({
   isFree,
   rsvpRequired,
   lifecycle,
-  attendanceCount = 0,
   registrationType,
   isOrganizer = false,
   initialAttended = false,
 }: Props) {
   const [attended, setAttended] = useState(initialAttended)
 
-  // Check localStorage on mount to restore guest/form-registered state
   useEffect(() => {
     if (initialAttended) return
     const attendedKey = `gospello_attended_${eventId}`
@@ -40,7 +38,6 @@ export default function EventQuickActions({
     }
   }, [eventId, initialAttended])
 
-  // Sync with AttendButton when attendance is recorded in the same tab
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       if (e.detail?.eventId === eventId) setAttended(true)
@@ -62,69 +59,93 @@ export default function EventQuickActions({
     : rsvpRequired ? 'rsvp'
     : 'instant'
 
-  let priceBadgeLabel: string
-  let priceBadgeCls: string
-  if (registrationType === 'free_no_registration' || (isFree && !rsvpRequired)) {
-    priceBadgeLabel = 'Free'
-    priceBadgeCls   = 'bg-emerald-100 text-emerald-700'
-  } else if (registrationType === 'free_registration' || (isFree && rsvpRequired)) {
-    priceBadgeLabel = 'Free'
-    priceBadgeCls   = 'bg-emerald-100 text-emerald-700'
-  } else {
-    priceBadgeLabel = 'Paid'
-    priceBadgeCls   = 'bg-blue-100 text-blue-700'
+  if (lifecycle === 'ended') {
+    return (
+      <>
+        <div
+          className="fixed bottom-0 left-0 right-0 md:hidden z-40 px-4"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', paddingTop: '8px' }}
+        >
+          <div className="bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl px-5 py-3.5 text-center text-sm font-medium text-gray-400 shadow-[0_8px_32px_rgba(0,0,0,0.10)]">
+            This event has ended
+          </div>
+        </div>
+        <div className="h-20 md:hidden" />
+      </>
+    )
   }
 
-  const rsvpConfig = {
-    instant: { label: 'INTERESTED',       Icon: Heart,      cls: 'bg-indigo-600 hover:bg-indigo-700' },
-    rsvp:    { label: 'REGISTER FREE',    Icon: UserCheck,  cls: 'bg-indigo-600 hover:bg-indigo-700' },
-    paid:    { label: 'GET TICKETS',      Icon: Ticket,     cls: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' },
-  }[mode]
+  if (isOrganizer) {
+    return (
+      <>
+        <div
+          className="fixed bottom-0 left-0 right-0 md:hidden z-40 px-4"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', paddingTop: '8px' }}
+        >
+          <div className="bg-white/95 backdrop-blur-md border border-gray-100 rounded-2xl px-5 py-3.5 flex items-center justify-center gap-2 text-sm font-semibold text-gray-500 shadow-[0_8px_32px_rgba(0,0,0,0.10)]">
+            <UserCheck className="w-4 h-4" />
+            You&apos;re organizing this event
+          </div>
+        </div>
+        <div className="h-20 md:hidden" />
+      </>
+    )
+  }
 
-  const rsvpButton = isOrganizer ? (
-    <div className="flex-1 bg-gray-50 text-gray-400 font-semibold py-3 px-4 rounded-2xl text-center text-sm border border-gray-200">
-      You&apos;re organizing this event
-    </div>
-  ) : lifecycle === 'ended' ? (
-    <div className="flex-1 bg-gray-100 text-gray-400 font-semibold py-3 px-4 rounded-2xl text-center text-sm">
-      Event Ended
-    </div>
-  ) : attended ? (
-    <div className="flex-1 flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-semibold py-3 px-4 rounded-2xl text-sm border border-emerald-200">
-      <CheckCircle2 className="w-4 h-4" />
-      {mode === 'instant' ? "You're going! 🎉" : "You're registered! 🎉"}
-    </div>
-  ) : (
-    <button
-      onClick={handleRsvpClick}
-      className={`flex-1 flex items-center justify-center gap-2 text-white font-bold py-3 px-4 rounded-2xl text-sm tracking-wide transition-all ${rsvpConfig.cls}`}
-    >
-      <rsvpConfig.Icon className="w-4 h-4" />
-      {rsvpConfig.label}
-    </button>
-  )
+  if (attended) {
+    return (
+      <>
+        <div
+          className="fixed bottom-0 left-0 right-0 md:hidden z-40 px-4"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', paddingTop: '8px' }}
+        >
+          <div className="bg-emerald-600 rounded-2xl px-5 py-3.5 flex items-center justify-center gap-2.5 text-white font-bold text-sm shadow-[0_8px_32px_rgba(5,150,105,0.35)]">
+            <CheckCircle2 className="w-5 h-5" />
+            {mode === 'instant' ? "You're going! 🎉" : "You're registered! 🎉"}
+          </div>
+        </div>
+        <div className="h-20 md:hidden" />
+      </>
+    )
+  }
+
+  /* Determine CTA label + style */
+  const cta =
+    mode === 'paid'
+      ? {
+          label: 'GET TICKETS',
+          cls: 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-[0_8px_32px_rgba(245,158,11,0.40)]',
+          Icon: Ticket,
+        }
+      : mode === 'rsvp'
+      ? {
+          label: 'REGISTER FREE',
+          cls: 'bg-indigo-600 shadow-[0_8px_32px_rgba(99,102,241,0.35)]',
+          Icon: UserCheck,
+        }
+      : {
+          label: 'I\'M GOING',
+          cls: 'bg-indigo-600 shadow-[0_8px_32px_rgba(99,102,241,0.35)]',
+          Icon: Heart,
+        }
 
   return (
     <>
-      {/* Mobile Sticky Bottom Bar */}
+      {/* Floating action bar */}
       <div
-        className="fixed bottom-0 left-0 right-0 md:hidden z-40 bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: '72px' }}
+        className="fixed bottom-0 left-0 right-0 md:hidden z-40 px-4"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', paddingTop: '8px' }}
       >
-        <div className="flex items-center gap-2.5 px-4 h-full">
-          {/* Price badge */}
-          <div className="flex flex-col items-start flex-shrink-0 min-w-[56px]">
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${priceBadgeCls}`}>
-              {priceBadgeLabel}
-            </span>
-          </div>
-
-          {/* RSVP / Get Ticket CTA */}
-          {rsvpButton}
-        </div>
+        <button
+          onClick={handleRsvpClick}
+          className={`w-full flex items-center justify-center gap-2.5 text-white font-black py-4 rounded-2xl text-[15px] tracking-wide transition-all active:scale-[0.98] ${cta.cls}`}
+        >
+          <cta.Icon className="w-5 h-5" />
+          {cta.label}
+        </button>
       </div>
 
-      {/* Spacer so page content isn't hidden behind sticky bar */}
+      {/* Spacer so content isn't hidden behind bar */}
       <div className="h-[72px] md:hidden" />
     </>
   )
