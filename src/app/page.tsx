@@ -83,7 +83,7 @@ async function getHomepageData() {
         .from('profiles')
         .select('id, display_name, avatar_url, state, ministry_type, description')
         .eq('account_type', 'organizer')
-        .eq('is_hidden', false)
+        .neq('is_hidden', true)
         .order('created_at', { ascending: false })
         .limit(20),
       adminClient
