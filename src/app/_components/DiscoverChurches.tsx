@@ -105,16 +105,21 @@ export default function DiscoverChurches({ churches }: Props) {
   return (
     <section className="py-12 border-t border-gray-100">
       {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Find a church near you</h2>
-          <p className="text-gray-500 mt-0.5 text-sm">New to a city? Looking for where to worship?</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Find a church near you</h2>
+            <p className="text-gray-500 mt-0.5 text-sm">New to a city? Looking for where to worship?</p>
+          </div>
+          <Link href="/churches" className="flex items-center gap-1 text-sm font-semibold text-gray-900 hover:underline transition-colors flex-shrink-0 mt-1">
+            See all <ChevronRight className="w-4 h-4" />
+          </Link>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2">
           {nearMeState === 'found' ? (
             <button
               onClick={clearNearMe}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-full text-[13px] font-medium bg-indigo-600 text-white border border-indigo-600 whitespace-nowrap"
+              className="flex items-center gap-1.5 h-8 px-3 rounded-full text-[13px] font-medium bg-gray-900 text-white whitespace-nowrap"
             >
               <MapPin className="w-3.5 h-3.5" />
               {nearMeLabel}
@@ -128,17 +133,15 @@ export default function DiscoverChurches({ churches }: Props) {
             >
               {nearMeState === 'loading'
                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                : <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                : <MapPin className="w-3.5 h-3.5" />
               }
               {nearMeState === 'loading' ? 'Locating…' : nearMeState === 'denied' ? 'Location denied' : nearMeState === 'error' ? 'Try again' : 'Near me'}
             </button>
           )}
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => scroll('left')}
             disabled={!canScrollLeft}
-            className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 bg-white shadow-sm disabled:opacity-30 hover:bg-gray-50 transition-colors"
+            className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 bg-white shadow-sm disabled:opacity-30 hover:bg-gray-50 transition-colors ml-auto"
             aria-label="Scroll left"
           >
             <ChevronLeft className="w-4 h-4 text-gray-600" />
@@ -151,9 +154,6 @@ export default function DiscoverChurches({ churches }: Props) {
           >
             <ChevronRight className="w-4 h-4 text-gray-600" />
           </button>
-          <Link href="/churches" className="flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-            See all <ChevronRight className="w-4 h-4" />
-          </Link>
         </div>
       </div>
 
@@ -185,7 +185,7 @@ export default function DiscoverChurches({ churches }: Props) {
               onClick={() => setDenomFilter(denomFilter === d ? null : d)}
               className={`flex-shrink-0 h-8 px-3 rounded-full text-[13px] font-medium transition-colors whitespace-nowrap border ${
                 denomFilter === d
-                  ? 'bg-violet-700 text-white border-violet-700'
+                  ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-gray-100 text-gray-700 border-transparent hover:bg-gray-200'
               }`}
             >
@@ -221,7 +221,7 @@ export default function DiscoverChurches({ churches }: Props) {
               className="group flex-shrink-0 snap-start w-[160px] md:w-[176px] bg-white border border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center hover:border-gray-300 hover:shadow-sm transition-all"
             >
               {/* Logo */}
-              <div className="w-14 h-14 rounded-full overflow-hidden bg-violet-100 flex items-center justify-center mb-3 flex-shrink-0">
+              <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center mb-3 flex-shrink-0">
                 {church.logo_url ? (
                   <Image src={church.logo_url} alt={church.name} width={56} height={56} className="object-cover w-full h-full" />
                 ) : (
@@ -230,13 +230,13 @@ export default function DiscoverChurches({ churches }: Props) {
               </div>
 
               {/* Name */}
-              <p className="text-[13px] font-semibold text-gray-900 line-clamp-2 leading-snug mb-1 group-hover:text-indigo-700 transition-colors">
+              <p className="text-[13px] font-semibold text-gray-900 line-clamp-2 leading-snug mb-1 group-hover:text-gray-600 transition-colors">
                 {church.name}
                 {church.verified_badge && <span className="text-amber-500 ml-0.5 text-xs" title="Verified">✓</span>}
               </p>
 
               {church.denomination && (
-                <span className="inline-block bg-violet-50 text-violet-700 text-[11px] font-medium px-2 py-0.5 rounded-full mb-1 truncate max-w-full">
+                <span className="inline-block bg-gray-100 text-gray-500 text-[11px] font-medium px-2 py-0.5 rounded-full mb-1 truncate max-w-full">
                   {church.denomination}
                 </span>
               )}
