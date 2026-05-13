@@ -99,8 +99,7 @@ async function getEvents(params: SearchParams) {
   }
 
   const { data } = await query
-  const now        = new Date()
-  const allSorted  = ((data ?? []) as Event[]).sort((a, b) => scoreEvent(b, now) - scoreEvent(a, now))
+  const allSorted  = (data ?? []) as Event[]
   const total      = allSorted.length
   const events     = allSorted.slice(from, to + 1)
 
