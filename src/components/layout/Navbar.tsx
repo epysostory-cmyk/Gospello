@@ -2,17 +2,23 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
-import { Menu, X, Shield, LogOut, Loader2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Menu, X, Shield, LogOut, Loader2, Search, Home, Calendar, Church } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 const NAV_LINKS = [
   { label: 'Events',     href: '/events' },
-  { label: 'Categories', href: '/categories' },
   { label: 'Churches',   href: '/churches' },
   { label: 'Organizers', href: '/organizers' },
+]
+
+const BOTTOM_NAV = [
+  { label: 'Home',    href: '/',          Icon: Home },
+  { label: 'Events',  href: '/events',    Icon: Calendar },
+  { label: 'Search',  href: '/search',    Icon: Search },
+  { label: 'Churches', href: '/churches', Icon: Church },
 ]
 
 interface NavbarProps {
@@ -21,12 +27,16 @@ interface NavbarProps {
 }
 
 export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [menuOpen,   setMenuOpen]   = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQ,    setSearchQ]    = useState('')
+  const [user,       setUser]       = useState<User | null>(null)
+  const [isAdmin,    setIsAdmin]    = useState(false)
   const [signingOut, setSigningOut] = useState(false)
-  const supabase = createClient()
-  const pathname = usePathname()
+  const supabase  = createClient()
+  const pathname  = usePathname()
+  const router    = useRouter()
+  const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -50,7 +60,11 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
     return () => subscription.unsubscribe()
   }, [supabase])
 
-  useEffect(() => { setMenuOpen(false) }, [pathname])
+  useEffect(() => { setMenuOpen(false); setSearchOpen(false) }, [pathname])
+
+  useEffect(() => {
+    if (searchOpen) setTimeout(() => searchRef.current?.focus(), 50)
+  }, [searchOpen])
 
   const handleSignOut = async () => {
     if (signingOut) return
@@ -59,11 +73,20 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
     window.location.href = '/'
   }
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQ.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQ.trim())}`)
+      setSearchOpen(false)
+      setSearchQ('')
+    }
+  }
+
   return (
     <>
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-15" style={{ height: '60px' }}>
+          <div className="flex items-center justify-between" style={{ height: '60px' }}>
 
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 flex-shrink-0">
@@ -108,6 +131,34 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
 
             {/* Desktop right side */}
             <div className="hidden md:flex items-center gap-2">
+              {/* Search bar */}
+              {searchOpen ? (
+                <form onSubmit={handleSearch} className="flex items-center gap-1">
+                  <input
+                    ref={searchRef}
+                    value={searchQ}
+                    onChange={e => setSearchQ(e.target.value)}
+                    placeholder="Search…"
+                    className="w-48 px-3 py-1.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onBlur={() => { if (!searchQ) setSearchOpen(false) }}
+                  />
+                  <button type="submit" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg">
+                    <Search className="w-4 h-4" />
+                  </button>
+                  <button type="button" onClick={() => setSearchOpen(false)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg">
+                    <X className="w-4 h-4" />
+                  </button>
+                </form>
+              ) : (
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                  aria-label="Search"
+                >
+                  <Search className="w-4.5 h-4.5 w-[18px] h-[18px]" />
+                </button>
+              )}
+
               {user ? (
                 <>
                   {isAdmin && (
@@ -151,8 +202,15 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
               )}
             </div>
 
-            {/* Mobile: CTA + hamburger */}
-            <div className="md:hidden flex items-center gap-2">
+            {/* Mobile: search + CTA + hamburger */}
+            <div className="md:hidden flex items-center gap-1.5">
+              <Link
+                href="/search"
+                className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                aria-label="Search"
+              >
+                <Search className="w-5 h-5" />
+              </Link>
               {!user && (
                 <Link
                   href="/auth/signup"
@@ -174,7 +232,7 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
         </div>
       </header>
 
-      {/* Mobile menu */}
+      {/* Mobile drawer menu */}
       {menuOpen && (
         <div className="md:hidden fixed inset-x-0 top-[60px] z-40 bg-white border-b border-gray-200 shadow-lg">
           <div className="max-w-7xl mx-auto px-4 py-3 space-y-0.5">
@@ -248,6 +306,31 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
           </div>
         </div>
       )}
+
+      {/* Mobile bottom nav bar */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="grid grid-cols-4">
+          {BOTTOM_NAV.map(({ label, href, Icon }) => {
+            const active = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/')
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-semibold transition-colors ${
+                  active ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-700'
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${active ? 'stroke-[2.5]' : ''}`} />
+                {label}
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
+
     </>
   )
 }

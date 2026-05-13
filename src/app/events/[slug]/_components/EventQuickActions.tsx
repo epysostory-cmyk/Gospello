@@ -59,18 +59,18 @@ export default function EventQuickActions({
     : rsvpRequired ? 'rsvp'
     : 'instant'
 
+  /* Sit above the mobile bottom nav (56px) */
+  const floatStyle = { bottom: '56px', paddingBottom: '0px', paddingTop: '0px' }
+
   if (lifecycle === 'ended') {
     return (
       <>
-        <div
-          className="fixed bottom-0 left-0 right-0 md:hidden z-40 px-4"
-          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', paddingTop: '8px' }}
-        >
+        <div className="fixed left-0 right-0 md:hidden z-40 px-4 pb-3" style={floatStyle}>
           <div className="bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl px-5 py-3.5 text-center text-sm font-medium text-gray-400 shadow-[0_8px_32px_rgba(0,0,0,0.10)]">
             This event has ended
           </div>
         </div>
-        <div className="h-20 md:hidden" />
+        <div className="h-[136px] md:hidden" />
       </>
     )
   }
@@ -78,16 +78,13 @@ export default function EventQuickActions({
   if (isOrganizer) {
     return (
       <>
-        <div
-          className="fixed bottom-0 left-0 right-0 md:hidden z-40 px-4"
-          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', paddingTop: '8px' }}
-        >
+        <div className="fixed left-0 right-0 md:hidden z-40 px-4 pb-3" style={floatStyle}>
           <div className="bg-white/95 backdrop-blur-md border border-gray-100 rounded-2xl px-5 py-3.5 flex items-center justify-center gap-2 text-sm font-semibold text-gray-500 shadow-[0_8px_32px_rgba(0,0,0,0.10)]">
             <UserCheck className="w-4 h-4" />
             You&apos;re organizing this event
           </div>
         </div>
-        <div className="h-20 md:hidden" />
+        <div className="h-[136px] md:hidden" />
       </>
     )
   }
@@ -95,16 +92,13 @@ export default function EventQuickActions({
   if (attended) {
     return (
       <>
-        <div
-          className="fixed bottom-0 left-0 right-0 md:hidden z-40 px-4"
-          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', paddingTop: '8px' }}
-        >
+        <div className="fixed left-0 right-0 md:hidden z-40 px-4 pb-3" style={floatStyle}>
           <div className="bg-emerald-600 rounded-2xl px-5 py-3.5 flex items-center justify-center gap-2.5 text-white font-bold text-sm shadow-[0_8px_32px_rgba(5,150,105,0.35)]">
             <CheckCircle2 className="w-5 h-5" />
             {mode === 'instant' ? "You're going! 🎉" : "You're registered! 🎉"}
           </div>
         </div>
-        <div className="h-20 md:hidden" />
+        <div className="h-[136px] md:hidden" />
       </>
     )
   }
@@ -131,11 +125,8 @@ export default function EventQuickActions({
 
   return (
     <>
-      {/* Floating action bar */}
-      <div
-        className="fixed bottom-0 left-0 right-0 md:hidden z-40 px-4"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', paddingTop: '8px' }}
-      >
+      {/* Floating action bar — sits above mobile bottom nav */}
+      <div className="fixed left-0 right-0 md:hidden z-40 px-4 pb-3" style={floatStyle}>
         <button
           onClick={handleRsvpClick}
           className={`w-full flex items-center justify-center gap-2.5 text-white font-black py-4 rounded-2xl text-[15px] tracking-wide transition-all active:scale-[0.98] ${cta.cls}`}
@@ -145,8 +136,8 @@ export default function EventQuickActions({
         </button>
       </div>
 
-      {/* Spacer so content isn't hidden behind bar */}
-      <div className="h-[72px] md:hidden" />
+      {/* Spacer so content isn't hidden behind bar + bottom nav */}
+      <div className="h-[136px] md:hidden" />
     </>
   )
 }

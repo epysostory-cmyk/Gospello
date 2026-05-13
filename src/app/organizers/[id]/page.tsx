@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate } from '@/lib/utils'
-import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, MessageCircle, User } from 'lucide-react'
+import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, MessageCircle, User, Instagram, Youtube } from 'lucide-react'
 import type { Profile, SeededOrganizer, Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import EventCard from '@/components/ui/EventCard'
@@ -93,17 +93,17 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
   const organizer = profileData as Profile | null
   const seeded = seededData as SeededOrganizer | null
 
-  const displayName    = isSeeded ? seeded!.name          : organizer!.display_name
-  const avatarUrl      = isSeeded ? seeded!.logo_url       : organizer!.avatar_url
-  const bioText        = isSeeded ? seeded!.description    : organizer!.bio
-  const websiteUrl     = isSeeded ? seeded!.website        : organizer!.website
-  const phoneNum       = isSeeded ? seeded!.phone          : (organizer as unknown as Record<string, string | null>)?.phone ?? null
-  const whatsappNum    = isSeeded ? null                   : (organizer as unknown as Record<string, string | null>)?.whatsapp ?? null
-  const instagramUrl   = isSeeded ? seeded!.instagram      : (organizer as unknown as Record<string, string | null>)?.instagram ?? null
-  const facebookUrl    = isSeeded ? seeded!.facebook       : (organizer as unknown as Record<string, string | null>)?.facebook ?? null
-  const twitterUrl     = isSeeded ? null                   : (organizer as unknown as Record<string, string | null>)?.twitter ?? null
-  const youtubeUrl     = isSeeded ? null                   : (organizer as unknown as Record<string, string | null>)?.youtube ?? null
-  const contactPerson  = isSeeded ? seeded!.contact_person : (organizer as unknown as Record<string, string | null>)?.contact_person ?? null
+  const displayName     = isSeeded ? seeded!.name          : organizer!.display_name
+  const avatarUrl       = isSeeded ? seeded!.logo_url       : organizer!.avatar_url
+  const bioText         = isSeeded ? seeded!.description    : organizer!.bio
+  const websiteUrl      = isSeeded ? seeded!.website        : organizer!.website
+  const phoneNum        = isSeeded ? seeded!.phone          : (organizer as unknown as Record<string, string | null>)?.phone ?? null
+  const whatsappNum     = isSeeded ? null                   : (organizer as unknown as Record<string, string | null>)?.whatsapp ?? null
+  const instagramUrl    = isSeeded ? seeded!.instagram      : (organizer as unknown as Record<string, string | null>)?.instagram ?? null
+  const facebookUrl     = isSeeded ? seeded!.facebook       : (organizer as unknown as Record<string, string | null>)?.facebook ?? null
+  const twitterUrl      = isSeeded ? null                   : (organizer as unknown as Record<string, string | null>)?.twitter ?? null
+  const youtubeUrl      = isSeeded ? null                   : (organizer as unknown as Record<string, string | null>)?.youtube ?? null
+  const contactPerson   = isSeeded ? seeded!.contact_person : (organizer as unknown as Record<string, string | null>)?.contact_person ?? null
   const ministryTypes: string[] = isSeeded
     ? (seeded!.ministry_type ? [seeded!.ministry_type] : [])
     : (() => {
@@ -114,9 +114,9 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
     ? [seeded!.city, seeded!.state].filter(Boolean).join(', ')
     : [(organizer as unknown as Record<string, string | null>)?.city, organizer!.state].filter(Boolean).join(', ')
 
-  const isVerified     = isSeeded ? seeded!.verified_badge       : false
-  const isClaimed      = isSeeded ? seeded!.is_claimed           : true
-  const hasPendingClaim = isSeeded ? !!seeded!.claim_requested_at : false
+  const isVerified      = isSeeded ? seeded!.verified_badge       : false
+  const isClaimed       = isSeeded ? seeded!.is_claimed           : true
+  const hasPendingClaim = isSeeded ? !!seeded!.claim_requested_at  : false
 
   const eventsProfileId = isSeeded ? seeded!.id : id
 
@@ -137,8 +137,8 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
   const upcoming  = allEvents.filter(e => getEventLifecycle(e.start_date, e.end_date) !== 'ended').reverse()
   const past      = allEvents.filter(e => getEventLifecycle(e.start_date, e.end_date) === 'ended')
 
-  const initial  = displayName?.[0]?.toUpperCase() ?? '?'
-  const siteUrl  = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
+  const initial   = displayName?.[0]?.toUpperCase() ?? '?'
+  const siteUrl   = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
   const profileUrl = `${siteUrl}/organizers/${id}`
 
   const jsonLd = {
@@ -152,85 +152,185 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
     sameAs: [instagramUrl, facebookUrl, websiteUrl].filter(Boolean),
   }
 
+  const hasSocials = websiteUrl || phoneNum || whatsappNum || instagramUrl || facebookUrl || twitterUrl || youtubeUrl
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* ── PROFILE HEADER ──────────────────────────────────────────
-          White, clean. Avatar + name + meta visible immediately.
-          No gradient. No theater.
-      ──────────────────────────────────────────────────────────── */}
-      <div className="border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-6">
+      {/* ── COVER + AVATAR HEADER ───────────────────────────────── */}
+      <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 h-32 relative">
+        <Link
+          href="/organizers"
+          className="absolute top-4 left-4 inline-flex items-center gap-1.5 text-xs font-semibold text-white/80 hover:text-white transition-colors bg-black/20 hover:bg-black/30 px-3 py-1.5 rounded-full"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Organizers
+        </Link>
+      </div>
 
-          {/* Back link */}
-          <Link
-            href="/organizers"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-5"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            All Organizers
-          </Link>
-
-          {/* Identity row */}
-          <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center border border-gray-200">
+      {/* Avatar row — overlaps cover */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end gap-4 -mt-12 pb-4">
+          {/* Avatar */}
+          <div className="relative flex-shrink-0">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-white ring-4 ring-white shadow-lg flex items-center justify-center">
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
                   alt={displayName}
-                  width={80}
-                  height={80}
+                  width={96}
+                  height={96}
                   className="object-cover w-full h-full"
                 />
               ) : (
-                <span className="text-2xl font-bold text-gray-400">{initial}</span>
+                <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                  <span className="text-3xl font-black text-white">{initial}</span>
+                </div>
               )}
             </div>
-
-            {/* Name + meta */}
-            <div className="flex-1 min-w-0 pt-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                {isVerified && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-                    <ShieldCheck className="w-3 h-3" /> Verified
-                  </span>
-                )}
-                {!isVerified && isClaimed && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                    <CheckCircle className="w-3 h-3" /> Active
-                  </span>
-                )}
+            {isVerified && (
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-indigo-600 border-2 border-white flex items-center justify-center shadow-md">
+                <ShieldCheck className="w-3.5 h-3.5 text-white" />
               </div>
-
-              <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-tight">{displayName}</h1>
-
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-sm text-gray-500">
-                {ministryTypes.length > 0 && (
-                  <span>{ministryTypes.join(' · ')}</span>
-                )}
-                {locationStr && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                    {locationStr}
-                  </span>
-                )}
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                  {upcoming.length} upcoming event{upcoming.length !== 1 ? 's' : ''}
-                </span>
-                {!isSeeded && organizer && (
-                  <span className="text-gray-400 text-xs">
-                    Since {formatDate(organizer.created_at, { month: 'short', year: 'numeric' })}
-                  </span>
-                )}
+            )}
+            {!isVerified && isClaimed && (
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center shadow-md">
+                <CheckCircle className="w-3.5 h-3.5 text-white" />
               </div>
-            </div>
+            )}
           </div>
+
+          {/* Spacer to push content to right on desktop */}
+          <div className="hidden sm:block flex-1" />
+
+          {/* Social icon links — desktop only, in cover overlap zone */}
+          {hasSocials && (
+            <div className="hidden sm:flex items-center gap-2 mb-2">
+              {websiteUrl && (
+                <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-indigo-600 hover:border-indigo-300 shadow-sm transition-all"
+                  title="Website">
+                  <Globe className="w-4 h-4" />
+                </a>
+              )}
+              {instagramUrl && (
+                <a href={instagramUrl.startsWith('http') ? instagramUrl : `https://instagram.com/${instagramUrl}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-pink-600 hover:border-pink-300 shadow-sm transition-all"
+                  title="Instagram">
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
+              {youtubeUrl && (
+                <a href={youtubeUrl.startsWith('http') ? youtubeUrl : `https://youtube.com/${youtubeUrl}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-red-600 hover:border-red-300 shadow-sm transition-all"
+                  title="YouTube">
+                  <Youtube className="w-4 h-4" />
+                </a>
+              )}
+              {whatsappNum && (
+                <a href={`https://wa.me/${whatsappNum.replace(/\D/g, '')}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:border-emerald-300 shadow-sm transition-all"
+                  title="WhatsApp">
+                  <MessageCircle className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Name + badges */}
+        <div className="pb-5 border-b border-gray-200">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-tight">{displayName}</h1>
+            {isVerified && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                <ShieldCheck className="w-3 h-3" /> Verified
+              </span>
+            )}
+            {!isVerified && isClaimed && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                <CheckCircle className="w-3 h-3" /> Active
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+            {ministryTypes.length > 0 && <span className="font-medium text-gray-600">{ministryTypes.join(' · ')}</span>}
+            {locationStr && (
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                {locationStr}
+              </span>
+            )}
+          </div>
+
+          {/* Stats row */}
+          <div className="flex items-center gap-5 mt-3">
+            <div className="text-center">
+              <p className="text-lg font-black text-gray-900">{upcoming.length}</p>
+              <p className="text-[11px] text-gray-500 font-medium">Upcoming</p>
+            </div>
+            <div className="w-px h-8 bg-gray-200" />
+            <div className="text-center">
+              <p className="text-lg font-black text-gray-900">{past.length}</p>
+              <p className="text-[11px] text-gray-500 font-medium">Past events</p>
+            </div>
+            {allEvents.length > 0 && (
+              <>
+                <div className="w-px h-8 bg-gray-200" />
+                <div className="text-center">
+                  <p className="text-lg font-black text-gray-900">{allEvents.length}</p>
+                  <p className="text-[11px] text-gray-500 font-medium">Total</p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Mobile social icons */}
+          {hasSocials && (
+            <div className="flex sm:hidden items-center gap-2 mt-3">
+              {websiteUrl && (
+                <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-indigo-600 shadow-sm transition-all">
+                  <Globe className="w-4 h-4" />
+                </a>
+              )}
+              {instagramUrl && (
+                <a href={instagramUrl.startsWith('http') ? instagramUrl : `https://instagram.com/${instagramUrl}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-pink-600 shadow-sm transition-all">
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
+              {youtubeUrl && (
+                <a href={youtubeUrl.startsWith('http') ? youtubeUrl : `https://youtube.com/${youtubeUrl}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-red-600 shadow-sm transition-all">
+                  <Youtube className="w-4 h-4" />
+                </a>
+              )}
+              {whatsappNum && (
+                <a href={`https://wa.me/${whatsappNum.replace(/\D/g, '')}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-emerald-600 shadow-sm transition-all">
+                  <MessageCircle className="w-4 h-4" />
+                </a>
+              )}
+              {phoneNum && (
+                <a href={`tel:${phoneNum}`}
+                  className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-indigo-600 shadow-sm transition-all">
+                  <Phone className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -242,28 +342,30 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
           <div className="lg:col-span-2 space-y-8">
 
             {bioText && (
-              <div>
-                <h2 className="text-base font-bold text-gray-900 mb-2">About</h2>
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2.5">About</h2>
                 <p className="text-gray-600 leading-relaxed whitespace-pre-wrap text-sm sm:text-base">{bioText}</p>
               </div>
             )}
 
             {/* Upcoming events */}
             <section>
-              <h2 className="text-lg font-bold text-gray-900 mb-4">
+              <h2 className="text-base font-bold text-gray-900 mb-4">
                 Upcoming Events
                 {upcoming.length > 0 && (
                   <span className="ml-2 text-sm font-normal text-gray-400">{upcoming.length}</span>
                 )}
               </h2>
               {upcoming.length === 0 ? (
-                <div className="border border-gray-200 rounded-xl p-10 text-center bg-gray-50">
-                  <Calendar className="w-7 h-7 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm font-medium">No upcoming events</p>
-                  <p className="text-gray-400 text-xs mt-1">Check back soon</p>
+                <div className="bg-white border border-gray-100 rounded-2xl p-12 text-center">
+                  <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Calendar className="w-6 h-6 text-gray-300" />
+                  </div>
+                  <p className="text-gray-600 font-semibold text-sm">No upcoming events</p>
+                  <p className="text-gray-400 text-xs mt-1">Follow this organizer to stay updated</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {upcoming.map((event) => (
                     <EventCard key={event.id} event={event} />
                   ))}
@@ -274,38 +376,35 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
             {/* Past events */}
             {past.length > 0 && (
               <section>
-                <h2 className="text-lg font-bold text-gray-900 mb-4">
+                <h2 className="text-base font-bold text-gray-900 mb-4">
                   Past Events
                   <span className="ml-2 text-sm font-normal text-gray-400">{past.length}</span>
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {past.map((event) => (
                     <Link
                       key={event.id}
                       href={`/events/${event.slug}`}
-                      className="group flex gap-3 border border-gray-200 rounded-xl p-3 hover:border-gray-300 transition-colors"
+                      className="group relative aspect-square rounded-xl overflow-hidden bg-gray-200"
                     >
-                      <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 grayscale group-hover:grayscale-0 transition-all">
-                        {event.banner_url ? (
-                          <Image src={event.banner_url} alt={event.title} fill className="object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-lg font-bold">
-                            {event.title[0]}
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex flex-col justify-center">
-                        <p className="text-sm font-semibold text-gray-700 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
-                          {event.title}
+                      {event.banner_url ? (
+                        <Image
+                          src={event.banner_url}
+                          alt={event.title}
+                          fill
+                          className="object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-2xl font-black bg-gray-100">
+                          {event.title[0]}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                        <p className="text-white text-[11px] font-bold line-clamp-2 leading-snug">{event.title}</p>
+                        <p className="text-white/70 text-[10px] mt-0.5">
+                          {formatDate(event.start_date, { month: 'short', year: 'numeric' })}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {formatDate(event.start_date, { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </p>
-                        {event.city && (
-                          <p className="text-xs text-gray-400 flex items-center gap-0.5">
-                            <MapPin className="w-2.5 h-2.5" />{event.city}
-                          </p>
-                        )}
                       </div>
                     </Link>
                   ))}
@@ -315,9 +414,9 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
           </div>
 
           {/* Right: sidebar */}
-          <div className="lg:sticky lg:top-6 self-start space-y-5">
+          <div className="lg:sticky lg:top-6 self-start space-y-4">
 
-            {/* Claim/verification state */}
+            {/* Claim/verification card */}
             {isSeeded && (
               isVerified ? (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-50 border border-indigo-200">
@@ -344,7 +443,7 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
                   </div>
                 </div>
               ) : (
-                <div className="px-4 py-4 rounded-xl bg-gray-50 border border-gray-200">
+                <div className="bg-white px-4 py-4 rounded-xl border border-gray-200">
                   <p className="text-sm font-semibold text-gray-900 mb-1">Is this your ministry?</p>
                   <p className="text-xs text-gray-500 mb-3">Claim this profile to manage your events and get verified.</p>
                   <Link
@@ -358,87 +457,44 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
               )
             )}
 
-            {/* Contact / info */}
-            {(websiteUrl || phoneNum || whatsappNum || locationStr || contactPerson || instagramUrl || facebookUrl || twitterUrl || youtubeUrl) && (
-              <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white">
-                <h2 className="text-sm font-bold text-gray-900">Contact Info</h2>
+            {/* Contact info card */}
+            {(websiteUrl || phoneNum || whatsappNum || locationStr || contactPerson || facebookUrl || twitterUrl) && (
+              <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3">
+                <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wide">Contact Info</h2>
 
                 {contactPerson && (
-                  <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Contact person</p>
-                    <p className="text-sm text-gray-700 flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-gray-400" />
-                      {contactPerson}
-                    </p>
-                  </div>
+                  <p className="text-sm text-gray-700 flex items-center gap-2">
+                    <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    {contactPerson}
+                  </p>
                 )}
-
                 {locationStr && (
-                  <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Location</p>
-                    <p className="text-sm text-gray-700 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                      {locationStr}
-                    </p>
-                  </div>
+                  <p className="text-sm text-gray-700 flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    {locationStr}
+                  </p>
                 )}
-
                 {phoneNum && (
-                  <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Phone</p>
-                    <a href={`tel:${phoneNum}`} className="text-sm font-medium text-indigo-600 hover:underline flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5" />
-                      {phoneNum}
-                    </a>
-                  </div>
+                  <a href={`tel:${phoneNum}`} className="text-sm font-medium text-indigo-600 hover:underline flex items-center gap-2">
+                    <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+                    {phoneNum}
+                  </a>
                 )}
-
-                {whatsappNum && (
-                  <div>
-                    <a
-                      href={`https://wa.me/${whatsappNum.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium text-emerald-600 hover:underline flex items-center gap-1.5"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      WhatsApp
-                    </a>
-                  </div>
-                )}
-
                 {websiteUrl && (
-                  <div>
-                    <a
-                      href={websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium text-indigo-600 hover:underline inline-flex items-center gap-1.5"
-                    >
-                      <Globe className="w-3.5 h-3.5" />
-                      Visit Website
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
+                  <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-sm font-medium text-indigo-600 hover:underline flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5 flex-shrink-0" />
+                    Visit Website
+                    <ExternalLink className="w-3 h-3 ml-auto" />
+                  </a>
                 )}
 
-                {(instagramUrl || facebookUrl || twitterUrl || youtubeUrl) && (
+                {(facebookUrl || twitterUrl) && (
                   <div className="flex flex-wrap gap-2 pt-1">
-                    {instagramUrl && (
-                      <a
-                        href={instagramUrl.startsWith('http') ? instagramUrl : `https://instagram.com/${instagramUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-50 text-pink-600 text-xs font-semibold hover:bg-pink-100 transition-colors"
-                      >
-                        Instagram <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
                     {facebookUrl && (
                       <a
                         href={facebookUrl.startsWith('http') ? facebookUrl : `https://facebook.com/${facebookUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors"
                       >
                         Facebook <ExternalLink className="w-3 h-3" />
@@ -447,25 +503,24 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
                     {twitterUrl && (
                       <a
                         href={twitterUrl.startsWith('http') ? twitterUrl : `https://x.com/${twitterUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-600 text-xs font-semibold hover:bg-sky-100 transition-colors"
                       >
                         X / Twitter
                       </a>
                     )}
-                    {youtubeUrl && (
-                      <a
-                        href={youtubeUrl.startsWith('http') ? youtubeUrl : `https://youtube.com/${youtubeUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition-colors"
-                      >
-                        YouTube
-                      </a>
-                    )}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Not seeded organizer — joined date */}
+            {!isSeeded && organizer && (
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 text-center">
+                <p className="text-xs text-gray-400">Member since</p>
+                <p className="text-sm font-bold text-gray-700 mt-0.5">
+                  {formatDate(organizer.created_at, { month: 'long', year: 'numeric' })}
+                </p>
               </div>
             )}
           </div>
