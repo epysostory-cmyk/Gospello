@@ -15,7 +15,7 @@ interface CreateProfileInput {
     // church
     pastor_name: string; leader_title: string; founder: string; denomination: string; service_times: string[]
     // organizer
-    contact_person: string; ministry_types: string[]
+    contact_person: string; ministry_types: string[]; ministry_other: string
   }
 }
 
@@ -66,7 +66,9 @@ export async function createAdminProfile(input: CreateProfileInput): Promise<{ e
         logo_url:        logoUrl || null,
         description:     form.description.trim() || null,
         contact_person:  form.contact_person.trim() || null,
-        ministry_types:  form.ministry_types.length > 0 ? form.ministry_types : null,
+        ministry_types:  form.ministry_types.length > 0
+          ? form.ministry_types.map(t => t === 'Other' && form.ministry_other.trim() ? form.ministry_other.trim() : t)
+          : null,
         city:            form.city.trim(),
         state:           form.state,
         address:         form.address.trim() || null,
