@@ -365,19 +365,6 @@ export default function CreateProfileForm({ adminId }: Props) {
             />
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-              What Best Describes You?
-            </label>
-            <div className="mt-2">
-              <OrganizerTypeChips
-                value={form.ministry_types}
-                onChange={v => set('ministry_types', v)}
-                otherText={form.ministry_other}
-                onOtherTextChange={t => set('ministry_other', t)}
-              />
-            </div>
-          </div>
         </div>
       )
 
@@ -529,7 +516,7 @@ export default function CreateProfileForm({ adminId }: Props) {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-2xl lg:max-w-none">
 
           {/* ── Left: form ── */}
           <div className="lg:col-span-3 space-y-6">
@@ -619,6 +606,21 @@ export default function CreateProfileForm({ adminId }: Props) {
                   {/* Step content */}
                   {OrgStepContent()}
 
+                  {/* Ministry type chips — always mounted so Other input state is preserved */}
+                  <div className={step === 0 ? 'mt-4' : 'hidden'}>
+                    <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                      What Best Describes You?
+                    </label>
+                    <div className="mt-2">
+                      <OrganizerTypeChips
+                        value={form.ministry_types}
+                        onChange={v => set('ministry_types', v)}
+                        otherText={form.ministry_other}
+                        onOtherTextChange={t => set('ministry_other', t)}
+                      />
+                    </div>
+                  </div>
+
                   {/* Navigation */}
                   {step < ORG_STEPS.length - 1 && (
                     <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
@@ -648,7 +650,7 @@ export default function CreateProfileForm({ adminId }: Props) {
           </div>
 
           {/* ── Right: live preview ── */}
-          <div className="lg:col-span-2">
+          <div className="hidden lg:block lg:col-span-2">
             <div className="sticky top-6">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Live Preview</p>
               <div className="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden">
