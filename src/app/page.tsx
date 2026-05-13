@@ -273,6 +273,7 @@ export default async function HomePage() {
     churchEventCountMap,
     categories,
     catMap,
+    stats,
     heroSettings,
     attendanceCountMap,
     discoverChurches,
@@ -282,8 +283,11 @@ export default async function HomePage() {
 
   const displayCategories = categories.slice(0, 8)
 
-  const heroHeadline = heroSettings?.hero_headline_1 ?? 'Find gospel events near you'
+  const heroHeadline1 = heroSettings?.hero_headline_1 ?? 'Find gospel events'
+  const heroHeadlineGradient = heroSettings?.hero_headline_gradient ?? 'near you'
+  const heroHeadline3 = heroSettings?.hero_headline_3 ?? ''
   const heroSubheadline = heroSettings?.hero_subheadline ?? 'Worship nights, conferences, prayer gatherings, youth programs and more — across all 36 Nigerian states.'
+  const heroBadge = heroSettings?.hero_badge ?? ''
   const popularSearches: string[] = (heroSettings?.hero_popular_searches ?? 'Worship,Lagos,Conference,Prayer,Youth')
     .split(',')
     .map((s: string) => s.trim())
@@ -294,29 +298,36 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-white">
 
-      {/* ── HERO ─────────────────────────────────────────────────────────
-          Job: Help someone find an event in the next 5 seconds.
-          One headline. One search. One secondary action. Nothing else.
-      ─────────────────────────────────────────────────────────────────── */}
+      {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-14 pb-12 sm:pt-20 sm:pb-16 text-center">
 
-          <h1 className="text-[2.6rem] sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-[1.08]">
-            {heroHeadline}
+          {/* Context label */}
+          <div className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-wide uppercase text-gray-400 mb-6 border border-gray-200 rounded-full px-3 py-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+            {heroBadge || 'Events · Churches · All 36 States'}
+          </div>
+
+          <h1 className="text-[2.75rem] sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-[1.06]">
+            {heroHeadline1}{' '}
+            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+              {heroHeadlineGradient}
+            </span>
+            {heroHeadline3 && <span> {heroHeadline3}</span>}
           </h1>
 
-          <p className="mt-4 text-base sm:text-lg text-gray-500 leading-relaxed max-w-lg mx-auto">
+          <p className="mt-4 text-base sm:text-[17px] text-gray-500 leading-relaxed max-w-lg mx-auto">
             {heroSubheadline}
           </p>
 
-          {/* Search — the only primary action */}
+          {/* Search */}
           <form action="/search" method="GET" className="mt-8 flex gap-2 max-w-lg mx-auto">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
                 type="text"
                 name="q"
-                placeholder="Search events, cities, churches..."
+                placeholder="Search events, churches, cities..."
                 className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
@@ -328,23 +339,33 @@ export default async function HomePage() {
             </button>
           </form>
 
-          {/* Quick links — not "popular searches", just quick navigation */}
-          {popularSearches.length > 0 && (
-            <div className="mt-4 flex items-center justify-center gap-1 flex-wrap">
-              <span className="text-xs text-gray-400 mr-1">Try:</span>
-              {popularSearches.map((tag, i) => (
-                <span key={tag} className="inline-flex items-center text-xs">
-                  <Link href={`/search?q=${encodeURIComponent(tag)}`} className="text-indigo-600 hover:underline font-medium">
-                    {tag}
-                  </Link>
-                  {i < popularSearches.length - 1 && <span className="text-gray-300 ml-1">·</span>}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Quick destinations + popular searches */}
+          <div className="mt-4 flex items-center justify-center gap-x-3 gap-y-2 flex-wrap">
+            <Link
+              href="/events?date=weekend"
+              className="inline-flex items-center gap-1 text-[13px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+            >
+              This weekend
+            </Link>
+            <Link
+              href="/churches"
+              className="inline-flex items-center gap-1 text-[13px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+            >
+              Find a church
+            </Link>
+            {popularSearches.slice(0, 4).map((tag) => (
+              <Link
+                key={tag}
+                href={`/search?q=${encodeURIComponent(tag)}`}
+                className="text-[13px] font-medium text-indigo-600 hover:text-indigo-800 hover:underline whitespace-nowrap transition-colors"
+              >
+                {tag}
+              </Link>
+            ))}
+          </div>
 
-          {/* Secondary CTA — one line, not competing with the search */}
-          <p className="mt-5 text-sm text-gray-500">
+          {/* Organizer CTA */}
+          <p className="mt-5 text-sm text-gray-400">
             Running an event?{' '}
             <Link href="/auth/signup" className="text-indigo-600 font-semibold hover:underline">
               Post it free →
@@ -354,10 +375,44 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── CATEGORY PILLS ───────────────────────────────────────────────
-          No section heading needed — people see colored pills and know
-          what to do. Scanning, not reading.
-      ─────────────────────────────────────────────────────────────────── */}
+      {/* ── STATS STRIP ───────────────────────────────────────────────── */}
+      {(stats.events > 0 || stats.churches > 0 || stats.cities > 0) && (
+        <div className="border-b border-gray-100">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-4 sm:gap-7 flex-wrap">
+            {stats.events > 0 && (
+              <span className="text-[13px] text-gray-400">
+                <span className="font-semibold text-gray-700">{stats.events.toLocaleString()}+</span>{' '}events listed
+              </span>
+            )}
+            {stats.churches > 0 && (
+              <>
+                <span className="text-gray-200 hidden sm:inline">·</span>
+                <span className="text-[13px] text-gray-400">
+                  <span className="font-semibold text-gray-700">{stats.churches.toLocaleString()}+</span>{' '}churches
+                </span>
+              </>
+            )}
+            {stats.cities > 0 && (
+              <>
+                <span className="text-gray-200 hidden sm:inline">·</span>
+                <span className="text-[13px] text-gray-400">
+                  <span className="font-semibold text-gray-700">{stats.cities}</span>{' '}cities covered
+                </span>
+              </>
+            )}
+            {stats.organizers > 0 && (
+              <>
+                <span className="text-gray-200 hidden sm:inline">·</span>
+                <span className="text-[13px] text-gray-400">
+                  <span className="font-semibold text-gray-700">{stats.organizers.toLocaleString()}+</span>{' '}organizers
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── CATEGORY PILLS ────────────────────────────────────────────── */}
       {displayCategories.length > 0 && (
         <div
           className="flex gap-2 overflow-x-auto px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-100"
@@ -386,7 +441,7 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* ── FEATURED EVENTS ──────────────────────────────────────────── */}
+      {/* ── FEATURED EVENTS ───────────────────────────────────────────── */}
       {featuredEvents.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4">
           <section>
@@ -408,7 +463,13 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* ── UPCOMING EVENTS ──────────────────────────────────────────── */}
+      {/* ── FIND A CHURCH ─────────────────────────────────────────────
+          Positioned before the main events feed — someone new to a city
+          will find this before they get lost scrolling events.
+      ──────────────────────────────────────────────────────────────── */}
+      <DiscoverChurches churches={discoverChurches} />
+
+      {/* ── UPCOMING EVENTS ───────────────────────────────────────────── */}
       {upcomingEvents.length > 0 && (
         <LocationAwareEvents
           allEvents={upcomingEvents}
@@ -436,16 +497,13 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* ── DISCOVER CHURCHES ────────────────────────────────────────── */}
-      <DiscoverChurches churches={discoverChurches} />
-
-      {/* ── DISCOVER ORGANIZERS ──────────────────────────────────────── */}
+      {/* ── ORGANIZERS ────────────────────────────────────────────────── */}
       <DiscoverOrganizers organizers={discoverOrganizers} />
 
-      {/* ── BOTTOM SECTIONS ──────────────────────────────────────────── */}
+      {/* ── BOTTOM SECTIONS ───────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-16">
 
-        {/* Featured Churches */}
+        {/* Featured Churches grid */}
         {featuredChurches.length > 0 && (
           <section>
             <SectionHeader
@@ -461,10 +519,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ── ORGANIZER CTA ─────────────────────────────────────────────
-            Warm amber bg — gospel warmth, not dark SaaS.
-            No glow blobs. One clear ask.
-        ──────────────────────────────────────────────────────────────── */}
+        {/* Organizer / Church CTA */}
         {(churchCta === null || churchCta.visible !== false) && (
           <section className="bg-amber-50 border border-amber-200 rounded-2xl px-8 py-10 sm:px-12 sm:py-12">
             <div className="max-w-xl">
