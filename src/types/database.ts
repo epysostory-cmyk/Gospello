@@ -1,9 +1,19 @@
 export type RegistrationType = 'free_no_registration' | 'free_registration' | 'paid'
 
-export interface DaySchedule {
-  date: string        // "2026-05-04"
-  start_time: string  // "09:00"
+export interface EventSession {
+  title: string | null
+  start_time: string | null
   end_time: string | null
+  speaker: string | null
+}
+
+export interface DaySchedule {
+  date: string
+  label: string | null        // day theme e.g. "Workers Retreat"
+  sessions: EventSession[]
+  // legacy fields — kept for backward compat with old records
+  start_time?: string
+  end_time?: string | null
 }
 
 export type AccountType = 'church' | 'organizer'

@@ -1,6 +1,6 @@
 'use client'
 
-import type { DaySchedule } from '@/types/database'
+import type { DaySchedule, EventSession } from '@/types/database'
 import TimezoneSelector from '@/components/ui/TimezoneSelector'
 
 interface StepProps {
@@ -49,9 +49,16 @@ function getDateRange(start: string, end: string): string[] {
   return dates
 }
 
+function emptySession(): EventSession {
+  return { title: null, start_time: null, end_time: null, speaker: null }
+}
+
 function rebuildSchedule(start: string, end: string, existing: DaySchedule[]): DaySchedule[] {
   const map = Object.fromEntries(existing.map(d => [d.date, d]))
-  return getDateRange(start, end).map(date => map[date] ?? { date, start_time: '', end_time: null })
+  return getDateRange(start, end).map(date => {
+    if (map[date]) return map[date]
+    return { date, label: null, sessions: [emptySession()] }
+  })
 }
 
 export default function Step2DateTime({ formData, updateForm, errors }: StepProps) {
@@ -60,7 +67,7 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
   const schedule: DaySchedule[] = formData.daily_schedule || []
   const dateRange = eventType === 'multi' ? getDateRange(formData.start_date, formData.end_date) : []
   const tooLong = dateRange.length > 14
-  const completedDays = schedule.filter(d => d.start_time).length
+  const completedDays = schedule.filter(d => (d.sessions?.length ?? 0) > 0 && d.sessions.some(s => s.title || s.start_time)).length
 
   function handleToggle(type: 'single' | 'multi') {
     updateForm('event_type', type)
@@ -87,11 +94,34 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
     }
   }
 
-  function updateDayTime(date: string, field: 'start_time' | 'end_time', value: string) {
-    const next = schedule.map(d =>
-      d.date === date ? { ...d, [field]: field === 'end_time' ? (value || null) : value } : d
-    )
-    updateForm('daily_schedule', next)
+  function updateDayLabel(date: string, label: string) {
+    updateForm('daily_schedule', schedule.map(d =>
+      d.date === date ? { ...d, label: label || null } : d
+    ))
+  }
+
+  function updateSession(date: string, idx: number, field: keyof EventSession, value: string) {
+    updateForm('daily_schedule', schedule.map(d => {
+      if (d.date !== date) return d
+      const sessions = d.sessions.map((s, i) =>
+        i === idx ? { ...s, [field]: value || null } : s
+      )
+      return { ...d, sessions }
+    }))
+  }
+
+  function addSession(date: string) {
+    updateForm('daily_schedule', schedule.map(d =>
+      d.date === date ? { ...d, sessions: [...(d.sessions ?? []), emptySession()] } : d
+    ))
+  }
+
+  function removeSession(date: string, idx: number) {
+    updateForm('daily_schedule', schedule.map(d => {
+      if (d.date !== date) return d
+      const sessions = d.sessions.filter((_, i) => i !== idx)
+      return { ...d, sessions: sessions.length ? sessions : [emptySession()] }
+    }))
   }
 
   return (
@@ -286,74 +316,120 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
               )}
 
               {schedule.map((day, idx) => {
-                const done = !!day.start_time
+                const sessions = day.sessions?.length ? day.sessions : [emptySession()]
+                const hasContent = sessions.some(s => s.title || s.start_time)
                 return (
                   <div
                     key={day.date}
                     className={`bg-white rounded-2xl border-2 overflow-hidden transition-colors ${
-                      done ? 'border-[#7C3AED]/30' : 'border-gray-100'
+                      hasContent ? 'border-[#7C3AED]/30' : 'border-gray-100'
                     }`}
                   >
-                    {/* Day header bar */}
-                    <div className={`flex items-center gap-3 px-5 py-3 ${done ? 'bg-violet-50' : 'bg-gray-50'}`}>
+                    {/* Day header */}
+                    <div className={`flex items-center gap-3 px-5 py-3 ${hasContent ? 'bg-violet-50' : 'bg-gray-50'}`}>
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${
-                        done ? 'bg-[#7C3AED] text-white' : 'bg-gray-200 text-gray-500'
+                        hasContent ? 'bg-[#7C3AED] text-white' : 'bg-gray-200 text-gray-500'
                       }`}>
-                        {done ? (
+                        {hasContent ? (
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 12 12">
                             <path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         ) : idx + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-bold ${done ? 'text-[#7C3AED]' : 'text-gray-700'}`}>
+                        <p className={`text-sm font-bold ${hasContent ? 'text-[#7C3AED]' : 'text-gray-700'}`}>
                           {fmtDayFull(day.date)}
                         </p>
-                        {done && (
-                          <p className="text-xs text-violet-500 font-medium mt-0.5">
-                            {fmt12(day.start_time)}{day.end_time ? ` – ${fmt12(day.end_time)}` : ''}
-                          </p>
+                        {day.label && (
+                          <p className="text-xs text-violet-500 font-medium mt-0.5 truncate">{day.label}</p>
                         )}
                       </div>
-                      {!done && (
-                        <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex-shrink-0">
-                          Needs time
-                        </span>
-                      )}
+                      <span className="text-[11px] font-semibold text-gray-400 flex-shrink-0">
+                        {sessions.filter(s => s.title || s.start_time).length} session{sessions.filter(s => s.title || s.start_time).length !== 1 ? 's' : ''}
+                      </span>
                     </div>
 
-                    {/* Time inputs */}
-                    <div className="grid grid-cols-2 gap-4 p-5">
+                    <div className="p-5 space-y-4">
+                      {/* Day label / theme */}
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                          Start Time <span className="text-red-500">*</span>
+                          Day Theme <span className="text-gray-400 font-normal normal-case tracking-normal">(optional — e.g. &quot;Workers Retreat&quot;)</span>
                         </label>
                         <input
-                          type="time"
-                          value={day.start_time}
-                          onChange={e => updateDayTime(day.date, 'start_time', e.target.value)}
-                          className={`w-full px-3 py-2.5 rounded-xl border-[1.5px] text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all ${
-                            !day.start_time ? 'border-amber-300 bg-amber-50/40' : 'border-gray-200'
-                          }`}
+                          type="text"
+                          value={day.label ?? ''}
+                          onChange={e => updateDayLabel(day.date, e.target.value)}
+                          placeholder="What's the focus of this day?"
+                          className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
                         />
-                        {day.start_time && (
-                          <p className="text-xs font-semibold text-[#7C3AED] mt-1">{fmt12(day.start_time)}</p>
-                        )}
                       </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                          End Time
-                          <span className="text-gray-400 font-normal normal-case tracking-normal ml-1">(optional)</span>
-                        </label>
-                        <input
-                          type="time"
-                          value={day.end_time ?? ''}
-                          onChange={e => updateDayTime(day.date, 'end_time', e.target.value)}
-                          className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
-                        />
-                        {day.end_time && (
-                          <p className="text-xs text-gray-500 mt-1">{fmt12(day.end_time)}</p>
-                        )}
+
+                      {/* Sessions */}
+                      <div className="space-y-3">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Sessions</p>
+                        {sessions.map((session, sIdx) => (
+                          <div key={sIdx} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50/50">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-semibold text-gray-500">Session {sIdx + 1}</span>
+                              {sessions.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeSession(day.date, sIdx)}
+                                  className="text-xs text-red-400 hover:text-red-600 font-medium"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                            <input
+                              type="text"
+                              value={session.title ?? ''}
+                              onChange={e => updateSession(day.date, sIdx, 'title', e.target.value)}
+                              placeholder="Session name (e.g. Morning Service, Revival Night)"
+                              className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                            />
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Start Time <span className="text-gray-400">(optional)</span></label>
+                                <input
+                                  type="time"
+                                  value={session.start_time ?? ''}
+                                  onChange={e => updateSession(day.date, sIdx, 'start_time', e.target.value)}
+                                  className="w-full px-3 py-2 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                                />
+                                {session.start_time && (
+                                  <p className="text-xs text-[#7C3AED] font-semibold mt-1">{fmt12(session.start_time)}</p>
+                                )}
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">End Time <span className="text-gray-400">(optional)</span></label>
+                                <input
+                                  type="time"
+                                  value={session.end_time ?? ''}
+                                  onChange={e => updateSession(day.date, sIdx, 'end_time', e.target.value)}
+                                  className="w-full px-3 py-2 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                                />
+                                {session.end_time && (
+                                  <p className="text-xs text-gray-500 mt-1">{fmt12(session.end_time)}</p>
+                                )}
+                              </div>
+                            </div>
+                            <input
+                              type="text"
+                              value={session.speaker ?? ''}
+                              onChange={e => updateSession(day.date, sIdx, 'speaker', e.target.value)}
+                              placeholder="Speaker / Minister (optional)"
+                              className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                            />
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => addSession(day.date)}
+                          className="w-full py-2.5 rounded-xl border border-dashed border-[#7C3AED]/40 text-sm font-semibold text-[#7C3AED] hover:bg-violet-50 transition-colors"
+                        >
+                          + Add Session
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -392,8 +468,8 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
         <span className="text-base flex-shrink-0 mt-0.5">💡</span>
         <p className="text-sm text-indigo-800">
           {eventType === 'single'
-            ? 'Set accurate times to help attendees plan their day.'
-            : 'Start time is required for each day. End time is optional — use it to show when each day wraps up.'}
+            ? 'Set accurate times to help attendees plan their day. Time is optional if not yet confirmed.'
+            : 'Add a theme and sessions for each day. Times are optional — add them when confirmed.'}
         </p>
       </div>
     </div>

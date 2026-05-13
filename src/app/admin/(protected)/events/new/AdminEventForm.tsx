@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import type { DaySchedule } from '@/types/database'
+import type { DaySchedule, EventSession } from '@/types/database'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Search, ArrowLeft, ChevronDown, Upload, Loader2 } from 'lucide-react'
@@ -94,7 +94,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
   })
 
   const [eventType, setEventType] = useState<'single' | 'multi'>('single')
-  const [scheduleMap, setScheduleMap] = useState<Record<string, { start_time: string; end_time: string }>>({})
+  const [scheduleMap, setScheduleMap] = useState<Record<string, { label: string; sessions: EventSession[] }>>({})
 
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -123,8 +123,8 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
     if (eventType !== 'multi') return
     const dates = getDateRange(form.start_date, form.end_date)
     setScheduleMap(prev => {
-      const next: Record<string, { start_time: string; end_time: string }> = {}
-      for (const d of dates) next[d] = prev[d] ?? { start_time: '', end_time: '' }
+      const next: Record<string, { label: string; sessions: EventSession[] }> = {}
+      for (const d of dates) next[d] = prev[d] ?? { label: '', sessions: [{ title: null, start_time: null, end_time: null, speaker: null }] }
       return next
     })
   }, [form.start_date, form.end_date, eventType])
@@ -134,7 +134,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
     [form.start_date, form.end_date, eventType]
   )
   const tooLong = dateRange.length > 14
-  const completedDays = dateRange.filter(d => scheduleMap[d]?.start_time).length
+  const completedDays = dateRange.filter(d => scheduleMap[d]?.sessions?.some(s => s.title || s.start_time)).length
 
   useEffect(() => {
     getVisibleCategories().then(cats => {
@@ -198,18 +198,17 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
       if (!form.end_date)   { setError('End date is required'); return }
       if (tooLong)          { setError('Event duration cannot exceed 14 days'); return }
       if (dateRange.length === 0) { setError('End date must be after start date'); return }
-      const missing = dateRange.find(d => !scheduleMap[d]?.start_time)
-      if (missing) { setError(`Start time is required for ${fmtDayShort(missing)}`); return }
-
       daily_schedule = dateRange.map(d => ({
         date: d,
-        start_time: scheduleMap[d].start_time,
-        end_time: scheduleMap[d].end_time || null,
+        label: scheduleMap[d]?.label || null,
+        sessions: scheduleMap[d]?.sessions ?? [],
       }))
       const offset = tzOffset(tz, dateRange[0])
-      startDatetime = `${dateRange[0]}T${scheduleMap[dateRange[0]].start_time}:00${offset}`
+      const firstTime = scheduleMap[dateRange[0]]?.sessions?.find(s => s.start_time)?.start_time ?? '00:00'
+      startDatetime = `${dateRange[0]}T${firstTime}:00${offset}`
       const lastD = dateRange[dateRange.length - 1]
-      endDatetime = `${lastD}T${scheduleMap[lastD].end_time || '23:59'}:00${offset}`
+      const lastTime = scheduleMap[lastD]?.sessions?.slice().reverse().find(s => s.end_time)?.end_time ?? '23:59'
+      endDatetime = `${lastD}T${lastTime}:00${offset}`
     } else {
       if (!form.start_date) { setError('Start date is required'); return }
       if (!form.start_time) { setError('Start time is required'); return }
@@ -501,67 +500,117 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
                     <span className="text-xs text-gray-400">{completedDays}/{dateRange.length} days set</span>
                   </div>
                   {dateRange.map((date, idx) => {
-                    const entry = scheduleMap[date] ?? { start_time: '', end_time: '' }
-                    const done = !!entry.start_time
+                    const entry = scheduleMap[date] ?? { label: '', sessions: [{ title: null, start_time: null, end_time: null, speaker: null }] }
+                    const sessions = entry.sessions?.length ? entry.sessions : [{ title: null, start_time: null, end_time: null, speaker: null }]
+                    const hasContent = sessions.some(s => s.title || s.start_time)
+
+                    const updateAdminSession = (sIdx: number, field: keyof EventSession, value: string) => {
+                      setScheduleMap(prev => {
+                        const cur = prev[date] ?? { label: '', sessions: [] }
+                        const updatedSessions = cur.sessions.map((s, i) =>
+                          i === sIdx ? { ...s, [field]: value || null } : s
+                        )
+                        return { ...prev, [date]: { ...cur, sessions: updatedSessions } }
+                      })
+                    }
+
+                    const addAdminSession = () => {
+                      setScheduleMap(prev => {
+                        const cur = prev[date] ?? { label: '', sessions: [] }
+                        return { ...prev, [date]: { ...cur, sessions: [...cur.sessions, { title: null, start_time: null, end_time: null, speaker: null }] } }
+                      })
+                    }
+
+                    const removeAdminSession = (sIdx: number) => {
+                      setScheduleMap(prev => {
+                        const cur = prev[date] ?? { label: '', sessions: [] }
+                        const updated = cur.sessions.filter((_, i) => i !== sIdx)
+                        return { ...prev, [date]: { ...cur, sessions: updated.length ? updated : [{ title: null, start_time: null, end_time: null, speaker: null }] } }
+                      })
+                    }
+
                     return (
-                      <div key={date} className={`rounded-xl border-2 overflow-hidden transition-colors ${done ? 'border-[#7C3AED]/30' : 'border-gray-100'}`}>
-                        <div className={`flex items-center gap-3 px-4 py-2.5 ${done ? 'bg-violet-50' : 'bg-gray-50'}`}>
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${done ? 'bg-[#7C3AED] text-white' : 'bg-gray-200 text-gray-500'}`}>
-                            {done ? (
+                      <div key={date} className={`rounded-xl border-2 overflow-hidden transition-colors ${hasContent ? 'border-[#7C3AED]/30' : 'border-gray-100'}`}>
+                        <div className={`flex items-center gap-3 px-4 py-2.5 ${hasContent ? 'bg-violet-50' : 'bg-gray-50'}`}>
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${hasContent ? 'bg-[#7C3AED] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                            {hasContent ? (
                               <svg className="w-3 h-3" fill="none" viewBox="0 0 12 12">
                                 <path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             ) : idx + 1}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-bold ${done ? 'text-[#7C3AED]' : 'text-gray-700'}`}>{fmtDayFull(date)}</p>
-                            {done && (
-                              <p className="text-xs text-violet-500 font-medium mt-0.5">
-                                {fmt12(entry.start_time)}{entry.end_time ? ` – ${fmt12(entry.end_time)}` : ''}
-                              </p>
-                            )}
+                            <p className={`text-sm font-bold ${hasContent ? 'text-[#7C3AED]' : 'text-gray-700'}`}>{fmtDayFull(date)}</p>
+                            {entry.label && <p className="text-xs text-violet-500 font-medium mt-0.5 truncate">{entry.label}</p>}
                           </div>
-                          {!done && (
-                            <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                              Needs time
-                            </span>
-                          )}
+                          <span className="text-[11px] text-gray-400">{sessions.filter(s => s.title || s.start_time).length} session{sessions.filter(s => s.title || s.start_time).length !== 1 ? 's' : ''}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 p-4">
-                          <div>
-                            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                              Start Time <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="time"
-                              value={entry.start_time}
-                              onChange={e => setScheduleMap(prev => ({
-                                ...prev, [date]: { ...prev[date], start_time: e.target.value }
-                              }))}
-                              className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:border-[#7C3AED] bg-white ${
-                                !entry.start_time ? 'border-amber-300 bg-amber-50/40' : 'border-gray-200'
-                              }`}
-                            />
-                            {entry.start_time && (
-                              <p className="text-xs font-semibold text-[#7C3AED] mt-1">{fmt12(entry.start_time)}</p>
-                            )}
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                              End Time <span className="text-gray-400 font-normal normal-case tracking-normal">(opt.)</span>
-                            </label>
-                            <input
-                              type="time"
-                              value={entry.end_time}
-                              onChange={e => setScheduleMap(prev => ({
-                                ...prev, [date]: { ...prev[date], end_time: e.target.value }
-                              }))}
-                              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#7C3AED] bg-white"
-                            />
-                            {entry.end_time && (
-                              <p className="text-xs text-gray-500 mt-1">{fmt12(entry.end_time)}</p>
-                            )}
-                          </div>
+
+                        <div className="p-4 space-y-3">
+                          {/* Day label */}
+                          <input
+                            type="text"
+                            value={entry.label ?? ''}
+                            onChange={e => setScheduleMap(prev => ({ ...prev, [date]: { ...prev[date], label: e.target.value } }))}
+                            placeholder="Day theme (optional — e.g. Workers Retreat)"
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] bg-white"
+                          />
+
+                          {/* Sessions */}
+                          {sessions.map((session, sIdx) => (
+                            <div key={sIdx} className="border border-gray-100 rounded-lg p-3 space-y-2 bg-gray-50/50">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Session {sIdx + 1}</span>
+                                {sessions.length > 1 && (
+                                  <button type="button" onClick={() => removeAdminSession(sIdx)} className="text-xs text-red-400 hover:text-red-600">Remove</button>
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                value={session.title ?? ''}
+                                onChange={e => updateAdminSession(sIdx, 'title', e.target.value)}
+                                placeholder="Session name (e.g. Morning Service)"
+                                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] bg-white"
+                              />
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-[10px] font-medium text-gray-400 mb-1">Start Time (optional)</label>
+                                  <input
+                                    type="time"
+                                    value={session.start_time ?? ''}
+                                    onChange={e => updateAdminSession(sIdx, 'start_time', e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#7C3AED] bg-white"
+                                  />
+                                  {session.start_time && <p className="text-xs text-[#7C3AED] mt-0.5">{fmt12(session.start_time)}</p>}
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-medium text-gray-400 mb-1">End Time (optional)</label>
+                                  <input
+                                    type="time"
+                                    value={session.end_time ?? ''}
+                                    onChange={e => updateAdminSession(sIdx, 'end_time', e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#7C3AED] bg-white"
+                                  />
+                                  {session.end_time && <p className="text-xs text-gray-500 mt-0.5">{fmt12(session.end_time)}</p>}
+                                </div>
+                              </div>
+                              <input
+                                type="text"
+                                value={session.speaker ?? ''}
+                                onChange={e => updateAdminSession(sIdx, 'speaker', e.target.value)}
+                                placeholder="Speaker / Minister (optional)"
+                                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] bg-white"
+                              />
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            onClick={addAdminSession}
+                            className="w-full py-2 rounded-lg border border-dashed border-[#7C3AED]/40 text-sm font-semibold text-[#7C3AED] hover:bg-violet-50 transition-colors"
+                          >
+                            + Add Session
+                          </button>
                         </div>
                       </div>
                     )

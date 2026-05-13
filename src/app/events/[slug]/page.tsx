@@ -129,8 +129,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const displayDate = hasSchedule
     ? `${fmtDay(e.daily_schedule![0].date)} – ${fmtDay(e.daily_schedule![e.daily_schedule!.length - 1].date)}`
     : formatDate(e.start_date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  const firstSessionTime = e.daily_schedule?.[0]?.sessions?.find((s: { start_time: string | null }) => s.start_time)?.start_time
+    ?? e.daily_schedule?.[0]?.start_time
   const displayTime = hasSchedule
-    ? fmt12(e.daily_schedule![0].start_time)
+    ? (firstSessionTime ? fmt12(firstSessionTime) : 'Time TBA')
     : formatTime(e.start_date)
   const displayVenue = e.is_online
     ? (e.online_platform ?? 'Online Event')
@@ -329,18 +331,38 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <div className="h-px bg-gray-100 mx-5" />
             <div className="px-5 py-5">
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-4">Schedule</p>
-              <div className="space-y-0">
-                {e.daily_schedule!.map((day: DaySchedule, i: number) => (
-                  <div key={day.date} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-gray-300 w-4 tabular-nums">{i + 1}</span>
-                      <span className="text-sm font-medium text-gray-900">{fmtDay(day.date)}</span>
+              <div className="space-y-5">
+                {e.daily_schedule!.map((day: DaySchedule, i: number) => {
+                  const sessions = day.sessions?.length ? day.sessions
+                    : (day.start_time ? [{ title: null, start_time: day.start_time, end_time: day.end_time ?? null, speaker: null }] : [])
+                  return (
+                    <div key={day.date}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-bold text-gray-300 tabular-nums">Day {i + 1}</span>
+                        <span className="text-sm font-semibold text-gray-900">{fmtDay(day.date)}</span>
+                        {day.label && <span className="text-xs text-indigo-600 font-medium">— {day.label}</span>}
+                      </div>
+                      {sessions.length > 0 ? (
+                        <div className="space-y-0 ml-4 border-l-2 border-gray-100 pl-4">
+                          {sessions.map((s: { title: string | null; start_time: string | null; end_time: string | null; speaker: string | null }, sIdx: number) => (
+                            <div key={sIdx} className="flex items-start justify-between py-2 border-b border-gray-50 last:border-0">
+                              <div>
+                                {s.title && <p className="text-sm font-medium text-gray-900">{s.title}</p>}
+                                {s.speaker && <p className="text-xs text-gray-400 mt-0.5">{s.speaker}</p>}
+                                {!s.title && !s.speaker && <p className="text-sm text-gray-400 italic">Session {sIdx + 1}</p>}
+                              </div>
+                              <span className="text-xs text-gray-400 tabular-nums flex-shrink-0 ml-3 pt-0.5">
+                                {s.start_time ? `${fmt12(s.start_time)}${s.end_time ? ` – ${fmt12(s.end_time)}` : ''}` : 'Time TBA'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 ml-4">Details coming soon</p>
+                      )}
                     </div>
-                    <span className="text-sm text-gray-500 tabular-nums">
-                      {fmt12(day.start_time)}{day.end_time ? ` – ${fmt12(day.end_time)}` : ''}
-                    </span>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </>
@@ -609,16 +631,30 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {hasSchedule && (
                 <div className="mb-7">
                   <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-4">Schedule · {e.daily_schedule!.length} days</p>
-                  <div>
-                    {e.daily_schedule!.map((day: DaySchedule, i: number) => (
-                      <div key={day.date} className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-0">
-                        <div className="flex items-center gap-4">
-                          <span className="text-xs font-bold text-gray-300 w-4 tabular-nums">{i + 1}</span>
-                          <span className="text-sm font-medium text-gray-900">{fmtDay(day.date)}</span>
+                  <div className="space-y-4">
+                    {e.daily_schedule!.map((day: DaySchedule, i: number) => {
+                      const sessions = day.sessions?.length ? day.sessions
+                        : (day.start_time ? [{ title: null, start_time: day.start_time, end_time: day.end_time ?? null, speaker: null }] : [])
+                      return (
+                        <div key={day.date}>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-xs text-gray-300 tabular-nums">Day {i + 1}</span>
+                            <span className="text-sm font-semibold text-gray-900">{fmtDay(day.date)}</span>
+                            {day.label && <span className="text-xs text-indigo-600 font-medium truncate">— {day.label}</span>}
+                          </div>
+                          <div className="ml-3 border-l-2 border-gray-100 pl-3 space-y-1">
+                            {sessions.length > 0 ? sessions.map((s: { title: string | null; start_time: string | null; end_time: string | null; speaker: string | null }, sIdx: number) => (
+                              <div key={sIdx} className="flex items-start justify-between">
+                                <span className="text-xs text-gray-700">{s.title ?? `Session ${sIdx + 1}`}</span>
+                                <span className="text-xs text-gray-400 tabular-nums ml-2 flex-shrink-0">
+                                  {s.start_time ? fmt12(s.start_time) : 'TBA'}
+                                </span>
+                              </div>
+                            )) : <span className="text-xs text-gray-400">Details TBA</span>}
+                          </div>
                         </div>
-                        <span className="text-sm text-gray-500 tabular-nums">{fmt12(day.start_time)}{day.end_time ? ` – ${fmt12(day.end_time)}` : ''}</span>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}
