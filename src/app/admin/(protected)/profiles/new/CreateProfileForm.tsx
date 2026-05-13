@@ -43,6 +43,7 @@ export default function CreateProfileForm({ adminId }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const logoInputRef = useRef<HTMLInputElement>(null)
+  const stepCardRef  = useRef<HTMLDivElement>(null)
 
   const [accountType, setAccountType] = useState<'church' | 'organizer'>('church')
   const [visible, setVisible]         = useState(true)
@@ -154,6 +155,7 @@ export default function CreateProfileForm({ adminId }: Props) {
     if (Object.keys(errs).length) { setFieldErrors(errs); return }
     setFieldErrors({})
     setStep(s => s + 1)
+    setTimeout(() => stepCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -589,7 +591,7 @@ export default function CreateProfileForm({ adminId }: Props) {
             {isOrg && (
               <>
                 {/* Step progress */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5">
+                <div ref={stepCardRef} className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-sm font-semibold text-gray-900">{ORG_STEPS[step].label}</p>
                     <span className="text-xs text-gray-400">Step {step + 1} of {ORG_STEPS.length}</span>
