@@ -606,20 +606,22 @@ export default function CreateProfileForm({ adminId }: Props) {
                   {/* Step content */}
                   {OrgStepContent()}
 
-                  {/* Ministry type chips — always mounted so Other input state is preserved */}
-                  <div className={step === 0 ? 'mt-4' : 'hidden'}>
-                    <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                      What Best Describes You?
-                    </label>
-                    <div className="mt-2">
-                      <OrganizerTypeChips
-                        value={form.ministry_types}
-                        onChange={v => set('ministry_types', v)}
-                        otherText={form.ministry_other}
-                        onOtherTextChange={t => set('ministry_other', t)}
-                      />
+                  {/* Ministry type chips — always mounted outside OrgStepContent so it never re-mounts */}
+                  {step === 0 && (
+                    <div className="mt-4">
+                      <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                        What Best Describes You?
+                      </label>
+                      <div className="mt-2">
+                        <OrganizerTypeChips
+                          value={form.ministry_types}
+                          onChange={v => setForm(f => ({ ...f, ministry_types: v }))}
+                          otherText={form.ministry_other}
+                          onOtherTextChange={t => setForm(f => ({ ...f, ministry_other: t }))}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Navigation */}
                   {step < ORG_STEPS.length - 1 && (
