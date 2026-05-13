@@ -64,11 +64,14 @@ async function getEvents(params: SearchParams) {
   const from = (page - 1) * PAGE_SIZE
   const to   = from + PAGE_SIZE - 1
 
+  const now = new Date().toISOString()
+
   let query = supabase
     .from('events')
     .select('*, churches(*)')
     .eq('status', 'approved')
     .eq('visibility', 'public')
+    .or(`end_date.gte.${now},and(end_date.is.null,start_date.gte.${now})`)
     .order('start_date', { ascending: true })
 
   if (params.q)        query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%,location_name.ilike.%${params.q}%`)
