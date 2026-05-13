@@ -153,32 +153,81 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
         <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
 
           {c.service_times && (
-            <div className="px-4 py-3.5 border-b border-gray-100">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Service Times</p>
-              <p className="text-sm text-gray-800 font-medium leading-snug whitespace-pre-wrap">{c.service_times}</p>
+            <div className="px-4 py-4 border-b border-gray-100">
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Service Times</p>
+              <div className="space-y-3">
+                {c.service_times.split('\n').filter(Boolean).map((line, i) => {
+                  // "Wednesday Service: 6:00 pm (Midweek Recharge)"
+                  const colonMatch = line.match(/^([^:\d]+):\s*(.+)$/)
+                  if (colonMatch) {
+                    const label = colonMatch[1].trim()
+                    const rest = colonMatch[2].trim()
+                    const noteMatch = rest.match(/\(([^)]+)\)/)
+                    const note = noteMatch ? noteMatch[1] : ''
+                    const time = rest.replace(/\([^)]+\)/g, '').replace(/[,&]\s*$/, '').trim()
+                    return (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide leading-none mb-1">{label}</p>
+                          <p className="text-sm font-semibold text-gray-900">{time}</p>
+                          {note && <p className="text-xs text-gray-400 mt-0.5">{note}</p>}
+                        </div>
+                      </div>
+                    )
+                  }
+                  // "Sundays 7:00 am, 9:00 am, & 11:00 am"
+                  const timeIdx = line.search(/\b\d{1,2}:\d{2}/)
+                  if (timeIdx > 0) {
+                    const label = line.slice(0, timeIdx).trim()
+                    const time = line.slice(timeIdx).replace(/[,&]\s*$/, '').trim()
+                    return (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide leading-none mb-1">{label}</p>
+                          <p className="text-sm font-semibold text-gray-900">{time}</p>
+                        </div>
+                      </div>
+                    )
+                  }
+                  // Fallback
+                  return (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                      <p className="text-sm text-gray-800">{line}</p>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
 
           {c.address && (
-            <div className="px-4 py-3.5 border-b border-gray-100">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Address</p>
-              <p className="text-sm text-gray-800 leading-snug">{c.address}</p>
-              {location && <p className="text-xs text-gray-400 mt-0.5">{location}</p>}
-              <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(`${c.address} ${c.city} ${c.state}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline mt-1.5"
-              >
-                <MapPin className="w-3 h-3" /> Open in Maps
-              </a>
+            <div className="px-4 py-4 border-b border-gray-100">
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Address</p>
+              <div className="flex items-start gap-2.5">
+                <MapPin className="w-3.5 h-3.5 text-rose-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-800 leading-snug">{c.address}</p>
+                  {location && <p className="text-sm text-gray-500 mt-0.5">{location}</p>}
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(`${c.address} ${c.city} ${c.state}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline mt-2"
+                  >
+                    Open in Maps <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+              </div>
             </div>
           )}
 
           {pastorLine && (
-            <div className="px-4 py-3.5 border-b border-gray-100">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Leadership</p>
-              <p className="text-sm text-gray-800">{pastorLine}</p>
+            <div className="px-4 py-4 border-b border-gray-100">
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Leadership</p>
+              <p className="text-sm font-semibold text-gray-900">{pastorLine}</p>
             </div>
           )}
 
