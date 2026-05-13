@@ -9,7 +9,6 @@ interface StepProps {
   errors: Record<string, string>
 }
 
-/* "HH:MM" → "9:00 AM" */
 function fmt12(t: string): string {
   if (!t) return ''
   const [h, m] = t.split(':').map(Number)
@@ -18,18 +17,9 @@ function fmt12(t: string): string {
   return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
-/* "2026-05-04" → "Monday, 4 May 2026" */
 function fmtDayFull(dateStr: string): string {
   return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-NG', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-    timeZone: 'Africa/Lagos',
-  })
-}
-
-/* "2026-05-04" → "Mon, 4 May" */
-function fmtDayShort(dateStr: string): string {
-  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-NG', {
-    weekday: 'short', day: 'numeric', month: 'short',
     timeZone: 'Africa/Lagos',
   })
 }
@@ -61,13 +51,14 @@ function rebuildSchedule(start: string, end: string, existing: DaySchedule[]): D
   })
 }
 
+const inp = 'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 bg-white transition-colors'
+
 export default function Step2DateTime({ formData, updateForm, errors }: StepProps) {
   const today = new Date().toISOString().split('T')[0]
   const eventType: 'single' | 'multi' = formData.event_type || 'single'
   const schedule: DaySchedule[] = formData.daily_schedule || []
   const dateRange = eventType === 'multi' ? getDateRange(formData.start_date, formData.end_date) : []
   const tooLong = dateRange.length > 14
-  const completedDays = schedule.filter(d => (d.sessions?.length ?? 0) > 0 && d.sessions.some(s => s.title || s.start_time)).length
 
   function handleToggle(type: 'single' | 'multi') {
     updateForm('event_type', type)
@@ -131,58 +122,32 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
 
-      {/* ── Header card ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-1">Date &amp; Time</h3>
-        <p className="text-sm text-gray-500">Tell attendees when your event takes place.</p>
-      </div>
-
-      {/* ── Event type toggle ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Event Duration</p>
-        <div className="grid grid-cols-2 gap-3">
-          {([
-            ['single', '📅', 'Single Day',      'Happens on one date'],
-            ['multi',  '📆', 'Multiple Days',   'Spans several days'],
-          ] as const).map(([type, icon, label, desc]) => {
-            const active = eventType === type
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => handleToggle(type)}
-                className={`relative flex flex-col items-start gap-1 p-4 rounded-2xl border-2 transition-all duration-200 text-left ${
-                  active
-                    ? 'border-[#7C3AED] bg-violet-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                {active && (
-                  <span className="absolute top-3 right-3 w-4 h-4 rounded-full bg-[#7C3AED] flex items-center justify-center">
-                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 10">
-                      <path d="M2 5l2.5 2.5 3.5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
-                )}
-                <span className="text-2xl">{icon}</span>
-                <span className={`text-sm font-bold ${active ? 'text-[#7C3AED]' : 'text-gray-800'}`}>{label}</span>
-                <span className="text-xs text-gray-500 leading-snug">{desc}</span>
-              </button>
-            )
-          })}
+      {/* Event type toggle */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-900 mb-3">How long is this event?</label>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => handleToggle('single')}
+            className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-colors ${
+              eventType === 'single' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+            }`}>
+            Single Day
+          </button>
+          <button type="button" onClick={() => handleToggle('multi')}
+            className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-colors ${
+              eventType === 'multi' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+            }`}>
+            Multiple Days
+          </button>
         </div>
       </div>
 
-      {/* ══════════════ SINGLE DAY ══════════════ */}
+      {/* Single day */}
       {eventType === 'single' && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Date &amp; Time</p>
-
-          {/* Date */}
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">
               Date <span className="text-red-500">*</span>
             </label>
             <input
@@ -190,199 +155,128 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
               value={formData.start_date}
               onChange={e => updateForm('start_date', e.target.value)}
               min={today}
-              className={`w-full px-4 py-3 rounded-xl border-[1.5px] text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all ${
-                errors.start_date ? 'border-red-400' : 'border-gray-200'
-              }`}
+              className={`${inp} ${errors.start_date ? 'border-red-400' : ''}`}
             />
             {errors.start_date && <p className="text-red-500 text-xs mt-1">{errors.start_date}</p>}
           </div>
 
-          {/* Start & End time side by side */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Start Time <span className="text-red-500">*</span>
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                Start time <span className="text-gray-400 font-normal">(optional)</span>
               </label>
               <input
                 type="time"
                 value={formData.start_time}
                 onChange={e => updateForm('start_time', e.target.value)}
-                className={`w-full px-4 py-3 rounded-xl border-[1.5px] text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all ${
-                  errors.start_time ? 'border-red-400' : 'border-gray-200'
-                }`}
+                className={inp}
               />
-              {errors.start_time && <p className="text-red-500 text-xs mt-1">{errors.start_time}</p>}
               {formData.start_time && (
-                <p className="text-xs text-[#7C3AED] font-semibold mt-1">{fmt12(formData.start_time)}</p>
+                <p className="text-xs text-gray-500 mt-1">{fmt12(formData.start_time)}</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                End Time <span className="text-gray-400 text-xs font-normal">(optional)</span>
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                End time <span className="text-gray-400 font-normal">(optional)</span>
               </label>
               <input
                 type="time"
                 value={formData.end_time}
                 onChange={e => updateForm('end_time', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                className={inp}
               />
               {formData.end_time && (
                 <p className="text-xs text-gray-500 mt-1">{fmt12(formData.end_time)}</p>
               )}
             </div>
           </div>
-
-          {/* Preview pill */}
-          {formData.start_date && formData.start_time && (
-            <div className="flex items-center gap-2 bg-violet-50 border border-violet-100 rounded-xl px-4 py-3">
-              <span className="text-violet-500 text-base">📅</span>
-              <p className="text-sm font-medium text-violet-800">
-                {fmtDayShort(formData.start_date)}
-                {' · '}
-                {fmt12(formData.start_time)}
-                {formData.end_time ? ` – ${fmt12(formData.end_time)}` : ''}
-              </p>
-            </div>
-          )}
         </div>
       )}
 
-      {/* ══════════════ MULTI-DAY ══════════════ */}
+      {/* Multi-day */}
       {eventType === 'multi' && (
-        <>
-          {/* Date range */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Date Range</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Start Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={formData.start_date}
-                  onChange={e => handleMultiDateChange('start_date', e.target.value)}
-                  min={today}
-                  className={`w-full px-4 py-3 rounded-xl border-[1.5px] text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all ${
-                    errors.start_date ? 'border-red-400' : 'border-gray-200'
-                  }`}
-                />
-                {errors.start_date && <p className="text-red-500 text-xs mt-1">{errors.start_date}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  End Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={formData.end_date}
-                  onChange={e => handleMultiDateChange('end_date', e.target.value)}
-                  min={formData.start_date || today}
-                  className={`w-full px-4 py-3 rounded-xl border-[1.5px] text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all ${
-                    errors.end_date ? 'border-red-400' : 'border-gray-200'
-                  }`}
-                />
-                {errors.end_date && <p className="text-red-500 text-xs mt-1">{errors.end_date}</p>}
-              </div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                Start date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={formData.start_date}
+                onChange={e => handleMultiDateChange('start_date', e.target.value)}
+                min={today}
+                className={`${inp} ${errors.start_date ? 'border-red-400' : ''}`}
+              />
+              {errors.start_date && <p className="text-red-500 text-xs mt-1">{errors.start_date}</p>}
             </div>
-
-            {/* Duration chip */}
-            {dateRange.length > 0 && !tooLong && (
-              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-full px-3 py-1.5 text-xs font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                {dateRange.length} day{dateRange.length > 1 ? 's' : ''}
-              </div>
-            )}
-            {tooLong && (
-              <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                <span className="text-amber-500 text-base flex-shrink-0">⚠️</span>
-                <p className="text-sm text-amber-800 font-medium">
-                  Event duration cannot exceed 14 days. Please shorten the date range.
-                </p>
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                End date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={formData.end_date}
+                onChange={e => handleMultiDateChange('end_date', e.target.value)}
+                min={formData.start_date || today}
+                className={`${inp} ${errors.end_date ? 'border-red-400' : ''}`}
+              />
+              {errors.end_date && <p className="text-red-500 text-xs mt-1">{errors.end_date}</p>}
+            </div>
           </div>
 
-          {/* Per-day schedule cards */}
+          {dateRange.length > 0 && !tooLong && (
+            <p className="text-xs text-gray-500">{dateRange.length} day{dateRange.length > 1 ? 's' : ''}</p>
+          )}
+
+          {tooLong && (
+            <p className="text-sm text-red-600">Event cannot exceed 14 days. Please shorten the date range.</p>
+          )}
+
+          {errors.daily_schedule && (
+            <p className="text-sm text-red-600">{errors.daily_schedule}</p>
+          )}
+
+          {/* Per-day cards */}
           {!tooLong && schedule.length > 0 && (
-            <div className="space-y-3">
-
-              {/* Section header */}
-              <div className="flex items-center justify-between px-1">
-                <p className="text-sm font-bold text-gray-700">Daily Schedule</p>
-                <span className="text-xs font-semibold text-gray-400">
-                  {completedDays}/{schedule.length} days set
-                </span>
-              </div>
-
-              {errors.daily_schedule && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-                  {errors.daily_schedule}
-                </div>
-              )}
-
+            <div className="space-y-4">
+              <label className="block text-sm font-semibold text-gray-900">What happens each day?</label>
               {schedule.map((day, idx) => {
                 const sessions = getSessions(day)
-                const hasContent = sessions.some(s => s.title || s.start_time)
                 return (
-                  <div
-                    key={day.date}
-                    className={`bg-white rounded-2xl border-2 overflow-hidden transition-colors ${
-                      hasContent ? 'border-[#7C3AED]/30' : 'border-gray-100'
-                    }`}
-                  >
-                    {/* Day header */}
-                    <div className={`flex items-center gap-3 px-5 py-3 ${hasContent ? 'bg-violet-50' : 'bg-gray-50'}`}>
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${
-                        hasContent ? 'bg-[#7C3AED] text-white' : 'bg-gray-200 text-gray-500'
-                      }`}>
-                        {hasContent ? (
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 12 12">
-                            <path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        ) : idx + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-bold ${hasContent ? 'text-[#7C3AED]' : 'text-gray-700'}`}>
-                          {fmtDayFull(day.date)}
-                        </p>
-                        {day.label && (
-                          <p className="text-xs text-violet-500 font-medium mt-0.5 truncate">{day.label}</p>
-                        )}
-                      </div>
+                  <div key={day.date} className="border border-gray-200 rounded-xl overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-2.5 border-b border-gray-200">
+                      <p className="text-sm font-semibold text-gray-900">Day {idx + 1} — {fmtDayFull(day.date)}</p>
                     </div>
-
                     <div className="p-4 space-y-3">
-                      {/* Day label */}
                       <input
                         type="text"
                         value={day.label ?? ''}
                         onChange={e => updateDayLabel(day.date, e.target.value)}
-                        placeholder="What's happening this day? e.g. Workers Retreat (optional)"
-                        className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                        placeholder="Day theme — e.g. Workers Retreat (optional)"
+                        className={inp}
                       />
 
-                      {/* Program rows */}
                       {sessions.map((session, sIdx) => (
                         <div key={sIdx} className="flex items-center gap-2">
                           <input
                             type="text"
                             value={session.title ?? ''}
                             onChange={e => updateSession(day.date, sIdx, 'title', e.target.value)}
-                            placeholder={sIdx === 0 ? 'Program name — e.g. Morning Service' : 'Program name — e.g. Evening Session'}
-                            className="flex-1 px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                            placeholder={sIdx === 0 ? 'e.g. Morning Service' : 'e.g. Evening Session'}
+                            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 bg-white transition-colors"
                           />
                           <input
                             type="time"
                             value={session.start_time ?? ''}
                             onChange={e => updateSession(day.date, sIdx, 'start_time', e.target.value)}
-                            className="w-28 px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                            className="w-28 px-3 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-gray-900 bg-white transition-colors"
                           />
                           {sessions.length > 1 && (
                             <button
                               type="button"
                               onClick={() => removeSession(day.date, sIdx)}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0"
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 text-lg"
                             >
                               ×
                             </button>
@@ -393,9 +287,9 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
                       <button
                         type="button"
                         onClick={() => addSession(day.date)}
-                        className="text-sm text-[#7C3AED] font-medium hover:underline"
+                        className="text-sm text-gray-600 font-medium hover:text-gray-900 transition-colors"
                       >
-                        + Add another program
+                        + Add program
                       </button>
                     </div>
                   </div>
@@ -404,40 +298,21 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
             </div>
           )}
 
-          {/* Placeholders */}
-          {!tooLong && schedule.length === 0 && (
-            <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center">
-              <p className="text-3xl mb-2">🗓</p>
-              <p className="text-sm font-semibold text-gray-700">No schedule yet</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {!formData.start_date || !formData.end_date
-                  ? 'Pick a start and end date above to set up your daily schedule.'
-                  : 'Your daily schedule will appear here.'}
-              </p>
-            </div>
+          {!tooLong && schedule.length === 0 && formData.start_date && formData.end_date && (
+            <p className="text-sm text-gray-400 text-center py-4">Pick valid dates above to set up your schedule.</p>
           )}
-        </>
+        </div>
       )}
 
       {/* Timezone */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Timezone</p>
+      <div>
+        <label className="block text-sm font-semibold text-gray-900 mb-1.5">Timezone</label>
         <TimezoneSelector
           value={formData.timezone || 'Africa/Lagos'}
           onChange={(tz: string) => updateForm('timezone', tz)}
         />
-        <p className="text-xs text-gray-400">Select the timezone where this event takes place.</p>
       </div>
 
-      {/* Bottom tip */}
-      <div className="flex items-start gap-3 bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3.5">
-        <span className="text-base flex-shrink-0 mt-0.5">💡</span>
-        <p className="text-sm text-indigo-800">
-          {eventType === 'single'
-            ? 'Set accurate times to help attendees plan their day. Time is optional if not yet confirmed.'
-            : 'Add a theme and sessions for each day. Times are optional — add them when confirmed.'}
-        </p>
-      </div>
     </div>
   )
 }
