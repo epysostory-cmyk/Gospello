@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-export const metadata: Metadata = { title: 'Find a Church Near You — Gospello' }
+export const metadata: Metadata = { title: 'Explore Churches — Gospello' }
 
 export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
-import ChurchCard from '@/components/ui/ChurchCard'
+import ChurchProfileCard from '@/components/ui/ChurchProfileCard'
 import type { Church } from '@/types/database'
 import { Search, X, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
@@ -19,7 +19,7 @@ interface SearchParams {
   page?: string
 }
 
-const PAGE_SIZE = 18
+const PAGE_SIZE = 24
 
 async function getChurches(params: SearchParams) {
   const supabase = await createClient()
@@ -52,7 +52,7 @@ async function getChurches(params: SearchParams) {
 
   const churches = (data ?? []) as Church[]
 
-  // Build denomination list ordered by frequency
+  // Denomination list sorted by frequency
   const denomCounts: Record<string, number> = {}
   for (const row of (denomRes.data ?? [])) {
     if (row.denomination) denomCounts[row.denomination] = (denomCounts[row.denomination] ?? 0) + 1
@@ -62,7 +62,6 @@ async function getChurches(params: SearchParams) {
     .slice(0, 14)
     .map(([d]) => d)
 
-  // Event counts for cards
   let eventCountMap: Record<string, number> = {}
   if (churches.length > 0) {
     const { data: eventRows } = await supabase
@@ -103,85 +102,73 @@ export default async function ChurchesPage({
     return `/churches${str ? `?${str}` : ''}`
   }
 
-  // Human-readable result context
-  const resultContext = (() => {
-    const parts: string[] = []
-    if (params.denomination) parts.push(params.denomination)
-    parts.push('church' + (total !== 1 ? 'es' : ''))
-    if (params.state) parts.push(`in ${params.state}`)
-    if (params.q) parts.push(`matching "${params.q}"`)
-    return `${total.toLocaleString()} ${parts.join(' ')}`
-  })()
-
   const showingFrom = (page - 1) * PAGE_SIZE + 1
   const showingTo = Math.min(page * PAGE_SIZE, total)
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
 
       {/* ── HEADER ──────────────────────────────────────────────────── */}
-      <section className="bg-white border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-5">
 
-          {/* Page identity */}
-          <div className="mb-5">
-            <p className="text-[11px] font-semibold tracking-widest uppercase text-indigo-600 mb-1.5">
-              Nigeria · Gospel Directory
-            </p>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-none mb-2">
-              Find a church near you
-            </h1>
-            <p className="text-sm text-gray-500">
-              {total > 0
-                ? `${total.toLocaleString()}+ churches listed across all 36 states — filter by location or denomination`
-                : 'Churches across all 36 Nigerian states'}
-            </p>
+          {/* Title row */}
+          <div className="flex items-end justify-between gap-4 mb-5">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+                Explore Churches
+              </h1>
+              <p className="text-sm text-gray-400 mt-1">
+                {total > 0 ? (
+                  <>
+                    <span className="font-semibold text-gray-600">{total.toLocaleString()}</span> church profiles across Nigeria
+                    {params.state && <span> · {params.state}</span>}
+                    {params.denomination && <span> · {params.denomination}</span>}
+                  </>
+                ) : 'Find churches across all 36 states'}
+              </p>
+            </div>
           </div>
 
-          {/* Search + filters form */}
-          <form method="GET" action="/churches" className="space-y-3">
-
-            {/* Pass denomination through form submits */}
+          {/* Search + state form */}
+          <form method="GET" action="/churches" className="flex flex-col sm:flex-row gap-2">
             {params.denomination && (
               <input type="hidden" name="denomination" value={params.denomination} />
             )}
 
-            {/* Row 1: search + state + buttons */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input
-                  type="text"
-                  name="q"
-                  defaultValue={params.q}
-                  placeholder="Search by name, city, or area..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                />
-              </div>
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                name="q"
+                defaultValue={params.q}
+                placeholder="Search by name, city, or area..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+              />
+            </div>
 
-              <div className="relative sm:w-48">
-                <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                <select
-                  name="state"
-                  defaultValue={params.state ?? ''}
-                  className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none cursor-pointer"
-                >
-                  <option value="">All states</option>
-                  {NIGERIAN_STATES.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="relative sm:w-44">
+              <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+              <select
+                name="state"
+                defaultValue={params.state ?? ''}
+                className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer"
+              >
+                <option value="">All states</option>
+                {NIGERIAN_STATES.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
 
-              <div className="flex gap-2 sm:flex-shrink-0">
-                <button
-                  type="submit"
-                  className="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
-                >
-                  Search
-                </button>
-                <NearMeButton />
-              </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                type="submit"
+                className="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
+              >
+                Search
+              </button>
+              <NearMeButton />
             </div>
           </form>
 
@@ -207,21 +194,18 @@ export default async function ChurchesPage({
               {params.q && (
                 <Link
                   href={buildUrl({ q: undefined, page: undefined })}
-                  className="flex items-center gap-1.5 text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-200 transition-colors"
                 >
                   &ldquo;{params.q}&rdquo; <X className="w-3 h-3" />
                 </Link>
               )}
-              <Link
-                href="/churches"
-                className="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1"
-              >
+              <Link href="/churches" className="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1">
                 Clear all
               </Link>
             </div>
           )}
 
-          {/* Denomination pills — quick browse by tradition */}
+          {/* Denomination pills */}
           {denominations.length > 0 && (
             <div
               className="flex gap-2 overflow-x-auto mt-4 -mx-4 sm:mx-0 px-4 sm:px-0 pb-1"
@@ -236,7 +220,7 @@ export default async function ChurchesPage({
                     className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors border ${
                       active
                         ? 'bg-violet-700 text-white border-violet-700'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300 hover:text-violet-700 hover:bg-violet-50'
                     }`}
                   >
                     {d}
@@ -245,31 +229,25 @@ export default async function ChurchesPage({
               })}
             </div>
           )}
-
         </div>
-      </section>
+      </div>
 
-      {/* ── RESULTS ─────────────────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-7">
+      {/* ── PROFILE GRID ────────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-        {/* Result count — only when we have results */}
-        {total > 0 && (
-          <p className="text-sm text-gray-500 mb-5">
-            <span className="font-semibold text-gray-800">{resultContext}</span>
-            {pages > 1 && (
-              <span className="text-gray-400 ml-1.5">· showing {showingFrom}–{showingTo}</span>
-            )}
+        {/* Showing context */}
+        {total > 0 && pages > 1 && (
+          <p className="text-xs text-gray-400 mb-4">
+            Showing {showingFrom}–{showingTo} of {total.toLocaleString()}
           </p>
         )}
 
         {churches.length === 0 ? (
-          <div className="text-center py-24">
+          <div className="text-center py-24 bg-white rounded-2xl border border-gray-100">
             <div className="text-5xl mb-4">⛪</div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">No churches found</h3>
             <p className="text-gray-500 mb-6 text-sm">
-              {hasFilters
-                ? 'Try a different state, denomination, or search term'
-                : 'Check back soon — we\'re adding more churches every week'}
+              {hasFilters ? 'Try a different state, denomination, or search' : 'Check back soon'}
             </p>
             {hasFilters && (
               <Link
@@ -281,12 +259,12 @@ export default async function ChurchesPage({
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {churches.map((church) => (
-              <ChurchCard
+              <ChurchProfileCard
                 key={church.id}
                 church={church}
-                eventCount={eventCountMap[church.id]}
+                eventCount={eventCountMap[church.id] ?? 0}
               />
             ))}
           </div>
@@ -294,10 +272,8 @@ export default async function ChurchesPage({
 
         {/* Pagination */}
         {pages > 1 && (
-          <div className="flex items-center justify-between mt-12 pt-8 border-t border-gray-100">
-            <p className="text-sm text-gray-400">
-              Page {page} of {pages}
-            </p>
+          <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-200">
+            <p className="text-sm text-gray-400">Page {page} of {pages}</p>
             <div className="flex gap-3">
               {page > 1 && (
                 <Link
