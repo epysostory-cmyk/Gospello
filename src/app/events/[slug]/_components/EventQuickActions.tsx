@@ -20,6 +20,7 @@ interface Props {
 
 export default function EventQuickActions({
   eventId,
+  eventUrl,
   isFree,
   rsvpRequired,
   lifecycle,
@@ -46,6 +47,14 @@ export default function EventQuickActions({
     return () => window.removeEventListener('gospello:attended', handler as EventListener)
   }, [eventId])
 
+  const mode =
+    registrationType === 'free_no_registration' ? 'instant'
+    : registrationType === 'free_registration'  ? 'rsvp'
+    : registrationType === 'paid'               ? 'paid'
+    : !isFree ? 'paid'
+    : rsvpRequired ? 'rsvp'
+    : 'instant'
+
   const handleRsvpClick = () => {
     if (mode === 'paid') {
       if (eventUrl) window.open(eventUrl, '_blank', 'noopener,noreferrer')
@@ -54,14 +63,6 @@ export default function EventQuickActions({
     const el = document.getElementById('attend')
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
-
-  const mode =
-    registrationType === 'free_no_registration' ? 'instant'
-    : registrationType === 'free_registration'  ? 'rsvp'
-    : registrationType === 'paid'               ? 'paid'
-    : !isFree ? 'paid'
-    : rsvpRequired ? 'rsvp'
-    : 'instant'
 
   /* Sit above the mobile bottom nav (56px) */
   const floatStyle = { bottom: '56px', paddingBottom: '0px', paddingTop: '0px' }
