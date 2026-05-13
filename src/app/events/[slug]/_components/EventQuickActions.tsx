@@ -57,7 +57,7 @@ export default function EventQuickActions({
 
   const handleRsvpClick = () => {
     if (mode === 'paid') {
-      if (eventUrl) window.open(eventUrl, '_blank', 'noopener,noreferrer')
+      if (eventUrl) window.location.href = eventUrl
       return
     }
     const el = document.getElementById('attend')

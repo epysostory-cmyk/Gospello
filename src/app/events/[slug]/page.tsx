@@ -855,7 +855,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         eventId={e.id}
         eventTitle={e.title}
         eventDate={shareDate}
-        eventUrl={eventUrl}
+        eventUrl={e.payment_link ?? eventUrl}
         isFree={e.is_free}
         rsvpRequired={e.rsvp_required}
         lifecycle={lifecycle}
