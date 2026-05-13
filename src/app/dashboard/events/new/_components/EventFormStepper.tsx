@@ -229,8 +229,6 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
           const sched = formData.daily_schedule || []
           if (sched.length > 14)
             newErrors.end_date = 'Event duration cannot exceed 14 days'
-          else if (sched.some((d: DaySchedule) => !d.start_time))
-            newErrors.daily_schedule = 'Every day must have a start time set'
           else if (sched.length === 0)
             newErrors.start_date = 'Please set a valid date range'
         } else {
@@ -310,8 +308,10 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
         const first = sched[0]
         const last  = sched[sched.length - 1]
         const offset = tzOffset(tz, first.date)
-        startDatetime = `${first.date}T${first.start_time}:00${offset}`
-        endDatetime   = `${last.date}T${last.end_time || '23:59'}:00${offset}`
+        const firstTime = first.sessions?.find((s: {start_time: string|null}) => s.start_time)?.start_time ?? first.start_time ?? '00:00'
+        const lastTime = last.sessions?.slice().reverse().find((s: {end_time: string|null}) => s.end_time)?.end_time ?? last.end_time ?? '23:59'
+        startDatetime = `${first.date}T${firstTime}:00${offset}`
+        endDatetime   = `${last.date}T${lastTime}:00${offset}`
         daily_schedule = sched
       } else {
         const offset = tzOffset(tz, formData.start_date)
@@ -420,83 +420,71 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 pb-24">
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {isEditMode ? 'Edit Event' : 'Create Event'}
-          </h1>
-          <p className="text-gray-600">
-            {isEditMode ? 'Update your event details' : 'Fill in your event information step by step'}
-          </p>
-        </div>
-
-        {/* Progress Bar */}
-        <StepperProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
-
-        {/* Auto-save indicator + Start Over */}
-        {!isEditMode && (
-          <div className="mt-4 flex items-center justify-between px-1">
-            <p className="text-xs text-gray-500">{getFormattedLastSaved() || 'Ready to save'}</p>
-            {(formData.title || formData.description) && (
+    <div className="min-h-screen bg-white">
+      {/* Sticky top bar with progress */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-base font-bold text-gray-900">
+              {isEditMode ? 'Edit Event' : 'Post an Event'}
+            </h1>
+            {!isEditMode && (formData.title || formData.description) && (
               <button
                 type="button"
                 onClick={() => {
-                  if (confirm('Clear all form data and start over?')) {
+                  if (confirm('Clear everything and start over?')) {
                     localStorage.removeItem(DRAFT_KEY)
                     setFormData(INITIAL_FORM_STATE)
                     setCurrentStep(1)
                     setErrors({})
                   }
                 }}
-                className="text-xs text-red-400 hover:text-red-600 font-medium transition-colors"
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors"
               >
-                Start Over
+                Start over
               </button>
             )}
           </div>
-        )}
-
-        {/* Form Content */}
-        <div className="mt-8">
-          {renderStep()}
+          <StepperProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
         </div>
+      </div>
 
-        {/* Error message */}
+      {/* Form content */}
+      <div className="max-w-2xl mx-auto px-4 py-8 pb-36">
+        {renderStep()}
         {errors.submit && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mt-6 p-4 border border-red-200 rounded-xl bg-red-50">
             <p className="text-sm text-red-600">{errors.submit}</p>
           </div>
         )}
+      </div>
 
-        {/* Navigation Buttons */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-2 sm:gap-3">
+      {/* Bottom nav — floats above mobile nav bar on mobile, at bottom on desktop */}
+      <div className="fixed left-0 right-0 z-20 bg-white border-t border-gray-200 px-4 py-3 bottom-14 md:bottom-0">
+        <div className="max-w-2xl mx-auto flex gap-3">
           <button
             onClick={handleBack}
             disabled={currentStep === 1 || isSubmitting}
-            className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            className="w-24 py-3.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition-colors"
           >
             Back
           </button>
-
           {currentStep < TOTAL_STEPS ? (
             <button
               onClick={handleNext}
               disabled={isSubmitting}
-              className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-3.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 disabled:opacity-50 transition-colors"
             >
-              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Next
+              Continue
             </button>
           ) : (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="flex-1 py-3 px-4 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-3.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitting ? 'Publishing...' : isEditMode ? 'Update Event' : 'Publish Event'}
+              {isSubmitting ? 'Submitting...' : isEditMode ? 'Save Changes' : 'Submit Event'}
             </button>
           )}
         </div>

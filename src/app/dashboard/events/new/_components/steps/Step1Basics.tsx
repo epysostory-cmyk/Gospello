@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
 import type { CategoryRow } from '@/app/actions/categories'
 
 interface StepProps {
@@ -11,17 +10,16 @@ interface StepProps {
   categories?: CategoryRow[]
 }
 
-// Fallback if DB hasn't loaded yet
 const FALLBACK_CATEGORIES = [
-  { id: 'worship',    slug: 'worship',    name: 'Worship Nights', icon: '🙏', color: '#7C3AED' },
-  { id: 'conference', slug: 'conference', name: 'Conference',     icon: '🎤', color: '#2563EB' },
-  { id: 'prayer',     slug: 'prayer',     name: 'Prayer Events',  icon: '✨', color: '#D97706' },
-  { id: 'youth',      slug: 'youth',      name: 'Youth Programs', icon: '🌟', color: '#059669' },
-  { id: 'concerts',   slug: 'concerts',   name: 'Concerts',       icon: '🎵', color: '#DC2626' },
-  { id: 'training',   slug: 'training',   name: 'Training',       icon: '📖', color: '#0891B2' },
-  { id: 'crusades',   slug: 'crusades',   name: 'Crusades',       icon: '🔥', color: '#EA580C' },
-  { id: 'podcasts',   slug: 'podcasts',   name: 'Podcasts',       icon: '🎙️', color: '#7C3AED' },
-  { id: 'other',      slug: 'other',      name: 'Other',          icon: '⛪', color: '#6B7280' },
+  { slug: 'worship',    name: 'Worship Night' },
+  { slug: 'conference', name: 'Conference' },
+  { slug: 'prayer',     name: 'Prayer Event' },
+  { slug: 'youth',      name: 'Youth Program' },
+  { slug: 'concerts',   name: 'Concert' },
+  { slug: 'training',   name: 'Training' },
+  { slug: 'crusades',   name: 'Crusade' },
+  { slug: 'podcasts',   name: 'Podcast' },
+  { slug: 'other',      name: 'Other' },
 ]
 
 const PREDEFINED_TAGS = [
@@ -30,14 +28,11 @@ const PREDEFINED_TAGS = [
   'Entertainment', 'Networking', 'Workshop',
 ]
 
-export default function Step1Basics({ formData, updateForm, errors, categories }: StepProps) {
-  const [showMoreDetails, setShowMoreDetails] = useState(false)
-  const catList = (categories && categories.length > 0) ? categories : FALLBACK_CATEGORIES
+const inp = 'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 bg-white transition-colors'
 
-  const inputCls =
-    'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white'
-  const labelCls = 'block text-sm font-medium text-gray-700 mb-2'
-  const errorCls = 'text-red-600 text-xs mt-1'
+export default function Step1Basics({ formData, updateForm, errors, categories }: StepProps) {
+  const [showExtra, setShowExtra] = useState(false)
+  const catList = (categories && categories.length > 0) ? categories : FALLBACK_CATEGORIES
 
   const toggleTag = (tag: string) => {
     if (formData.tags.includes(tag)) {
@@ -48,137 +43,125 @@ export default function Step1Basics({ formData, updateForm, errors, categories }
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 space-y-5">
-      <h3 className="text-lg font-semibold text-gray-900">Event Basics</h3>
+    <div className="space-y-6">
 
-      {/* Title */}
       <div>
-        <label className={labelCls}>Event Title *</label>
+        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+          Event name <span className="text-red-500">*</span>
+        </label>
         <input
           type="text"
           value={formData.title}
-          onChange={(e) => updateForm('title', e.target.value)}
-          placeholder="Enter event title"
+          onChange={e => updateForm('title', e.target.value)}
+          placeholder="e.g. Next Level Prayer Conference 2026"
           maxLength={100}
-          className={inputCls}
+          className={inp}
         />
-        {errors.title && <p className={errorCls}>{errors.title}</p>}
-        <p className="text-xs text-gray-400 mt-1">{formData.title.length}/100 characters</p>
+        {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
       </div>
 
-      {/* Description */}
       <div>
-        <label className={labelCls}>Description *</label>
+        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+          What is this event about? <span className="text-red-500">*</span>
+        </label>
         <textarea
           value={formData.description}
-          onChange={(e) => updateForm('description', e.target.value)}
-          placeholder="Tell people what this event is about..."
+          onChange={e => updateForm('description', e.target.value)}
+          placeholder="Describe the event — theme, what attendees will experience, who it's for..."
           maxLength={2000}
-          rows={6}
-          className={`${inputCls} resize-none`}
+          rows={5}
+          className={`${inp} resize-none`}
         />
-        {errors.description && <p className={errorCls}>{errors.description}</p>}
-        <p className="text-xs text-gray-400 mt-1">{formData.description.length}/2000 characters</p>
+        {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+        <p className="text-xs text-gray-400 mt-1">{formData.description.length}/2000</p>
       </div>
 
-      {/* Category */}
       <div>
-        <label className={labelCls}>Category *</label>
+        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+          Category <span className="text-red-500">*</span>
+        </label>
         <select
           value={formData.category}
-          onChange={(e) => updateForm('category', e.target.value)}
-          className={inputCls}
+          onChange={e => updateForm('category', e.target.value)}
+          className={inp}
         >
-          {catList.map((cat) => (
-            <option key={cat.slug} value={cat.slug}>
-              {cat.icon} {cat.name}
-            </option>
+          {catList.map(cat => (
+            <option key={cat.slug} value={cat.slug}>{cat.name}</option>
           ))}
         </select>
-        {errors.category && <p className={errorCls}>{errors.category}</p>}
+        {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
       </div>
 
-      {/* Tags */}
       <div>
-        <label className={labelCls}>Event Tags <span className="text-gray-400 font-normal">(optional)</span></label>
+        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+          Tags <span className="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <p className="text-xs text-gray-500 mb-2">Tap any that apply — helps people find your event</p>
         <div className="flex flex-wrap gap-2">
-          {PREDEFINED_TAGS.map((tag) => (
+          {PREDEFINED_TAGS.map(tag => (
             <button
               key={tag}
               type="button"
               onClick={() => toggleTag(tag)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`h-8 px-3 rounded-full text-[13px] font-medium border transition-colors ${
                 formData.tags.includes(tag)
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
               }`}
             >
               {tag}
             </button>
           ))}
         </div>
-        {formData.tags.length > 0 && (
-          <p className="text-xs text-gray-500 mt-2">{formData.tags.length} tag{formData.tags.length > 1 ? 's' : ''} selected</p>
-        )}
       </div>
 
-      {/* More Details — collapsible */}
-      <div className="pt-4 border-t border-gray-100">
+      <div className="border-t border-gray-100 pt-4">
         <button
           type="button"
-          onClick={() => setShowMoreDetails(!showMoreDetails)}
-          className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+          onClick={() => setShowExtra(!showExtra)}
+          className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
         >
-          <ChevronDown className={`w-4 h-4 transition-transform ${showMoreDetails ? 'rotate-180' : ''}`} />
-          More Details
+          {showExtra ? 'Hide extra details' : '+ Add speakers, parking, dress code...'}
         </button>
 
-        {showMoreDetails && (
-          <div className="mt-4 space-y-4">
-            {/* Speakers */}
+        {showExtra && (
+          <div className="mt-5 space-y-5">
             <div>
-              <label className={labelCls}>Featured Ministers &amp; Speakers <span className="text-gray-400 font-normal">(optional)</span></label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                Ministers & Speakers <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
               <input
                 type="text"
                 value={formData.speakers || ''}
-                onChange={(e) => updateForm('speakers', e.target.value)}
-                placeholder="e.g. Min Tasha Cobbs, Pastor Biodun Fatoyinbo, Dunsin Oyekan"
-                className={inputCls}
+                onChange={e => updateForm('speakers', e.target.value)}
+                placeholder="e.g. Pastor Biodun Fatoyinbo, Dunsin Oyekan"
+                className={inp}
               />
             </div>
-
-            {/* Checkboxes */}
             <div className="space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={formData.parking_available}
-                  onChange={(e) => updateForm('parking_available', e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900">🅿️ Parking available</span>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={formData.parking_available}
+                  onChange={e => updateForm('parking_available', e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300" />
+                <span className="text-sm text-gray-700">Parking available</span>
               </label>
-
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={formData.child_friendly}
-                  onChange={(e) => updateForm('child_friendly', e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900">👨‍👩‍👧‍👦 Child friendly</span>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={formData.child_friendly}
+                  onChange={e => updateForm('child_friendly', e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300" />
+                <span className="text-sm text-gray-700">Child friendly</span>
               </label>
             </div>
-
-            {/* Notes */}
             <div>
-              <label className={labelCls}>Additional Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                Additional notes <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
               <textarea
                 value={formData.notes || ''}
-                onChange={(e) => updateForm('notes', e.target.value)}
-                placeholder="Dress code, items to bring, special instructions..."
+                onChange={e => updateForm('notes', e.target.value)}
+                placeholder="Dress code, what to bring, special instructions..."
                 rows={3}
-                className={`${inputCls} resize-none`}
+                className={`${inp} resize-none`}
               />
             </div>
           </div>

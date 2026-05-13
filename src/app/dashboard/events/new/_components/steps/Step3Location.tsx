@@ -8,29 +8,15 @@ interface StepProps {
   errors: Record<string, string>
 }
 
-const ONLINE_PLATFORMS = [
-  'Zoom',
-  'YouTube Live',
-  'Google Meet',
-  'Facebook Live',
-  'WhatsApp',
-  'Telegram',
-  'Other',
-]
+const ONLINE_PLATFORMS = ['Zoom', 'YouTube Live', 'Google Meet', 'Facebook Live', 'WhatsApp', 'Telegram', 'Other']
+const inp = 'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 bg-white transition-colors'
 
 export default function Step3Location({ formData, updateForm, errors }: StepProps) {
-  const inputCls =
-    'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white'
-  const labelCls = 'block text-sm font-medium text-gray-700 mb-2'
-  const errorCls = 'text-red-600 text-xs mt-1'
-
-  // Fix 4: Clear stale data when toggling between Physical and Online
   const switchToPhysical = () => {
     updateForm('is_online', false)
     updateForm('online_platform', '')
     updateForm('online_link', '')
   }
-
   const switchToOnline = () => {
     updateForm('is_online', true)
     updateForm('location_name', '')
@@ -39,170 +25,117 @@ export default function Step3Location({ formData, updateForm, errors }: StepProp
     updateForm('state', '')
     updateForm('country', 'Nigeria')
   }
-
   const isNigeria = (formData.country || 'Nigeria') === 'Nigeria'
 
   return (
-    <div className="bg-white rounded-2xl p-6 space-y-5">
-      <h3 className="text-lg font-semibold text-gray-900">Location</h3>
+    <div className="space-y-6">
 
-      {/* Toggle Physical / Online */}
-      <div className="flex gap-3 p-4 bg-gray-50 rounded-xl">
-        <button
-          type="button"
-          onClick={switchToPhysical}
-          className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${
-            !formData.is_online
-              ? 'bg-indigo-600 text-white'
-              : 'bg-white text-gray-700 border border-gray-200'
-          }`}
-        >
-          📍 Physical Location
-        </button>
-        <button
-          type="button"
-          onClick={switchToOnline}
-          className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${
-            formData.is_online
-              ? 'bg-indigo-600 text-white'
-              : 'bg-white text-gray-700 border border-gray-200'
-          }`}
-        >
-          🌐 Online Event
-        </button>
+      <div>
+        <label className="block text-sm font-semibold text-gray-900 mb-3">Where is this event?</label>
+        <div className="flex gap-2">
+          <button type="button" onClick={switchToPhysical}
+            className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-colors ${
+              !formData.is_online ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+            }`}>
+            Physical Location
+          </button>
+          <button type="button" onClick={switchToOnline}
+            className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-colors ${
+              formData.is_online ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+            }`}>
+            Online Event
+          </button>
+        </div>
       </div>
 
-      {/* Physical Location Fields */}
       {!formData.is_online && (
         <div className="space-y-4">
-          {/* Country */}
           <div>
-            <label className={labelCls}>Country *</label>
-            <select
-              value={formData.country || 'Nigeria'}
-              onChange={(e) => {
-                updateForm('country', e.target.value)
-                updateForm('state', '')
-              }}
-              className={inputCls}
-            >
-              {COUNTRY_LIST.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Country <span className="text-red-500">*</span></label>
+            <select value={formData.country || 'Nigeria'}
+              onChange={e => { updateForm('country', e.target.value); updateForm('state', '') }}
+              className={inp}>
+              {COUNTRY_LIST.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            {errors.country && <p className={errorCls}>{errors.country}</p>}
           </div>
-
           <div>
-            <label className={labelCls}>Location Name *</label>
-            <input
-              type="text"
-              value={formData.location_name}
-              onChange={(e) => updateForm('location_name', e.target.value)}
-              placeholder="e.g., Grace Sanctuary Church, City Centre"
-              className={inputCls}
-            />
-            {errors.location_name && <p className={errorCls}>{errors.location_name}</p>}
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Venue name <span className="text-red-500">*</span></label>
+            <input type="text" value={formData.location_name}
+              onChange={e => updateForm('location_name', e.target.value)}
+              placeholder="e.g. Dominion City, Faith Auditorium"
+              className={inp} />
+            {errors.location_name && <p className="text-red-500 text-xs mt-1">{errors.location_name}</p>}
           </div>
-
           <div>
-            <label className={labelCls}>Address <span className="text-gray-400 font-normal">(optional)</span></label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => updateForm('address', e.target.value)}
-              placeholder="e.g., 123 Main Street"
-              className={inputCls}
-            />
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Street address <span className="text-gray-400 font-normal">(optional)</span></label>
+            <input type="text" value={formData.address}
+              onChange={e => updateForm('address', e.target.value)}
+              placeholder="e.g. 12 Admiralty Way, Lekki Phase 1"
+              className={inp} />
           </div>
-
-          <div>
-            <label className={labelCls}>City *</label>
-            <input
-              type="text"
-              value={formData.city}
-              onChange={(e) => updateForm('city', e.target.value)}
-              placeholder={isNigeria ? 'e.g., Lagos, Ibadan, Abuja' : 'e.g., London, Houston'}
-              className={inputCls}
-            />
-            {errors.city && <p className={errorCls}>{errors.city}</p>}
-          </div>
-
-          <div>
-            <label className={labelCls}>
-              {isNigeria ? 'State *' : 'State / Province / Region *'}
-            </label>
-            {isNigeria ? (
-              <select
-                value={formData.state}
-                onChange={(e) => updateForm('state', e.target.value)}
-                className={inputCls}
-              >
-                <option value="">Select a state</option>
-                {NIGERIAN_STATES.map((st) => (
-                  <option key={st} value={st}>{st}</option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                value={formData.state}
-                onChange={(e) => updateForm('state', e.target.value)}
-                placeholder="e.g., England, Texas, Ontario"
-                className={inputCls}
-              />
-            )}
-            {errors.state && <p className={errorCls}>{errors.state}</p>}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">City <span className="text-red-500">*</span></label>
+              <input type="text" value={formData.city}
+                onChange={e => updateForm('city', e.target.value)}
+                placeholder={isNigeria ? 'e.g. Lagos' : 'e.g. London'}
+                className={inp} />
+              {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                {isNigeria ? 'State' : 'Region'} <span className="text-red-500">*</span>
+              </label>
+              {isNigeria ? (
+                <select value={formData.state}
+                  onChange={e => updateForm('state', e.target.value)}
+                  className={inp}>
+                  <option value="">Select state</option>
+                  {NIGERIAN_STATES.map(st => <option key={st} value={st}>{st}</option>)}
+                </select>
+              ) : (
+                <input type="text" value={formData.state}
+                  onChange={e => updateForm('state', e.target.value)}
+                  placeholder="e.g. England, Texas"
+                  className={inp} />
+              )}
+              {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Online Event Fields */}
       {formData.is_online && (
         <div className="space-y-4">
           <div>
-            <label className={labelCls}>Platform <span className="text-gray-400 font-normal">(optional)</span></label>
-            <select
-              value={formData.online_platform}
-              onChange={(e) => updateForm('online_platform', e.target.value)}
-              className={inputCls}
-            >
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Platform <span className="text-gray-400 font-normal">(optional)</span></label>
+            <select value={formData.online_platform}
+              onChange={e => updateForm('online_platform', e.target.value)}
+              className={inp}>
               <option value="">Select platform</option>
-              {ONLINE_PLATFORMS.map((plat) => (
-                <option key={plat} value={plat}>
-                  {plat}
-                </option>
-              ))}
+              {ONLINE_PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
-
           <div>
-            <label className={labelCls}>Join Link *</label>
-            <input
-              type="url"
-              value={formData.online_link}
-              onChange={(e) => updateForm('online_link', e.target.value)}
-              placeholder="e.g., https://zoom.us/j/123456..."
-              className={inputCls}
-            />
-            {errors.online_link && <p className={errorCls}>{errors.online_link}</p>}
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Join link <span className="text-red-500">*</span></label>
+            <input type="url" value={formData.online_link}
+              onChange={e => updateForm('online_link', e.target.value)}
+              placeholder="https://zoom.us/j/..."
+              className={inp} />
+            {errors.online_link && <p className="text-red-500 text-xs mt-1">{errors.online_link}</p>}
           </div>
         </div>
       )}
 
-      {/* Livestream URL — always shown */}
-      <div className="pt-2 border-t border-gray-100">
-        <label className={labelCls}>
-          Livestream URL <span className="text-gray-400 font-normal">(optional)</span>
+      <div className="border-t border-gray-100 pt-4">
+        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+          Livestream link <span className="text-gray-400 font-normal">(optional)</span>
         </label>
-        <input
-          type="url"
-          value={formData.livestream_url}
-          onChange={(e) => updateForm('livestream_url', e.target.value)}
-          placeholder="e.g., https://youtube.com/live/..."
-          className={inputCls}
-        />
-        <p className="text-xs text-gray-400 mt-1">Add a livestream link even if this is a physical event.</p>
+        <input type="url" value={formData.livestream_url}
+          onChange={e => updateForm('livestream_url', e.target.value)}
+          placeholder="https://youtube.com/live/..."
+          className={inp} />
+        <p className="text-xs text-gray-400 mt-1">Add even if it&apos;s a physical event.</p>
       </div>
     </div>
   )
