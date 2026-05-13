@@ -342,23 +342,22 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                         <span className="text-sm font-semibold text-gray-900">{fmtDay(day.date)}</span>
                         {day.label && <span className="text-xs text-indigo-600 font-medium">— {day.label}</span>}
                       </div>
-                      {sessions.length > 0 ? (
+                      {sessions.length > 0 && (
                         <div className="space-y-0 ml-4 border-l-2 border-gray-100 pl-4">
                           {sessions.map((s: { title: string | null; start_time: string | null; end_time: string | null; speaker: string | null }, sIdx: number) => (
                             <div key={sIdx} className="flex items-start justify-between py-2 border-b border-gray-50 last:border-0">
                               <div>
                                 {s.title && <p className="text-sm font-medium text-gray-900">{s.title}</p>}
                                 {s.speaker && <p className="text-xs text-gray-400 mt-0.5">{s.speaker}</p>}
-                                {!s.title && !s.speaker && <p className="text-sm text-gray-400 italic">Session {sIdx + 1}</p>}
                               </div>
-                              <span className="text-xs text-gray-400 tabular-nums flex-shrink-0 ml-3 pt-0.5">
-                                {s.start_time ? `${fmt12(s.start_time)}${s.end_time ? ` – ${fmt12(s.end_time)}` : ''}` : 'Time TBA'}
-                              </span>
+                              {s.start_time && (
+                                <span className="text-xs text-gray-400 tabular-nums flex-shrink-0 ml-3 pt-0.5">
+                                  {fmt12(s.start_time)}{s.end_time ? ` – ${fmt12(s.end_time)}` : ''}
+                                </span>
+                              )}
                             </div>
                           ))}
                         </div>
-                      ) : (
-                        <p className="text-xs text-gray-400 ml-4">Details coming soon</p>
                       )}
                     </div>
                   )
@@ -642,16 +641,20 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                             <span className="text-sm font-semibold text-gray-900">{fmtDay(day.date)}</span>
                             {day.label && <span className="text-xs text-indigo-600 font-medium truncate">— {day.label}</span>}
                           </div>
-                          <div className="ml-3 border-l-2 border-gray-100 pl-3 space-y-1">
-                            {sessions.length > 0 ? sessions.map((s: { title: string | null; start_time: string | null; end_time: string | null; speaker: string | null }, sIdx: number) => (
-                              <div key={sIdx} className="flex items-start justify-between">
-                                <span className="text-xs text-gray-700">{s.title ?? `Session ${sIdx + 1}`}</span>
-                                <span className="text-xs text-gray-400 tabular-nums ml-2 flex-shrink-0">
-                                  {s.start_time ? fmt12(s.start_time) : 'TBA'}
-                                </span>
-                              </div>
-                            )) : <span className="text-xs text-gray-400">Details TBA</span>}
-                          </div>
+                          {sessions.length > 0 && (
+                            <div className="ml-3 border-l-2 border-gray-100 pl-3 space-y-1">
+                              {sessions.map((s: { title: string | null; start_time: string | null; end_time: string | null; speaker: string | null }, sIdx: number) => (
+                                <div key={sIdx} className="flex items-start justify-between">
+                                  {s.title && <span className="text-xs text-gray-700">{s.title}</span>}
+                                  {s.start_time && (
+                                    <span className="text-xs text-gray-400 tabular-nums ml-2 flex-shrink-0">
+                                      {fmt12(s.start_time)}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )
                     })}
