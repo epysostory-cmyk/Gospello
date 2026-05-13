@@ -6,7 +6,6 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Profile, SeededOrganizer } from '@/types/database'
-import { getEventLifecycle } from '@/types/database'
 import { Search, X, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
 import OrganizerProfileCard from '@/components/ui/OrganizerProfileCard'
@@ -60,21 +59,19 @@ export default async function OrganizersPage({
 
   if (authOrganizers.length > 0) {
     const { data: rows } = await adminClient
-      .from('events').select('organizer_id, start_date, end_date')
-      .eq('status', 'approved').is('seeded_organizer_id', null)
+      .from('events').select('organizer_id')
+      .is('seeded_organizer_id', null)
       .in('organizer_id', authOrganizers.map(o => o.id))
-    for (const r of rows ?? []) {
-      if (getEventLifecycle(r.start_date, r.end_date) !== 'ended')
-        eventCountMap[r.organizer_id] = (eventCountMap[r.organizer_id] ?? 0) + 1
-    }
+    for (const r of rows ?? [])
+      eventCountMap[r.organizer_id] = (eventCountMap[r.organizer_id] ?? 0) + 1
   }
 
   if (seededOrganizers.length > 0) {
     const { data: rows } = await adminClient
-      .from('events').select('seeded_organizer_id, start_date, end_date')
-      .eq('status', 'approved').in('seeded_organizer_id', seededOrganizers.map(o => o.id))
+      .from('events').select('seeded_organizer_id')
+      .in('seeded_organizer_id', seededOrganizers.map(o => o.id))
     for (const r of rows ?? []) {
-      if (r.seeded_organizer_id && getEventLifecycle(r.start_date, r.end_date) !== 'ended')
+      if (r.seeded_organizer_id)
         eventCountMap[r.seeded_organizer_id] = (eventCountMap[r.seeded_organizer_id] ?? 0) + 1
     }
   }

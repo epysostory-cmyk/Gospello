@@ -89,7 +89,7 @@ export default function OrganizerProfileCard({
 
           {/* Ministry type */}
           {ministryType && ministryType.toLowerCase() !== 'other' && (
-            <p className="text-[11px] font-semibold text-violet-600 mb-1 truncate">{ministryType}</p>
+            <p className="text-[11px] text-gray-500 mb-1 truncate">{ministryType}</p>
           )}
 
           {/* Location */}
@@ -101,7 +101,7 @@ export default function OrganizerProfileCard({
           <div className="mt-auto pt-3 border-t border-gray-100 mt-3 flex items-center justify-center gap-1.5">
             <Calendar className="w-3 h-3 text-indigo-400" />
             <span className="text-sm font-bold text-gray-900 leading-none">{eventCount}</span>
-            <span className="text-[10px] text-gray-400">events</span>
+            <span className="text-[10px] text-gray-400">{eventCount === 1 ? 'event' : 'events'} on Gospello</span>
           </div>
         </div>
       </div>

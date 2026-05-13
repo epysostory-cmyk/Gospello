@@ -119,10 +119,8 @@ export default function DiscoverOrganizers({ organizers }: Props) {
                 </p>
 
                 {/* Ministry type */}
-                {org.ministry_type && (
-                  <span className="mt-1 inline-block bg-gray-100 text-gray-600 text-[11px] font-medium px-2 py-0.5 rounded-full w-fit max-w-full truncate">
-                    {org.ministry_type}
-                  </span>
+                {org.ministry_type && org.ministry_type.toLowerCase() !== 'other' && (
+                  <p className="mt-0.5 text-[11px] text-gray-500 truncate">{org.ministry_type}</p>
                 )}
 
                 {/* Bio */}
