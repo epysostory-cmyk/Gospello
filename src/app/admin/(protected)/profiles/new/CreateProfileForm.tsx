@@ -63,7 +63,7 @@ export default function CreateProfileForm({ adminId }: Props) {
     pastor_name: '', leader_title: '', founder: '', denomination: '',
     service_times: [''],
     // organizer-specific
-    contact_person: '', ministry_types: [] as string[],
+    contact_person: '', ministry_types: [] as string[], ministry_other: '',
   })
 
   // Load draft
@@ -373,6 +373,8 @@ export default function CreateProfileForm({ adminId }: Props) {
               <OrganizerTypeChips
                 value={form.ministry_types}
                 onChange={v => set('ministry_types', v)}
+                otherText={form.ministry_other}
+                onOtherTextChange={t => set('ministry_other', t)}
               />
             </div>
           </div>
