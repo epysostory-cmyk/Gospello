@@ -88,7 +88,7 @@ export default function OrganizerProfileCard({
           </div>
 
           {/* Ministry type */}
-          {ministryType && (
+          {ministryType && ministryType.toLowerCase() !== 'other' && (
             <p className="text-[11px] font-semibold text-violet-600 mb-1 truncate">{ministryType}</p>
           )}
 

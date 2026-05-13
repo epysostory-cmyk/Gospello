@@ -103,6 +103,7 @@ export default async function OrganizersPage({
     if (e.ministryType) ministryCounts[e.ministryType] = (ministryCounts[e.ministryType] ?? 0) + 1
   }
   const ministryTypes = Object.entries(ministryCounts)
+    .filter(([m]) => m.toLowerCase() !== 'other')
     .sort((a, b) => b[1] - a[1]).slice(0, 14).map(([m]) => m)
 
   // Apply filters
