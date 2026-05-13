@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-export const metadata: Metadata = { title: 'Events' }
-
+export const metadata: Metadata = { title: 'Events · Gospello' }
 export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
@@ -9,7 +8,7 @@ import EventCard from '@/components/ui/EventCard'
 import { formatDate, formatTime } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
-import { Search, MapPin, X, ChevronRight } from 'lucide-react'
+import { Search, MapPin, X, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
@@ -34,13 +33,14 @@ const FALLBACK_CATEGORIES = [
   { slug: 'conference', name: 'Conference', icon: '🎤' },
   { slug: 'youth',      name: 'Youth',      icon: '🌟' },
   { slug: 'training',   name: 'Training',   icon: '📖' },
+  { slug: 'concert',    name: 'Concert',    icon: '🎵' },
   { slug: 'other',      name: 'Other',      icon: '⭐' },
 ]
 
 const TIMEFRAME_OPTIONS = [
-  { value: 'today',   label: 'Today' },
-  { value: 'week',    label: 'This Week' },
-  { value: 'weekend', label: 'This Weekend' },
+  { value: 'today',   label: 'Today',        emoji: '📅' },
+  { value: 'weekend', label: 'This Weekend',  emoji: '🎉' },
+  { value: 'week',    label: 'This Week',     emoji: '🗓️' },
 ] as const
 
 function scoreEvent(event: Event, now: Date): number {
@@ -49,7 +49,7 @@ function scoreEvent(event: Event, now: Date): number {
   if (lifecycle === 'ongoing') return 200 + (event.is_featured ? 40 : 0)
   if (lifecycle === 'ended') return -100
   const daysUntil = (new Date(event.start_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  if (daysUntil <= 7) score += 50
+  if (daysUntil <= 7)  score += 50
   else if (daysUntil <= 14) score += 30
   else if (daysUntil <= 30) score += 15
   score += Math.min((event.views_count ?? 0) / 10, 20)
@@ -62,7 +62,7 @@ async function getEvents(params: SearchParams) {
   const adminClient = createAdminClient()
   const page = parseInt(params.page ?? '1', 10)
   const from = (page - 1) * PAGE_SIZE
-  const to = from + PAGE_SIZE - 1
+  const to   = from + PAGE_SIZE - 1
 
   let query = supabase
     .from('events')
@@ -87,30 +87,30 @@ async function getEvents(params: SearchParams) {
   if (params.timeframe === 'weekend') {
     const now = new Date()
     const daysUntilFriday = (5 - now.getDay() + 7) % 7
-    const friday = new Date(now); friday.setDate(now.getDate() + daysUntilFriday); friday.setHours(0, 0, 0, 0)
-    const sunday = new Date(friday); sunday.setDate(friday.getDate() + 2); sunday.setHours(23, 59, 59, 999)
+    const friday  = new Date(now); friday.setDate(now.getDate() + daysUntilFriday); friday.setHours(0, 0, 0, 0)
+    const sunday  = new Date(friday); sunday.setDate(friday.getDate() + 2); sunday.setHours(23, 59, 59, 999)
     query = query.gte('start_date', friday.toISOString()).lte('start_date', sunday.toISOString())
   }
   if (params.timeframe === 'week') {
-    const now    = new Date()
-    const sunday = new Date(now); sunday.setDate(now.getDate() - now.getDay()); sunday.setHours(0, 0, 0, 0)
+    const now      = new Date()
+    const sunday   = new Date(now); sunday.setDate(now.getDate() - now.getDay()); sunday.setHours(0, 0, 0, 0)
     const saturday = new Date(sunday); saturday.setDate(sunday.getDate() + 6); saturday.setHours(23, 59, 59, 999)
     query = query.gte('start_date', sunday.toISOString()).lte('start_date', saturday.toISOString())
   }
 
   const { data } = await query
-  const now = new Date()
-  const allSorted = ((data ?? []) as Event[]).sort((a, b) => scoreEvent(b, now) - scoreEvent(a, now))
-  const total  = allSorted.length
-  const events = allSorted.slice(from, to + 1)
+  const now        = new Date()
+  const allSorted  = ((data ?? []) as Event[]).sort((a, b) => scoreEvent(b, now) - scoreEvent(a, now))
+  const total      = allSorted.length
+  const events     = allSorted.slice(from, to + 1)
 
   let attendanceCountMap: Record<string, number> = {}
   if (events.length > 0) {
-    const { data: attendanceRows } = await adminClient
+    const { data: rows } = await adminClient
       .from('attendances')
       .select('event_id')
       .in('event_id', events.map(e => e.id))
-    for (const row of attendanceRows ?? []) {
+    for (const row of rows ?? []) {
       attendanceCountMap[row.event_id] = (attendanceCountMap[row.event_id] ?? 0) + 1
     }
   }
@@ -125,7 +125,7 @@ async function getLocationOptions() {
     .select('country, state')
     .eq('status', 'approved')
     .eq('visibility', 'public')
-  const rows = data ?? []
+  const rows      = data ?? []
   const countries = [...new Set(rows.map(r => r.country).filter(Boolean))].sort() as string[]
   const states    = [...new Set(rows.map(r => r.state).filter(Boolean))].sort() as string[]
   return { countries, states }
@@ -138,6 +138,7 @@ export default async function EventsPage({
 }) {
   const params = await searchParams
   const adminClient = createAdminClient()
+
   const [{ events, total, page, pages, attendanceCountMap }, categoriesRes, locationOptions] = await Promise.all([
     getEvents(params),
     adminClient
@@ -158,7 +159,8 @@ export default async function EventsPage({
     const merged = { ...params, ...overrides }
     const qs = new URLSearchParams()
     Object.entries(merged).forEach(([k, v]) => { if (v) qs.set(k, String(v)) })
-    return `/events?${qs.toString()}`
+    const str = qs.toString()
+    return `/events${str ? `?${str}` : ''}`
   }
 
   const hasFilters = !!(params.q || params.city || params.state || params.country || params.category || params.timeframe)
@@ -166,81 +168,86 @@ export default async function EventsPage({
     ? categoryOptions.find(c => c.slug === params.category)?.name
     : null
 
+  /* Split featured vs regular for the "no filter" browse view */
+  const featuredEvents  = !hasFilters ? events.filter(e => e.is_featured && getEventLifecycle(e.start_date, e.end_date) !== 'ended') : []
+  const regularEvents   = !hasFilters ? events.filter(e => !e.is_featured || getEventLifecycle(e.start_date, e.end_date) === 'ended') : events
+
+  const now = new Date()
+  const thisWeekEvents = !hasFilters
+    ? regularEvents.filter(e => {
+        const d = (new Date(e.start_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        return d >= 0 && d <= 7 && getEventLifecycle(e.start_date, e.end_date) !== 'ended'
+      })
+    : []
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F7F8FA]">
 
-      {/* ── HEADER ───────────────────────────────────────────────────
-          Same pattern as churches/organizers directory pages.
-          White, clean, search front and centre.
-      ──────────────────────────────────────────────────────────── */}
-      <section className="bg-white border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-0">
+      {/* ── HERO HEADER ─────────────────────────────────────────────── */}
+      <section className="bg-gradient-to-br from-indigo-700 via-indigo-800 to-purple-900 pt-8 pb-0">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          {/* Title row */}
+          {/* Title */}
           <div className="mb-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600 mb-1.5">
-              {activeCategoryLabel ? activeCategoryLabel : 'Gospel Events · Nigeria'}
+            <p className="text-indigo-300 text-xs font-semibold uppercase tracking-widest mb-1">
+              Nigeria &amp; Beyond
             </p>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
-                {activeCategoryLabel ? `${activeCategoryLabel} events` : 'Gospel events'}
-              </h1>
-              {total > 0 && (
-                <p className="text-sm text-gray-400 sm:pb-0.5">
-                  {total.toLocaleString()} event{total !== 1 ? 's' : ''}
-                  {params.city ? ` in ${params.city}` : params.state ? ` in ${params.state}` : ''}
-                </p>
-              )}
-            </div>
+            <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight">
+              {activeCategoryLabel ? `${activeCategoryLabel} Events` : 'Gospel Events'}
+            </h1>
+            {total > 0 && (
+              <p className="text-indigo-300 text-sm mt-1">
+                {total.toLocaleString()} event{total !== 1 ? 's' : ''} listed
+                {params.state ? ` in ${params.state}` : params.city ? ` in ${params.city}` : ''}
+              </p>
+            )}
           </div>
 
           {/* Search */}
-          <form method="GET" action="/events" className="flex gap-2 max-w-xl">
+          <form method="GET" action="/events" className="flex gap-2 max-w-xl mb-6">
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
               <input
                 type="text"
                 name="q"
                 defaultValue={params.q}
                 placeholder="Search events, churches, cities…"
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 text-white placeholder-white/50 text-sm focus:outline-none focus:bg-white/25 focus:border-white/40 transition-all"
               />
             </div>
-            {params.category && <input type="hidden" name="category" value={params.category} />}
-            {params.state    && <input type="hidden" name="state"    value={params.state} />}
+            {params.category  && <input type="hidden" name="category"  value={params.category} />}
+            {params.state     && <input type="hidden" name="state"     value={params.state} />}
             {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
             <button
               type="submit"
-              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors"
+              className="flex-shrink-0 bg-white text-indigo-700 font-bold px-5 py-3 rounded-xl text-sm hover:bg-indigo-50 transition-colors shadow-sm"
             >
               Search
             </button>
             {params.q && (
               <Link
                 href={buildUrl({ q: undefined, page: undefined })}
-                className="flex-shrink-0 flex items-center px-3 py-2.5 rounded-lg border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+                className="flex-shrink-0 flex items-center px-3 py-3 rounded-xl border border-white/20 text-white/70 text-sm hover:bg-white/10 transition-colors"
               >
-                Clear
+                <X className="w-4 h-4" />
               </Link>
             )}
           </form>
 
-          {/* Category chips */}
-          <div className="flex gap-2.5 overflow-x-auto sm:overflow-visible flex-nowrap sm:flex-wrap pt-5 pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {/* Category icon tiles */}
+          <div className="flex gap-3 overflow-x-auto sm:overflow-visible flex-nowrap sm:flex-wrap pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link
               href={buildUrl({ category: undefined, page: undefined })}
-              className={`flex-shrink-0 flex flex-col items-center gap-1.5 w-16 transition-all duration-150 ${
-                !params.category ? 'opacity-100' : 'opacity-60 hover:opacity-90'
-              }`}
+              className="flex-shrink-0 flex flex-col items-center gap-1.5 w-[60px] transition-all duration-150"
             >
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-150 ${
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all duration-150 ${
                 !params.category
-                  ? 'bg-indigo-600 shadow-[0_4px_12px_rgba(99,102,241,0.4)] scale-105'
-                  : 'bg-gray-100 hover:bg-gray-200'
+                  ? 'bg-white shadow-[0_4px_16px_rgba(255,255,255,0.3)] scale-110'
+                  : 'bg-white/20 hover:bg-white/30'
               }`}>
                 ✨
               </div>
-              <span className={`text-[11px] font-semibold whitespace-nowrap ${!params.category ? 'text-indigo-600' : 'text-gray-500'}`}>
+              <span className={`text-[11px] font-semibold whitespace-nowrap ${!params.category ? 'text-white' : 'text-white/60'}`}>
                 All
               </span>
             </Link>
@@ -251,224 +258,271 @@ export default async function EventsPage({
                 <Link
                   key={cat.slug}
                   href={buildUrl({ category: cat.slug, page: undefined })}
-                  className={`flex-shrink-0 flex flex-col items-center gap-1.5 w-16 transition-all duration-150 ${
-                    active ? 'opacity-100' : 'opacity-60 hover:opacity-90'
-                  }`}
+                  className="flex-shrink-0 flex flex-col items-center gap-1.5 w-[60px] transition-all duration-150"
                 >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-150 ${
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all duration-150 ${
                     active
-                      ? 'bg-indigo-600 shadow-[0_4px_12px_rgba(99,102,241,0.4)] scale-105'
-                      : 'bg-gray-100 hover:bg-gray-200'
+                      ? 'bg-white shadow-[0_4px_16px_rgba(255,255,255,0.3)] scale-110'
+                      : 'bg-white/20 hover:bg-white/30'
                   }`}>
                     {cat.icon}
                   </div>
-                  <span className={`text-[11px] font-semibold whitespace-nowrap ${active ? 'text-indigo-600' : 'text-gray-500'}`}>
+                  <span className={`text-[11px] font-semibold whitespace-nowrap ${active ? 'text-white' : 'text-white/60'}`}>
                     {cat.name}
                   </span>
                 </Link>
               )
             })}
           </div>
+
+          {/* Timeframe pills + location — white pill bar that bleeds into body */}
+          <div className="mt-4 -mx-4 sm:mx-0 bg-white/10 backdrop-blur-sm border-t border-white/10 px-4 sm:px-0 sm:rounded-t-2xl">
+            <div className="max-w-5xl flex flex-wrap items-center gap-2 py-3">
+              {/* Timeframe quick pills */}
+              {TIMEFRAME_OPTIONS.map((tf) => (
+                <Link
+                  key={tf.value}
+                  href={buildUrl({ timeframe: params.timeframe === tf.value ? undefined : tf.value, page: undefined })}
+                  className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full transition-all whitespace-nowrap ${
+                    params.timeframe === tf.value
+                      ? 'bg-white text-indigo-700 shadow-sm'
+                      : 'bg-white/15 text-white hover:bg-white/25'
+                  }`}
+                >
+                  <span>{tf.emoji}</span> {tf.label}
+                </Link>
+              ))}
+
+              {/* Location */}
+              {availableStates.length > 0 && (
+                <form method="GET" action="/events" className="flex items-center gap-1.5 ml-auto">
+                  {params.q         && <input type="hidden" name="q"         value={params.q} />}
+                  {params.category  && <input type="hidden" name="category"  value={params.category} />}
+                  {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
+                  <div className="relative flex items-center bg-white/15 hover:bg-white/25 rounded-full border border-white/20 overflow-hidden transition-colors">
+                    <MapPin className="w-3.5 h-3.5 text-white/60 absolute left-3 pointer-events-none" />
+                    <select
+                      name="state"
+                      defaultValue={params.state ?? ''}
+                      className="pl-8 pr-4 py-2 text-xs font-semibold text-white bg-transparent focus:outline-none appearance-none cursor-pointer"
+                      onChange={e => (e.currentTarget.form as HTMLFormElement)?.submit()}
+                    >
+                      <option value="" className="text-gray-900">All States</option>
+                      {availableStates.map(s => <option key={s} value={s} className="text-gray-900">{s}</option>)}
+                    </select>
+                  </div>
+                </form>
+              )}
+
+              {/* Clear all */}
+              {hasFilters && (
+                <Link
+                  href="/events"
+                  className="flex items-center gap-1 text-xs font-semibold text-white/70 hover:text-white transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" /> Clear
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── FILTERS & RESULTS ──────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      {/* ── RESULTS ────────────────────────────────────────────────── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-        {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-2 mb-6">
-
-          {/* Timeframe pills */}
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-            <Link
-              href={buildUrl({ timeframe: undefined, page: undefined })}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
-                !params.timeframe ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Any time
-            </Link>
-            {TIMEFRAME_OPTIONS.map((tf) => (
-              <Link
-                key={tf.value}
-                href={buildUrl({ timeframe: tf.value, page: undefined })}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${
-                  params.timeframe === tf.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tf.label}
-              </Link>
-            ))}
+        {/* Active filter chips */}
+        {(params.q || params.state || params.city) && (
+          <div className="flex flex-wrap gap-2 mb-5">
+            {params.q && (
+              <span className="flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-full">
+                &ldquo;{params.q}&rdquo;
+                <Link href={buildUrl({ q: undefined })} className="hover:text-indigo-900 leading-none">×</Link>
+              </span>
+            )}
+            {params.state && (
+              <span className="flex items-center gap-1.5 text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
+                📍 {params.state}
+                <Link href={buildUrl({ state: undefined })} className="hover:text-gray-900 leading-none">×</Link>
+              </span>
+            )}
+            {params.city && (
+              <span className="flex items-center gap-1.5 text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
+                📍 {params.city}
+                <Link href={buildUrl({ city: undefined })} className="hover:text-gray-900 leading-none">×</Link>
+              </span>
+            )}
           </div>
+        )}
 
-          {/* Location filter */}
-          <form method="GET" action="/events" className="flex items-center gap-1.5">
-            {params.q        && <input type="hidden" name="q"        value={params.q} />}
-            {params.category && <input type="hidden" name="category" value={params.category} />}
-            {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
-            {availableStates.length > 0 && (
-              <div className="relative flex items-center bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 pointer-events-none" />
-                <select
-                  name="state"
-                  defaultValue={params.state ?? ''}
-                  className="pl-8 pr-3 py-2 text-xs font-medium text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
-                >
-                  <option value="">All States</option>
-                  {availableStates.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            )}
-            {availableCountries.length > 1 && (
-              <div className="relative flex items-center bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <select
-                  name="country"
-                  defaultValue={params.country ?? ''}
-                  className="px-3 py-2 text-xs font-medium text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
-                >
-                  <option value="">All Countries</option>
-                  {availableCountries.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-            )}
-            <button
-              type="submit"
-              className="px-3 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              Go
-            </button>
-          </form>
-
-          {/* Clear all */}
-          {hasFilters && (
-            <Link
-              href="/events"
-              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-red-500 bg-white rounded-lg border border-gray-200 px-3 py-2 transition-colors"
-            >
-              <X className="w-3 h-3" /> Clear all
-            </Link>
-          )}
-
-          {/* Active filter chips */}
-          {params.q && (
-            <span className="flex items-center gap-1 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-full">
-              &quot;{params.q}&quot;
-              <Link href={buildUrl({ q: undefined })} className="hover:text-indigo-900 ml-0.5 leading-none">×</Link>
-            </span>
-          )}
-          {params.state && (
-            <span className="flex items-center gap-1 text-xs font-medium bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
-              📍 {params.state}
-              <Link href={buildUrl({ state: undefined })} className="hover:text-gray-900 ml-0.5 leading-none">×</Link>
-            </span>
-          )}
-          {params.city && (
-            <span className="flex items-center gap-1 text-xs font-medium bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
-              📍 {params.city}
-              <Link href={buildUrl({ city: undefined })} className="hover:text-gray-900 ml-0.5 leading-none">×</Link>
-            </span>
-          )}
-          {params.country && (
-            <span className="flex items-center gap-1 text-xs font-medium bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
-              🌍 {params.country}
-              <Link href={buildUrl({ country: undefined })} className="hover:text-gray-900 ml-0.5 leading-none">×</Link>
-            </span>
-          )}
-        </div>
-
-        {/* Results */}
         {events.length === 0 ? (
+          /* ── EMPTY STATE ── */
           <div className="text-center py-20">
-            <p className="text-4xl mb-4">🔍</p>
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-3xl">
+              🔍
+            </div>
             <h3 className="text-lg font-bold text-gray-900 mb-1">
               {activeCategoryLabel ? `No ${activeCategoryLabel} events found` : 'No events found'}
             </h3>
-            <p className="text-gray-500 mb-6 text-sm">
-              {hasFilters ? 'Try adjusting your filters or search terms' : 'Check back soon — new events are added regularly'}
+            <p className="text-gray-500 mb-6 text-sm max-w-xs mx-auto">
+              {hasFilters ? 'Try a different filter or search term' : 'New events are added regularly — check back soon'}
             </p>
             {hasFilters && (
               <Link
                 href="/events"
-                className="inline-flex items-center gap-1.5 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="inline-flex items-center gap-1.5 bg-indigo-600 text-white text-sm font-bold px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors"
               >
-                Browse all events <ChevronRight className="w-4 h-4" />
+                Browse all events
               </Link>
             )}
           </div>
         ) : (
           <>
-            {/* Mobile: compact list */}
-            <div className="flex flex-col md:hidden gap-2.5">
-              {events.map(event => {
-                const categoryInfo = catMap[event.category]
-                const hasEnded = getEventLifecycle(event.start_date, event.end_date) === 'ended'
-                return (
-                  <Link
-                    key={event.id}
-                    href={`/events/${event.slug}`}
-                    className="flex gap-3 p-3 rounded-xl bg-white border border-gray-200 hover:border-gray-300 active:bg-gray-50 transition-colors"
-                    style={{ opacity: hasEnded ? 0.6 : 1 }}
-                  >
-                    {/* Thumbnail */}
-                    <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden relative bg-gray-100">
-                      {event.banner_url ? (
-                        <Image
-                          src={event.banner_url}
-                          alt={event.title}
-                          width={80}
-                          height={80}
-                          className={`object-cover w-full h-full${hasEnded ? ' grayscale' : ''}`}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-indigo-100">
-                          <span className="text-xl leading-none">{categoryInfo?.icon ?? '🎵'}</span>
-                        </div>
-                      )}
-                      {hasEnded && (
-                        <div className="absolute inset-0 bg-gray-900/30 flex items-center justify-center">
-                          <span className="text-[10px] font-bold text-white bg-gray-800/80 px-1.5 py-0.5 rounded-full">Ended</span>
-                        </div>
-                      )}
-                    </div>
+            {/* ── FEATURED EVENTS (no filter view only) ── */}
+            {featuredEvents.length > 0 && (
+              <section className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-base font-black text-gray-900">⭐ Featured</span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+                <div className={`grid gap-4 ${featuredEvents.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
+                  {featuredEvents.slice(0, 2).map(event => (
+                    <EventCard key={event.id} event={event} variant="featured" categoryInfo={catMap[event.category]} attendanceCount={attendanceCountMap[event.id]} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                        {!hasEnded && (
-                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full text-white ${event.is_free ? 'bg-emerald-500' : 'bg-indigo-500'}`}>
-                            {event.is_free ? 'Free' : event.price != null ? `₦${event.price.toLocaleString()}` : 'Paid'}
-                          </span>
-                        )}
-                        {categoryInfo && (
-                          <span className="text-[11px] text-gray-400">{categoryInfo.icon} {categoryInfo.name}</span>
-                        )}
-                      </div>
-                      <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">{event.title}</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate">
-                        {event.is_online
-                          ? 'Online'
-                          : [event.location_name, event.city].filter(Boolean).join(' · ') || event.state || ''}
-                      </p>
-                    </div>
+            {/* ── HAPPENING THIS WEEK (no filter view only) ── */}
+            {thisWeekEvents.length > 0 && (
+              <section className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-base font-black text-gray-900">🔥 This Week</span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <Link href={buildUrl({ timeframe: 'week' })} className="text-xs font-semibold text-indigo-600 hover:underline whitespace-nowrap">
+                    See all →
                   </Link>
-                )
-              })}
-            </div>
+                </div>
 
-            {/* Desktop: card grid */}
-            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {events.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  categoryInfo={catMap[event.category]}
-                  attendanceCount={attendanceCountMap[event.id]}
-                />
-              ))}
-            </div>
+                {/* Mobile: horizontal scroll */}
+                <div className="flex gap-3 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:hidden pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {thisWeekEvents.slice(0, 6).map(event => (
+                    <Link
+                      key={event.id}
+                      href={`/events/${event.slug}`}
+                      className="flex-shrink-0 w-52 bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 active:scale-95 transition-transform"
+                    >
+                      <div className="relative h-32 bg-gray-100">
+                        {event.banner_url
+                          ? <Image src={event.banner_url} alt={event.title} fill className="object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center text-4xl font-black text-gray-200">{event.title[0]}</div>
+                        }
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        <span className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${event.is_free ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>
+                          {event.is_free ? 'Free' : 'Paid'}
+                        </span>
+                        <p className="absolute bottom-2 left-2 right-2 text-white text-xs font-bold line-clamp-2 leading-snug">{event.title}</p>
+                      </div>
+                      <div className="px-3 py-2">
+                        <p className="text-[11px] text-gray-500">
+                          {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}
+                        </p>
+                        {event.city && <p className="text-[11px] text-gray-400 truncate">📍 {event.city}</p>}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Desktop: grid */}
+                <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {thisWeekEvents.slice(0, 6).map(event => (
+                    <EventCard key={event.id} event={event} categoryInfo={catMap[event.category]} attendanceCount={attendanceCountMap[event.id]} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ── ALL EVENTS / FILTERED RESULTS ── */}
+            {(regularEvents.length > 0 || hasFilters) && (
+              <section>
+                {!hasFilters && (regularEvents.length > 0) && (
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-base font-black text-gray-900">All Events</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-xs text-gray-400">{regularEvents.length} events</span>
+                  </div>
+                )}
+
+                {/* Mobile: compact list */}
+                <div className="flex flex-col sm:hidden gap-2.5">
+                  {(hasFilters ? events : regularEvents).map(event => {
+                    const categoryInfo = catMap[event.category]
+                    const hasEnded = getEventLifecycle(event.start_date, event.end_date) === 'ended'
+                    return (
+                      <Link
+                        key={event.id}
+                        href={`/events/${event.slug}`}
+                        className="flex gap-3 p-3 rounded-2xl bg-white border border-gray-100 active:bg-gray-50 transition-colors"
+                        style={{ opacity: hasEnded ? 0.55 : 1 }}
+                      >
+                        <div className="flex-shrink-0 w-[72px] h-[72px] rounded-xl overflow-hidden relative bg-gray-100">
+                          {event.banner_url ? (
+                            <Image
+                              src={event.banner_url}
+                              alt={event.title}
+                              width={72}
+                              height={72}
+                              className={`object-cover w-full h-full ${hasEnded ? 'grayscale' : ''}`}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-2xl">
+                              {categoryInfo?.icon ?? '🎵'}
+                            </div>
+                          )}
+                          {hasEnded && (
+                            <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                              <span className="text-[9px] font-black text-white bg-black/60 px-1.5 py-0.5 rounded-full">ENDED</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full text-white ${event.is_free ? 'bg-emerald-500' : 'bg-amber-500'}`}>
+                              {event.is_free ? 'FREE' : event.price != null ? `₦${event.price.toLocaleString()}` : 'PAID'}
+                            </span>
+                            {categoryInfo && (
+                              <span className="text-[10px] text-gray-400 font-medium">{categoryInfo.icon} {categoryInfo.name}</span>
+                            )}
+                          </div>
+                          <p className="text-sm font-bold text-gray-900 leading-snug line-clamp-2">{event.title}</p>
+                          <p className="text-xs text-gray-400">
+                            {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}
+                          </p>
+                          {(event.city || event.is_online) && (
+                            <p className="text-xs text-gray-400 truncate">
+                              {event.is_online ? '🌐 Online' : `📍 ${[event.location_name, event.city].filter(Boolean).join(' · ')}`}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+
+                {/* Desktop: card grid */}
+                <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {(hasFilters ? events : regularEvents).map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      categoryInfo={catMap[event.category]}
+                      attendanceCount={attendanceCountMap[event.id]}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         )}
 
@@ -476,31 +530,22 @@ export default async function EventsPage({
         {pages > 1 && (
           <div className="flex justify-center gap-2 mt-10">
             {page > 1 && (
-              <Link
-                href={buildUrl({ page: String(page - 1) })}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                ← Previous
+              <Link href={buildUrl({ page: String(page - 1) })}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                ← Prev
               </Link>
             )}
             {Array.from({ length: Math.min(pages, 5) }, (_, i) => i + 1).map((p) => (
-              <Link
-                key={p}
-                href={buildUrl({ page: String(p) })}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  p === page
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
+              <Link key={p} href={buildUrl({ page: String(p) })}
+                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-colors ${
+                  p === page ? 'bg-indigo-600 text-white' : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50'
+                }`}>
                 {p}
               </Link>
             ))}
             {page < pages && (
-              <Link
-                href={buildUrl({ page: String(page + 1) })}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
+              <Link href={buildUrl({ page: String(page + 1) })}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                 Next →
               </Link>
             )}
