@@ -350,8 +350,41 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
     <section>
       {/* Section heading */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-5 pt-2">
-        <h2 className="text-2xl font-bold text-gray-900">Upcoming Events</h2>
-        <p className="text-gray-500 text-sm mt-1">Gospel events happening in the next 3 months</p>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Upcoming Events</h2>
+            <p className="text-gray-500 text-sm mt-1">Gospel events happening near you</p>
+          </div>
+          <Link href="/events" className="flex items-center gap-1 text-sm font-semibold text-gray-900 hover:underline flex-shrink-0 mt-1">
+            See all <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={handleNearMe}
+            disabled={nearMeDetecting}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-full text-[13px] font-medium border transition-colors whitespace-nowrap disabled:opacity-60"
+            style={{
+              background: nearMeActive ? '#111827' : '#fff',
+              borderColor: nearMeActive ? '#111827' : '#E5E7EB',
+              color: nearMeActive ? '#fff' : '#374151',
+            }}
+          >
+            {nearMeDetecting
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <MapPin className="w-3.5 h-3.5" />
+            }
+            {nearMeActive && nearMeState
+              ? <>{nearMeState} <span className="opacity-60">×</span></>
+              : nearMeDetecting ? 'Locating…' : 'Near me'
+            }
+          </button>
+          {nearMeTooltip && (
+            <div className="absolute top-full left-0 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg z-50 whitespace-nowrap">
+              Enable location to see nearby events
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Sticky filter bar ──────────────────────────────────────── */}
@@ -392,25 +425,6 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
               <Chip active={!!stateFilter} onClick={toggleStateDropdown}>
                 {stateFilter ?? 'All States'} <ChevronDown className="w-3 h-3" />
               </Chip>
-            </div>
-
-            {/* Near Me */}
-            <div className="relative flex-shrink-0 snap-start">
-              <Chip active={nearMeActive} onClick={handleNearMe} disabled={nearMeDetecting}>
-                {nearMeDetecting
-                  ? <Loader2 className="w-3 h-3 animate-spin" />
-                  : '📍'
-                }
-                {nearMeActive && nearMeState ? nearMeState : 'Near Me'}
-              </Chip>
-              {nearMeTooltip && (
-                <div
-                  className="absolute top-full left-0 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg z-50"
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  Enable location to see nearby events
-                </div>
-              )}
             </div>
 
             {/* Category dropdown trigger */}
