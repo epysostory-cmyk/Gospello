@@ -27,10 +27,10 @@ export default function OrganizerTypeChips({ value, onChange, max = 3, otherText
   const [query, setQuery] = useState('')
 
   const hasOther = value.includes('Other')
-
+  const unselected = ALL_TYPES.filter(t => !value.includes(t))
   const filtered = query.trim()
-    ? ALL_TYPES.filter(t => t.toLowerCase().includes(query.toLowerCase()))
-    : ALL_TYPES
+    ? unselected.filter(t => t.toLowerCase().includes(query.toLowerCase()))
+    : unselected
 
   function toggle(type: string) {
     if (value.includes(type)) {
@@ -41,67 +41,67 @@ export default function OrganizerTypeChips({ value, onChange, max = 3, otherText
     }
   }
 
-  function handleCustomOtherChange(e: React.ChangeEvent<HTMLInputElement>) {
-    onOtherTextChange?.(e.target.value)
-  }
-
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs text-gray-500">Select up to {max}</p>
-        <span className={`text-xs font-semibold ${value.length >= max ? 'text-[#7C3AED]' : 'text-gray-400'}`}>
-          {value.length}/{max} selected
-        </span>
-      </div>
+    <div className="space-y-3">
+      <p className="text-xs text-gray-500">Select up to {max}</p>
 
-      <div className="relative mb-3">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-        <input
-          type="text"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Search..."
-          className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/20"
-        />
-      </div>
-
-      <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
-        {filtered.map(type => {
-          const selected = value.includes(type)
-          const disabled = !selected && value.length >= max
-          return (
+      {/* Selected chips pinned at top */}
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {value.map(type => (
             <button
               key={type}
               type="button"
-              disabled={disabled}
               onClick={() => toggle(type)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 select-none ${
-                selected
-                  ? 'bg-[#7C3AED] text-white shadow-sm scale-105'
-                  : disabled
-                  ? 'bg-gray-100 text-gray-300 cursor-not-allowed opacity-50'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 cursor-pointer'
-              }`}
+              className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-900 text-white flex items-center gap-1.5"
             >
-              {type}
+              {type} <span className="text-white/60">×</span>
             </button>
-          )
-        })}
-        {filtered.length === 0 && (
-          <p className="text-xs text-gray-400 py-2">No results for &quot;{query}&quot;</p>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Custom input shown when "Other" is selected */}
+      {/* Search + unselected list — only show if under max */}
+      {value.length < max && (
+        <>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <input
+              type="text"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Search..."
+              className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:border-gray-900"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1">
+            {filtered.map(type => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => toggle(type)}
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+              >
+                {type}
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <p className="text-xs text-gray-400 py-2">No results for &quot;{query}&quot;</p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Other custom input */}
       {hasOther && (
-        <div className="mt-3">
+        <div>
           <input
             type="text"
             value={otherText}
-            onChange={handleCustomOtherChange}
+            onChange={e => onOtherTextChange?.(e.target.value)}
             placeholder="Describe your ministry type..."
             maxLength={60}
-            className="w-full px-3.5 py-2 rounded-xl border border-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-gray-900"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:border-gray-900"
           />
           <p className="text-xs text-gray-400 mt-1">Tell us what best describes you</p>
         </div>
