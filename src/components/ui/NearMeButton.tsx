@@ -6,9 +6,10 @@ import { Navigation } from 'lucide-react'
 
 interface Props {
   basePath?: string
+  compact?: boolean
 }
 
-export default function NearMeButton({ basePath = '/churches' }: Props) {
+export default function NearMeButton({ basePath = '/churches', compact = false }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -57,10 +58,14 @@ export default function NearMeButton({ basePath = '/churches' }: Props) {
         type="button"
         onClick={handleNearMe}
         disabled={loading}
-        className="flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold transition-colors disabled:opacity-60"
+        className={`flex items-center gap-1.5 font-semibold transition-colors disabled:opacity-60 ${
+          compact
+            ? 'px-3.5 py-1.5 rounded-full text-xs'
+            : 'px-4 py-3 rounded-2xl text-sm'
+        }`}
         style={{ background: '#F3F4F6', color: '#374151', border: '1px solid #E5E7EB' }}
       >
-        <Navigation className={`w-4 h-4 ${loading ? 'animate-pulse' : ''}`} />
+        <Navigation className={`${compact ? 'w-3.5 h-3.5' : 'w-4 h-4'} ${loading ? 'animate-pulse' : ''}`} />
         {loading ? 'Detecting…' : 'Near Me'}
       </button>
       {error && <p className="text-[11px] text-red-500 pl-1">{error}</p>}
