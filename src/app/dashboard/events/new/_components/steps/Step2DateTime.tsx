@@ -350,93 +350,53 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
                           <p className="text-xs text-violet-500 font-medium mt-0.5 truncate">{day.label}</p>
                         )}
                       </div>
-                      <span className="text-[11px] font-semibold text-gray-400 flex-shrink-0">
-                        {sessions.filter(s => s.title || s.start_time).length} session{sessions.filter(s => s.title || s.start_time).length !== 1 ? 's' : ''}
-                      </span>
                     </div>
 
-                    <div className="p-5 space-y-4">
-                      {/* Day label / theme */}
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                          Day Theme <span className="text-gray-400 font-normal normal-case tracking-normal">(optional — e.g. &quot;Workers Retreat&quot;)</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={day.label ?? ''}
-                          onChange={e => updateDayLabel(day.date, e.target.value)}
-                          placeholder="What's the focus of this day?"
-                          className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
-                        />
-                      </div>
+                    <div className="p-4 space-y-3">
+                      {/* Day label */}
+                      <input
+                        type="text"
+                        value={day.label ?? ''}
+                        onChange={e => updateDayLabel(day.date, e.target.value)}
+                        placeholder="What's happening this day? e.g. Workers Retreat (optional)"
+                        className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                      />
 
-                      {/* Sessions */}
-                      <div className="space-y-3">
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Sessions</p>
-                        {sessions.map((session, sIdx) => (
-                          <div key={sIdx} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50/50">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold text-gray-500">Session {sIdx + 1}</span>
-                              {sessions.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeSession(day.date, sIdx)}
-                                  className="text-xs text-red-400 hover:text-red-600 font-medium"
-                                >
-                                  Remove
-                                </button>
-                              )}
-                            </div>
-                            <input
-                              type="text"
-                              value={session.title ?? ''}
-                              onChange={e => updateSession(day.date, sIdx, 'title', e.target.value)}
-                              placeholder="Session name (e.g. Morning Service, Revival Night)"
-                              className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
-                            />
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Start Time <span className="text-gray-400">(optional)</span></label>
-                                <input
-                                  type="time"
-                                  value={session.start_time ?? ''}
-                                  onChange={e => updateSession(day.date, sIdx, 'start_time', e.target.value)}
-                                  className="w-full px-3 py-2 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
-                                />
-                                {session.start_time && (
-                                  <p className="text-xs text-[#7C3AED] font-semibold mt-1">{fmt12(session.start_time)}</p>
-                                )}
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">End Time <span className="text-gray-400">(optional)</span></label>
-                                <input
-                                  type="time"
-                                  value={session.end_time ?? ''}
-                                  onChange={e => updateSession(day.date, sIdx, 'end_time', e.target.value)}
-                                  className="w-full px-3 py-2 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
-                                />
-                                {session.end_time && (
-                                  <p className="text-xs text-gray-500 mt-1">{fmt12(session.end_time)}</p>
-                                )}
-                              </div>
-                            </div>
-                            <input
-                              type="text"
-                              value={session.speaker ?? ''}
-                              onChange={e => updateSession(day.date, sIdx, 'speaker', e.target.value)}
-                              placeholder="Speaker / Minister (optional)"
-                              className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
-                            />
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => addSession(day.date)}
-                          className="w-full py-2.5 rounded-xl border border-dashed border-[#7C3AED]/40 text-sm font-semibold text-[#7C3AED] hover:bg-violet-50 transition-colors"
-                        >
-                          + Add Session
-                        </button>
-                      </div>
+                      {/* Program rows */}
+                      {sessions.map((session, sIdx) => (
+                        <div key={sIdx} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={session.title ?? ''}
+                            onChange={e => updateSession(day.date, sIdx, 'title', e.target.value)}
+                            placeholder={sIdx === 0 ? 'Program name — e.g. Morning Service' : 'Program name — e.g. Evening Session'}
+                            className="flex-1 px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                          />
+                          <input
+                            type="time"
+                            value={session.start_time ?? ''}
+                            onChange={e => updateSession(day.date, sIdx, 'start_time', e.target.value)}
+                            className="w-28 px-3 py-2.5 rounded-xl border-[1.5px] border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] focus:ring-[3px] focus:ring-[#EDE9FE] bg-white transition-all"
+                          />
+                          {sessions.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeSession(day.date, sIdx)}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={() => addSession(day.date)}
+                        className="text-sm text-[#7C3AED] font-medium hover:underline"
+                      >
+                        + Add another program
+                      </button>
                     </div>
                   </div>
                 )
