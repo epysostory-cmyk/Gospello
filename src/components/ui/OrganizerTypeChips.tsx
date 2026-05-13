@@ -19,11 +19,12 @@ interface Props {
   value: string[]
   onChange: (v: string[]) => void
   max?: number
+  otherText?: string
+  onOtherTextChange?: (text: string) => void
 }
 
-export default function OrganizerTypeChips({ value, onChange, max = 3 }: Props) {
+export default function OrganizerTypeChips({ value, onChange, max = 3, otherText = '', onOtherTextChange }: Props) {
   const [query, setQuery] = useState('')
-  const [customOther, setCustomOther] = useState('')
 
   const hasOther = value.includes('Other')
 
@@ -34,17 +35,14 @@ export default function OrganizerTypeChips({ value, onChange, max = 3 }: Props) 
   function toggle(type: string) {
     if (value.includes(type)) {
       onChange(value.filter(v => v !== type))
-      if (type === 'Other') setCustomOther('')
+      if (type === 'Other') onOtherTextChange?.('')
     } else if (value.length < max) {
       onChange([...value, type])
     }
   }
 
   function handleCustomOtherChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const text = e.target.value
-    setCustomOther(text)
-    // Replace 'Other' in the value array with the custom text (or keep 'Other' if empty)
-    onChange(value.map(v => v === 'Other' ? (text.trim() || 'Other') : v))
+    onOtherTextChange?.(e.target.value)
   }
 
   return (
@@ -99,12 +97,11 @@ export default function OrganizerTypeChips({ value, onChange, max = 3 }: Props) 
         <div className="mt-3">
           <input
             type="text"
-            value={customOther}
+            value={otherText}
             onChange={handleCustomOtherChange}
             placeholder="Describe your ministry type..."
             maxLength={60}
-            className="w-full px-3.5 py-2 rounded-xl border border-[#7C3AED] text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
-            autoFocus
+            className="w-full px-3.5 py-2 rounded-xl border border-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-gray-900"
           />
           <p className="text-xs text-gray-400 mt-1">Tell us what best describes you</p>
         </div>
