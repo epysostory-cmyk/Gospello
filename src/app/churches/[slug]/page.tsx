@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
-  MapPin, Clock, Globe, Phone, ArrowLeft, Calendar,
+  MapPin, Globe, Phone, ArrowLeft, Calendar,
   ExternalLink, ShieldCheck, CheckCircle, AlertTriangle,
 } from 'lucide-react'
 import EventCard from '@/components/ui/EventCard'
@@ -328,7 +328,7 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
 
         {/* Avatar + identity */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end gap-4" style={{ marginTop: '-36px' }}>
+          <div className="relative z-10 flex items-end gap-4" style={{ marginTop: '-36px' }}>
 
             {/* Circular avatar overlapping cover */}
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white overflow-hidden shadow-md bg-white flex-shrink-0">
@@ -381,12 +381,6 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-gray-400" />
                   {location}
-                </span>
-              )}
-              {c.service_times && (
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-gray-400" />
-                  {c.service_times}
                 </span>
               )}
               <span className="flex items-center gap-1">
