@@ -47,6 +47,10 @@ export default function EventQuickActions({
   }, [eventId])
 
   const handleRsvpClick = () => {
+    if (mode === 'paid') {
+      if (eventUrl) window.open(eventUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
     const el = document.getElementById('attend')
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
