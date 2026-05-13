@@ -12,6 +12,7 @@ import Link from 'next/link'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import ListYourChurchCTA from '@/components/ui/ListYourChurchCTA'
 import NearMeButton from '@/components/ui/NearMeButton'
+import StateFilterDropdown from '@/components/ui/StateFilterDropdown'
 
 interface SearchParams {
   q?: string
@@ -148,9 +149,9 @@ export default async function ChurchesPage({
             </div>
           )}
 
-          {/* State tabs — full bleed, scroll on mobile */}
+          {/* State tabs — mobile/tablet: horizontal scroll */}
           <div
-            className="flex gap-1 overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-0"
+            className="lg:hidden flex gap-1 overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-0"
             style={{ scrollbarWidth: 'none' } as React.CSSProperties}
           >
             <Link
@@ -179,6 +180,15 @@ export default async function ChurchesPage({
           </div>
         </div>
       </section>
+
+      {/* ── STATE DROPDOWN — desktop only ───────────────────────── */}
+      <div className="hidden lg:block max-w-5xl mx-auto">
+        <StateFilterDropdown
+          states={NIGERIAN_STATES}
+          currentState={params.state}
+          currentQ={params.q}
+        />
+      </div>
 
       {/* ── CHURCH GRID ─────────────────────────────────────────── */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
