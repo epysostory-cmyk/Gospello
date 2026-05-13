@@ -305,12 +305,14 @@ export default async function EventsPage({
                       name="state"
                       defaultValue={params.state ?? ''}
                       className="pl-8 pr-4 py-2 text-xs font-semibold text-white bg-transparent focus:outline-none appearance-none cursor-pointer"
-                      onChange={e => (e.currentTarget.form as HTMLFormElement)?.submit()}
                     >
                       <option value="" className="text-gray-900">All States</option>
                       {availableStates.map(s => <option key={s} value={s} className="text-gray-900">{s}</option>)}
                     </select>
                   </div>
+                  <button type="submit" className="px-3 py-2 text-xs font-bold bg-white/20 hover:bg-white/30 text-white rounded-full transition-colors">
+                    Go
+                  </button>
                 </form>
               )}
 
