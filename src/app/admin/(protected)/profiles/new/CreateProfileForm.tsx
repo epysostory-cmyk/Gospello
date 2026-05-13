@@ -76,6 +76,7 @@ export default function CreateProfileForm({ adminId }: Props) {
         setForm(prev => ({ ...prev, ...saved.form }))
         if (saved.accountType) setAccountType(saved.accountType)
         if (saved.visible !== undefined) setVisible(saved.visible)
+        if (saved.logoUrl) { setLogoUrl(saved.logoUrl); setLogoPreview(saved.logoUrl) }
       }
     } catch { /* ignore */ }
   }, [])
@@ -83,9 +84,9 @@ export default function CreateProfileForm({ adminId }: Props) {
   // Auto-save draft every 60s
   const saveDraft = useCallback(() => {
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, accountType, visible }))
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, accountType, visible, logoUrl }))
     } catch { /* ignore */ }
-  }, [form, accountType, visible])
+  }, [form, accountType, visible, logoUrl])
 
   useEffect(() => {
     const id = setInterval(saveDraft, 60_000)
@@ -110,8 +111,10 @@ export default function CreateProfileForm({ adminId }: Props) {
       fd.append('folder', 'seeded-profiles')
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
       const json = await res.json()
-      if (json.url) setLogoUrl(json.url)
-      else setError('Logo upload failed')
+      if (json.url) {
+        setLogoUrl(json.url)
+        try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, accountType, visible, logoUrl: json.url })) } catch { /* ignore */ }
+      } else setError('Logo upload failed')
     } catch {
       setError('Logo upload failed')
     } finally {
