@@ -25,6 +25,7 @@ interface OrganizerEntry {
   slug: string
   name: string
   avatarUrl: string | null
+  description: string | null
   eventCount: number
   isSeeded: boolean
   isClaimed: boolean
@@ -94,6 +95,7 @@ export default async function OrganizersPage({
       slug: o.id,
       name: o.display_name,
       avatarUrl: o.avatar_url,
+      description: (o as unknown as { description?: string | null }).description ?? null,
       eventCount: eventCountMap[o.id] ?? 0,
       isSeeded: false,
       isClaimed: true,
@@ -108,6 +110,7 @@ export default async function OrganizersPage({
       slug: o.slug,
       name: o.name,
       avatarUrl: o.logo_url,
+      description: (o as unknown as { description?: string | null }).description ?? null,
       eventCount: eventCountMap[o.id] ?? 0,
       isSeeded: true,
       isClaimed: o.is_claimed,
@@ -126,7 +129,7 @@ export default async function OrganizersPage({
   }
   const ministryTypes = Object.entries(ministryCounts)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 12)
+    .slice(0, 16)
     .map(([m]) => m)
 
   // Apply filters
@@ -162,108 +165,69 @@ export default async function OrganizersPage({
     <div className="min-h-screen bg-gray-50">
 
       {/* ── HEADER ──────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-5">
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 
-          {/* Title */}
-          <div className="mb-5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-              Explore Organizers
-            </h1>
-            <p className="text-sm text-gray-400 mt-1">
-              {total > 0 ? (
-                <>
-                  <span className="font-semibold text-gray-600">{total.toLocaleString()}</span> ministries and event hosts
-                  {params.ministry && <span> · {params.ministry}</span>}
-                </>
-              ) : 'Ministries and event hosts across Nigeria'}
-            </p>
+          {/* Title row */}
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">Organizers</h1>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {total > 0 ? (
+                  <><span className="font-semibold text-gray-600">{total.toLocaleString()}</span> ministries &amp; event hosts</>
+                ) : 'Ministries and event hosts across Nigeria'}
+              </p>
+            </div>
           </div>
 
           {/* Search form */}
-          <form method="GET" action="/organizers" className="flex gap-2">
-            {params.ministry && (
-              <input type="hidden" name="ministry" value={params.ministry} />
-            )}
+          <form method="GET" action="/organizers" className="flex gap-2 mb-3">
+            {params.ministry && <input type="hidden" name="ministry" value={params.ministry} />}
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
                 type="text"
                 name="q"
                 defaultValue={params.q}
-                placeholder="Search by name..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                placeholder="Search organizers..."
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
               />
             </div>
-            <button
-              type="submit"
-              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
-            >
+            <button type="submit"
+              className="flex-shrink-0 bg-gray-900 hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors">
               Search
             </button>
             {params.q && (
-              <Link
-                href={buildUrl({ q: undefined, page: undefined })}
-                className="flex-shrink-0 flex items-center px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
-              >
-                Clear
+              <Link href={buildUrl({ q: undefined, page: undefined })}
+                className="flex-shrink-0 flex items-center px-3 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 transition-colors">
+                <X className="w-4 h-4" />
               </Link>
             )}
           </form>
 
-          {/* Active filter chips */}
-          {hasFilters && (
-            <div className="flex items-center gap-2 flex-wrap mt-3">
-              {params.ministry && (
-                <Link
-                  href={buildUrl({ ministry: undefined, page: undefined })}
-                  className="flex items-center gap-1.5 text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-100 px-3 py-1.5 rounded-full hover:bg-violet-100 transition-colors"
-                >
-                  {params.ministry} <X className="w-3 h-3" />
-                </Link>
-              )}
-              {params.q && (
-                <Link
-                  href={buildUrl({ q: undefined, page: undefined })}
-                  className="flex items-center gap-1.5 text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-200 transition-colors"
-                >
-                  &ldquo;{params.q}&rdquo; <X className="w-3 h-3" />
-                </Link>
-              )}
-              <Link href="/organizers" className="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1">
-                Clear all
-              </Link>
-            </div>
-          )}
-
-          {/* Ministry type pills */}
+          {/* Ministry type chips */}
           {ministryTypes.length > 0 && (
-            <div
-              className="flex gap-2 overflow-x-auto mt-4 -mx-4 sm:mx-0 px-4 sm:px-0 pb-1"
-              style={{ scrollbarWidth: 'none' } as React.CSSProperties}
-            >
-              {ministryTypes.map((m) => {
-                const active = params.ministry === m
-                return (
-                  <Link
-                    key={m}
-                    href={buildUrl({ ministry: active ? undefined : m, page: undefined })}
-                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors border ${
-                      active
-                        ? 'bg-violet-700 text-white border-violet-700'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300 hover:text-violet-700 hover:bg-violet-50'
-                    }`}
-                  >
-                    {m}
-                  </Link>
-                )
-              })}
+            <div className="flex gap-2 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0"
+              style={{ scrollbarWidth: 'none' } as React.CSSProperties}>
+              {params.ministry && (
+                <Link href={buildUrl({ ministry: undefined, page: undefined })}
+                  className="flex-shrink-0 h-8 px-3 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors bg-gray-900 text-white border border-gray-900 flex items-center gap-1.5">
+                  {params.ministry} <X className="w-3 h-3 opacity-70" />
+                </Link>
+              )}
+              {ministryTypes.filter(m => m !== params.ministry).map((m) => (
+                <Link key={m}
+                  href={buildUrl({ ministry: m, page: undefined })}
+                  className="flex-shrink-0 h-8 px-3 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent flex items-center">
+                  {m}
+                </Link>
+              ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* ── PROFILE GRID ────────────────────────────────────────────── */}
+      {/* ── GRID ────────────────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {total > 0 && pages > 1 && (
@@ -274,16 +238,14 @@ export default async function OrganizersPage({
 
         {paginated.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-2xl border border-gray-100">
-            <p className="text-5xl mb-4">🎤</p>
+            <p className="text-4xl mb-4">🎤</p>
             <h3 className="text-xl font-bold text-gray-900 mb-2">No organizers found</h3>
             <p className="text-gray-500 text-sm mb-6">
-              {hasFilters ? `Try a different search or filter` : 'Check back soon'}
+              {hasFilters ? 'Try a different search or filter' : 'Check back soon'}
             </p>
             {hasFilters && (
-              <Link
-                href="/organizers"
-                className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors"
-              >
+              <Link href="/organizers"
+                className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-700 transition-colors">
                 See all organizers
               </Link>
             )}
@@ -297,6 +259,7 @@ export default async function OrganizersPage({
                 slug={entry.slug}
                 name={entry.name}
                 avatarUrl={entry.avatarUrl}
+                description={entry.description}
                 eventCount={entry.eventCount}
                 isVerified={entry.isVerified}
                 isClaimed={entry.isClaimed}
@@ -314,18 +277,14 @@ export default async function OrganizersPage({
             <p className="text-sm text-gray-400">Page {page} of {pages}</p>
             <div className="flex gap-3">
               {page > 1 && (
-                <Link
-                  href={buildUrl({ page: String(page - 1) })}
-                  className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
-                >
+                <Link href={buildUrl({ page: String(page - 1) })}
+                  className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                   ← Previous
                 </Link>
               )}
               {page < pages && (
-                <Link
-                  href={buildUrl({ page: String(page + 1) })}
-                  className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
-                >
+                <Link href={buildUrl({ page: String(page + 1) })}
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-700 rounded-xl transition-colors">
                   Next →
                 </Link>
               )}
