@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-export const metadata: Metadata = { title: 'Organizers' }
+export const metadata: Metadata = { title: 'Explore Organizers — Gospello' }
 
 export const dynamic = 'force-dynamic'
 
@@ -7,13 +7,14 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Profile, SeededOrganizer } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
-import { Search, ShieldCheck, CheckCircle, ChevronRight } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
+import OrganizerProfileCard from '@/components/ui/OrganizerProfileCard'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
 
 interface SearchParams {
   q?: string
+  ministry?: string
   page?: string
 }
 
@@ -28,8 +29,10 @@ interface OrganizerEntry {
   isSeeded: boolean
   isClaimed: boolean
   isVerified: boolean
-  hasPendingClaim: boolean
   sortScore: number
+  ministryType: string | null
+  city: string
+  state: string
 }
 
 export default async function OrganizersPage({
@@ -95,8 +98,10 @@ export default async function OrganizersPage({
       isSeeded: false,
       isClaimed: true,
       isVerified: false,
-      hasPendingClaim: false,
       sortScore: 2,
+      ministryType: o.ministry_type ?? null,
+      city: '',
+      state: o.state ?? '',
     })),
     ...seededOrganizers.map(o => ({
       id: o.id,
@@ -107,14 +112,30 @@ export default async function OrganizersPage({
       isSeeded: true,
       isClaimed: o.is_claimed,
       isVerified: o.verified_badge,
-      hasPendingClaim: !!o.claim_requested_at,
       sortScore: o.verified_badge ? 3 : o.is_claimed ? 2 : o.claim_requested_at ? 1 : 0,
+      ministryType: o.ministry_type ?? null,
+      city: o.city ?? '',
+      state: o.state ?? '',
     })),
   ]
 
+  // Build ministry type list sorted by frequency
+  const ministryCounts: Record<string, number> = {}
+  for (const e of entries) {
+    if (e.ministryType) ministryCounts[e.ministryType] = (ministryCounts[e.ministryType] ?? 0) + 1
+  }
+  const ministryTypes = Object.entries(ministryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12)
+    .map(([m]) => m)
+
+  // Apply filters
   if (params.q) {
     const q = params.q.toLowerCase()
     entries = entries.filter(e => e.name.toLowerCase().includes(q))
+  }
+  if (params.ministry) {
+    entries = entries.filter(e => e.ministryType === params.ministry)
   }
 
   entries.sort((a, b) => b.sortScore - a.sortScore || a.name.localeCompare(b.name))
@@ -124,143 +145,187 @@ export default async function OrganizersPage({
   const pages = Math.ceil(total / PAGE_SIZE)
   const paginated = entries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
+  const hasFilters = !!(params.q || params.ministry)
+
   function buildUrl(overrides: Partial<SearchParams>) {
     const merged = { ...params, ...overrides }
     const qs = new URLSearchParams()
     Object.entries(merged).forEach(([k, v]) => { if (v) qs.set(k, String(v)) })
-    return `/organizers?${qs.toString()}`
+    const str = qs.toString()
+    return `/organizers${str ? `?${str}` : ''}`
   }
 
-  return (
-    <div className="min-h-screen bg-white">
+  const showingFrom = (page - 1) * PAGE_SIZE + 1
+  const showingTo = Math.min(page * PAGE_SIZE, total)
 
-      {/* Header */}
-      <section className="border-b border-gray-200 bg-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-          <div className="flex items-end justify-between gap-4 mb-6">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600 mb-1">Directory</p>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-none">
-                Organizers
-              </h1>
-            </div>
-            {total > 0 && (
-              <p className="text-sm text-gray-400 pb-1 shrink-0">
-                {total} organizer{total !== 1 ? 's' : ''}
-                {params.q ? ` · "${params.q}"` : ''}
-              </p>
-            )}
+  return (
+    <div className="min-h-screen bg-gray-50">
+
+      {/* ── HEADER ──────────────────────────────────────────────────── */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-5">
+
+          {/* Title */}
+          <div className="mb-5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+              Explore Organizers
+            </h1>
+            <p className="text-sm text-gray-400 mt-1">
+              {total > 0 ? (
+                <>
+                  <span className="font-semibold text-gray-600">{total.toLocaleString()}</span> ministries and event hosts
+                  {params.ministry && <span> · {params.ministry}</span>}
+                </>
+              ) : 'Ministries and event hosts across Nigeria'}
+            </p>
           </div>
 
+          {/* Search form */}
           <form method="GET" action="/organizers" className="flex gap-2">
-            <div className="flex-1 relative">
+            {params.ministry && (
+              <input type="hidden" name="ministry" value={params.ministry} />
+            )}
+            <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
                 type="text"
                 name="q"
                 defaultValue={params.q}
-                placeholder="Search by name…"
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Search by name..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
               />
             </div>
-            <button type="submit" className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+            <button
+              type="submit"
+              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+            >
               Search
             </button>
             {params.q && (
-              <Link href="/organizers" className="flex-shrink-0 flex items-center px-4 py-2.5 rounded-lg border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors">
+              <Link
+                href={buildUrl({ q: undefined, page: undefined })}
+                className="flex-shrink-0 flex items-center px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
                 Clear
               </Link>
             )}
           </form>
-        </div>
-      </section>
 
-      {/* List */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Active filter chips */}
+          {hasFilters && (
+            <div className="flex items-center gap-2 flex-wrap mt-3">
+              {params.ministry && (
+                <Link
+                  href={buildUrl({ ministry: undefined, page: undefined })}
+                  className="flex items-center gap-1.5 text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-100 px-3 py-1.5 rounded-full hover:bg-violet-100 transition-colors"
+                >
+                  {params.ministry} <X className="w-3 h-3" />
+                </Link>
+              )}
+              {params.q && (
+                <Link
+                  href={buildUrl({ q: undefined, page: undefined })}
+                  className="flex items-center gap-1.5 text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                >
+                  &ldquo;{params.q}&rdquo; <X className="w-3 h-3" />
+                </Link>
+              )}
+              <Link href="/organizers" className="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1">
+                Clear all
+              </Link>
+            </div>
+          )}
+
+          {/* Ministry type pills */}
+          {ministryTypes.length > 0 && (
+            <div
+              className="flex gap-2 overflow-x-auto mt-4 -mx-4 sm:mx-0 px-4 sm:px-0 pb-1"
+              style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+            >
+              {ministryTypes.map((m) => {
+                const active = params.ministry === m
+                return (
+                  <Link
+                    key={m}
+                    href={buildUrl({ ministry: active ? undefined : m, page: undefined })}
+                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors border ${
+                      active
+                        ? 'bg-violet-700 text-white border-violet-700'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300 hover:text-violet-700 hover:bg-violet-50'
+                    }`}
+                  >
+                    {m}
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── PROFILE GRID ────────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        {total > 0 && pages > 1 && (
+          <p className="text-xs text-gray-400 mb-4">
+            Showing {showingFrom}–{showingTo} of {total.toLocaleString()}
+          </p>
+        )}
+
         {paginated.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-4">🎤</p>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">No organizers found</h3>
-            <p className="text-gray-500 text-sm mb-5">
-              {params.q ? `No results for "${params.q}"` : 'Check back soon'}
+          <div className="text-center py-24 bg-white rounded-2xl border border-gray-100">
+            <p className="text-5xl mb-4">🎤</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No organizers found</h3>
+            <p className="text-gray-500 text-sm mb-6">
+              {hasFilters ? `Try a different search or filter` : 'Check back soon'}
             </p>
-            {params.q && (
-              <Link href="/organizers" className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors">
-                Clear search
+            {hasFilters && (
+              <Link
+                href="/organizers"
+                className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors"
+              >
+                See all organizers
               </Link>
             )}
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {paginated.map((entry) => {
-              const initial = entry.name?.[0]?.toUpperCase() ?? '?'
-              const href = `/organizers/${entry.slug}`
-
-              return (
-                <Link
-                  key={entry.id}
-                  href={href}
-                  className="flex items-center gap-4 py-3.5 group hover:bg-gray-50 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 transition-colors rounded-lg"
-                >
-                  {/* Avatar */}
-                  {entry.avatarUrl ? (
-                    <Image
-                      src={entry.avatarUrl}
-                      alt={entry.name}
-                      width={44}
-                      height={44}
-                      className="w-11 h-11 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-gray-600 font-semibold text-base">{initial}</span>
-                    </div>
-                  )}
-
-                  {/* Name + badge */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-gray-900 text-sm group-hover:text-indigo-600 transition-colors truncate">
-                        {entry.name}
-                      </p>
-                      {entry.isVerified ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 flex-shrink-0">
-                          <ShieldCheck className="w-2.5 h-2.5" /> Verified
-                        </span>
-                      ) : entry.isClaimed ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex-shrink-0">
-                          <CheckCircle className="w-2.5 h-2.5" /> Active
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {entry.eventCount > 0
-                        ? `${entry.eventCount} upcoming event${entry.eventCount !== 1 ? 's' : ''}`
-                        : 'No upcoming events'}
-                    </p>
-                  </div>
-
-                  <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 flex-shrink-0 transition-colors" />
-                </Link>
-              )
-            })}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {paginated.map((entry) => (
+              <OrganizerProfileCard
+                key={entry.id}
+                id={entry.id}
+                slug={entry.slug}
+                name={entry.name}
+                avatarUrl={entry.avatarUrl}
+                eventCount={entry.eventCount}
+                isVerified={entry.isVerified}
+                isClaimed={entry.isClaimed}
+                ministryType={entry.ministryType}
+                city={entry.city}
+                state={entry.state}
+              />
+            ))}
           </div>
         )}
 
         {/* Pagination */}
         {pages > 1 && (
-          <div className="flex flex-col items-center gap-3 mt-10">
-            <p className="text-sm text-gray-400">
-              Page {page} of {pages} · {total} organizer{total !== 1 ? 's' : ''}
-            </p>
+          <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-200">
+            <p className="text-sm text-gray-400">Page {page} of {pages}</p>
             <div className="flex gap-3">
               {page > 1 && (
-                <Link href={buildUrl({ page: String(page - 1) })} className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                <Link
+                  href={buildUrl({ page: String(page - 1) })}
+                  className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                >
                   ← Previous
                 </Link>
               )}
               {page < pages && (
-                <Link href={buildUrl({ page: String(page + 1) })} className="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+                <Link
+                  href={buildUrl({ page: String(page + 1) })}
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
+                >
                   Next →
                 </Link>
               )}
