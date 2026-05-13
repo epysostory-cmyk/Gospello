@@ -225,32 +225,49 @@ export default async function EventsPage({
             )}
           </form>
 
-          {/* Category chips — scroll on mobile, wrap on desktop */}
-          <div className="flex gap-2 overflow-x-auto sm:overflow-visible flex-nowrap sm:flex-wrap pt-4 pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {/* Category chips */}
+          <div className="flex gap-2.5 overflow-x-auto sm:overflow-visible flex-nowrap sm:flex-wrap pt-5 pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link
               href={buildUrl({ category: undefined, page: undefined })}
-              className={`flex-shrink-0 text-sm font-medium px-4 py-2 rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${
-                !params.category
-                  ? 'text-indigo-600 border-indigo-600 bg-indigo-50/50'
-                  : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+              className={`flex-shrink-0 flex flex-col items-center gap-1.5 w-16 transition-all duration-150 ${
+                !params.category ? 'opacity-100' : 'opacity-60 hover:opacity-90'
               }`}
             >
-              All
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-150 ${
+                !params.category
+                  ? 'bg-indigo-600 shadow-[0_4px_12px_rgba(99,102,241,0.4)] scale-105'
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}>
+                ✨
+              </div>
+              <span className={`text-[11px] font-semibold whitespace-nowrap ${!params.category ? 'text-indigo-600' : 'text-gray-500'}`}>
+                All
+              </span>
             </Link>
-            {categoryOptions.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={buildUrl({ category: cat.slug, page: undefined })}
-                className={`flex-shrink-0 flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${
-                  params.category === cat.slug
-                    ? 'text-indigo-600 border-indigo-600 bg-indigo-50/50'
-                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <span>{cat.icon}</span>
-                {cat.name}
-              </Link>
-            ))}
+
+            {categoryOptions.map((cat) => {
+              const active = params.category === cat.slug
+              return (
+                <Link
+                  key={cat.slug}
+                  href={buildUrl({ category: cat.slug, page: undefined })}
+                  className={`flex-shrink-0 flex flex-col items-center gap-1.5 w-16 transition-all duration-150 ${
+                    active ? 'opacity-100' : 'opacity-60 hover:opacity-90'
+                  }`}
+                >
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-sm transition-all duration-150 ${
+                    active
+                      ? 'bg-indigo-600 shadow-[0_4px_12px_rgba(99,102,241,0.4)] scale-105'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}>
+                    {cat.icon}
+                  </div>
+                  <span className={`text-[11px] font-semibold whitespace-nowrap ${active ? 'text-indigo-600' : 'text-gray-500'}`}>
+                    {cat.name}
+                  </span>
+                </Link>
+              )
+            })}
           </div>
         </div>
       </section>
