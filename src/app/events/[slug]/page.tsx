@@ -312,6 +312,13 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           )}
         </div>
 
+        {/* Inline CTA for rsvp/paid mobile — scroll target for the floating bar */}
+        {lifecycle !== 'ended' && (e.registration_type === 'free_registration' || e.registration_type === 'paid' || (!e.registration_type && (e.rsvp_required || !e.is_free))) && (
+          <div id="mobile-attend-form" className="px-5 pb-5">
+            <CtaBlock compact />
+          </div>
+        )}
+
         {/* Divider */}
         <div className="h-px bg-gray-100 mx-5" />
 
@@ -861,6 +868,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         registrationType={e.registration_type}
         isOrganizer={isOrganizer}
         initialAttended={initialAttended}
+        serverUserId={user?.id ?? null}
       />
     </div>
   )

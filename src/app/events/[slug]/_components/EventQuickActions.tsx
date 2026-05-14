@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Ticket, UserCheck, Heart } from 'lucide-react'
+import { CheckCircle2, Ticket, UserCheck, Heart, Loader2 } from 'lucide-react'
+import { instantAttend, anonymousAttend } from '@/app/actions/attendance'
 import type { RegistrationType } from '@/types/database'
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
   registrationType?: RegistrationType
   isOrganizer?: boolean
   initialAttended?: boolean
+  serverUserId?: string | null
 }
 
 export default function EventQuickActions({
@@ -27,8 +29,10 @@ export default function EventQuickActions({
   registrationType,
   isOrganizer = false,
   initialAttended = false,
+  serverUserId,
 }: Props) {
   const [attended, setAttended] = useState(initialAttended)
+  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (initialAttended) return
@@ -55,13 +59,45 @@ export default function EventQuickActions({
     : rsvpRequired ? 'rsvp'
     : 'instant'
 
-  const handleRsvpClick = () => {
+  const guestCanOneTap = registrationType === 'free_no_registration'
+
+  const notifyAttended = (id: string) => {
+    window.dispatchEvent(new CustomEvent('gospello:attended', { detail: { eventId: id } }))
+  }
+
+  const handleClick = async () => {
     if (mode === 'paid') {
       if (eventUrl) window.location.href = eventUrl
       return
     }
-    const el = document.getElementById('attend')
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (mode === 'rsvp') {
+      const el = document.getElementById('mobile-attend-form')
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    // instant mode — call action directly
+    setBusy(true)
+    if (serverUserId) {
+      const res = await instantAttend(eventId)
+      if (res.success || res.alreadyAttending) {
+        setAttended(true)
+        notifyAttended(eventId)
+      }
+    } else if (guestCanOneTap) {
+      const key = `gospello_attended_${eventId}`
+      if (localStorage.getItem(key)) { setAttended(true); setBusy(false); return }
+      const res = await anonymousAttend(eventId)
+      if (res.success) {
+        setAttended(true)
+        localStorage.setItem(key, '1')
+        notifyAttended(eventId)
+      }
+    } else {
+      // legacy free event without explicit registration_type — scroll to form
+      const el = document.getElementById('mobile-attend-form')
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+    setBusy(false)
   }
 
   /* Sit above the mobile bottom nav (56px) */
@@ -133,11 +169,12 @@ export default function EventQuickActions({
       {/* Floating action bar — sits above mobile bottom nav */}
       <div className="fixed left-0 right-0 md:hidden z-40 px-4 pb-3" style={floatStyle}>
         <button
-          onClick={handleRsvpClick}
-          className={`w-full flex items-center justify-center gap-2.5 text-white font-black py-4 rounded-2xl text-[15px] tracking-wide transition-all active:scale-[0.98] ${cta.cls}`}
+          onClick={handleClick}
+          disabled={busy}
+          className={`w-full flex items-center justify-center gap-2.5 text-white font-black py-4 rounded-2xl text-[15px] tracking-wide transition-all active:scale-[0.98] disabled:opacity-70 ${cta.cls}`}
         >
-          <cta.Icon className="w-5 h-5" />
-          {cta.label}
+          {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <cta.Icon className="w-5 h-5" />}
+          {busy ? 'Please wait...' : cta.label}
         </button>
       </div>
 
