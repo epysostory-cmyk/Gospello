@@ -31,12 +31,18 @@ export default function CategoryScroller({ categories, activeSlug, allUrl }: Pro
 
   useEffect(() => {
     checkScroll()
+    // Re-check after fonts/layout settle
+    const t = setTimeout(checkScroll, 150)
     const el = scrollRef.current
     el?.addEventListener('scroll', checkScroll, { passive: true })
     window.addEventListener('resize', checkScroll)
+    const ro = new ResizeObserver(checkScroll)
+    if (el) ro.observe(el)
     return () => {
+      clearTimeout(t)
       el?.removeEventListener('scroll', checkScroll)
       window.removeEventListener('resize', checkScroll)
+      ro.disconnect()
     }
   }, [])
 
@@ -51,12 +57,13 @@ export default function CategoryScroller({ categories, activeSlug, allUrl }: Pro
       {/* Left arrow */}
       <button
         onClick={() => scroll('left')}
-        className={`flex-shrink-0 w-7 h-7 rounded-full border border-gray-200 bg-white flex items-center justify-center transition-all ${
-          canLeft ? 'opacity-100 hover:bg-gray-50 hover:border-gray-300' : 'opacity-0 pointer-events-none'
+        disabled={!canLeft}
+        className={`flex-shrink-0 w-7 h-7 rounded-full border bg-white flex items-center justify-center transition-all ${
+          canLeft ? 'border-gray-300 hover:bg-gray-50 text-gray-600' : 'border-gray-100 text-gray-300 cursor-default'
         }`}
         aria-label="Scroll left"
       >
-        <ChevronLeft className="w-4 h-4 text-gray-500" />
+        <ChevronLeft className="w-4 h-4" />
       </button>
 
       {/* Scrollable pills */}
@@ -86,12 +93,13 @@ export default function CategoryScroller({ categories, activeSlug, allUrl }: Pro
       {/* Right arrow */}
       <button
         onClick={() => scroll('right')}
-        className={`flex-shrink-0 w-7 h-7 rounded-full border border-gray-200 bg-white flex items-center justify-center transition-all ${
-          canRight ? 'opacity-100 hover:bg-gray-50 hover:border-gray-300' : 'opacity-0 pointer-events-none'
+        disabled={!canRight}
+        className={`flex-shrink-0 w-7 h-7 rounded-full border bg-white flex items-center justify-center transition-all ${
+          canRight ? 'border-gray-300 hover:bg-gray-50 text-gray-600' : 'border-gray-100 text-gray-300 cursor-default'
         }`}
         aria-label="Scroll right"
       >
-        <ChevronRight className="w-4 h-4 text-gray-500" />
+        <ChevronRight className="w-4 h-4" />
       </button>
     </div>
   )
