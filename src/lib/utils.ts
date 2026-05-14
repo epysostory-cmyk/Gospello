@@ -7,6 +7,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function slugify(text: string): string {
   return text
+    .replace(/https?:\/\/\S+/gi, '')
+    .replace(/[^\x00-\x7F]/g, '')
     .toLowerCase()
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '-')
