@@ -10,7 +10,7 @@ interface Props {
 
 export default function ConditionalLayout({ children, navbar, footer }: Props) {
   const pathname = usePathname()
-  const isAuthPage = pathname.startsWith('/auth') || pathname.startsWith('/onboarding')
+  const isAuthPage = pathname.startsWith('/auth') || pathname.startsWith('/onboarding') || pathname.startsWith('/admin')
 
   if (isAuthPage) {
     return <>{children}</>
