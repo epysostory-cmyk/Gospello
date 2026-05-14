@@ -777,7 +777,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
             {/* ── RIGHT: sticky sidebar ──────────────────────────── */}
             <div className="w-[280px] flex-shrink-0">
-              <div className="sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto">
+              <div className="sticky top-6">
 
                 {/* CTA card */}
                 <div className="border border-gray-200 rounded-2xl overflow-hidden">
