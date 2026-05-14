@@ -777,7 +777,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
             {/* ── RIGHT: sticky sidebar ──────────────────────────── */}
             <div className="w-[280px] flex-shrink-0">
-              <div className="sticky top-6">
+              <div className="sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto">
 
                 {/* CTA card */}
                 <div className="border border-gray-200 rounded-2xl overflow-hidden">
@@ -838,10 +838,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   </div>
                 </div>
 
-                {/* Share — below the card, not inside it */}
-                <div className="mt-5">
+                {/* Share — compact inline row */}
+                <div className="mt-4 px-1">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Share</p>
                   <ShareButton eventTitle={e.title} eventUrl={eventUrl} eventDate={shareDate}
-                    eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} />
+                    eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} compact />
                 </div>
 
                 {/* Views */}
