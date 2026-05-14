@@ -1,9 +1,9 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 import Link from 'next/link'
 import { ArrowRight, Heart, Globe, Users, Zap, Shield, MapPin } from 'lucide-react'
 import BackButton from '@/components/ui/BackButton'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export const metadata = {
   title: 'About Us',
@@ -62,7 +62,7 @@ const DEFAULTS = {
 }
 
 export default async function AboutPage() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data } = await supabase
     .from('platform_settings')
     .select(

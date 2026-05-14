@@ -1,7 +1,8 @@
+export const revalidate = 60
+
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate } from '@/lib/utils'
 import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, MessageCircle, User } from 'lucide-react'
@@ -9,12 +10,10 @@ import type { Profile, SeededOrganizer, Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import EventCard from '@/components/ui/EventCard'
 
-export const dynamic = 'force-dynamic'
-
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const adminClient = createAdminClient()
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
 
@@ -64,7 +63,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function OrganizerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const adminClient = createAdminClient()
 
   const { data: profileData } = await supabase

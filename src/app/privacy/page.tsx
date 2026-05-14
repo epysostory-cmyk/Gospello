@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 86400
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import BackButton from '@/components/ui/BackButton'

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ChevronRight } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 export default async function CategoriesPage() {
   const admin = createAdminClient()

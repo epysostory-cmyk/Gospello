@@ -1,7 +1,8 @@
+export const revalidate = 60
+
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
   MapPin, Globe, Phone, ArrowLeft, Calendar,
@@ -10,12 +11,10 @@ import {
 import EventCard from '@/components/ui/EventCard'
 import type { Church, Event } from '@/types/database'
 
-export const dynamic = 'force-dynamic'
-
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data } = await supabase.from('churches').select('name, description, logo_url, city, state').eq('slug', slug).maybeSingle()
   if (!data) return {}
 
@@ -59,7 +58,7 @@ function gradientFor(name: string) {
 
 export default async function ChurchPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: church } = await supabase.from('churches').select('*').eq('slug', slug).eq('is_hidden', false).single()
   if (!church) notFound()
