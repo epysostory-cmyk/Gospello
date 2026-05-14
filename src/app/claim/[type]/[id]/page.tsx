@@ -146,7 +146,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ type: st
                   </Link>
                 </div>
 
-                <p className="text-xs text-gray-400 mt-5">Free to join · No credit card required</p>
+                <p className="text-xs text-gray-400 mt-5">Free to join</p>
               </div>
 
             ) : (
