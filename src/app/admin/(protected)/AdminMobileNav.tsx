@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   Menu, X, LayoutDashboard, Calendar, Users, Building2, Mic2, Grid3X3,
-  Bell, History, User, Shield, Star, Settings, ExternalLink, LogOut, Tag,
+  Bell, History, User, Shield, Star, Settings, ExternalLink, LogOut, Tag, BarChart2,
 } from 'lucide-react'
 
 interface Props { adminUser: { email: string; role: string }; pendingCount: number; pendingClaimsCount?: number }
@@ -16,11 +16,12 @@ type NavItem = {
 }
 
 const ALL_NAV: NavItem[] = [
-  { href: '/admin',              label: 'Dashboard',       icon: LayoutDashboard, exact: true, roles: ['super_admin','admin','moderator'] },
-  { href: '/admin/events',       label: 'Events',          icon: Calendar,                     roles: ['super_admin','admin','moderator'] },
-  { href: '/admin/profiles',     label: 'Seeded Profiles', icon: Users,                        roles: ['super_admin','admin','moderator'] },
-  { href: '/admin/organizations',label: 'User Profiles',   icon: Building2,                    roles: ['super_admin','admin'] },
-  { href: '/admin/organizers',   label: 'Organizers',      icon: Mic2,                         roles: ['super_admin','admin'] },
+  { href: '/admin',              label: 'Dashboard',          icon: LayoutDashboard, exact: true, roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/analytics',    label: 'Analytics',          icon: BarChart2,                    roles: ['super_admin','admin'] },
+  { href: '/admin/events',       label: 'Events',             icon: Calendar,                     roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/profiles',     label: 'Seeded Churches',    icon: Building2,                    roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/organizations',label: 'User Profiles',      icon: Users,                        roles: ['super_admin','admin'] },
+  { href: '/admin/organizers',   label: 'Seeded Organizers',  icon: Mic2,                         roles: ['super_admin','admin'] },
   { href: '/admin/categories',   label: 'Categories',      icon: Grid3X3,                      roles: ['super_admin'] },
   { href: '/admin/claims',       label: 'Pending Claims',  icon: Bell,   badge: 'claims',      roles: ['super_admin','admin'] },
   { href: '/admin/claims/history',label:'Claim History',   icon: History,                      roles: ['super_admin','admin'] },
