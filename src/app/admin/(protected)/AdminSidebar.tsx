@@ -105,7 +105,7 @@ export default function AdminSidebar({ adminUser, pendingCount, pendingClaimsCou
 
   return (
     <aside
-      className="hidden lg:flex flex-col w-60 min-h-screen sticky top-0 flex-shrink-0"
+      className="hidden lg:flex flex-col w-60 h-screen sticky top-0 flex-shrink-0 overflow-y-auto"
       style={{ background: '#0F0F0F', fontFamily: 'var(--font-plus-jakarta), sans-serif' }}
     >
       {/* Logo */}

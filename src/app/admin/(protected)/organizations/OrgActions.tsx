@@ -1,145 +1,103 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useRef, useEffect, useTransition } from 'react'
 import {
-  ShieldOff, ShieldCheck, EyeOff, Eye, Trash2, Loader2, Building2,
+  ShieldOff, ShieldCheck, EyeOff, Eye, Trash2, Loader2,
+  Building2, MoreHorizontal,
 } from 'lucide-react'
 import {
-  deleteProfileAction,
-  setProfileStatusAction,
-  setProfileHiddenAction,
-  deleteChurchAction,
-  setChurchHiddenAction,
+  deleteProfileAction, setProfileStatusAction, setProfileHiddenAction,
+  deleteChurchAction, setChurchHiddenAction,
 } from './actions'
 
 interface Props {
-  profileId: string
-  status: string
-  isHidden: boolean
-  accountType: 'church' | 'organizer'
-  churchId: string | null
-  churchIsHidden: boolean
-  displayName: string
+  profileId: string; status: string; isHidden: boolean
+  accountType: 'church' | 'organizer'; churchId: string | null
+  churchIsHidden: boolean; displayName: string
 }
 
-export default function OrgActions({
-  profileId,
-  status,
-  isHidden,
-  accountType,
-  churchId,
-  churchIsHidden,
-  displayName,
-}: Props) {
+export default function OrgActions({ profileId, status, isHidden, accountType, churchId, churchIsHidden, displayName }: Props) {
   const [pending, startTransition] = useTransition()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
   const suspended = status === 'suspended'
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
   const run = (fn: () => Promise<void>) => {
-    startTransition(async () => { await fn() })
+    startTransition(async () => { await fn(); setOpen(false) })
   }
 
-  const confirmDelete = (label: string, action: () => void) => {
-    if (window.confirm(`Delete "${label}" permanently? This cannot be undone.`)) {
-      action()
-    }
+  const confirmRun = (label: string, fn: () => Promise<void>) => {
+    if (window.confirm(`${label}? This cannot be undone.`)) run(fn)
   }
+
+  if (pending) return <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
 
   return (
-    <div className="flex items-center justify-end gap-1.5 flex-wrap">
-
-      {/* ── Suspend / Reactivate ── */}
+    <div ref={ref} className="relative">
       <button
-        disabled={pending}
-        onClick={() =>
-          run(() => setProfileStatusAction(profileId, suspended ? 'active' : 'suspended'))
-        }
-        title={suspended ? 'Reactivate account' : 'Suspend account'}
-        className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
-          suspended
-            ? 'bg-green-600/20 hover:bg-green-600/30 border border-green-600/30 text-green-400'
-            : 'bg-amber-600/20 hover:bg-amber-600/30 border border-amber-600/30 text-amber-400'
-        }`}
+        onClick={() => setOpen(o => !o)}
+        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
       >
-        {pending ? (
-          <Loader2 className="w-3 h-3 animate-spin" />
-        ) : suspended ? (
-          <ShieldCheck className="w-3 h-3" />
-        ) : (
-          <ShieldOff className="w-3 h-3" />
-        )}
-        {suspended ? 'Reactivate' : 'Suspend'}
+        <MoreHorizontal className="w-4 h-4" />
       </button>
 
-      {/* ── Hide / Show (profile — organizers page) ── */}
-      <button
-        disabled={pending}
-        onClick={() => run(() => setProfileHiddenAction(profileId, !isHidden))}
-        title={isHidden ? 'Show on public site' : 'Hide from public site'}
-        className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
-          isHidden
-            ? 'bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-600/30 text-indigo-400'
-            : 'bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400'
-        }`}
-      >
-        {pending ? (
-          <Loader2 className="w-3 h-3 animate-spin" />
-        ) : isHidden ? (
-          <Eye className="w-3 h-3" />
-        ) : (
-          <EyeOff className="w-3 h-3" />
-        )}
-        {isHidden ? 'Show' : 'Hide'}
-      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden w-48">
+          <button
+            onClick={() => run(() => setProfileStatusAction(profileId, suspended ? 'active' : 'suspended'))}
+            className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
+              suspended ? 'text-green-700 hover:bg-green-50' : 'text-amber-700 hover:bg-amber-50'
+            }`}
+          >
+            {suspended ? <ShieldCheck className="w-3.5 h-3.5" /> : <ShieldOff className="w-3.5 h-3.5" />}
+            {suspended ? 'Reactivate' : 'Suspend'}
+          </button>
 
-      {/* ── Hide / Show church listing (only for churches) ── */}
-      {accountType === 'church' && churchId && (
-        <button
-          disabled={pending}
-          onClick={() => run(() => setChurchHiddenAction(churchId, !churchIsHidden))}
-          title={churchIsHidden ? 'Show church page publicly' : 'Hide church page publicly'}
-          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
-            churchIsHidden
-              ? 'bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/30 text-purple-400'
-              : 'bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400'
-          }`}
-        >
-          {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Building2 className="w-3 h-3" />}
-          {churchIsHidden ? 'Show Church' : 'Hide Church'}
-        </button>
+          <button
+            onClick={() => run(() => setProfileHiddenAction(profileId, !isHidden))}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            {isHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+            {isHidden ? 'Show Profile' : 'Hide Profile'}
+          </button>
+
+          {accountType === 'church' && churchId && (
+            <button
+              onClick={() => run(() => setChurchHiddenAction(churchId, !churchIsHidden))}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              {churchIsHidden ? 'Show Church' : 'Hide Church'}
+            </button>
+          )}
+
+          <div className="border-t border-gray-100" />
+
+          {accountType === 'church' && churchId && (
+            <button
+              onClick={() => confirmRun(`Delete church record for "${displayName}" (keeps user account)`, () => deleteChurchAction(churchId))}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Delete Church
+            </button>
+          )}
+
+          <button
+            onClick={() => confirmRun(`Permanently delete "${displayName}" and ALL their data`, () => deleteProfileAction(profileId))}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Delete All Data
+          </button>
+        </div>
       )}
-
-      {/* ── Delete church record only ── */}
-      {accountType === 'church' && churchId && (
-        <button
-          disabled={pending}
-          onClick={() =>
-            confirmDelete(`${displayName} (church record)`, () =>
-              run(() => deleteChurchAction(churchId)),
-            )
-          }
-          title="Delete church record (keeps user account)"
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-orange-600/20 hover:bg-orange-600/30 border border-orange-600/30 text-orange-400 transition-colors disabled:opacity-50"
-        >
-          {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-          Del Church
-        </button>
-      )}
-
-      {/* ── Delete profile + auth user (permanent) ── */}
-      <button
-        disabled={pending}
-        onClick={() =>
-          confirmDelete(`${displayName} account (ALL DATA)`, () =>
-            run(() => deleteProfileAction(profileId)),
-          )
-        }
-        title="Permanently delete user + all their data"
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-600/20 hover:bg-red-600/30 border border-red-600/30 text-red-400 transition-colors disabled:opacity-50"
-      >
-        {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-        Delete All
-      </button>
-
     </div>
   )
 }
