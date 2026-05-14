@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Users, Building2, Mic2, Grid3X3,
   Bell, History, User, Shield, Star, Settings, ExternalLink, LogOut,
-  ChevronRight, Tag,
+  ChevronRight, Tag, BarChart2,
 } from 'lucide-react'
 
 interface AdminUser { id: string; email: string; role: string }
@@ -30,7 +30,8 @@ function buildNav(role: string): NavSection[] {
     {
       label: 'OVERVIEW',
       items: [
-        { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true, roles: ['super_admin','admin','moderator'] },
+        { href: '/admin',            label: 'Dashboard', icon: LayoutDashboard, exact: true, roles: ['super_admin','admin','moderator'] },
+        { href: '/admin/analytics',  label: 'Analytics', icon: BarChart2,                     roles: ['super_admin','admin'] },
       ],
     },
     {
