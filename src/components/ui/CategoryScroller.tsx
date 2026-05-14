@@ -1,0 +1,98 @@
+'use client'
+
+import { useRef, useState, useEffect } from 'react'
+import Link from 'next/link'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+interface CategoryItem {
+  slug: string
+  name: string
+  icon?: string | null
+  url: string
+}
+
+interface Props {
+  categories: CategoryItem[]
+  activeSlug: string | undefined
+  allUrl: string
+}
+
+export default function CategoryScroller({ categories, activeSlug, allUrl }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canLeft, setCanLeft]   = useState(false)
+  const [canRight, setCanRight] = useState(false)
+
+  const checkScroll = () => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanLeft(el.scrollLeft > 4)
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }
+
+  useEffect(() => {
+    checkScroll()
+    const el = scrollRef.current
+    el?.addEventListener('scroll', checkScroll, { passive: true })
+    window.addEventListener('resize', checkScroll)
+    return () => {
+      el?.removeEventListener('scroll', checkScroll)
+      window.removeEventListener('resize', checkScroll)
+    }
+  }, [])
+
+  const scroll = (dir: 'left' | 'right') => {
+    scrollRef.current?.scrollBy({ left: dir === 'left' ? -200 : 200, behavior: 'smooth' })
+  }
+
+  const allItems = [{ slug: '', name: 'All', icon: null, url: allUrl }, ...categories]
+
+  return (
+    <div className="relative flex items-center gap-1">
+      {/* Left arrow */}
+      <button
+        onClick={() => scroll('left')}
+        className={`flex-shrink-0 w-7 h-7 rounded-full border border-gray-200 bg-white flex items-center justify-center transition-all ${
+          canLeft ? 'opacity-100 hover:bg-gray-50 hover:border-gray-300' : 'opacity-0 pointer-events-none'
+        }`}
+        aria-label="Scroll left"
+      >
+        <ChevronLeft className="w-4 h-4 text-gray-500" />
+      </button>
+
+      {/* Scrollable pills */}
+      <div
+        ref={scrollRef}
+        className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {allItems.map((cat) => {
+          const active = cat.slug === '' ? !activeSlug : activeSlug === cat.slug
+          return (
+            <Link
+              key={cat.slug || 'all'}
+              href={cat.url}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-all whitespace-nowrap ${
+                active
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:text-gray-900'
+              }`}
+            >
+              {cat.icon && <span className="text-sm leading-none">{cat.icon}</span>}
+              {cat.name}
+            </Link>
+          )
+        })}
+      </div>
+
+      {/* Right arrow */}
+      <button
+        onClick={() => scroll('right')}
+        className={`flex-shrink-0 w-7 h-7 rounded-full border border-gray-200 bg-white flex items-center justify-center transition-all ${
+          canRight ? 'opacity-100 hover:bg-gray-50 hover:border-gray-300' : 'opacity-0 pointer-events-none'
+        }`}
+        aria-label="Scroll right"
+      >
+        <ChevronRight className="w-4 h-4 text-gray-500" />
+      </button>
+    </div>
+  )
+}

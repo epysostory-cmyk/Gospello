@@ -10,7 +10,7 @@ import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import { Search, MapPin, X } from 'lucide-react'
 import NearMeButton from '@/components/ui/NearMeButton'
-import CategoryDropdown from '@/components/ui/CategoryDropdown'
+import CategoryScroller from '@/components/ui/CategoryScroller'
 import Link from 'next/link'
 import Image from 'next/image'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
@@ -229,10 +229,9 @@ export default async function EventsPage({
             )}
           </form>
 
-          {/* Category dropdown */}
-          <CategoryDropdown
+          {/* Category scroller */}
+          <CategoryScroller
             activeSlug={params.category}
-            activeLabel={activeCategoryLabel}
             allUrl={buildUrl({ category: undefined, page: undefined })}
             categories={categoryOptions.map(cat => ({
               slug: cat.slug,
