@@ -10,6 +10,7 @@ import DiscoverChurches from './_components/DiscoverChurches'
 import DiscoverOrganizers from './_components/DiscoverOrganizers'
 import type { OrganizerCard } from './_components/DiscoverOrganizers'
 import type { Event, Church } from '@/types/database'
+import HomeCategoryScroller from './_components/HomeCategoryScroller'
 
 export const revalidate = 60
 
@@ -416,31 +417,7 @@ export default async function HomePage() {
 
       {/* ── CATEGORY PILLS ────────────────────────────────────────────── */}
       {displayCategories.length > 0 && (
-        <div
-          className="flex gap-2 overflow-x-auto px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-100"
-          style={{ scrollbarWidth: 'none' } as React.CSSProperties}
-        >
-          {displayCategories.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/events?category=${cat.slug}`}
-              className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700 whitespace-nowrap"
-            >
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: cat.color ?? '#6B7280' }}
-              />
-              {cat.name}
-            </Link>
-          ))}
-          <Link
-            href="/categories"
-            className="flex-shrink-0 flex items-center gap-1 px-4 py-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-sm font-medium text-gray-500 whitespace-nowrap"
-          >
-            All categories
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
+        <HomeCategoryScroller categories={displayCategories} />
       )}
 
       {/* ── FEATURED EVENTS ───────────────────────────────────────────── */}
