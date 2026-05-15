@@ -4,18 +4,12 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Users, CheckCircle2, Clock, Ticket } from 'lucide-react'
+import { ArrowLeft, Users, CheckCircle2, Clock, Ticket, BookmarkCheck, Download } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import ExportCSVButton from './_components/ExportCSVButton'
 
 interface Props {
   params: Promise<{ id: string }>
-}
-
-const TYPE_LABELS: Record<string, string> = {
-  free_no_registration: 'Free (No Reg.)',
-  free_registration: 'Free (Registered)',
-  paid: 'Paid',
 }
 
 export default async function EventRegistrationsPage({ params }: Props) {
@@ -27,17 +21,22 @@ export default async function EventRegistrationsPage({ params }: Props) {
 
   const admin = createAdminClient()
 
-  // Verify the event belongs to this organizer
+  // Fetch event — include registration_type + is_free so we can tailor the UI
   const { data: event } = await admin
     .from('events')
-    .select('id, title, slug, organizer_id, start_date, city, state')
+    .select('id, title, slug, organizer_id, start_date, city, state, registration_type, is_free')
     .eq('id', id)
     .single()
 
   if (!event) notFound()
   if (event.organizer_id !== user.id) notFound()
 
-  // Fetch all registrations + saved count in parallel
+  const regType = event.registration_type as string | null
+  const isPaid = regType === 'paid'
+  const isFreeReg = regType === 'free_registration'
+  const isInstant = regType === 'free_no_registration' || (!regType && event.is_free)
+
+  // Fetch registrations + saved count in parallel
   const [{ data: registrations }, { count: savedCount }] = await Promise.all([
     admin
       .from('registrations')
@@ -51,27 +50,26 @@ export default async function EventRegistrationsPage({ params }: Props) {
   ])
 
   const regs = registrations ?? []
-  const totalCount = regs.length
-  const paidConfirmedCount = regs.filter(r => r.paid_confirmed).length
-  const freeCount = regs.filter(r => r.registration_type === 'free_registration').length
-  const paidCount = regs.filter(r => r.registration_type === 'paid').length
   const interestedCount = savedCount ?? 0
+  const confirmedCount = regs.filter(r => r.paid_confirmed).length
+  const pendingPaymentCount = regs.filter(r => !r.paid_confirmed).length
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Header */}
+    <div className="max-w-3xl space-y-5">
+
+      {/* Back + header */}
       <div>
         <Link
           href="/dashboard/events"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-3 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to My Events
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{event.title}</h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <h1 className="text-xl font-bold text-gray-900 leading-snug">{event.title}</h1>
+            <p className="text-gray-400 text-sm mt-0.5">
               {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
               {event.city ? ` · ${event.city}` : ''}
             </p>
@@ -82,120 +80,182 @@ export default async function EventRegistrationsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{totalCount}</div>
-          <div className="text-xs text-gray-500 mt-1">Total Registrations</div>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
-          <div className="text-2xl font-bold text-rose-500">{interestedCount}</div>
-          <div className="text-xs text-gray-500 mt-1">Saved / Interested</div>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
-          <div className="text-2xl font-bold text-indigo-600">{freeCount}</div>
-          <div className="text-xs text-gray-500 mt-1">Free Registered</div>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
-          <div className="text-2xl font-bold text-amber-600">{paidCount}</div>
-          <div className="text-xs text-gray-500 mt-1">Paid</div>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
-          <div className="text-2xl font-bold text-emerald-600">{paidConfirmedCount}</div>
-          <div className="text-xs text-gray-500 mt-1">Payment Confirmed</div>
-        </div>
-      </div>
-
-      {/* Registrations table */}
-      {regs.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
-          <Users className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No registrations yet</h3>
-          <p className="text-gray-500">Registrations will appear here once attendees sign up.</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 text-left">
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ticket</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {regs.map((reg) => (
-                  <tr key={reg.id} className="hover:bg-gray-50/50 transition-colors">
-                    {/* Ticket number */}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <Ticket className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                        <span className="font-mono text-sm font-semibold text-indigo-600">
-                          #{String(reg.ticket_number).padStart(4, '0')}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Name */}
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900 text-sm">{reg.full_name}</p>
-                    </td>
-
-                    {/* Email */}
-                    <td className="px-4 py-3">
-                      <p className="text-sm text-gray-600">{reg.email}</p>
-                    </td>
-
-                    {/* Type */}
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                        reg.registration_type === 'paid'
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-indigo-50 text-indigo-700'
-                      }`}>
-                        {TYPE_LABELS[reg.registration_type] ?? reg.registration_type}
-                      </span>
-                    </td>
-
-                    {/* Registered date */}
-                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
-                      {formatDate(reg.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </td>
-
-                    {/* Payment status */}
-                    <td className="px-4 py-3">
-                      {reg.registration_type === 'paid' ? (
-                        reg.paid_confirmed ? (
-                          <span className="flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full w-fit">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Confirmed
-                          </span>
-                        ) : (reg as { payment_status?: string }).payment_status === 'payment_self_confirmed' ? (
-                          <span className="flex items-center gap-1 text-xs font-medium text-orange-700 bg-orange-50 px-2.5 py-1 rounded-full w-fit">
-                            <Clock className="w-3 h-3" />
-                            Self-Confirmed ⚠️
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full w-fit">
-                            <Clock className="w-3 h-3" />
-                            Pending Payment
-                          </span>
-                        )
-                      ) : (
-                        <span className="text-xs text-gray-400">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* ── Instant / free-no-registration ── */}
+      {isInstant && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+          <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+            <Users className="w-5 h-5 text-emerald-500" />
           </div>
+          <p className="text-sm font-medium text-gray-700 mb-1">This is a free drop-in event</p>
+          <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">
+            No registration required — anyone can mark themselves as attending. Check your event page to see the attendee count.
+          </p>
+          {interestedCount > 0 && (
+            <div className="mt-5 inline-flex items-center gap-2 bg-rose-50 border border-rose-100 text-rose-700 text-sm font-semibold px-4 py-2 rounded-full">
+              <BookmarkCheck className="w-4 h-4" />
+              {interestedCount} people saved this event
+            </div>
+          )}
         </div>
       )}
+
+      {/* ── Free registration ── */}
+      {isFreeReg && (
+        <>
+          {/* Stats — only what matters for a free event */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+              <p className="text-3xl font-black text-gray-900">{regs.length}</p>
+              <p className="text-xs text-gray-500 mt-1 font-medium">Registered</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+              <p className="text-3xl font-black text-rose-500">{interestedCount}</p>
+              <p className="text-xs text-gray-500 mt-1 font-medium">Saved / Interested</p>
+            </div>
+          </div>
+
+          {/* Attendee list */}
+          {regs.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <AttendeeList regs={regs} showPayment={false} />
+          )}
+        </>
+      )}
+
+      {/* ── Paid event ── */}
+      {isPaid && (
+        <>
+          {/* Stats — payment-aware */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+              <p className="text-3xl font-black text-gray-900">{regs.length}</p>
+              <p className="text-xs text-gray-500 mt-1 font-medium">Registered</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+              <p className="text-3xl font-black text-emerald-600">{confirmedCount}</p>
+              <p className="text-xs text-gray-500 mt-1 font-medium">Payment Confirmed</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center col-span-2 sm:col-span-1">
+              <p className="text-3xl font-black text-rose-500">{interestedCount}</p>
+              <p className="text-xs text-gray-500 mt-1 font-medium">Saved / Interested</p>
+            </div>
+          </div>
+
+          {pendingPaymentCount > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+              <span className="font-semibold">{pendingPaymentCount} {pendingPaymentCount === 1 ? 'person' : 'people'}</span> registered but payment hasn&apos;t been confirmed yet. Check your payment dashboard.
+            </div>
+          )}
+
+          {regs.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <AttendeeList regs={regs} showPayment={true} />
+          )}
+        </>
+      )}
+
+    </div>
+  )
+}
+
+/* ── Shared components ───────────────────────────────────── */
+
+function EmptyState() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+      <Users className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+      <p className="text-base font-semibold text-gray-700 mb-1">No registrations yet</p>
+      <p className="text-sm text-gray-400">People who register will appear here.</p>
+    </div>
+  )
+}
+
+function AttendeeList({ regs, showPayment }: { regs: any[]; showPayment: boolean }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+        <p className="text-sm font-semibold text-gray-700">{regs.length} {regs.length === 1 ? 'attendee' : 'attendees'}</p>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="divide-y divide-gray-50 sm:hidden">
+        {regs.map(reg => (
+          <div key={reg.id} className="px-4 py-3.5 space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold text-gray-900 text-sm">{reg.full_name}</p>
+              <span className="font-mono text-xs font-bold text-indigo-500 flex-shrink-0">
+                #{String(reg.ticket_number).padStart(4, '0')}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500">{reg.email}</p>
+            <div className="flex items-center justify-between pt-0.5">
+              <p className="text-xs text-gray-400">
+                {formatDate(reg.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}
+              </p>
+              {showPayment && (
+                reg.paid_confirmed
+                  ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      <CheckCircle2 className="w-3 h-3" /> Confirmed
+                    </span>
+                  : <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                      <Clock className="w-3 h-3" /> Pending
+                    </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden sm:block overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50 text-left">
+              <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Ticket</th>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Name</th>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Email</th>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Registered</th>
+              {showPayment && (
+                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Payment</th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {regs.map(reg => (
+              <tr key={reg.id} className="hover:bg-gray-50/50 transition-colors">
+                <td className="px-4 py-3">
+                  <span className="font-mono text-sm font-bold text-indigo-500">
+                    #{String(reg.ticket_number).padStart(4, '0')}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <p className="font-medium text-gray-900 text-sm">{reg.full_name}</p>
+                </td>
+                <td className="px-4 py-3">
+                  <p className="text-sm text-gray-500">{reg.email}</p>
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">
+                  {formatDate(reg.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}
+                </td>
+                {showPayment && (
+                  <td className="px-4 py-3">
+                    {reg.paid_confirmed
+                      ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                          <CheckCircle2 className="w-3 h-3" /> Confirmed
+                        </span>
+                      : <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
+                          <Clock className="w-3 h-3" /> Pending
+                        </span>
+                    }
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
