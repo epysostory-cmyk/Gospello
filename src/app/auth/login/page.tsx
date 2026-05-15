@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -40,8 +41,14 @@ function LoginPage() {
   const [loading, setLoading]           = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]               = useState('')
+  const [logoUrl, setLogoUrl]           = useState<string | null>(null)
 
   const reason = searchParams.get('reason')
+
+  useEffect(() => {
+    supabase.from('platform_settings').select('site_logo_url').eq('id', 'default').single()
+      .then(({ data }) => { if (data?.site_logo_url) setLogoUrl(data.site_logo_url) })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (reason === 'deleted') return
@@ -104,10 +111,16 @@ function LoginPage() {
         {/* Logo */}
         <div className="mb-10">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center">
-              <span className="text-white font-bold text-sm">G</span>
-            </div>
-            <span className="text-base font-bold text-gray-900">Gospello</span>
+            {logoUrl ? (
+              <Image src={logoUrl} alt="Gospello" width={140} height={40} className="h-8 w-auto object-contain" />
+            ) : (
+              <>
+                <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-sm">G</span>
+                </div>
+                <span className="text-base font-bold text-gray-900">Gospello</span>
+              </>
+            )}
           </Link>
         </div>
 
