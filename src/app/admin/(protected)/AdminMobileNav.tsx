@@ -73,7 +73,7 @@ export default function AdminMobileNav({ adminUser, pendingCount, pendingClaimsC
                 href={href}
                 onClick={() => setOpen(false)}
                 className={`relative flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  active ? 'text-white bg-[#1F1F1F]' : 'text-[#9CA3AF] hover:bg-[#1F1F1F] hover:text-white'
+                  active ? 'text-white bg-[#1F1F1F]' : 'text-gray-400 hover:bg-[#1F1F1F] hover:text-white'
                 }`}
               >
                 {active && (

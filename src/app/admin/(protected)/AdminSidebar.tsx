@@ -127,7 +127,7 @@ export default function AdminSidebar({ adminUser, pendingCount, pendingClaimsCou
       <nav className="flex-1 px-3 pb-3 overflow-y-auto">
         {sections.map((section, si) => (
           <div key={section.label} className={si > 0 ? 'mt-1 pt-1 border-t border-white/[0.05]' : ''}>
-            <p className="px-2 pt-3 pb-1 text-[11px] font-medium text-gray-600">
+            <p className="px-2 pt-3 pb-1 text-[11px] font-medium text-gray-500">
               {section.label}
             </p>
             <div className="space-y-0.5">
@@ -141,14 +141,14 @@ export default function AdminSidebar({ adminUser, pendingCount, pendingClaimsCou
                     className={`relative flex items-center justify-between px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors ${
                       active
                         ? 'text-white bg-white/10'
-                        : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.05]'
+                        : 'text-gray-400 hover:text-white hover:bg-white/[0.07]'
                     }`}
                   >
                     {active && (
                       <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-[#7C3AED] rounded-r-full" />
                     )}
                     <span className="flex items-center gap-2.5">
-                      <Icon className={`w-[15px] h-[15px] flex-shrink-0 ${active ? 'text-[#9B6FE8]' : 'text-gray-600'}`} />
+                      <Icon className={`w-[15px] h-[15px] flex-shrink-0 ${active ? 'text-[#9B6FE8]' : 'text-gray-500'}`} />
                       {label}
                     </span>
                     {badge && count > 0 && (
@@ -185,7 +185,7 @@ export default function AdminSidebar({ adminUser, pendingCount, pendingClaimsCou
         <Link
           href="/"
           target="_blank"
-          className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium text-gray-500 hover:text-gray-200 hover:bg-white/[0.05] transition-colors"
+          className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium text-gray-400 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
           <ExternalLink className="w-[15px] h-[15px]" />
           View Site
