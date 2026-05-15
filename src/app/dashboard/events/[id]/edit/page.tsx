@@ -1,57 +1,46 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { Loader2 } from 'lucide-react'
+import { notFound, redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import EventFormStepper from '../../new/_components/EventFormStepper'
 import type { Event } from '@/types/database'
-import BackButton from '@/components/ui/BackButton'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
-export default function EditEventPage() {
-  const params = useParams()
-  const [event, setEvent] = useState<Event | null>(null)
-  const [loading, setLoading] = useState(true)
+interface Props {
+  params: Promise<{ id: string }>
+}
 
-  useEffect(() => {
-    // Create client inside effect to avoid it as a stale dependency
-    const supabase = createClient()
-    const loadEvent = async () => {
-      const { data } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', params.id)
-        .single()
+export default async function EditEventPage({ params }: Props) {
+  const { id } = await params
 
-      if (data) {
-        setEvent(data as Event)
-      }
-      setLoading(false)
-    }
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
 
-    loadEvent()
-  }, [params.id])
+  const admin = createAdminClient()
+  const { data: event } = await admin
+    .from('events')
+    .select('*')
+    .eq('id', id)
+    .single()
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-      </div>
-    )
-  }
+  if (!event) notFound()
 
-  if (!event) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Event not found</p>
-      </div>
-    )
-  }
+  // Only the organizer can edit their own event
+  if (event.organizer_id !== user.id) notFound()
 
   return (
-    <>
-      <BackButton />
-      <EventFormStepper isEditMode={true} initialEvent={event} />
-    </>
+    <div>
+      <div className="px-4 pt-4 max-w-2xl mx-auto">
+        <Link
+          href="/dashboard/events"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to My Events
+        </Link>
+      </div>
+      <EventFormStepper isEditMode={true} initialEvent={event as Partial<Event>} />
+    </div>
   )
 }
