@@ -25,7 +25,7 @@ const OPTIONS: { value: RegistrationType; label: string; desc: string }[] = [
   {
     value: 'paid',
     label: 'Paid event',
-    desc: 'Attendees register and pay via your payment link. Ticket sent after payment.',
+    desc: 'Attendees see your ticket price and go straight to your payment link to pay.',
   },
 ]
 
@@ -77,34 +77,61 @@ export default function Step5Entry({ formData, updateForm, errors }: StepProps) 
       </div>
 
       {current === 'paid' && (
-        <div className="space-y-4 pt-2 border-t border-gray-100">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1.5">Ticket price <span className="text-red-500">*</span></label>
-              <input type="number" value={formData.price}
-                onChange={e => updateForm('price', e.target.value)}
-                placeholder="0" min="0" step="0.01"
-                className={inp} />
-              {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1.5">Currency <span className="text-red-500">*</span></label>
-              <select value={formData.currency}
+        <div className="space-y-5 pt-2 border-t border-gray-100">
+
+          {/* How it works for the host */}
+          <div className="bg-gray-50 rounded-xl px-4 py-3 space-y-1.5">
+            <p className="text-xs font-semibold text-gray-700">How this works</p>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Gospello shows your ticket price and sends interested attendees straight to your payment link.
+              Your payment provider (Paystack, Flutterwave, etc.) handles everything from there — collection, receipt, and confirmation.
+              You manage your attendees from your payment dashboard.
+            </p>
+          </div>
+
+          {/* Price */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+              Ticket price <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-2">
+              <select
+                value={formData.currency}
                 onChange={e => updateForm('currency', e.target.value)}
-                className={inp}>
+                className={`w-24 flex-shrink-0 ${inp}`}
+              >
                 {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
+              <input
+                type="number"
+                value={formData.price}
+                onChange={e => updateForm('price', e.target.value)}
+                placeholder="e.g. 5000"
+                min="0"
+                step="0.01"
+                className={`flex-1 ${inp}`}
+              />
             </div>
+            {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
+            <p className="text-xs text-gray-400 mt-1.5">This is shown as a badge on your event — e.g. <span className="font-medium text-gray-600">NGN 5,000</span></p>
           </div>
+
+          {/* Payment link */}
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Payment link <span className="text-red-500">*</span></label>
-            <input type="url" value={formData.payment_link}
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+              Where should people pay? <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="url"
+              value={formData.payment_link}
               onChange={e => updateForm('payment_link', e.target.value)}
-              placeholder="https://paystack.com/pay/..."
-              className={inp} />
+              placeholder="https://paystack.com/pay/your-event"
+              className={inp}
+            />
             {errors.payment_link && <p className="text-red-500 text-xs mt-1">{errors.payment_link}</p>}
-            <p className="text-xs text-gray-400 mt-1">Flutterwave, Paystack, or any payment page link.</p>
+            <p className="text-xs text-gray-400 mt-1.5">Paste your Paystack, Flutterwave, Selar, or any payment page link.</p>
           </div>
+
         </div>
       )}
 

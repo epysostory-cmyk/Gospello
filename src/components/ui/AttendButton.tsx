@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, CheckCircle2, UserPlus, UserMinus, UserCheck, Ticket, Download } from 'lucide-react'
+import { Loader2, CheckCircle2, UserPlus, UserMinus, UserCheck, Ticket, Download, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { instantAttend, unattend, anonymousAttend } from '@/app/actions/attendance'
-import { registerForEvent, confirmPayment, regenerateTicket } from '@/app/actions/registrations'
+import { registerForEvent, regenerateTicket } from '@/app/actions/registrations'
 import type { User } from '@supabase/supabase-js'
 import HaveAnEventCTA from './HaveAnEventCTA'
 
@@ -55,14 +55,14 @@ export default function AttendButton({
   const [email, setEmail] = useState(serverUserEmail ?? '')
   const [submitting, setSubmitting] = useState(false)
 
-  // Post-registration state
+  // Post-registration state (free events only)
   const [registrationId, setRegistrationId] = useState<string | null>(null)
   const [ticketPdfBase64, setTicketPdfBase64] = useState<string | null>(null)
   const [ticketNumber, setTicketNumber] = useState<number | null>(null)
-  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false)
-  const [confirmingPayment, setConfirmingPayment] = useState(false)
-  const [ticketConfirmed, setTicketConfirmed] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
+
+  // Paid event state — simple redirect, no ticket
+  const [paidSent, setPaidSent] = useState(false)
 
 
   useEffect(() => {
@@ -247,7 +247,6 @@ export default function AttendButton({
       if (typeof window !== 'undefined') {
         if (result.registrationId) localStorage.setItem(`gospello_regid_${eventId}`, result.registrationId)
         if (result.ticketNumber)    localStorage.setItem(`gospello_ticketnum_${eventId}`, String(result.ticketNumber))
-        // Store email so ownership check passes on re-download after refresh
         localStorage.setItem(`gospello_email_${eventId}`, email.trim().toLowerCase())
       }
 
@@ -255,33 +254,15 @@ export default function AttendButton({
         // Free registration — ticket generated immediately
         setTicketPdfBase64(result.ticketPdfBase64 ?? null)
       } else if (mode === 'paid') {
-        // Paid — open payment link, then show confirmation step
-        if (paymentLink) {
-          setTimeout(() => window.open(paymentLink, '_blank'), 400)
-        }
-        setShowPaymentConfirm(true)
+        // Paid — open payment link directly, Gospello's job is done
+        if (paymentLink) window.open(paymentLink, '_blank')
+        setPaidSent(true)
       }
     } else {
       setError(result.error ?? 'Failed to register. Please try again.')
     }
 
     setSubmitting(false)
-  }
-
-  const handleConfirmPayment = async () => {
-    if (!registrationId) return
-    setConfirmingPayment(true)
-    setError('')
-    const result = await confirmPayment(registrationId, email)
-    if (result.success) {
-      setTicketPdfBase64(result.ticketPdfBase64 ?? null)
-      setTicketNumber(result.ticketNumber ?? null)
-      setShowPaymentConfirm(false)
-      setTicketConfirmed(true)
-    } else {
-      setError(result.error ?? 'Could not confirm payment. Please try again.')
-    }
-    setConfirmingPayment(false)
   }
 
   const downloadTicket = (base64?: string | null, num?: number | null) => {
@@ -392,68 +373,28 @@ export default function AttendButton({
     )
   }
 
-  // ── Paid: ticket confirmed ───────────────────────────────────
-  if (attended && mode === 'paid' && ticketConfirmed && ticketPdfBase64) {
+  // ── Paid: redirected to payment page ────────────────────────
+  if (mode === 'paid' && paidSent) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-          Payment confirmed! Ticket issued 🎟
+          Payment page opened
         </div>
-        <p className="text-center text-xs text-gray-500">Your ticket has been emailed to you.</p>
-        <button
-          onClick={() => downloadTicket()}
-          className="w-full flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 font-medium py-2.5 rounded-xl hover:bg-indigo-50 transition-colors text-sm"
-        >
-          <Download className="w-4 h-4" />
-          Download Ticket {ticketNumber ? `#${String(ticketNumber).padStart(4, '0')}` : ''}
-        </button>
-        <HaveAnEventCTA compact />
-      </div>
-    )
-  }
-
-  // ── Paid: awaiting payment confirmation ──────────────────────
-  if (attended && mode === 'paid' && showPaymentConfirm) {
-    return (
-      <div className="space-y-3">
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-          <p className="text-sm font-semibold text-amber-800 mb-1">Complete your payment 💳</p>
-          <p className="text-xs text-amber-700">
-            You&apos;ve been registered. After completing payment on the payment page,
-            tap the button below to receive your ticket.
-          </p>
-        </div>
+        <p className="text-center text-xs text-gray-400 leading-relaxed">
+          Complete your payment there to secure your spot.
+        </p>
         {paymentLink && (
           <a
             href={paymentLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+            className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium py-2.5 rounded-xl transition-colors text-sm"
           >
             <Ticket className="w-4 h-4" />
-            Go to Payment Page →
+            Open payment page again
           </a>
         )}
-        <button
-          onClick={handleConfirmPayment}
-          disabled={confirmingPayment}
-          className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
-        >
-          {confirmingPayment && <Loader2 className="w-4 h-4 animate-spin" />}
-          {confirmingPayment ? 'Confirming...' : "I've completed payment — get my ticket"}
-        </button>
-        {error && <p className="text-red-600 text-xs text-center">{error}</p>}
-      </div>
-    )
-  }
-
-  // ── Paid: registered, awaiting (no payment confirm panel) ────
-  if (attended && mode === 'paid') {
-    return (
-      <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
-        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-        Registered — awaiting payment
       </div>
     )
   }
@@ -491,12 +432,12 @@ export default function AttendButton({
       {showForm && (
         <form onSubmit={handleSubmit} className="mt-4 space-y-3 border-t border-gray-100 pt-4">
           <p className="text-sm font-semibold text-gray-900">
-            {mode === 'paid' ? '🎟 Complete your registration' : '✏️ Confirm your spot'}
+            {mode === 'paid' ? 'Enter your details to continue' : 'Confirm your spot'}
           </p>
 
           {mode === 'paid' && paymentLink && (
-            <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-100">
-              After registering you&apos;ll be redirected to the payment page.
+            <p className="text-xs text-gray-600 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+              You&apos;ll go straight to the payment page after this.
             </p>
           )}
 
@@ -541,7 +482,7 @@ export default function AttendButton({
               className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 disabled:opacity-60 transition-colors text-sm"
             >
               {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              {submitting ? 'Registering...' : mode === 'paid' ? 'Register & Pay →' : 'Confirm Spot'}
+              {submitting ? 'Please wait...' : mode === 'paid' ? 'Go to Payment →' : 'Confirm Spot'}
             </button>
           </div>
         </form>
