@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate, formatTime, CATEGORY_LABELS } from '@/lib/utils'
+import type { ReactNode } from 'react'
 import {
   Calendar, MapPin, Clock, ArrowLeft, ExternalLink,
   Eye, Globe, Ticket, Users, Tag, Wifi, Star,
@@ -163,7 +164,7 @@ export default async function AdminEventPreview({
   )
 }
 
-function Chip({ icon, label, highlight }: { icon: React.ReactNode; label: string; highlight?: boolean }) {
+function Chip({ icon, label, highlight }: { icon: ReactNode; label: string; highlight?: boolean }) {
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${
       highlight
@@ -176,7 +177,7 @@ function Chip({ icon, label, highlight }: { icon: React.ReactNode; label: string
   )
 }
 
-function Detail({ label, value, icon, href }: { label: string; value: string; icon: React.ReactNode; href?: string }) {
+function Detail({ label, value, icon, href }: { label: string; value: string; icon: ReactNode; href?: string }) {
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-1">
       <div className="flex items-center gap-1.5 text-gray-500">
