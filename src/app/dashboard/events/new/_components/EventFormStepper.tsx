@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, CheckCircle2, Clock, Bell, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 import StepperProgressBar from './StepperProgressBar'
 import Step1Basics from './steps/Step1Basics'
 import Step2DateTime from './steps/Step2DateTime'
@@ -104,6 +105,7 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
   const [categories, setCategories] = useState<CategoryRow[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null)
   const submittedRef = useRef(false)
@@ -388,8 +390,8 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
       // Clear localStorage on success
       localStorage.removeItem(DRAFT_KEY)
 
-      // Redirect to dashboard
-      router.push('/dashboard/events')
+      // Show success screen instead of silent redirect
+      setSubmitted(true)
     } catch (error) {
       setErrors({ submit: error instanceof Error ? error.message : 'An error occurred' })
     } finally {
@@ -417,6 +419,86 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
       case 6: return <Step6Review {...props} goToStep={setCurrentStep} />
       default: return null
     }
+  }
+
+  // ── Success screen ──────────────────────────────────────────
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-16 px-4">
+        <div className="w-full max-w-md">
+
+          {/* Icon */}
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-1">
+              {isEditMode ? 'Changes saved' : 'Event submitted!'}
+            </h1>
+            <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+              {isEditMode
+                ? 'Your updates have been saved. The event is back in review.'
+                : `Your event "${formData.title}" has been submitted and is now under review.`}
+            </p>
+          </div>
+
+          {/* What happens next */}
+          {!isEditMode && (
+            <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">What happens next</p>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Our team reviews your event</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Usually within 24 hours. We check your details and approve it for the platform.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-violet-50 flex items-center justify-center flex-shrink-0">
+                    <Bell className="w-4 h-4 text-[#7C3AED]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">You get notified</p>
+                    <p className="text-xs text-gray-500 mt-0.5">We&apos;ll email you once it&apos;s approved — or if we need anything from you.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                    <ArrowRight className="w-4 h-4 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Your event goes live</p>
+                    <p className="text-xs text-gray-500 mt-0.5">It appears on Gospello for people to discover, save, and register.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="space-y-2.5">
+            <Link
+              href="/dashboard/events"
+              className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold transition-colors"
+            >
+              View my events
+            </Link>
+            {!isEditMode && (
+              <Link
+                href="/dashboard/events/new"
+                className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors"
+              >
+                Post another event
+              </Link>
+            )}
+          </div>
+
+        </div>
+      </div>
+    )
   }
 
   return (
