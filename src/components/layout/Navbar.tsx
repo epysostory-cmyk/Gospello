@@ -117,7 +117,7 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors font-outfit tracking-wide ${
                       active
                         ? 'text-indigo-600 bg-indigo-50'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -188,13 +188,13 @@ export default function Navbar({ logoUrl, siteName = 'Gospello' }: NavbarProps) 
                 <>
                   <Link
                     href="/auth/login"
-                    className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="text-sm font-semibold text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors font-outfit tracking-wide"
                   >
                     Sign in
                   </Link>
                   <Link
                     href="/auth/signup"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors font-outfit tracking-wide"
                   >
                     Post an Event
                   </Link>
