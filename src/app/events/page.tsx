@@ -98,9 +98,11 @@ async function getEvents(params: SearchParams) {
   }
   if (params.timeframe === 'week') {
     const now      = new Date()
+    // Week runs Sunday–Saturday. Find the Sunday that started this week,
+    // then the Saturday that ends it (always in the future relative to that Sunday).
     const sunday   = new Date(now); sunday.setDate(now.getDate() - now.getDay()); sunday.setHours(0, 0, 0, 0)
     const saturday = new Date(sunday); saturday.setDate(sunday.getDate() + 6); saturday.setHours(23, 59, 59, 999)
-    query = query.gte('start_date', sunday.toISOString()).lte('start_date', saturday.toISOString())
+    query = query.gte('start_date', now.toISOString()).lte('start_date', saturday.toISOString())
   }
 
   const { data } = await query
