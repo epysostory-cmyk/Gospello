@@ -41,7 +41,7 @@ function LoginPage() {
   const [loading, setLoading]           = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]               = useState('')
-  const [logoUrl, setLogoUrl]           = useState<string | null>(null)
+  const [logoUrl, setLogoUrl]           = useState<string>('https://atrdstihzvnvbgxveplm.supabase.co/storage/v1/object/public/site-assets/logo/dccedb39-bf4b-4b4b-beec-fc285f57ad68/1777020281172.png')
 
   const reason = searchParams.get('reason')
 

@@ -96,7 +96,7 @@ function SignUpForm() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [siteLogoUrl, setSiteLogoUrl] = useState<string | null>(null)
+  const [siteLogoUrl, setSiteLogoUrl] = useState<string>('https://atrdstihzvnvbgxveplm.supabase.co/storage/v1/object/public/site-assets/logo/dccedb39-bf4b-4b4b-beec-fc285f57ad68/1777020281172.png')
 
   useEffect(() => {
     supabase
