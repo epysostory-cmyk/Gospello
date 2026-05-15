@@ -302,7 +302,7 @@ export default async function HomePage() {
     <div className="min-h-screen bg-white">
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <section className="bg-white border-b border-gray-100">
+      <section className="bg-white border-b border-gray-100 font-outfit">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-14 pb-12 sm:pt-20 sm:pb-16 text-center">
 
           {/* Context label */}
