@@ -302,78 +302,57 @@ export default async function HomePage() {
     <div className="min-h-screen bg-white">
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <section className="bg-white border-b border-gray-100 font-outfit">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-14 pb-12 sm:pt-20 sm:pb-16 text-center">
+      <section className="bg-white font-outfit">
+        <div className="max-w-3xl mx-auto px-5 sm:px-6 pt-16 pb-14 sm:pt-24 sm:pb-20 text-center">
 
-          {/* Context label */}
-          <div className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-wide uppercase text-gray-400 mb-6 border border-gray-200 rounded-full px-3 py-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
-            {heroBadge || 'Events · Churches · All 36 States'}
-          </div>
-
-          <h1 className="text-[2.75rem] sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-[1.06]">
+          {/* Headline */}
+          <h1 className="text-[2.6rem] sm:text-[3.5rem] font-black text-gray-950 tracking-tight leading-[1.08] mb-5">
             {heroHeadline1}{' '}
-            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
-              {heroHeadlineGradient}
-            </span>
+            <span className="text-indigo-600">{heroHeadlineGradient}</span>
             {heroHeadline3 && <span> {heroHeadline3}</span>}
           </h1>
 
-          <p className="mt-4 text-base sm:text-[17px] text-gray-500 leading-relaxed max-w-lg mx-auto">
+          {/* Subheadline */}
+          <p className="text-[17px] sm:text-lg text-gray-500 leading-relaxed max-w-xl mx-auto mb-10">
             {heroSubheadline}
           </p>
 
-          {/* Search */}
-          <form action="/search" method="GET" className="mt-8 flex gap-2 max-w-lg mx-auto">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          {/* Search — the only CTA */}
+          <form action="/search" method="GET" className="max-w-xl mx-auto">
+            <div className="flex items-center gap-0 bg-white border-2 border-gray-900 rounded-2xl overflow-hidden focus-within:border-indigo-600 transition-colors">
+              <Search className="w-5 h-5 text-gray-400 ml-4 flex-shrink-0" />
               <input
                 type="text"
                 name="q"
-                placeholder="Search events, churches, cities..."
-                className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Search events, churches, cities…"
+                className="flex-1 px-3 py-4 text-[15px] text-gray-900 placeholder-gray-400 bg-transparent focus:outline-none"
               />
+              <button
+                type="submit"
+                className="flex-shrink-0 bg-gray-950 hover:bg-gray-800 text-white font-bold text-sm px-6 py-4 transition-colors"
+              >
+                Search
+              </button>
             </div>
-            <button
-              type="submit"
-              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3.5 rounded-xl text-sm transition-colors"
-            >
-              Search
-            </button>
           </form>
 
-          {/* Quick destinations + popular searches */}
-          <div className="mt-4 flex items-center justify-center gap-x-3 gap-y-2 flex-wrap">
-            <Link
-              href="/events?date=weekend"
-              className="inline-flex items-center gap-1 text-[13px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
-            >
-              This weekend
-            </Link>
-            <Link
-              href="/churches"
-              className="inline-flex items-center gap-1 text-[13px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
-            >
-              Find a church
-            </Link>
-            {popularSearches.slice(0, 4).map((tag) => (
-              <Link
-                key={tag}
-                href={`/search?q=${encodeURIComponent(tag)}`}
-                className="text-[13px] font-medium text-indigo-600 hover:text-indigo-800 hover:underline whitespace-nowrap transition-colors"
-              >
-                {tag}
-              </Link>
+          {/* Popular searches — minimal, text-only */}
+          <div className="mt-5 flex items-center justify-center gap-x-1 gap-y-2 flex-wrap">
+            <span className="text-sm text-gray-400 mr-1">Popular:</span>
+            {popularSearches.slice(0, 5).map((tag, i) => (
+              <span key={tag} className="flex items-center">
+                <Link
+                  href={`/search?q=${encodeURIComponent(tag)}`}
+                  className="text-sm text-gray-600 hover:text-indigo-600 hover:underline transition-colors"
+                >
+                  {tag}
+                </Link>
+                {i < Math.min(popularSearches.length, 5) - 1 && (
+                  <span className="text-gray-300 mx-1.5">·</span>
+                )}
+              </span>
             ))}
           </div>
-
-          {/* Organizer CTA */}
-          <p className="mt-5 text-sm text-gray-400">
-            Running an event?{' '}
-            <Link href="/auth/signup" className="text-indigo-600 font-semibold hover:underline">
-              Post it free →
-            </Link>
-          </p>
 
         </div>
       </section>
