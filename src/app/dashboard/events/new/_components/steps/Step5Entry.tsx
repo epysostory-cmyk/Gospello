@@ -19,8 +19,8 @@ const OPTIONS: { value: RegistrationType; label: string; desc: string }[] = [
   },
   {
     value: 'free_registration',
-    label: 'Free — But register to attend',
-    desc: 'Free event. Attendees fill a short form and receive a ticket by email.',
+    label: 'Free — Register to attend',
+    desc: 'Attendees fill a short form and download their ticket immediately.',
   },
   {
     value: 'paid',

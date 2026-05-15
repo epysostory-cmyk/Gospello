@@ -357,7 +357,6 @@ export default function AttendButton({
           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
           You&apos;re registered! 🎉
         </div>
-        <p className="text-center text-xs text-gray-500">Your ticket has been emailed to you.</p>
         <button
           onClick={() => downloadTicket()}
           className="w-full flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 font-medium py-2.5 rounded-xl hover:bg-indigo-50 transition-colors text-sm"
@@ -503,7 +502,7 @@ export default function AttendButton({
 
           {mode === 'rsvp' && (
             <p className="text-xs text-indigo-700 bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100">
-              Your ticket will be emailed to you and available for download right after you register.
+              Your ticket will be ready to download immediately after you register.
             </p>
           )}
 

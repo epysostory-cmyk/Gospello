@@ -135,7 +135,8 @@ export async function registerForEvent(
       ? 'Online Event'
       : [event?.location_name, event?.city].filter(Boolean).join(', ') || 'TBD'
 
-    // ── For free_registration: generate ticket immediately + email it ──
+    // ── For free_registration: generate ticket immediately for in-browser download ──
+    // No email sent — ticket is available instantly on the page, no inbox needed.
     if (registrationType === 'free_registration') {
       const pdfBytes = await generateTicketPdf({
         eventTitle,
@@ -148,23 +149,6 @@ export async function registerForEvent(
       })
 
       const pdfBase64 = Buffer.from(pdfBytes).toString('base64')
-
-      const { subject, html } = emailTicket({
-        eventTitle,
-        attendeeName: fullName.trim(),
-        ticketNumber,
-        eventDate,
-        eventLocation,
-        isPaid: false,
-      })
-
-      // Best-effort email — don't block ticket download if email fails
-      void sendEmail({
-        to: email.trim().toLowerCase(),
-        subject,
-        html,
-        attachments: [{ filename: `ticket-${String(ticketNumber).padStart(4, '0')}.pdf`, content: pdfBase64 }],
-      })
 
       return { success: true, registrationId: reg.id, ticketPdfBase64: pdfBase64, ticketNumber }
     }
