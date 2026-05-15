@@ -96,9 +96,10 @@ const INITIAL_FORM_STATE: FormState = {
 interface Props {
   isEditMode?: boolean
   initialEvent?: Partial<Event>
+  eventStatus?: string
 }
 
-export default function EventFormStepper({ isEditMode = false, initialEvent }: Props) {
+export default function EventFormStepper({ isEditMode = false, initialEvent, eventStatus }: Props) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormState>(INITIAL_FORM_STATE)
@@ -561,12 +562,17 @@ export default function EventFormStepper({ isEditMode = false, initialEvent }: P
             </button>
           ) : (
             <button
-              onClick={handleSubmit}
+              onClick={() => {
+                if (isEditMode && eventStatus === 'approved') {
+                  if (!confirm('This will take your event offline and send it back for review. Proceed?')) return
+                }
+                handleSubmit()
+              }}
               disabled={isSubmitting}
               className="flex-1 py-3.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitting ? 'Submitting...' : isEditMode ? 'Save Changes' : 'Submit Event'}
+              {isSubmitting ? 'Saving...' : isEditMode ? 'Save Changes' : 'Submit Event'}
             </button>
           )}
         </div>

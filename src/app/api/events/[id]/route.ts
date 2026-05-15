@@ -22,7 +22,7 @@ export async function PUT(
     // Verify event ownership
     const { data: event } = await supabase
       .from('events')
-      .select('organizer_id')
+      .select('organizer_id, status')
       .eq('id', id)
       .single()
 
@@ -35,7 +35,10 @@ export async function PUT(
       title: body.title,
       description: body.description,
       category: body.category,
-      status: 'pending', // Always reset to pending on edit — prevents self-approval
+      // Always reset to pending — clear approval/rejection state cleanly
+      status: 'pending',
+      approved_at: null,
+      rejection_reason: null,
       visibility: body.visibility,
       start_date: body.start_date,
       end_date: body.end_date || null,
