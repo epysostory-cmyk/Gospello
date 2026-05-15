@@ -153,32 +153,26 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
   return (
     <Link
       href={`/events/${event.slug}`}
-      className="group bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1"
-      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)', }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(99,102,241,0.12)' }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)' }}
+      className="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:bg-gray-950 hover:-translate-y-0.5 hover:shadow-2xl shadow-sm border border-gray-100 hover:border-gray-950"
     >
       {/* Image */}
-      <div className="relative h-48 bg-gradient-to-br from-indigo-50 to-purple-50 overflow-hidden">
+      <div className="relative h-48 bg-gray-100 overflow-hidden">
         {event.banner_url ? (
           <Image
             src={event.banner_url}
             alt={event.title}
             fill
-            className={`object-cover group-hover:scale-105 transition-transform duration-500 ${hasEnded ? 'grayscale opacity-60' : ''}`}
+            className={`object-cover group-hover:scale-[1.03] transition-transform duration-500 ${hasEnded ? 'grayscale opacity-60' : ''}`}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-5xl font-black text-indigo-100">{event.title[0]}</span>
+          <div className="w-full h-full flex items-center justify-center bg-gray-50">
+            <span className="text-5xl font-black text-gray-200">{event.title[0]}</span>
           </div>
         )}
 
-        {/* Ended overlay */}
-        {hasEnded && (
-          <div className="absolute inset-0 bg-gray-900/30" />
-        )}
+        {hasEnded && <div className="absolute inset-0 bg-gray-900/30" />}
 
-        {/* Category - top left */}
+        {/* Category */}
         <span
           className="absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20"
           style={badgeStyle}
@@ -186,7 +180,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
           {categoryIcon && <span className="mr-1">{categoryIcon}</span>}{categoryLabel}
         </span>
 
-        {/* Badges - top right */}
+        {/* Status badges */}
         <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
           {hasEnded ? (
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-700/90 text-white backdrop-blur-sm">Ended</span>
@@ -197,7 +191,9 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
           ) : event.is_free ? (
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/90 text-white backdrop-blur-sm">Free</span>
           ) : (
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/90 text-white backdrop-blur-sm">Paid</span>
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/90 text-white backdrop-blur-sm">
+              {event.price != null ? `₦${event.price.toLocaleString()}` : 'Paid'}
+            </span>
           )}
           {isUpcoming && isAlmostFull && (
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/90 text-white backdrop-blur-sm">Almost Full</span>
@@ -209,7 +205,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
           )}
         </div>
 
-        {/* Save button - absolute over image, bottom right */}
+        {/* Save */}
         <div className="absolute bottom-3 right-3" onClick={e => e.preventDefault()}>
           <SaveButton eventId={event.id} initialSaved={false} variant="icon" size="sm" />
         </div>
@@ -217,51 +213,40 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
 
       {/* Body */}
       <div className="p-4">
-        <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug text-[15px]">
+        <h3 className="font-bold text-gray-900 group-hover:text-white transition-colors line-clamp-2 leading-snug text-[15px]">
           {event.title}
         </h3>
 
         <div className="mt-3 space-y-1.5">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Calendar className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-gray-500 group-hover:text-white/50 transition-colors">
+            <Calendar className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 group-hover:text-white/40" />
             {event.end_date && event.end_date.split('T')[0] !== event.start_date.split('T')[0] ? (
-              <span>
-                {formatDate(event.start_date, { month: 'short', day: 'numeric' })} – {formatDate(event.end_date, { month: 'short', day: 'numeric' })}
-              </span>
+              <span>{formatDate(event.start_date, { month: 'short', day: 'numeric' })} – {formatDate(event.end_date, { month: 'short', day: 'numeric' })}</span>
             ) : (
               <span>{formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}</span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs group-hover:text-white/50 transition-colors">
             {event.is_online ? (
-              <><Globe className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" /><span className="text-sky-600 font-semibold">Online Event</span></>
+              <><Globe className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 group-hover:text-white/40" /><span className="text-gray-600 group-hover:text-white/60 font-medium">Online</span></>
             ) : (
-              <><MapPin className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" /><span className="text-rose-600 font-semibold">In Person</span>{(event.location_name || event.city) && <span className="text-gray-500 truncate"> · {event.location_name || event.city}</span>}</>
+              <><MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 group-hover:text-white/40" /><span className="text-gray-600 group-hover:text-white/60 font-medium truncate">{event.location_name || event.city || 'In Person'}</span></>
             )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-          <div className="flex items-center gap-2 min-w-0">
-            {event.churches
-              ? <p className="text-xs font-semibold text-indigo-600 truncate">{event.churches.name}</p>
-              : <span />
-            }
-            {attendanceCount != null && attendanceCount > 0 && (
-              <span className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
-                <Users className="w-3 h-3" />
-                {attendanceCount}
-              </span>
-            )}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 group-hover:border-white/10 transition-colors">
+          <div className="min-w-0 flex-1">
+            {event.churches ? (
+              <p className="text-xs font-semibold text-gray-400 group-hover:text-white/40 truncate transition-colors">{event.churches.name}</p>
+            ) : <span />}
           </div>
-          {/* Free / Paid price badge */}
-          {event.is_free ? (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">Free</span>
-          ) : event.price != null ? (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex-shrink-0">₦{event.price.toLocaleString()}</span>
-          ) : (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex-shrink-0">Paid</span>
+          {attendanceCount != null && attendanceCount > 0 && (
+            <span className="flex items-center gap-1 text-xs text-gray-400 group-hover:text-white/40 flex-shrink-0 transition-colors">
+              <Users className="w-3 h-3" />
+              {attendanceCount}
+            </span>
           )}
         </div>
       </div>
