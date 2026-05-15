@@ -153,7 +153,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
   return (
     <Link
       href={`/events/${event.slug}`}
-      className="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:bg-indigo-950 hover:-translate-y-0.5 hover:shadow-2xl shadow-sm border border-gray-100 hover:border-indigo-950"
+      className="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl shadow-sm border border-gray-100 hover:border-gray-200"
     >
       {/* Image */}
       <div className="relative h-48 bg-gray-100 overflow-hidden">
@@ -213,37 +213,37 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
 
       {/* Body */}
       <div className="p-4">
-        <h3 className="font-bold text-gray-900 group-hover:text-white transition-colors line-clamp-2 leading-snug text-[15px]">
+        <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug text-[15px]">
           {event.title}
         </h3>
 
         <div className="mt-3 space-y-1.5">
-          <div className="flex items-center gap-2 text-xs text-gray-500 group-hover:text-white/50 transition-colors">
-            <Calendar className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 group-hover:text-white/40" />
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Calendar className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
             {event.end_date && event.end_date.split('T')[0] !== event.start_date.split('T')[0] ? (
               <span>{formatDate(event.start_date, { month: 'short', day: 'numeric' })} – {formatDate(event.end_date, { month: 'short', day: 'numeric' })}</span>
             ) : (
               <span>{formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}</span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs group-hover:text-white/50 transition-colors">
+          <div className="flex items-center gap-2 text-xs">
             {event.is_online ? (
-              <><Globe className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 group-hover:text-white/40" /><span className="text-gray-600 group-hover:text-white/60 font-medium">Online</span></>
+              <><Globe className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" /><span className="text-gray-600 font-medium">Online</span></>
             ) : (
-              <><MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 group-hover:text-white/40" /><span className="text-gray-600 group-hover:text-white/60 font-medium truncate">{event.location_name || event.city || 'In Person'}</span></>
+              <><MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" /><span className="text-gray-600 font-medium truncate">{event.location_name || event.city || 'In Person'}</span></>
             )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 group-hover:border-white/10 transition-colors">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
           <div className="min-w-0 flex-1">
             {event.churches ? (
-              <p className="text-xs font-semibold text-gray-400 group-hover:text-white/40 truncate transition-colors">{event.churches.name}</p>
+              <p className="text-xs font-semibold text-gray-400 truncate">{event.churches.name}</p>
             ) : <span />}
           </div>
           {attendanceCount != null && attendanceCount > 0 && (
-            <span className="flex items-center gap-1 text-xs text-gray-400 group-hover:text-white/40 flex-shrink-0 transition-colors">
+            <span className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
               <Users className="w-3 h-3" />
               {attendanceCount}
             </span>
