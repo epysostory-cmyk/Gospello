@@ -24,14 +24,16 @@ export default async function ClaimPage({ params }: { params: Promise<{ type: st
   let profileCity = ''
   let isClaimed   = false
   let hasPendingClaim = false
+  let profileSlug = ''
 
   if (profileType === 'church') {
-    const { data } = await adminClient.from('churches').select('name, city, state, is_claimed, claim_requested_at').eq('id', id).single()
+    const { data } = await adminClient.from('churches').select('name, city, state, is_claimed, claim_requested_at, slug').eq('id', id).single()
     if (!data) notFound()
     profileName     = data.name
     profileCity     = [data.city, data.state].filter(Boolean).join(', ')
     isClaimed       = data.is_claimed
     hasPendingClaim = !!data.claim_requested_at
+    profileSlug     = data.slug ?? ''
   } else {
     const { data } = await adminClient.from('seeded_organizers').select('name, city, state, is_claimed, claim_requested_at').eq('id', id).single()
     if (!data) notFound()
@@ -41,7 +43,9 @@ export default async function ClaimPage({ params }: { params: Promise<{ type: st
     hasPendingClaim = !!data.claim_requested_at
   }
 
-  const backHref    = profileType === 'church' ? `/churches` : `/organizers`
+  const backHref    = profileType === 'church'
+    ? (profileSlug ? `/churches/${profileSlug}` : `/churches`)
+    : `/organizers/${id}`
   const redirectUrl = `/claim/${profileType}/${id}`
   const typeName    = profileType === 'church' ? 'church' : 'organisation'
 
