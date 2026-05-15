@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Users, Building2, Mic2, Grid3X3,
-  Bell, History, User, Shield, Star, Settings, ExternalLink, LogOut,
+  Bell, User, Shield, Star, Settings, ExternalLink, LogOut,
   Tag, BarChart2,
 } from 'lucide-react'
 
@@ -47,8 +47,7 @@ function buildNav(role: string): NavSection[] {
     {
       label: 'Claims',
       items: [
-        { href: '/admin/claims',         label: 'Pending Claims', icon: Bell,    badge: 'claims' as const, roles: ['super_admin','admin'] },
-        { href: '/admin/claims/history', label: 'Claim History',  icon: History,                          roles: ['super_admin','admin'] },
+        { href: '/admin/claims', label: 'Claims', icon: Bell, badge: 'claims' as const, roles: ['super_admin','admin'] },
       ],
     },
     {

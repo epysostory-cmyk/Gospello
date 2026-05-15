@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   Menu, X, LayoutDashboard, Calendar, Users, Building2, Mic2, Grid3X3,
-  Bell, History, User, Shield, Star, Settings, ExternalLink, LogOut, Tag, BarChart2,
+  Bell, User, Shield, Star, Settings, ExternalLink, LogOut, Tag, BarChart2,
 } from 'lucide-react'
 
 interface Props { adminUser: { email: string; role: string }; pendingCount: number; pendingClaimsCount?: number }
@@ -23,8 +23,7 @@ const ALL_NAV: NavItem[] = [
   { href: '/admin/organizations',label: 'User Profiles',      icon: Users,                        roles: ['super_admin','admin'] },
   { href: '/admin/organizers',   label: 'Seeded Organizers',  icon: Mic2,                         roles: ['super_admin','admin'] },
   { href: '/admin/categories',   label: 'Categories',      icon: Grid3X3,                      roles: ['super_admin'] },
-  { href: '/admin/claims',       label: 'Pending Claims',  icon: Bell,   badge: 'claims',      roles: ['super_admin','admin'] },
-  { href: '/admin/claims/history',label:'Claim History',   icon: History,                      roles: ['super_admin','admin'] },
+  { href: '/admin/claims',       label: 'Claims',          icon: Bell,   badge: 'claims',      roles: ['super_admin','admin'] },
   { href: '/admin/moderation',   label: 'Event Queue',     icon: Tag,    badge: 'pending',     roles: ['super_admin','admin','moderator'] },
   { href: '/admin/users',        label: 'Users',           icon: User,                         roles: ['super_admin','admin'] },
   { href: '/admin/team',         label: 'Roles',           icon: Shield,                       roles: ['super_admin'] },
