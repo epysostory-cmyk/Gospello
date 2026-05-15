@@ -223,10 +223,15 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
             </div>
           )}
 
-          {pastorLine && (
+          {(c.leader_title || c.pastor_name) && (
             <div className="px-4 py-4 border-b border-gray-100">
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Leadership</p>
-              <p className="text-sm font-semibold text-gray-900">{pastorLine}</p>
+              {c.leader_title && (
+                <p className="text-xs text-gray-500 mb-0.5">{c.leader_title}</p>
+              )}
+              {c.pastor_name && (
+                <p className="text-sm font-semibold text-gray-900">{c.pastor_name}</p>
+              )}
             </div>
           )}
 
