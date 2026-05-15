@@ -153,7 +153,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
   return (
     <Link
       href={`/events/${event.slug}`}
-      className="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:bg-gray-950 hover:-translate-y-0.5 hover:shadow-2xl shadow-sm border border-gray-100 hover:border-gray-950"
+      className="group bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:bg-indigo-950 hover:-translate-y-0.5 hover:shadow-2xl shadow-sm border border-gray-100 hover:border-indigo-950"
     >
       {/* Image */}
       <div className="relative h-48 bg-gray-100 overflow-hidden">
