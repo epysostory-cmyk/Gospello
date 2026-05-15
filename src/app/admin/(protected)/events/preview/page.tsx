@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate, formatTime, CATEGORY_LABELS } from '@/lib/utils'
 import { Calendar, MapPin, Clock, ArrowLeft, ExternalLink } from 'lucide-react'
+import AdminEventActions from '../AdminEventActions'
 
 export default async function AdminEventPreview({
   searchParams,
@@ -31,6 +32,13 @@ export default async function AdminEventPreview({
     hidden:   'bg-gray-500',
   }
 
+  const statusMessage: Record<string, string> = {
+    pending:  'This event is PENDING — awaiting review',
+    approved: 'This event is APPROVED and visible to the public',
+    rejected: 'This event is REJECTED and not visible to the public',
+    hidden:   'This event is HIDDEN and not visible to the public',
+  }
+
   return (
     <div className="max-w-3xl space-y-6">
       {/* Toolbar */}
@@ -54,7 +62,13 @@ export default async function AdminEventPreview({
 
       {/* Status banner */}
       <div className={`${statusColor[event.status] ?? 'bg-gray-500'} text-white text-sm font-semibold px-4 py-2.5 rounded-xl`}>
-        ⚠️ Admin Preview — This event is <span className="uppercase">{event.status}</span> and not visible to the public
+        {statusMessage[event.status] ?? `Status: ${event.status}`}
+      </div>
+
+      {/* Actions */}
+      <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+        <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Actions</p>
+        <AdminEventActions event={event as any} hidePreview />
       </div>
 
       {/* Banner */}
