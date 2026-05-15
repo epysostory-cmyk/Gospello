@@ -179,10 +179,13 @@ export default async function EventsPage({
   const regularEvents   = !hasFilters ? events.filter(e => !e.is_featured || getEventLifecycle(e.start_date, e.end_date) === 'ended') : events
 
   const now = new Date()
+  // Week = Sunday through Saturday. Find end-of-week Saturday 23:59.
+  const weekSunday = new Date(now); weekSunday.setDate(now.getDate() - now.getDay()); weekSunday.setHours(0, 0, 0, 0)
+  const weekSaturday = new Date(weekSunday); weekSaturday.setDate(weekSunday.getDate() + 6); weekSaturday.setHours(23, 59, 59, 999)
   const thisWeekEvents = !hasFilters
     ? regularEvents.filter(e => {
-        const d = (new Date(e.start_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-        return d >= 0 && d <= 7 && getEventLifecycle(e.start_date, e.end_date) !== 'ended'
+        const start = new Date(e.start_date)
+        return start >= now && start <= weekSaturday && getEventLifecycle(e.start_date, e.end_date) !== 'ended'
       })
     : []
 
