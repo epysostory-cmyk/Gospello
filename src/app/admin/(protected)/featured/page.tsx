@@ -43,13 +43,15 @@ export default async function AdminFeaturedPage({
 
   function buildUrl(overrides: Record<string, string | undefined>) {
     const p = new URLSearchParams()
-    if (tab !== 'all')   p.set('tab', tab)
-    if (search)          p.set('search', search)
-    if (page > 1)        p.set('page', String(page))
+    p.set('tab', tab)
+    if (search) p.set('search', search)
+    if (page > 1) p.set('page', String(page))
     Object.entries(overrides).forEach(([k, v]) => {
       if (v === undefined || v === '') p.delete(k)
       else p.set(k, v)
     })
+    // clean up default tab=all from URL
+    if (p.get('tab') === 'all') p.delete('tab')
     const s = p.toString()
     return `/admin/featured${s ? `?${s}` : ''}`
   }
@@ -69,8 +71,8 @@ export default async function AdminFeaturedPage({
         {/* Search bar */}
         <div className="p-4 border-b border-gray-100">
           <form method="GET" action="/admin/featured" className="flex gap-2">
-            {/* Always preserve tab */}
-            {tab === 'featured' && <input type="hidden" name="tab" value="featured" />}
+            {/* Always preserve tab in search */}
+            <input type="hidden" name="tab" value={tab} />
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
