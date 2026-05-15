@@ -7,7 +7,7 @@ import Link from 'next/link'
 import type { Event } from '@/types/database'
 import { approveEvent, rejectEvent, hideEvent, unhideEvent, deleteEvent } from './actions'
 
-export default function AdminEventActions({ event }: { event: Event }) {
+export default function AdminEventActions({ event, hidePreview }: { event: Event; hidePreview?: boolean }) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
@@ -78,13 +78,15 @@ export default function AdminEventActions({ event }: { event: Event }) {
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
       {/* Preview */}
-      <Link
-        href={`/admin/events/preview?id=${event.id}`}
-        className="flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
-      >
-        <ExternalLink className="w-3 h-3" />
-        Preview
-      </Link>
+      {!hidePreview && (
+        <Link
+          href={`/admin/events/preview?id=${event.id}`}
+          className="flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
+        >
+          <ExternalLink className="w-3 h-3" />
+          Preview
+        </Link>
+      )}
 
       {/* Edit */}
       <Link
