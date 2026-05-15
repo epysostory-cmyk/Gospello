@@ -299,10 +299,10 @@ export default async function HomePage() {
   const hasEvents = featuredEvents.length > 0 || upcomingEvents.length > 0
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white font-outfit">
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <section className="bg-white font-outfit">
+      <section className="bg-white">
         <div className="max-w-3xl mx-auto px-5 sm:px-6 pt-16 pb-14 sm:pt-24 sm:pb-20 text-center">
 
           <h1 className="text-[2.6rem] sm:text-[3.5rem] font-black text-gray-950 tracking-tight leading-[1.08] mb-5">
