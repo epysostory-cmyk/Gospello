@@ -49,6 +49,7 @@ export default function FeatureToggle({
         disabled={isPending}
         className="px-2 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-xs focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED] cursor-pointer disabled:opacity-60"
       >
+        <option value="3">3 days</option>
         <option value="7">7 days</option>
         <option value="14">14 days</option>
         <option value="30">30 days</option>
