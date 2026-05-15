@@ -54,6 +54,11 @@ body {
   font-family: var(--font-plus-jakarta), 'Plus Jakarta Sans', sans-serif;
 }
 
+/* Premium font utility — Outfit */
+.font-outfit {
+  font-family: var(--font-outfit), 'Outfit', sans-serif;
+}
+
 /* Hide scrollbar for horizontal sliders */
 .scrollbar-hide {
   -ms-overflow-style: none;
