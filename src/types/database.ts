@@ -231,14 +231,14 @@ export interface AdminUser {
   created_at: string
 }
 
-/** Returns 'upcoming' | 'ongoing' | 'ended' based on event dates */
+/** Returns 'upcoming' | 'ongoing' | 'ended' based on event dates.
+ *  If no end_date is set, the event is treated as ended 5 hours after start. */
 export function getEventLifecycle(startDate: string, endDate?: string | null): EventLifecycle {
   const now = new Date()
   const start = new Date(startDate)
-  const end = endDate ? new Date(endDate) : null
+  const end = endDate ? new Date(endDate) : new Date(start.getTime() + 5 * 60 * 60 * 1000)
   if (now < start) return 'upcoming'
-  if (end && now > end) return 'ended'
-  if (!end && now > new Date(start.getTime() + 6 * 60 * 60 * 1000)) return 'ended'
+  if (now > end) return 'ended'
   return 'ongoing'
 }
 

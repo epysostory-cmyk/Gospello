@@ -167,9 +167,19 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   }
 
   /* ─── Sidebar CTA (shared between desktop + mobile inline) ──── */
+  // Drop-in (free_no_registration) stays open during the event — late arrivals can still tap I'm Going.
+  // Ticket (free_registration) and paid events close at start time — no late registrations.
+  const regType = e.registration_type
+  const isTicketOrPaid = regType === 'free_registration' || regType === 'paid'
+  const registrationOpen = lifecycle === 'ended'
+    ? false
+    : isTicketOrPaid
+    ? lifecycle === 'upcoming'
+    : true // drop-in: open until ended
+
   const CtaBlock = ({ compact = false }: { compact?: boolean }) => (
     <div className={compact ? '' : 'space-y-3'}>
-      {lifecycle !== 'ended' ? (
+      {registrationOpen ? (
         <RegistrationButton
           event={{ id: e.id, registration_type: e.registration_type, price: e.price, payment_link: e.payment_link, rsvp_required: e.rsvp_required, is_free: e.is_free, title: e.title }}
           userId={user?.id ?? null}
@@ -180,7 +190,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         />
       ) : (
         <div className="w-full text-center py-3 text-sm text-gray-400 bg-gray-50 rounded-xl border border-gray-100">
-          This event has ended
+          {lifecycle === 'ended'
+            ? 'This event has ended'
+            : 'Registration is now closed'}
         </div>
       )}
       {!compact && lifecycle !== 'ended' && (
@@ -313,7 +325,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         </div>
 
         {/* Inline CTA for rsvp/paid mobile — scroll target for the floating bar */}
-        {lifecycle !== 'ended' && (e.registration_type === 'free_registration' || e.registration_type === 'paid' || (!e.registration_type && (e.rsvp_required || !e.is_free))) && (
+        {registrationOpen && (e.registration_type === 'free_registration' || e.registration_type === 'paid' || (!e.registration_type && (e.rsvp_required || !e.is_free))) && (
           <div id="mobile-attend-form" className="px-5 pb-5">
             <CtaBlock compact />
           </div>
@@ -864,7 +876,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         eventUrl={e.payment_link ?? eventUrl}
         isFree={e.is_free}
         rsvpRequired={e.rsvp_required}
-        lifecycle={lifecycle}
+        lifecycle={registrationOpen ? lifecycle : 'ended'}
         attendanceCount={attendance}
         registrationType={e.registration_type}
         isOrganizer={isOrganizer}
