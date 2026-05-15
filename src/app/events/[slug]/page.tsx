@@ -584,8 +584,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             ? <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
             : <div className="absolute inset-0 flex items-center justify-center text-9xl font-black text-gray-200">{e.title[0]}</div>
           }
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-
           {/* Back button overlaid */}
           <div className="absolute top-6 left-6">
             <Link href="/events"
@@ -599,32 +597,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={initialSaved}
               serverUserId={user?.id ?? null} variant="icon" size="md" />
           </div>
-
-          {/* Title + badges over gradient */}
-          <div className="absolute bottom-0 left-0 right-0 px-8 pb-8">
-            <div className="max-w-5xl mx-auto">
-              <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <EventStatusBadge startDate={e.start_date} endDate={e.end_date} />
-                <span className={`text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm ${
-                  e.is_free
-                    ? 'bg-emerald-500/80 text-white'
-                    : 'bg-amber-500/80 text-white'
-                }`}>{displayPrice}</span>
-                {almostFull && (
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-red-500/80 text-white backdrop-blur-sm">Almost Full</span>
-                )}
-              </div>
-              <h1 className="text-[36px] font-extrabold text-white leading-tight tracking-tight max-w-3xl">
-                {e.title}
-              </h1>
-              {attendance > 0 && (
-                <p className="mt-2 text-sm text-white/70 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" />
-                  <span><span className="font-bold text-white">{attendance.toLocaleString()}</span> {attendance === 1 ? 'person' : 'people'} going</span>
-                </p>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* ── Two-column body ── */}
@@ -633,6 +605,30 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
             {/* ── LEFT: main content ─────────────────────────────── */}
             <div className="flex-1 min-w-0">
+
+              {/* Title + badges — below banner */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <EventStatusBadge startDate={e.start_date} endDate={e.end_date} />
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                    e.is_free
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}>{displayPrice}</span>
+                  {almostFull && (
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200">Almost Full</span>
+                  )}
+                  {attendance > 0 && (
+                    <span className="ml-auto text-sm text-gray-400 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5" />
+                      {attendance.toLocaleString()} going
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-[32px] font-extrabold text-gray-950 leading-tight tracking-tight">
+                  {e.title}
+                </h1>
+              </div>
 
               {/* Date / Location / Host — unified card */}
               <div className="rounded-2xl border border-gray-100 bg-gray-50 divide-y divide-gray-100 overflow-hidden mb-8">
