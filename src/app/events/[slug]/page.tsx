@@ -209,22 +209,24 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       {/* ══════════════════════════════════════════════════════════════
           MOBILE  (hidden on lg+)
       ══════════════════════════════════════════════════════════════ */}
-      <div className="lg:hidden">
+      <div className="lg:hidden font-jakarta">
 
-        {/* Event flyer — full bleed, no overlay text */}
-        <div className="relative w-full bg-gray-100" style={{ aspectRatio: '1 / 1.05', maxHeight: '90vw' }}>
+        {/* Hero image — full bleed */}
+        <div className="relative w-full bg-gray-100" style={{ aspectRatio: '1 / 1.05', maxHeight: '92vw' }}>
           {e.banner_url
             ? <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
             : <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                <span className="text-6xl font-black text-gray-200">{e.title[0]}</span>
+                <span className="text-7xl font-black text-gray-200">{e.title[0]}</span>
               </div>
           }
-          {/* Minimal back + save — transparent so image reads fully */}
-          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4">
+          {/* Floating nav */}
+          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-5">
             <BackButton />
-            <div className="bg-black/30 backdrop-blur-sm rounded-full">
-              <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={initialSaved}
-                serverUserId={user?.id ?? null} variant="icon" size="md" />
+            <div className="flex items-center gap-2">
+              <div className="bg-black/30 backdrop-blur-sm rounded-full">
+                <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={initialSaved}
+                  serverUserId={user?.id ?? null} variant="icon" size="md" />
+              </div>
             </div>
           </div>
           {e.banner_url && (
@@ -234,141 +236,149 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           )}
         </div>
 
-        {/* Core info — the first thing they read after the image */}
-        <div className="px-5 pt-5 pb-2">
-
-          {/* Status + price badges */}
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
+        {/* ── Title block ── */}
+        <div className="px-5 pt-6 pb-5">
+          {/* Badges */}
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
             <EventStatusBadge startDate={e.start_date} endDate={e.end_date} />
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
               e.is_free
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-gray-100 text-gray-700'
+                : 'bg-gray-100 text-gray-700 border border-gray-200'
             }`}>
               {displayPrice}
             </span>
             {almostFull && (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
-                Almost Full
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
+                Almost full
               </span>
             )}
           </div>
 
           {/* Title */}
-          <h1 className="text-[22px] font-bold text-gray-900 leading-snug mb-4">
+          <h1 className="text-[24px] font-extrabold text-gray-950 leading-tight tracking-tight mb-2">
             {e.title}
           </h1>
 
-          {/* The three things people need to know immediately */}
-          <div className="space-y-3 mb-5">
-            <div className="flex items-start gap-3">
-              <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{displayDate}</p>
-                <p className="text-sm text-gray-500">{displayTime}
-                  {e.timezone && e.timezone !== 'UTC' && <> · <EventTimezone timezone={e.timezone} startDate={e.start_date} /></>}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              {e.is_online
-                ? <Globe className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                : <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-              }
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{displayVenue}</p>
-                {!e.is_online && e.city && (
-                  <p className="text-sm text-gray-500">{[e.address, e.city, e.state].filter(Boolean).join(', ')}</p>
-                )}
-                {!e.is_online && (
-                  <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-indigo-600 hover:underline">
-                    Get directions →
-                  </a>
-                )}
-                {e.is_online && e.online_link && (
-                  <a href={e.online_link} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-indigo-600 hover:underline">
-                    Join link →
-                  </a>
-                )}
-              </div>
-            </div>
-            {host && (
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center mt-0.5">
-                  {host.img
-                    ? <div className="w-4 h-4 rounded-full overflow-hidden"><Image src={host.img} alt="" width={16} height={16} className="object-cover" /></div>
-                    : host.icon ?? <span className="w-4 h-4 rounded-full bg-gray-200 text-[8px] font-bold text-gray-500 flex items-center justify-center">{host.name?.[0]}</span>
-                  }
-                </div>
-                <p className="text-sm text-gray-500">
-                  Hosted by <Link href={host.href} className="font-semibold text-gray-900 hover:text-indigo-600 transition-colors">{host.name}</Link>
-                </p>
-              </div>
+          {/* Attendance + countdown */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {attendance > 0 && (
+              <p className="text-sm text-gray-500">
+                <span className="font-bold text-gray-900">{attendance.toLocaleString()}</span> {attendance === 1 ? 'person' : 'people'} going
+              </p>
+            )}
+            {lifecycle === 'upcoming' && (
+              <p className="text-sm text-gray-400">
+                <CountdownTimer startDate={e.start_date} />
+              </p>
             )}
           </div>
+        </div>
 
-          {/* Attendance */}
-          {attendance > 0 && (
-            <p className="text-sm text-gray-500 mb-4">
-              <strong className="text-gray-900">{attendance.toLocaleString()}</strong> {attendance === 1 ? 'person' : 'people'} going
-            </p>
-          )}
-
-          {/* Countdown */}
-          {lifecycle === 'upcoming' && (
-            <div className="mb-4 text-sm text-gray-500">
-              Starts in: <CountdownTimer startDate={e.start_date} />
+        {/* ── Date / Location / Host card ── */}
+        <div className="mx-5 mb-5 rounded-2xl border border-gray-100 bg-gray-50 divide-y divide-gray-100 overflow-hidden">
+          {/* Date */}
+          <div className="flex items-start gap-4 px-4 py-4">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-4.5 h-4.5 text-indigo-500" />
             </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900 leading-snug">{displayDate}</p>
+              <p className="text-sm text-gray-500 mt-0.5">{displayTime}
+                {e.timezone && e.timezone !== 'UTC' && <> · <EventTimezone timezone={e.timezone} startDate={e.start_date} /></>}
+              </p>
+            </div>
+          </div>
+          {/* Location */}
+          <div className="flex items-start gap-4 px-4 py-4">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+              {e.is_online
+                ? <Globe className="w-4.5 h-4.5 text-indigo-500" />
+                : <MapPin className="w-4.5 h-4.5 text-indigo-500" />
+              }
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900 leading-snug">{displayVenue}</p>
+              {!e.is_online && e.city && (
+                <p className="text-sm text-gray-500 mt-0.5">{[e.address, e.city, e.state].filter(Boolean).join(', ')}</p>
+              )}
+              {!e.is_online && (
+                <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
+                  className="text-sm font-semibold text-indigo-600 mt-1 inline-block">
+                  Get directions →
+                </a>
+              )}
+              {e.is_online && e.online_link && (
+                <a href={e.online_link} target="_blank" rel="noopener noreferrer"
+                  className="text-sm font-semibold text-indigo-600 mt-1 inline-block">
+                  Join link →
+                </a>
+              )}
+            </div>
+          </div>
+          {/* Host */}
+          {host && (
+            <Link href={host.href} className="flex items-center gap-4 px-4 py-4 group">
+              <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                {host.img
+                  ? <Image src={host.img} alt="" width={36} height={36} className="object-cover w-full h-full" />
+                  : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-gray-500">{host.name?.[0]}</div>
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-400 mb-0.5">Organised by</p>
+                <p className="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">{host.name}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+            </Link>
           )}
         </div>
 
-        {/* Inline CTA for rsvp/paid mobile — scroll target for the floating bar */}
+        {/* Inline CTA for rsvp/paid */}
         {registrationOpen && (e.registration_type === 'free_registration' || e.registration_type === 'paid' || (!e.registration_type && (e.rsvp_required || !e.is_free))) && (
           <div id="mobile-attend-form" className="px-5 pb-5">
             <CtaBlock compact />
           </div>
         )}
 
-        {/* Divider */}
-        <div className="h-px bg-gray-100 mx-5" />
-
-        {/* About */}
+        {/* ── About ── */}
         {e.description && (
-          <div className="px-5 py-5">
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">About</p>
-            <ReadMoreText text={e.description} limit={320} />
-          </div>
+          <>
+            <div className="h-px bg-gray-100" />
+            <div className="px-5 py-6">
+              <h2 className="text-[17px] font-bold text-gray-900 mb-3">About this event</h2>
+              <ReadMoreText text={e.description} limit={320} />
+            </div>
+          </>
         )}
 
-        {/* Multi-day schedule */}
+        {/* ── Schedule ── */}
         {hasSchedule && (
           <>
-            <div className="h-px bg-gray-100 mx-5" />
-            <div className="px-5 py-5">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-4">Schedule</p>
+            <div className="h-px bg-gray-100" />
+            <div className="px-5 py-6">
+              <h2 className="text-[17px] font-bold text-gray-900 mb-4">Schedule</h2>
               <div className="space-y-5">
                 {e.daily_schedule!.map((day: DaySchedule, i: number) => {
                   const sessions = day.sessions?.length ? day.sessions
                     : (day.start_time ? [{ title: null, start_time: day.start_time, end_time: day.end_time ?? null, speaker: null }] : [])
                   return (
                     <div key={day.date}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-bold text-gray-300 tabular-nums">Day {i + 1}</span>
-                        <span className="text-sm font-semibold text-gray-900">{fmtDay(day.date)}</span>
-                        {day.label && <span className="text-xs text-indigo-600 font-medium">— {day.label}</span>}
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <span className="text-xs font-bold text-gray-300 uppercase tracking-wide">Day {i + 1}</span>
+                        <span className="text-sm font-bold text-gray-900">{fmtDay(day.date)}</span>
+                        {day.label && <span className="text-xs font-semibold text-indigo-500">— {day.label}</span>}
                       </div>
                       {sessions.length > 0 && (
-                        <div className="space-y-0 ml-4 border-l-2 border-gray-100 pl-4">
+                        <div className="ml-1 border-l-2 border-indigo-100 pl-4 space-y-0">
                           {sessions.map((s: { title: string | null; start_time: string | null; end_time: string | null; speaker: string | null }, sIdx: number) => (
-                            <div key={sIdx} className="flex items-start justify-between py-2 border-b border-gray-50 last:border-0">
+                            <div key={sIdx} className="flex items-start justify-between py-2.5 border-b border-gray-50 last:border-0">
                               <div>
-                                {s.title && <p className="text-sm font-medium text-gray-900">{s.title}</p>}
-                                {s.speaker && <p className="text-xs text-gray-400 mt-0.5">{s.speaker}</p>}
+                                {s.title && <p className="text-sm font-semibold text-gray-900">{s.title}</p>}
+                                {s.speaker && <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1"><Mic className="w-3 h-3" />{s.speaker}</p>}
                               </div>
                               {s.start_time && (
-                                <span className="text-xs text-gray-400 tabular-nums flex-shrink-0 ml-3 pt-0.5">
+                                <span className="text-xs font-semibold text-gray-400 tabular-nums flex-shrink-0 ml-3 pt-0.5">
                                   {fmt12(s.start_time)}{s.end_time ? ` – ${fmt12(s.end_time)}` : ''}
                                 </span>
                               )}
@@ -384,29 +394,30 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </>
         )}
 
-        {/* Speakers */}
+        {/* ── Speakers ── */}
         {e.speakers && (
           <>
-            <div className="h-px bg-gray-100 mx-5" />
-            <div className="px-5 py-5">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Ministers &amp; Speakers</p>
-              <p className="text-sm text-gray-700 leading-relaxed">{e.speakers}</p>
+            <div className="h-px bg-gray-100" />
+            <div className="px-5 py-6">
+              <h2 className="text-[17px] font-bold text-gray-900 mb-3">Ministers &amp; Speakers</h2>
+              <p className="text-[15px] text-gray-600 leading-relaxed">{e.speakers}</p>
             </div>
           </>
         )}
 
-        {/* Ticket info */}
+        {/* ── Tickets ── */}
         {!e.is_free && (
           <>
-            <div className="h-px bg-gray-100 mx-5" />
-            <div className="px-5 py-5">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Tickets</p>
-              <div className="flex items-center gap-3">
-                <Ticket className="w-4 h-4 text-gray-400" />
+            <div className="h-px bg-gray-100" />
+            <div className="px-5 py-6">
+              <h2 className="text-[17px] font-bold text-gray-900 mb-3">Tickets</h2>
+              <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3">
+                <Ticket className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <div>
-                  {e.price != null && <p className="text-sm font-semibold text-gray-900">{e.currency ?? '₦'}{e.price.toLocaleString()}</p>}
+                  {e.price != null && <p className="text-base font-bold text-gray-900">{e.currency ?? '₦'}{e.price.toLocaleString()}</p>}
                   {e.payment_link && (
-                    <a href={e.payment_link} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">Buy tickets →</a>
+                    <a href={e.payment_link} target="_blank" rel="noopener noreferrer"
+                      className="text-sm font-semibold text-indigo-600">Buy tickets →</a>
                   )}
                 </div>
               </div>
@@ -414,16 +425,16 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </>
         )}
 
-        {/* Capacity */}
+        {/* ── Capacity bar ── */}
         {e.capacity != null && e.capacity > 0 && (
           <>
-            <div className="h-px bg-gray-100 mx-5" />
-            <div className="px-5 py-4">
-              <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                <span>{attendance} of {e.capacity} spots taken</span>
-                <span className={capacityPct >= 90 ? 'text-red-500 font-semibold' : ''}>{capacityPct}% full</span>
+            <div className="h-px bg-gray-100" />
+            <div className="px-5 py-5">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="font-semibold text-gray-700">{attendance} of {e.capacity} spots</span>
+                <span className={`font-bold tabular-nums ${capacityPct >= 90 ? 'text-red-500' : 'text-gray-400'}`}>{capacityPct}%</span>
               </div>
-              <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div style={{ width: `${capacityPct}%` }}
                   className={`h-full rounded-full transition-all ${capacityPct >= 90 ? 'bg-red-400' : capacityPct >= 70 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
               </div>
@@ -431,58 +442,63 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </>
         )}
 
-        {/* Livestream */}
+        {/* ── Livestream ── */}
         {e.livestream_url && (
           <>
-            <div className="h-px bg-gray-100 mx-5" />
-            <div className="px-5 py-5">
+            <div className="h-px bg-gray-100" />
+            <div className="px-5 py-6">
+              <h2 className="text-[17px] font-bold text-gray-900 mb-3">Livestream</h2>
               <a href={e.livestream_url} target="_blank" rel="noopener noreferrer"
-                className="text-sm font-medium text-indigo-600 hover:underline flex items-center gap-2">
-                <Globe className="w-4 h-4" /> Watch Livestream
+                className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600">
+                <Globe className="w-4 h-4" /> Watch live →
               </a>
             </div>
           </>
         )}
 
-        {/* Amenities + notes */}
+        {/* ── Amenities ── */}
         {(e.parking_available || e.child_friendly || e.notes) && (
           <>
-            <div className="h-px bg-gray-100 mx-5" />
-            <div className="px-5 py-5 space-y-3">
-              <div className="flex flex-wrap gap-4">
+            <div className="h-px bg-gray-100" />
+            <div className="px-5 py-6 space-y-3">
+              <h2 className="text-[17px] font-bold text-gray-900">Good to know</h2>
+              <div className="flex flex-wrap gap-3">
                 {e.parking_available && (
-                  <span className="flex items-center gap-1.5 text-sm text-gray-600">
+                  <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl">
                     <Car className="w-4 h-4 text-gray-400" /> Parking available
                   </span>
                 )}
                 {e.child_friendly && (
-                  <span className="flex items-center gap-1.5 text-sm text-gray-600">
+                  <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl">
                     <Baby className="w-4 h-4 text-gray-400" /> Child friendly
                   </span>
                 )}
               </div>
               {e.notes && (
-                <p className="text-sm text-gray-600 pl-3 border-l-2 border-gray-200">{e.notes}</p>
+                <p className="text-sm text-gray-600 pl-4 border-l-2 border-indigo-200 leading-relaxed">{e.notes}</p>
               )}
             </div>
           </>
         )}
 
-        {/* Tags */}
+        {/* ── Tags ── */}
         {(e.tags?.length ?? 0) > 0 && (
           <>
-            <div className="h-px bg-gray-100 mx-5" />
-            <div className="px-5 py-4 flex flex-wrap gap-2">
+            <div className="h-px bg-gray-100" />
+            <div className="px-5 py-5 flex flex-wrap gap-2">
               {e.tags!.map(tag => (
-                <span key={tag} className="text-xs text-gray-500 border border-gray-200 px-2.5 py-1 rounded-full">#{tag}</span>
+                <span key={tag} className="text-xs font-semibold text-gray-500 border border-gray-200 bg-gray-50 px-3 py-1.5 rounded-full">
+                  #{tag}
+                </span>
               ))}
             </div>
           </>
         )}
 
-        {/* Calendar + share */}
-        <div className="h-px bg-gray-100 mx-5" />
-        <div className="px-5 py-5 space-y-4">
+        {/* ── Calendar + Share ── */}
+        <div className="h-px bg-gray-100" />
+        <div className="px-5 py-6 space-y-3">
+          <h2 className="text-[17px] font-bold text-gray-900 mb-4">Save &amp; Share</h2>
           <div className="flex flex-wrap gap-2">
             <AddToCalendar title={e.title} startDate={e.start_date} endDate={e.end_date}
               location={shareLocation} description={e.description} />
@@ -492,24 +508,24 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} />
         </div>
 
-        {/* Organizer */}
+        {/* ── Organizer ── */}
         {host && (
           <>
-            <div className="h-px bg-gray-100 mx-5" />
-            <div className="px-5 py-5">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-4">Hosted by</p>
-              <Link href={host.href} className="flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+            <div className="h-px bg-gray-100" />
+            <div className="px-5 py-6">
+              <h2 className="text-[17px] font-bold text-gray-900 mb-4">Hosted by</h2>
+              <Link href={host.href} className="flex items-center gap-4 group">
+                <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
                   {host.img
-                    ? <Image src={host.img} alt="" width={40} height={40} className="object-cover w-full h-full" />
-                    : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-gray-400">{host.name?.[0]}</div>
+                    ? <Image src={host.img} alt="" width={48} height={48} className="object-cover w-full h-full" />
+                    : <div className="w-full h-full flex items-center justify-center text-base font-bold text-gray-400">{host.name?.[0]}</div>
                   }
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{host.name}</p>
-                  {host.meta && <p className="text-xs text-gray-400">{host.meta}</p>}
+                  <p className="text-base font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{host.name}</p>
+                  {host.meta && <p className="text-sm text-gray-400 mt-0.5">{host.meta}</p>}
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition-colors flex-shrink-0" />
+                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-400 transition-colors flex-shrink-0" />
               </Link>
             </div>
           </>
@@ -522,27 +538,27 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </p>
         </div>
 
-        {/* Related events */}
+        {/* ── Related Events ── */}
         {related.length > 0 && (
           <>
             <div className="h-2 bg-gray-50" />
-            <div className="px-5 py-5">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">More Events</p>
-                <Link href="/events" className="text-xs text-indigo-600 font-medium hover:underline">See all</Link>
+            <div className="px-5 py-6">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-[17px] font-bold text-gray-900">More Events</h2>
+                <Link href="/events" className="text-sm font-semibold text-indigo-600 hover:underline">See all</Link>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {related.slice(0, 3).map(ev => (
-                  <Link key={ev.id} href={`/events/${ev.slug}`} className="flex gap-3 group">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                  <Link key={ev.id} href={`/events/${ev.slug}`} className="flex gap-4 group">
+                    <div className="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
                       {(ev as Event & { banner_url?: string | null }).banner_url
-                        ? <Image src={(ev as Event & { banner_url?: string | null }).banner_url!} alt={ev.title} width={64} height={64} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200" />
-                        : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300 font-bold text-sm">{ev.title[0]}</div>
+                        ? <Image src={(ev as Event & { banner_url?: string | null }).banner_url!} alt={ev.title} width={72} height={72} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200" />
+                        : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300 font-bold text-lg">{ev.title[0]}</div>
                       }
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">{ev.title}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{formatDate(ev.start_date, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                      <p className="text-[15px] font-bold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">{ev.title}</p>
+                      <p className="text-sm text-gray-400 mt-1">{formatDate(ev.start_date, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                     </div>
                   </Link>
                 ))}
@@ -552,7 +568,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         )}
 
         <div className="h-2 bg-gray-50" />
-        <div className="px-5 py-5">
+        <div className="px-5 py-6">
           <HaveAnEventCTA />
         </div>
       </div>

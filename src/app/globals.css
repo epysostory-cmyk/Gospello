@@ -49,6 +49,11 @@ body {
   animation: ctaGlow 3s ease-in-out infinite;
 }
 
+/* Premium font utility — Plus Jakarta Sans */
+.font-jakarta {
+  font-family: var(--font-plus-jakarta), 'Plus Jakarta Sans', sans-serif;
+}
+
 /* Hide scrollbar for horizontal sliders */
 .scrollbar-hide {
   -ms-overflow-style: none;
