@@ -8,20 +8,14 @@ interface SectionHeaderProps {
   linkText?: string
 }
 
-export default function SectionHeader({ title, subtitle, href, linkText = 'View all' }: SectionHeaderProps) {
+export default function SectionHeader({ title, href, linkText = 'View all' }: SectionHeaderProps) {
   return (
-    <div className="flex items-end justify-between mb-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-        {subtitle && <p className="text-gray-500 text-sm mt-1">{subtitle}</p>}
-      </div>
+    <div className="flex items-center justify-between mb-6">
+      <h2 className="text-xl font-bold text-gray-900">{title}</h2>
       {href && (
-        <Link
-          href={href}
-          className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
-        >
+        <Link href={href} className="flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
           {linkText}
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       )}
     </div>

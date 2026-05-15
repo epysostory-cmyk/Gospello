@@ -305,21 +305,18 @@ export default async function HomePage() {
       <section className="bg-white font-outfit">
         <div className="max-w-3xl mx-auto px-5 sm:px-6 pt-16 pb-14 sm:pt-24 sm:pb-20 text-center">
 
-          {/* Headline */}
           <h1 className="text-[2.6rem] sm:text-[3.5rem] font-black text-gray-950 tracking-tight leading-[1.08] mb-5">
             {heroHeadline1}{' '}
             <span className="text-indigo-600">{heroHeadlineGradient}</span>
             {heroHeadline3 && <span> {heroHeadline3}</span>}
           </h1>
 
-          {/* Subheadline */}
           <p className="text-[17px] sm:text-lg text-gray-500 leading-relaxed max-w-xl mx-auto mb-10">
             {heroSubheadline}
           </p>
 
-          {/* Search — the only CTA */}
           <form action="/search" method="GET" className="max-w-xl mx-auto">
-            <div className="flex items-center gap-0 bg-white border-2 border-gray-900 rounded-2xl overflow-hidden focus-within:border-indigo-600 transition-colors">
+            <div className="flex items-center bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
               <Search className="w-5 h-5 text-gray-400 ml-4 flex-shrink-0" />
               <input
                 type="text"
@@ -329,27 +326,21 @@ export default async function HomePage() {
               />
               <button
                 type="submit"
-                className="flex-shrink-0 bg-gray-950 hover:bg-gray-800 text-white font-bold text-sm px-6 py-4 transition-colors"
+                className="flex-shrink-0 m-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors"
               >
                 Search
               </button>
             </div>
           </form>
 
-          {/* Popular searches — minimal, text-only */}
           <div className="mt-5 flex items-center justify-center gap-x-1 gap-y-2 flex-wrap">
             <span className="text-sm text-gray-400 mr-1">Popular:</span>
             {popularSearches.slice(0, 5).map((tag, i) => (
               <span key={tag} className="flex items-center">
-                <Link
-                  href={`/search?q=${encodeURIComponent(tag)}`}
-                  className="text-sm text-gray-600 hover:text-indigo-600 hover:underline transition-colors"
-                >
+                <Link href={`/search?q=${encodeURIComponent(tag)}`} className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">
                   {tag}
                 </Link>
-                {i < Math.min(popularSearches.length, 5) - 1 && (
-                  <span className="text-gray-300 mx-1.5">·</span>
-                )}
+                {i < Math.min(popularSearches.length, 5) - 1 && <span className="text-gray-300 mx-1.5">·</span>}
               </span>
             ))}
           </div>
@@ -357,75 +348,28 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── STATS STRIP ───────────────────────────────────────────────── */}
-      {(stats.events > 0 || stats.churches > 0 || stats.cities > 0) && (
-        <div className="border-b border-gray-100">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-4 sm:gap-7 flex-wrap">
-            {stats.events > 0 && (
-              <span className="text-[13px] text-gray-400">
-                <span className="font-semibold text-gray-700">{stats.events.toLocaleString()}+</span>{' '}events listed
-              </span>
-            )}
-            {stats.churches > 0 && (
-              <>
-                <span className="text-gray-200 hidden sm:inline">·</span>
-                <span className="text-[13px] text-gray-400">
-                  <span className="font-semibold text-gray-700">{stats.churches.toLocaleString()}+</span>{' '}churches
-                </span>
-              </>
-            )}
-            {stats.cities > 0 && (
-              <>
-                <span className="text-gray-200 hidden sm:inline">·</span>
-                <span className="text-[13px] text-gray-400">
-                  <span className="font-semibold text-gray-700">{stats.cities}</span>{' '}cities covered
-                </span>
-              </>
-            )}
-            {stats.organizers > 0 && (
-              <>
-                <span className="text-gray-200 hidden sm:inline">·</span>
-                <span className="text-[13px] text-gray-400">
-                  <span className="font-semibold text-gray-700">{stats.organizers.toLocaleString()}+</span>{' '}organizers
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── CATEGORY PILLS ────────────────────────────────────────────── */}
+      {/* ── CATEGORIES ────────────────────────────────────────────────── */}
       {displayCategories.length > 0 && (
-        <HomeCategoryScroller categories={displayCategories} />
+        <div className="border-t border-gray-100">
+          <HomeCategoryScroller categories={displayCategories} />
+        </div>
       )}
 
       {/* ── FEATURED EVENTS ───────────────────────────────────────────── */}
       {featuredEvents.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-4">
           <section>
-            <SectionHeader
-              title="Featured Events"
-              subtitle="Hand-picked highlights — curated by our team"
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Featured</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {featuredEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  variant="featured"
-                  categoryInfo={catMap[event.category]}
-                />
+                <EventCard key={event.id} event={event} variant="featured" categoryInfo={catMap[event.category]} />
               ))}
             </div>
           </section>
         </div>
       )}
-
-      {/* ── FIND A CHURCH ─────────────────────────────────────────────
-          Positioned before the main events feed — someone new to a city
-          will find this before they get lost scrolling events.
-      ──────────────────────────────────────────────────────────────── */}
-      <DiscoverChurches churches={discoverChurches} />
 
       {/* ── UPCOMING EVENTS ───────────────────────────────────────────── */}
       {upcomingEvents.length > 0 && (
@@ -440,73 +384,54 @@ export default async function HomePage() {
       {/* Empty state */}
       {!hasEvents && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-          <section className="text-center py-20">
-            <p className="text-5xl mb-4">⛪</p>
+          <section className="text-center py-24">
+            <p className="text-5xl mb-5">⛪</p>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Events coming soon</h2>
-            <p className="text-gray-500 mb-8 text-sm">Be the first to post an event on Gospello.</p>
-            <Link
-              href="/auth/signup"
-              className="inline-flex items-center gap-2 bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors text-sm"
-            >
-              Post an Event
-              <ArrowRight className="w-4 h-4" />
+            <p className="text-gray-400 mb-8 text-sm">Be the first to post an event on Gospello.</p>
+            <Link href="/auth/signup" className="inline-flex items-center gap-2 bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors text-sm">
+              Post an Event <ArrowRight className="w-4 h-4" />
             </Link>
           </section>
         </div>
       )}
 
-      {/* ── ORGANIZERS ────────────────────────────────────────────────── */}
+      {/* ── DISCOVER CHURCHES ─────────────────────────────────────────── */}
+      <DiscoverChurches churches={discoverChurches} />
+
+      {/* ── DISCOVER ORGANIZERS ───────────────────────────────────────── */}
       <DiscoverOrganizers organizers={discoverOrganizers} />
 
-      {/* ── BOTTOM SECTIONS ───────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-16">
-
-        {/* Featured Churches grid */}
-        {featuredChurches.length > 0 && (
-          <section>
-            <SectionHeader
-              title="Featured Churches"
-              subtitle="Connect with vibrant churches across Nigeria"
-              href="/churches"
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {featuredChurches.map((church) => (
-                <ChurchCard key={church.id} church={church} eventCount={churchEventCountMap[church.id]} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Organizer / Church CTA */}
-        {(churchCta === null || churchCta.visible !== false) && (
-          <section className="bg-amber-50 border border-amber-200 rounded-2xl px-8 py-10 sm:px-12 sm:py-12">
-            <div className="max-w-xl">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
-                {churchCta?.heading ?? 'Is your church putting on an event?'}
+      {/* ── BOTTOM CTA ────────────────────────────────────────────────── */}
+      {(churchCta === null || churchCta.visible !== false) && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+          <section className="border border-gray-200 rounded-3xl px-8 py-12 sm:px-14 sm:py-14 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-8">
+            <div className="max-w-lg">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-950 leading-tight">
+                {churchCta?.heading ?? 'Running an event?'}
               </h2>
-              <p className="mt-3 text-base text-gray-600 leading-relaxed">
-                {churchCta?.subtext ?? 'List it on Gospello for free. Reach more believers across Nigeria — no tech skills needed.'}
+              <p className="mt-2 text-[15px] text-gray-500 leading-relaxed">
+                {churchCta?.subtext ?? 'List it on Gospello for free. Reach believers across Nigeria — no tech skills needed.'}
               </p>
-              <div className="mt-7 flex flex-col sm:flex-row gap-3">
-                <Link
-                  href={churchCta?.button1_url ?? '/auth/signup?type=church'}
-                  className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-xl text-sm transition-colors"
-                >
-                  {churchCta?.button1_label ?? 'Register Your Church'}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href={churchCta?.button2_url ?? '/auth/signup'}
-                  className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-800 font-semibold px-7 py-3.5 rounded-xl border border-gray-200 text-sm transition-colors"
-                >
-                  {churchCta?.button2_label ?? 'Post an Event'}
-                </Link>
-              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+              <Link
+                href={churchCta?.button1_url ?? '/auth/signup?type=church'}
+                className="inline-flex items-center justify-center gap-2 bg-gray-950 hover:bg-gray-800 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-colors"
+              >
+                {churchCta?.button1_label ?? 'Register your church'}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href={churchCta?.button2_url ?? '/auth/signup'}
+                className="inline-flex items-center justify-center bg-white hover:bg-gray-50 text-gray-800 font-semibold px-6 py-3 rounded-xl border border-gray-200 text-sm transition-colors"
+              >
+                {churchCta?.button2_label ?? 'Post an event'}
+              </Link>
             </div>
           </section>
-        )}
+        </div>
+      )}
 
-      </div>
     </div>
   )
 }
