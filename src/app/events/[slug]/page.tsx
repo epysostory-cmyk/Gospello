@@ -576,112 +576,157 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       {/* ══════════════════════════════════════════════════════════════
           DESKTOP  (hidden below lg)
       ══════════════════════════════════════════════════════════════ */}
-      <div className="hidden lg:block">
-        <div className="max-w-5xl mx-auto px-6 lg:px-8 pt-6 pb-16">
+      <div className="hidden lg:block font-jakarta">
 
-          <Link href="/events" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition-colors">
-            <ChevronLeft className="w-4 h-4" /> Back to Events
-          </Link>
+        {/* ── Full-width hero banner ── */}
+        <div className="relative w-full bg-gray-100 overflow-hidden" style={{ height: '420px' }}>
+          {e.banner_url
+            ? <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
+            : <div className="absolute inset-0 flex items-center justify-center text-9xl font-black text-gray-200">{e.title[0]}</div>
+          }
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
-          <div className="flex gap-12">
+          {/* Back button overlaid */}
+          <div className="absolute top-6 left-6">
+            <Link href="/events"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-black/30 backdrop-blur-md px-3 py-2 rounded-full hover:bg-black/50 transition-colors">
+              <ChevronLeft className="w-4 h-4" /> Events
+            </Link>
+          </div>
 
-            {/* ── LEFT: content ─────────────────────────────────── */}
-            <div className="flex-1 min-w-0">
+          {/* Save button overlaid */}
+          <div className="absolute top-6 right-6 bg-black/30 backdrop-blur-md rounded-full">
+            <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={initialSaved}
+              serverUserId={user?.id ?? null} variant="icon" size="md" />
+          </div>
 
-              {/* Flyer */}
-              <div className="relative w-full rounded-2xl overflow-hidden bg-gray-100 mb-7" style={{ aspectRatio: '16/9' }}>
-                {e.banner_url
-                  ? <Image src={e.banner_url} alt={e.title} fill className="object-cover" priority />
-                  : <div className="absolute inset-0 flex items-center justify-center text-8xl font-black text-gray-200">{e.title[0]}</div>
-                }
-              </div>
-
-              {/* Badges */}
-              <div className="flex items-center gap-2 mb-4 flex-wrap">
+          {/* Title + badges over gradient */}
+          <div className="absolute bottom-0 left-0 right-0 px-8 pb-8">
+            <div className="max-w-5xl mx-auto">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <EventStatusBadge startDate={e.start_date} endDate={e.end_date} />
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  e.is_free ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-700'
+                <span className={`text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm ${
+                  e.is_free
+                    ? 'bg-emerald-500/80 text-white'
+                    : 'bg-amber-500/80 text-white'
                 }`}>{displayPrice}</span>
-                {almostFull && <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200">Almost Full</span>}
-                {attendance > 0 && (
-                  <span className="ml-auto text-sm text-gray-400 flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5" />
-                    {attendance.toLocaleString()} going
-                  </span>
+                {almostFull && (
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-red-500/80 text-white backdrop-blur-sm">Almost Full</span>
                 )}
               </div>
+              <h1 className="text-[36px] font-extrabold text-white leading-tight tracking-tight max-w-3xl">
+                {e.title}
+              </h1>
+              {attendance > 0 && (
+                <p className="mt-2 text-sm text-white/70 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
+                  <span><span className="font-bold text-white">{attendance.toLocaleString()}</span> {attendance === 1 ? 'person' : 'people'} going</span>
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
 
-              {/* Title */}
-              <h1 className="text-3xl font-bold text-gray-900 leading-tight mb-5">{e.title}</h1>
+        {/* ── Two-column body ── */}
+        <div className="max-w-5xl mx-auto px-6 lg:px-8 pt-8 pb-16">
+          <div className="flex gap-10">
 
-              {/* Date / time / location — the non-negotiables */}
-              <div className="space-y-3 mb-7">
-                <div className="flex items-start gap-3 text-sm">
-                  <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            {/* ── LEFT: main content ─────────────────────────────── */}
+            <div className="flex-1 min-w-0">
+
+              {/* Date / Location / Host — unified card */}
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 divide-y divide-gray-100 overflow-hidden mb-8">
+                <div className="flex items-start gap-4 px-5 py-4">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-4 h-4 text-indigo-500" />
+                  </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{displayDate}</p>
-                    <p className="text-gray-500">{displayTime}
+                    <p className="text-sm font-bold text-gray-900 leading-snug">{displayDate}</p>
+                    <p className="text-sm text-gray-500 mt-0.5">{displayTime}
                       {e.timezone && e.timezone !== 'UTC' && <> · <EventTimezone timezone={e.timezone} startDate={e.start_date} /></>}
                     </p>
+                    {lifecycle === 'upcoming' && (
+                      <p className="text-xs text-indigo-500 font-semibold mt-1">
+                        <CountdownTimer startDate={e.start_date} />
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-start gap-3 text-sm">
-                  {e.is_online ? <Globe className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" /> : <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />}
+                <div className="flex items-start gap-4 px-5 py-4">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                    {e.is_online
+                      ? <Globe className="w-4 h-4 text-indigo-500" />
+                      : <MapPin className="w-4 h-4 text-indigo-500" />
+                    }
+                  </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{displayVenue}</p>
-                    {!e.is_online && <p className="text-gray-500">{[e.address, e.city, e.state].filter(Boolean).join(', ')}</p>}
-                    {!e.is_online && <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline">Get directions →</a>}
-                    {e.is_online && e.online_link && <a href={e.online_link} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline">Join link →</a>}
+                    <p className="text-sm font-bold text-gray-900 leading-snug">{displayVenue}</p>
+                    {!e.is_online && e.city && (
+                      <p className="text-sm text-gray-500 mt-0.5">{[e.address, e.city, e.state].filter(Boolean).join(', ')}</p>
+                    )}
+                    {!e.is_online && (
+                      <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
+                        className="text-sm font-semibold text-indigo-600 mt-1 inline-block">Get directions →</a>
+                    )}
+                    {e.is_online && e.online_link && (
+                      <a href={e.online_link} target="_blank" rel="noopener noreferrer"
+                        className="text-sm font-semibold text-indigo-600 mt-1 inline-block">Join link →</a>
+                    )}
                   </div>
                 </div>
                 {host && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                  <Link href={host.href} className="flex items-center gap-4 px-5 py-4 group">
+                    <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
                       {host.img
-                        ? <div className="w-4 h-4 rounded-full overflow-hidden"><Image src={host.img} alt="" width={16} height={16} className="object-cover" /></div>
-                        : host.icon ?? <span className="text-gray-400">{host.name?.[0]}</span>
+                        ? <Image src={host.img} alt="" width={36} height={36} className="object-cover w-full h-full" />
+                        : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-gray-500">{host.name?.[0]}</div>
                       }
                     </div>
-                    <p className="text-gray-500">
-                      Hosted by <Link href={host.href} className="font-semibold text-gray-900 hover:text-indigo-600 transition-colors">{host.name}</Link>
-                    </p>
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-400 mb-0.5">Organised by</p>
+                      <p className="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">{host.name}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                  </Link>
                 )}
               </div>
 
-              <hr className="border-gray-100 mb-7" />
-
               {/* About */}
               {e.description && (
-                <div className="mb-7">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-4">About this event</p>
-                  <ReadMoreText text={e.description} limit={500} />
+                <div className="mb-8">
+                  <h2 className="text-[17px] font-bold text-gray-900 mb-3">About this event</h2>
+                  <ReadMoreText text={e.description} limit={600} />
                 </div>
               )}
 
+              <div className="h-px bg-gray-100 mb-8" />
+
               {/* Schedule */}
               {hasSchedule && (
-                <div className="mb-7">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-4">Schedule · {e.daily_schedule!.length} days</p>
-                  <div className="space-y-4">
+                <div className="mb-8">
+                  <h2 className="text-[17px] font-bold text-gray-900 mb-4">Schedule</h2>
+                  <div className="space-y-5">
                     {e.daily_schedule!.map((day: DaySchedule, i: number) => {
                       const sessions = day.sessions?.length ? day.sessions
                         : (day.start_time ? [{ title: null, start_time: day.start_time, end_time: day.end_time ?? null, speaker: null }] : [])
                       return (
                         <div key={day.date}>
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span className="text-xs text-gray-300 tabular-nums">Day {i + 1}</span>
-                            <span className="text-sm font-semibold text-gray-900">{fmtDay(day.date)}</span>
-                            {day.label && <span className="text-xs text-indigo-600 font-medium truncate">— {day.label}</span>}
+                          <div className="flex items-center gap-2 mb-2.5">
+                            <span className="text-xs font-bold text-gray-300 uppercase tracking-wide">Day {i + 1}</span>
+                            <span className="text-sm font-bold text-gray-900">{fmtDay(day.date)}</span>
+                            {day.label && <span className="text-xs font-semibold text-indigo-500">— {day.label}</span>}
                           </div>
                           {sessions.length > 0 && (
-                            <div className="ml-3 border-l-2 border-gray-100 pl-3 space-y-1">
+                            <div className="ml-1 border-l-2 border-indigo-100 pl-4 space-y-0">
                               {sessions.map((s: { title: string | null; start_time: string | null; end_time: string | null; speaker: string | null }, sIdx: number) => (
-                                <div key={sIdx} className="flex items-start justify-between">
-                                  {s.title && <span className="text-xs text-gray-700">{s.title}</span>}
+                                <div key={sIdx} className="flex items-start justify-between py-2.5 border-b border-gray-50 last:border-0">
+                                  <div>
+                                    {s.title && <p className="text-sm font-semibold text-gray-900">{s.title}</p>}
+                                    {s.speaker && <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1"><Mic className="w-3 h-3" />{s.speaker}</p>}
+                                  </div>
                                   {s.start_time && (
-                                    <span className="text-xs text-gray-400 tabular-nums ml-2 flex-shrink-0">
-                                      {fmt12(s.start_time)}
+                                    <span className="text-xs font-semibold text-gray-400 tabular-nums flex-shrink-0 ml-3 pt-0.5">
+                                      {fmt12(s.start_time)}{s.end_time ? ` – ${fmt12(s.end_time)}` : ''}
                                     </span>
                                   )}
                                 </div>
@@ -697,102 +742,124 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
               {/* Speakers */}
               {e.speakers && (
-                <div className="mb-7">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Ministers &amp; Speakers</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{e.speakers}</p>
+                <div className="mb-8">
+                  <h2 className="text-[17px] font-bold text-gray-900 mb-3">Ministers &amp; Speakers</h2>
+                  <p className="text-sm text-gray-600 leading-relaxed">{e.speakers}</p>
                 </div>
               )}
 
-              {/* Tickets (paid) */}
+              {/* Tickets */}
               {!e.is_free && e.price != null && (
-                <div className="mb-7">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Tickets</p>
-                  <p className="text-sm font-semibold text-gray-900">{e.currency ?? '₦'}{e.price.toLocaleString()}</p>
-                  {e.payment_link && <a href={e.payment_link} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">Buy tickets →</a>}
+                <div className="mb-8">
+                  <h2 className="text-[17px] font-bold text-gray-900 mb-3">Tickets</h2>
+                  <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3">
+                    <Ticket className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-base font-bold text-gray-900">{e.currency ?? '₦'}{e.price.toLocaleString()}</p>
+                      {e.payment_link && (
+                        <a href={e.payment_link} target="_blank" rel="noopener noreferrer"
+                          className="text-sm font-semibold text-indigo-600">Buy tickets →</a>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* Livestream */}
               {e.livestream_url && (
-                <div className="mb-7">
+                <div className="mb-8">
+                  <h2 className="text-[17px] font-bold text-gray-900 mb-3">Livestream</h2>
                   <a href={e.livestream_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:underline">
-                    <Globe className="w-4 h-4" /> Watch Livestream
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600">
+                    <Globe className="w-4 h-4" /> Watch live →
                   </a>
                 </div>
               )}
 
-              {/* Venue map */}
+              {/* Venue */}
               {!e.is_online && (
-                <div className="mb-7">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Venue</p>
-                  <p className="text-sm font-medium text-gray-900">{e.location_name}</p>
-                  {e.address && <p className="text-sm text-gray-500">{e.address}</p>}
+                <div className="mb-8">
+                  <h2 className="text-[17px] font-bold text-gray-900 mb-3">Venue</h2>
+                  <p className="text-sm font-semibold text-gray-900">{e.location_name}</p>
+                  {e.address && <p className="text-sm text-gray-500 mt-0.5">{e.address}</p>}
                   <p className="text-sm text-gray-500">{e.city}, {e.state}</p>
                   <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-indigo-600 hover:underline mt-1 inline-block">Open in Google Maps →</a>
+                    className="text-sm font-semibold text-indigo-600 mt-1.5 inline-block">Open in Google Maps →</a>
                 </div>
               )}
 
               {/* Amenities */}
               {(e.parking_available || e.child_friendly || e.notes) && (
-                <div className="mb-7 space-y-3">
-                  <div className="flex flex-wrap gap-4">
-                    {e.parking_available && <span className="flex items-center gap-1.5 text-sm text-gray-600"><Car className="w-4 h-4 text-gray-400" /> Parking available</span>}
-                    {e.child_friendly && <span className="flex items-center gap-1.5 text-sm text-gray-600"><Baby className="w-4 h-4 text-gray-400" /> Child friendly</span>}
+                <div className="mb-8">
+                  <h2 className="text-[17px] font-bold text-gray-900 mb-3">Good to know</h2>
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    {e.parking_available && (
+                      <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl">
+                        <Car className="w-4 h-4 text-gray-400" /> Parking available
+                      </span>
+                    )}
+                    {e.child_friendly && (
+                      <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl">
+                        <Baby className="w-4 h-4 text-gray-400" /> Child friendly
+                      </span>
+                    )}
                   </div>
-                  {e.notes && <p className="text-sm text-gray-600 pl-3 border-l-2 border-gray-200">{e.notes}</p>}
+                  {e.notes && <p className="text-sm text-gray-600 pl-4 border-l-2 border-indigo-200 leading-relaxed">{e.notes}</p>}
                 </div>
               )}
 
               {/* Tags */}
               {(e.tags?.length ?? 0) > 0 && (
-                <div className="flex flex-wrap gap-2 mb-7">
-                  {e.tags!.map(tag => <span key={tag} className="text-xs text-gray-500 border border-gray-200 px-2.5 py-1 rounded-full">#{tag}</span>)}
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {e.tags!.map(tag => (
+                    <span key={tag} className="text-xs font-semibold text-gray-500 border border-gray-200 bg-gray-50 px-3 py-1.5 rounded-full">
+                      #{tag}
+                    </span>
+                  ))}
                 </div>
               )}
 
-              <hr className="border-gray-100 mb-7" />
+              <div className="h-px bg-gray-100 mb-8" />
 
-              {/* Organizer card */}
+              {/* Organizer */}
               {host && (
-                <div className="mb-7">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-4">Hosted by</p>
+                <div className="mb-8">
+                  <h2 className="text-[17px] font-bold text-gray-900 mb-4">Hosted by</h2>
                   <Link href={host.href} className="flex items-center gap-4 group">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                       {host.img
                         ? <Image src={host.img} alt="" width={48} height={48} className="object-cover w-full h-full" />
-                        : <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">{host.name?.[0]}</div>
+                        : <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-base">{host.name?.[0]}</div>
                       }
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{host.name}</p>
-                      {host.meta && <p className="text-sm text-gray-400">{host.meta}</p>}
+                      <p className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{host.name}</p>
+                      {host.meta && <p className="text-sm text-gray-400 mt-0.5">{host.meta}</p>}
                     </div>
-                    <span className="text-sm text-indigo-600 font-medium group-hover:underline">View profile →</span>
+                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-400 transition-colors" />
                   </Link>
                 </div>
               )}
 
-              <hr className="border-gray-100 mb-7" />
+              <div className="h-px bg-gray-100 mb-8" />
 
-              {/* Related */}
+              {/* Related events */}
               {related.length > 0 && (
-                <div className="mb-7">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">More Events</p>
-                    <Link href="/events" className="text-sm text-indigo-600 hover:underline">See all</Link>
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-[17px] font-bold text-gray-900">More Events</h2>
+                    <Link href="/events" className="text-sm font-semibold text-indigo-600 hover:underline">See all</Link>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     {related.slice(0, 3).map(ev => (
                       <Link key={ev.id} href={`/events/${ev.slug}`} className="group block">
-                        <div className="aspect-video rounded-xl overflow-hidden bg-gray-100 mb-2">
+                        <div className="aspect-video rounded-xl overflow-hidden bg-gray-100 mb-2.5">
                           {(ev as Event & { banner_url?: string | null }).banner_url
                             ? <Image src={(ev as Event & { banner_url?: string | null }).banner_url!} alt={ev.title} width={240} height={135} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200" />
-                            : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300 font-bold">{ev.title[0]}</div>
+                            : <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold text-lg">{ev.title[0]}</div>
                           }
                         </div>
-                        <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">{ev.title}</p>
+                        <p className="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">{ev.title}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{formatDate(ev.start_date, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                       </Link>
                     ))}
@@ -804,44 +871,39 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
 
             {/* ── RIGHT: sticky sidebar ──────────────────────────── */}
-            <div className="w-[280px] flex-shrink-0">
-              <div className="sticky top-6">
+            <div className="w-[290px] flex-shrink-0">
+              <div className="sticky top-6 space-y-4">
 
                 {/* CTA card */}
-                <div className="border border-gray-200 rounded-2xl overflow-hidden">
+                <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                   <div className="p-5 space-y-3">
                     <CtaBlock />
                   </div>
 
-                  {/* Key info repeated — so users never have to scroll to check */}
-                  <div className="border-t border-gray-100 px-5 py-4 space-y-3.5 bg-gray-50/60">
-                    <div className="flex items-start gap-2.5 text-sm">
-                      <Calendar className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                  {/* Key info */}
+                  <div className="border-t border-gray-100 px-5 py-4 space-y-3 bg-gray-50/60">
+                    <div className="flex items-start gap-3">
+                      <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="font-medium text-gray-900 leading-snug">{displayDate}</p>
-                        <p className="text-gray-500 text-xs">{displayTime}</p>
+                        <p className="text-sm font-semibold text-gray-900 leading-snug">{displayDate}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{displayTime}</p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-2.5 text-sm">
-                      {e.is_online ? <Globe className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" /> : <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />}
+                    <div className="flex items-start gap-3">
+                      {e.is_online ? <Globe className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" /> : <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />}
                       <div>
-                        <p className="font-medium text-gray-900 leading-snug">{displayVenue}</p>
-                        {!e.is_online && e.city && <p className="text-gray-500 text-xs">{e.city}, {e.state}</p>}
+                        <p className="text-sm font-semibold text-gray-900 leading-snug">{displayVenue}</p>
+                        {!e.is_online && e.city && <p className="text-xs text-gray-500 mt-0.5">{e.city}, {e.state}</p>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2.5 text-sm">
-                      <Ticket className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                      <p className={`font-semibold ${e.is_free ? 'text-emerald-700' : 'text-gray-900'}`}>{displayPrice}</p>
+                    <div className="flex items-center gap-3">
+                      <Ticket className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <p className={`text-sm font-bold ${e.is_free ? 'text-emerald-700' : 'text-gray-900'}`}>{displayPrice}</p>
                     </div>
                     {attendance > 0 && (
-                      <div className="flex items-center gap-2.5 text-sm">
-                        <Users className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                        <p className="text-gray-500">{attendance.toLocaleString()} {attendance === 1 ? 'person' : 'people'} going</p>
-                      </div>
-                    )}
-                    {lifecycle === 'upcoming' && (
-                      <div className="text-xs text-gray-400">
-                        <CountdownTimer startDate={e.start_date} />
+                      <div className="flex items-center gap-3">
+                        <Users className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <p className="text-sm text-gray-500">{attendance.toLocaleString()} {attendance === 1 ? 'person' : 'people'} going</p>
                       </div>
                     )}
                     {e.capacity != null && e.capacity > 0 && (
@@ -850,7 +912,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                           <span>{attendance} / {e.capacity} spots</span>
                           <span>{capacityPct}%</span>
                         </div>
-                        <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                           <div style={{ width: `${capacityPct}%` }}
                             className={`h-full rounded-full ${capacityPct >= 90 ? 'bg-red-400' : capacityPct >= 70 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
                         </div>
@@ -858,7 +920,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     )}
                   </div>
 
-                  {/* Calendar + save flyer */}
+                  {/* Calendar + flyer */}
                   <div className="border-t border-gray-100 px-5 py-4 space-y-2">
                     <AddToCalendar title={e.title} startDate={e.start_date} endDate={e.end_date}
                       location={shareLocation} description={e.description} />
@@ -866,15 +928,15 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   </div>
                 </div>
 
-                {/* Share — compact inline row */}
-                <div className="mt-4 px-1">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Share</p>
+                {/* Share */}
+                <div className="px-1">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Share</p>
                   <ShareButton eventTitle={e.title} eventUrl={eventUrl} eventDate={shareDate}
                     eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} compact />
                 </div>
 
                 {/* Views */}
-                <p className="mt-4 text-xs text-gray-400 flex justify-end">
+                <p className="text-xs text-gray-400 flex justify-end px-1">
                   <ViewCounter eventId={e.id} initialCount={e.views_count ?? 0} />
                 </p>
               </div>
