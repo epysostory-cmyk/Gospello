@@ -207,7 +207,11 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
       const firstTime = scheduleMap[dateRange[0]]?.sessions?.find(s => s.start_time)?.start_time ?? '00:00'
       startDatetime = `${dateRange[0]}T${firstTime}:00${offset}`
       const lastD = dateRange[dateRange.length - 1]
-      const lastTime = scheduleMap[lastD]?.sessions?.slice().reverse().find(s => s.end_time)?.end_time ?? '23:59'
+      const lastEndTime = scheduleMap[lastD]?.sessions?.slice().reverse().find(s => s.end_time)?.end_time
+      const lastStartTime = scheduleMap[lastD]?.sessions?.find(s => s.start_time)?.start_time
+      const lastTime = lastEndTime ?? (lastStartTime
+        ? `${String(parseInt(lastStartTime.split(':')[0]) + 5).padStart(2, '0')}:${lastStartTime.split(':')[1]}`
+        : '13:00')
       endDatetime = `${lastD}T${lastTime}:00${offset}`
     } else {
       if (!form.start_date) { setError('Start date is required'); return }
