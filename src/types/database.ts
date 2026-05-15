@@ -236,7 +236,7 @@ export interface AdminUser {
 export function getEventLifecycle(startDate: string, endDate?: string | null): EventLifecycle {
   const now = new Date()
   const start = new Date(startDate)
-  const end = endDate ? new Date(endDate) : new Date(start.getTime() + 5 * 60 * 60 * 1000)
+  const end = endDate ? new Date(endDate) : start
   if (now < start) return 'upcoming'
   if (now > end) return 'ended'
   return 'ongoing'
