@@ -10,7 +10,7 @@ function FeatureButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 text-xs font-medium transition-colors disabled:opacity-60 whitespace-nowrap"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#7C3AED] text-white hover:bg-[#6D28D9] text-xs font-semibold transition-colors disabled:opacity-60 whitespace-nowrap"
     >
       {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Star className="w-3 h-3" />}
       Feature
@@ -24,9 +24,9 @@ function RemoveButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 text-xs font-medium transition-colors disabled:opacity-60 whitespace-nowrap"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 text-xs font-semibold transition-colors disabled:opacity-60 whitespace-nowrap"
     >
-      {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Star className="w-3 h-3 fill-amber-400" />}
+      {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Star className="w-3 h-3 fill-amber-500" />}
       Remove
     </button>
   )
@@ -55,14 +55,14 @@ export default function FeatureToggle({
       <select
         name="duration_days"
         defaultValue="30"
-        className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+        className="px-2 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-xs focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED] cursor-pointer"
       >
-        <option value="7" className="bg-[#1A1A2E]">7 days</option>
-        <option value="14" className="bg-[#1A1A2E]">14 days</option>
-        <option value="30" className="bg-[#1A1A2E]">30 days</option>
-        <option value="60" className="bg-[#1A1A2E]">60 days</option>
-        <option value="90" className="bg-[#1A1A2E]">90 days</option>
-        <option value="0" className="bg-[#1A1A2E]">Permanent</option>
+        <option value="7">7 days</option>
+        <option value="14">14 days</option>
+        <option value="30">30 days</option>
+        <option value="60">60 days</option>
+        <option value="90">90 days</option>
+        <option value="0">Permanent</option>
       </select>
       <FeatureButton />
     </form>

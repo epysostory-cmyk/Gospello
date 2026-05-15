@@ -18,7 +18,7 @@ export default async function AdminFeaturedPage({
 
   let query = adminClient
     .from('events')
-    .select('id, title, is_featured, featured_until, status, start_date, views_count, profiles(display_name)', { count: 'exact' })
+    .select('id, title, is_featured, featured_until, status, start_date, views_count, profiles(display_name), churches(name), seeded_organizers(name)', { count: 'exact' })
     .order('created_at', { ascending: false })
 
   if (tab === 'featured') query = query.eq('is_featured', true)
@@ -75,7 +75,12 @@ export default async function AdminFeaturedPage({
                 </td></tr>
               ) : events.map((event) => {
                 const profile   = Array.isArray(event.profiles) ? event.profiles[0] : event.profiles
-                const organizer = (profile as {display_name:string})?.display_name || 'Unknown'
+                const church    = Array.isArray(event.churches) ? event.churches[0] : event.churches
+                const seeded    = Array.isArray(event.seeded_organizers) ? event.seeded_organizers[0] : event.seeded_organizers
+                const organizer = (profile as {display_name:string}|null)?.display_name
+                               || (church  as {name:string}|null)?.name
+                               || (seeded  as {name:string}|null)?.name
+                               || 'Unknown'
                 return (
                   <tr key={event.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-3.5">
