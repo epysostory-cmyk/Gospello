@@ -221,7 +221,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           }
           {/* Floating nav */}
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-5">
-            <BackButton />
+            <BackButton variant="overlay" />
             <div className="flex items-center gap-2">
               <div className="bg-black/30 backdrop-blur-sm rounded-full">
                 <SaveButton eventId={e.id} eventTitle={e.title} initialSaved={initialSaved}
