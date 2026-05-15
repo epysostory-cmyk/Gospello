@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Users, CheckCircle2, Clock, Ticket, BookmarkCheck, Download } from 'lucide-react'
+import { ArrowLeft, Users, CheckCircle2, Clock, Ticket, BookmarkCheck, Eye } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import ExportCSVButton from './_components/ExportCSVButton'
 
@@ -21,10 +21,10 @@ export default async function EventRegistrationsPage({ params }: Props) {
 
   const admin = createAdminClient()
 
-  // Fetch event — include registration_type + is_free so we can tailor the UI
+  // Fetch event — include registration_type + is_free + views so we can tailor the UI
   const { data: event } = await admin
     .from('events')
-    .select('id, title, slug, organizer_id, start_date, city, state, registration_type, is_free')
+    .select('id, title, slug, organizer_id, start_date, city, state, registration_type, is_free, views_count')
     .eq('id', id)
     .single()
 
@@ -36,8 +36,8 @@ export default async function EventRegistrationsPage({ params }: Props) {
   const isFreeReg = regType === 'free_registration'
   const isInstant = regType === 'free_no_registration' || (!regType && event.is_free)
 
-  // Fetch registrations + saved count in parallel
-  const [{ data: registrations }, { count: savedCount }] = await Promise.all([
+  // Fetch registrations + saved count + attendance count in parallel
+  const [{ data: registrations }, { count: savedCount }, { count: attendanceCount }] = await Promise.all([
     admin
       .from('registrations')
       .select('*')
@@ -45,6 +45,10 @@ export default async function EventRegistrationsPage({ params }: Props) {
       .order('ticket_number', { ascending: true }),
     admin
       .from('saved_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', id),
+    admin
+      .from('attendances')
       .select('id', { count: 'exact', head: true })
       .eq('event_id', id),
   ])
@@ -82,35 +86,63 @@ export default async function EventRegistrationsPage({ params }: Props) {
 
       {/* ── Instant / free-no-registration ── */}
       {isInstant && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
-          <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
-            <Users className="w-5 h-5 text-emerald-500" />
-          </div>
-          <p className="text-sm font-medium text-gray-700 mb-1">This is a free drop-in event</p>
-          <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">
-            No registration required — anyone can mark themselves as attending. Check your event page to see the attendee count.
-          </p>
-          {interestedCount > 0 && (
-            <div className="mt-5 inline-flex items-center gap-2 bg-rose-50 border border-rose-100 text-rose-700 text-sm font-semibold px-4 py-2 rounded-full">
-              <BookmarkCheck className="w-4 h-4" />
-              {interestedCount} people saved this event
+        <>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+              <p className="text-3xl font-black text-gray-900">{(event.views_count ?? 0).toLocaleString()}</p>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <Eye className="w-3 h-3 text-gray-400" />
+                <p className="text-xs text-gray-500 font-medium">Views</p>
+              </div>
             </div>
-          )}
-        </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+              <p className="text-3xl font-black text-emerald-600">{(attendanceCount ?? 0).toLocaleString()}</p>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <Users className="w-3 h-3 text-gray-400" />
+                <p className="text-xs text-gray-500 font-medium">Going</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+              <p className="text-3xl font-black text-rose-500">{interestedCount.toLocaleString()}</p>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <BookmarkCheck className="w-3 h-3 text-gray-400" />
+                <p className="text-xs text-gray-500 font-medium">Saved</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 rounded-xl px-4 py-3">
+            <p className="text-xs text-gray-500 text-center leading-relaxed">
+              This is a free drop-in event — no registration required. Anyone can tap <span className="font-semibold text-gray-700">I&apos;m Going</span> on the event page.
+            </p>
+          </div>
+        </>
       )}
 
       {/* ── Free registration ── */}
       {isFreeReg && (
         <>
           {/* Stats — only what matters for a free event */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
-              <p className="text-3xl font-black text-gray-900">{regs.length}</p>
-              <p className="text-xs text-gray-500 mt-1 font-medium">Registered</p>
+              <p className="text-3xl font-black text-gray-900">{(event.views_count ?? 0).toLocaleString()}</p>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <Eye className="w-3 h-3 text-gray-400" />
+                <p className="text-xs text-gray-500 font-medium">Views</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+              <p className="text-3xl font-black text-emerald-600">{regs.length}</p>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <Users className="w-3 h-3 text-gray-400" />
+                <p className="text-xs text-gray-500 font-medium">Registered</p>
+              </div>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
               <p className="text-3xl font-black text-rose-500">{interestedCount}</p>
-              <p className="text-xs text-gray-500 mt-1 font-medium">Saved / Interested</p>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <BookmarkCheck className="w-3 h-3 text-gray-400" />
+                <p className="text-xs text-gray-500 font-medium">Saved</p>
+              </div>
             </div>
           </div>
 
@@ -127,18 +159,34 @@ export default async function EventRegistrationsPage({ params }: Props) {
       {isPaid && (
         <>
           {/* Stats — payment-aware */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
-              <p className="text-3xl font-black text-gray-900">{regs.length}</p>
-              <p className="text-xs text-gray-500 mt-1 font-medium">Registered</p>
+              <p className="text-3xl font-black text-gray-900">{(event.views_count ?? 0).toLocaleString()}</p>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <Eye className="w-3 h-3 text-gray-400" />
+                <p className="text-xs text-gray-500 font-medium">Views</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+              <p className="text-3xl font-black text-indigo-600">{regs.length}</p>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <Users className="w-3 h-3 text-gray-400" />
+                <p className="text-xs text-gray-500 font-medium">Registered</p>
+              </div>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
               <p className="text-3xl font-black text-emerald-600">{confirmedCount}</p>
-              <p className="text-xs text-gray-500 mt-1 font-medium">Payment Confirmed</p>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <CheckCircle2 className="w-3 h-3 text-gray-400" />
+                <p className="text-xs text-gray-500 font-medium">Paid</p>
+              </div>
             </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center col-span-2 sm:col-span-1">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
               <p className="text-3xl font-black text-rose-500">{interestedCount}</p>
-              <p className="text-xs text-gray-500 mt-1 font-medium">Saved / Interested</p>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <BookmarkCheck className="w-3 h-3 text-gray-400" />
+                <p className="text-xs text-gray-500 font-medium">Saved</p>
+              </div>
             </div>
           </div>
 
