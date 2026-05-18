@@ -63,7 +63,6 @@ export async function POST(request: NextRequest) {
       shuttle_available: body.shuttle_available || false,
       wheelchair_accessible: body.wheelchair_accessible || false,
       food_provided: body.food_provided || false,
-      accommodation_available: body.accommodation_available || false,
       dress_code: body.dress_code || null,
       no_recording: body.no_recording || false,
       gender_restriction: body.gender_restriction || null,

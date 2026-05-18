@@ -389,7 +389,6 @@ export default function EventFormStepper({ isEditMode = false, initialEvent, eve
         shuttle_available: formData.shuttle_available,
         wheelchair_accessible: formData.wheelchair_accessible,
         food_provided: formData.food_provided,
-        accommodation_available: formData.accommodation_available,
         dress_code: formData.dress_code || null,
         no_recording: formData.no_recording,
         gender_restriction: formData.gender_restriction || null,
