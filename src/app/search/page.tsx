@@ -191,10 +191,10 @@ export default async function SearchPage({ searchParams }: Props) {
             <p className="text-gray-900 font-semibold mb-1">No results for &ldquo;{query}&rdquo;</p>
             <p className="text-sm text-gray-500 mb-5">Try a different spelling, city name, or event type.</p>
             <div className="flex flex-wrap gap-2 justify-center">
-              {QUICK_CATEGORIES.slice(0, 4).map(({ label, q: catQ }) => (
+              {['Concerts', 'Conferences', 'Crusades', 'Youth'].map(label => (
                 <Link
                   key={label}
-                  href={`/search?q=${encodeURIComponent(catQ)}`}
+                  href={`/search?q=${encodeURIComponent(label.toLowerCase())}`}
                   className="px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors"
                 >
                   {label}
