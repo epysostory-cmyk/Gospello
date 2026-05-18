@@ -25,6 +25,14 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [isPending, startTransition] = useTransition()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [query, setQuery] = useState('')
+
+  const filtered = query.trim()
+    ? cats.filter(c =>
+        c.name.toLowerCase().includes(query.toLowerCase()) ||
+        c.slug.toLowerCase().includes(query.toLowerCase())
+      )
+    : cats
 
   const allIds = cats.map(c => c.id)
   const allSelected = allIds.length > 0 && allIds.every(id => selected.has(id))
@@ -75,6 +83,22 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
 
   return (
     <div>
+      {/* Search */}
+      <div className="px-4 py-3 border-b border-gray-100">
+        <input
+          type="search"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search categories…"
+          className="w-full sm:w-72 px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        />
+        {query && (
+          <p className="text-xs text-gray-400 mt-1.5">
+            {filtered.length} of {cats.length} categories
+          </p>
+        )}
+      </div>
+
       {/* Select all row */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -139,7 +163,12 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
 
       {/* Category cards */}
       <div className="divide-y divide-gray-100">
-        {cats.map((cat, idx) => {
+        {filtered.length === 0 && query && (
+        <div className="py-10 text-center text-sm text-gray-400">
+          No categories match &ldquo;{query}&rdquo;
+        </div>
+      )}
+      {filtered.map((cat, idx) => {
           const accentColor = cat.color ?? '#6B7280'
           const eventCount = countMap[cat.slug] ?? 0
           const isChecked = selected.has(cat.id)
@@ -203,7 +232,7 @@ export default function CategoryBulkTable({ cats, countMap }: Props) {
                       color={cat.color ?? '#6B7280'}
                       isVisible={cat.is_visible ?? true}
                       isFirst={idx === 0}
-                      isLast={idx === cats.length - 1}
+                      isLast={idx === filtered.length - 1}
                     />
                   </div>
                 </div>
