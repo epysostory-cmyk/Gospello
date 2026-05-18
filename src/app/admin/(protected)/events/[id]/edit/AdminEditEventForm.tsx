@@ -121,6 +121,13 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
     parking_available: event.parking_available ?? false,
     child_friendly:    event.child_friendly ?? false,
     notes:         event.notes ?? '',
+    shuttle_available:      (event as any).shuttle_available ?? false,
+    wheelchair_accessible:  (event as any).wheelchair_accessible ?? false,
+    food_provided:          (event as any).food_provided ?? false,
+    accommodation_available:(event as any).accommodation_available ?? false,
+    dress_code:             (event as any).dress_code ?? '',
+    no_recording:           (event as any).no_recording ?? false,
+    gender_restriction:     (event as any).gender_restriction ?? '',
     source_url:    event.source_url ?? '',
     daily_schedule: (event.daily_schedule ?? null) as DaySchedule[] | null,
     timezone:      event.timezone ?? 'Africa/Lagos',
@@ -624,15 +631,38 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
         {/* Additional info */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
           <p className="text-sm font-semibold text-gray-900">Additional Info</p>
-          <div className="flex flex-col gap-3">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" checked={form.parking_available} onChange={e => set('parking_available', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-[#7C3AED]" />
-              <span className="text-sm text-gray-700">Parking available</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {([
+              ['parking_available',      'Parking available'],
+              ['shuttle_available',       'Bus / shuttle available'],
+              ['child_friendly',          'Child-friendly'],
+              ['wheelchair_accessible',   'Wheelchair accessible'],
+              ['food_provided',           'Food / refreshments provided'],
+              ['accommodation_available', 'Accommodation available'],
+              ['no_recording',            'No recording allowed'],
+            ] as [string, string][]).map(([key, label]) => (
+              <label key={key} className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={!!(form as any)[key]} onChange={e => set(key, e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-[#7C3AED]" />
+                <span className="text-sm text-gray-700">{label}</span>
+              </label>
+            ))}
+          </div>
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer mb-2">
+              <input type="checkbox" checked={!!(form as any).dress_code} onChange={e => set('dress_code', e.target.checked ? 'Smart casual' : '')} className="w-4 h-4 rounded border-gray-300 text-[#7C3AED]" />
+              <span className="text-sm text-gray-700">Dress code required</span>
             </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" checked={form.child_friendly} onChange={e => set('child_friendly', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-[#7C3AED]" />
-              <span className="text-sm text-gray-700">Child-friendly</span>
-            </label>
+            {!!(form as any).dress_code && (
+              <input type="text" value={(form as any).dress_code} onChange={e => set('dress_code', e.target.value)} placeholder="e.g. Smart casual, All-white, Native attire" className={inputCls} />
+            )}
+          </div>
+          <div>
+            <label className={labelCls}>Audience restriction</label>
+            <select value={(form as any).gender_restriction || ''} onChange={e => set('gender_restriction', e.target.value)} className={inputCls}>
+              <option value="">Open to everyone</option>
+              <option value="women_only">Women only</option>
+              <option value="men_only">Men only</option>
+            </select>
           </div>
           <div>
             <label className={labelCls}>Notes (internal)</label>

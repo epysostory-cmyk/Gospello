@@ -7,7 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { formatDate, formatTime } from '@/lib/utils'
 import { getCategoryMap } from '@/lib/categories'
-import { Calendar, MapPin, Clock, Building2, Globe, ChevronLeft, Car, Baby, Mic, Ticket, Users, ChevronRight } from 'lucide-react'
+import { Calendar, MapPin, Clock, Building2, Globe, ChevronLeft, Car, Baby, Mic, Ticket, Users, ChevronRight, Bus, Accessibility, UtensilsCrossed, BedDouble, ShirtIcon, VideoOff, UserCheck } from 'lucide-react'
 import type { DaySchedule } from '@/types/database'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
@@ -457,22 +457,21 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         )}
 
         {/* ── Amenities ── */}
-        {(e.parking_available || e.child_friendly || e.notes) && (
+        {(e.parking_available || e.child_friendly || e.shuttle_available || e.wheelchair_accessible || e.food_provided || e.accommodation_available || e.dress_code || e.no_recording || e.gender_restriction || e.notes) && (
           <>
             <div className="h-px bg-gray-100" />
             <div className="px-5 py-6 space-y-3">
               <h2 className="text-[17px] font-bold text-gray-900">Good to know</h2>
-              <div className="flex flex-wrap gap-3">
-                {e.parking_available && (
-                  <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl">
-                    <Car className="w-4 h-4 text-gray-400" /> Parking available
-                  </span>
-                )}
-                {e.child_friendly && (
-                  <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl">
-                    <Baby className="w-4 h-4 text-gray-400" /> Child friendly
-                  </span>
-                )}
+              <div className="flex flex-wrap gap-2">
+                {e.parking_available       && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><Car className="w-4 h-4 text-gray-400" /> Parking available</span>}
+                {e.shuttle_available       && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><Bus className="w-4 h-4 text-gray-400" /> Bus / shuttle</span>}
+                {e.child_friendly          && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><Baby className="w-4 h-4 text-gray-400" /> Child-friendly</span>}
+                {e.wheelchair_accessible   && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><Accessibility className="w-4 h-4 text-gray-400" /> Wheelchair accessible</span>}
+                {e.food_provided           && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><UtensilsCrossed className="w-4 h-4 text-gray-400" /> Food provided</span>}
+                {e.accommodation_available && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><BedDouble className="w-4 h-4 text-gray-400" /> Accommodation available</span>}
+                {e.dress_code              && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl"><ShirtIcon className="w-4 h-4 text-amber-500" /> Dress code: {e.dress_code}</span>}
+                {e.no_recording            && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-red-50 border border-red-200 px-3 py-2 rounded-xl"><VideoOff className="w-4 h-4 text-red-400" /> No recording</span>}
+                {e.gender_restriction      && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-indigo-50 border border-indigo-200 px-3 py-2 rounded-xl"><UserCheck className="w-4 h-4 text-indigo-400" />{e.gender_restriction === 'women_only' ? 'Women only' : 'Men only'}</span>}
               </div>
               {e.notes && (
                 <p className="text-sm text-gray-600 pl-4 border-l-2 border-indigo-200 leading-relaxed">{e.notes}</p>
@@ -773,20 +772,19 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               )}
 
               {/* Amenities */}
-              {(e.parking_available || e.child_friendly || e.notes) && (
+              {(e.parking_available || e.child_friendly || e.shuttle_available || e.wheelchair_accessible || e.food_provided || e.accommodation_available || e.dress_code || e.no_recording || e.gender_restriction || e.notes) && (
                 <div className="mb-8">
                   <h2 className="text-[17px] font-bold text-gray-900 mb-3">Good to know</h2>
-                  <div className="flex flex-wrap gap-3 mb-3">
-                    {e.parking_available && (
-                      <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl">
-                        <Car className="w-4 h-4 text-gray-400" /> Parking available
-                      </span>
-                    )}
-                    {e.child_friendly && (
-                      <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl">
-                        <Baby className="w-4 h-4 text-gray-400" /> Child friendly
-                      </span>
-                    )}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {e.parking_available       && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><Car className="w-4 h-4 text-gray-400" /> Parking available</span>}
+                    {e.shuttle_available       && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><Bus className="w-4 h-4 text-gray-400" /> Bus / shuttle</span>}
+                    {e.child_friendly          && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><Baby className="w-4 h-4 text-gray-400" /> Child-friendly</span>}
+                    {e.wheelchair_accessible   && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><Accessibility className="w-4 h-4 text-gray-400" /> Wheelchair accessible</span>}
+                    {e.food_provided           && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><UtensilsCrossed className="w-4 h-4 text-gray-400" /> Food provided</span>}
+                    {e.accommodation_available && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl"><BedDouble className="w-4 h-4 text-gray-400" /> Accommodation available</span>}
+                    {e.dress_code              && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl"><ShirtIcon className="w-4 h-4 text-amber-500" /> Dress code: {e.dress_code}</span>}
+                    {e.no_recording            && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-red-50 border border-red-200 px-3 py-2 rounded-xl"><VideoOff className="w-4 h-4 text-red-400" /> No recording</span>}
+                    {e.gender_restriction      && <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-indigo-50 border border-indigo-200 px-3 py-2 rounded-xl"><UserCheck className="w-4 h-4 text-indigo-400" />{e.gender_restriction === 'women_only' ? 'Women only' : 'Men only'}</span>}
                   </div>
                   {e.notes && <p className="text-sm text-gray-600 pl-4 border-l-2 border-indigo-200 leading-relaxed">{e.notes}</p>}
                 </div>

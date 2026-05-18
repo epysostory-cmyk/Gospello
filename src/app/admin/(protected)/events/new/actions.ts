@@ -26,6 +26,13 @@ interface AdminEventInput {
     parking_available: boolean
     child_friendly: boolean
     notes: string
+    shuttle_available: boolean
+    wheelchair_accessible: boolean
+    food_provided: boolean
+    accommodation_available: boolean
+    dress_code: string
+    no_recording: boolean
+    gender_restriction: string
     source_url: string
     daily_schedule: DaySchedule[] | null
     timezone: string
@@ -77,11 +84,18 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
       banner_url:        form.banner_url || null,
       gallery_urls:      [],
       visibility:        form.visibility,
-      speakers:          form.speakers || null,
-      parking_available: form.parking_available,
-      child_friendly:    form.child_friendly,
-      notes:             form.notes || null,
-      created_by_admin:  true,
+      speakers:               form.speakers || null,
+      parking_available:      form.parking_available,
+      child_friendly:         form.child_friendly,
+      notes:                  form.notes || null,
+      shuttle_available:      form.shuttle_available,
+      wheelchair_accessible:  form.wheelchair_accessible,
+      food_provided:          form.food_provided,
+      accommodation_available:form.accommodation_available,
+      dress_code:             form.dress_code || null,
+      no_recording:           form.no_recording,
+      gender_restriction:     form.gender_restriction || null,
+      created_by_admin:       true,
       source_url:        form.source_url || null,
       timezone:          form.timezone || 'Africa/Lagos',
       livestream_url:    form.livestream_url || null,
@@ -132,11 +146,18 @@ export async function updateAdminEvent(input: AdminEventUpdateInput): Promise<{ 
       tags:              form.tags,
       banner_url:        form.banner_url || null,
       visibility:        form.visibility,
-      speakers:          form.speakers || null,
-      parking_available: form.parking_available,
-      child_friendly:    form.child_friendly,
-      notes:             form.notes || null,
-      source_url:        form.source_url || null,
+      speakers:               form.speakers || null,
+      parking_available:      form.parking_available,
+      child_friendly:         form.child_friendly,
+      notes:                  form.notes || null,
+      shuttle_available:      form.shuttle_available,
+      wheelchair_accessible:  form.wheelchair_accessible,
+      food_provided:          form.food_provided,
+      accommodation_available:form.accommodation_available,
+      dress_code:             form.dress_code || null,
+      no_recording:           form.no_recording,
+      gender_restriction:     form.gender_restriction || null,
+      source_url:             form.source_url || null,
       timezone:          form.timezone || 'Africa/Lagos',
       livestream_url:    form.livestream_url || null,
     }).eq('id', eventId)

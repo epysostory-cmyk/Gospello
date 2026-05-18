@@ -138,20 +138,63 @@ export default function Step1Basics({ formData, updateForm, errors, categories }
                 className={inp}
               />
             </div>
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={formData.parking_available}
-                  onChange={e => updateForm('parking_available', e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300" />
-                <span className="text-sm text-gray-700">Parking available</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={formData.child_friendly}
-                  onChange={e => updateForm('child_friendly', e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300" />
-                <span className="text-sm text-gray-700">Child friendly</span>
-              </label>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 mb-3">Additional Info</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {([
+                  ['parking_available',       'Parking available'],
+                  ['shuttle_available',        'Bus / shuttle available'],
+                  ['child_friendly',           'Child-friendly'],
+                  ['wheelchair_accessible',    'Wheelchair accessible'],
+                  ['food_provided',            'Food / refreshments provided'],
+                  ['accommodation_available',  'Accommodation available'],
+                  ['no_recording',             'No recording allowed'],
+                ] as [string, string][]).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox"
+                      checked={!!(formData as any)[key]}
+                      onChange={e => updateForm(key as any, e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">{label}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Dress code — text reveals when ticked */}
+              <div className="mt-3">
+                <label className="flex items-center gap-3 cursor-pointer mb-2">
+                  <input type="checkbox"
+                    checked={!!(formData as any).dress_code}
+                    onChange={e => updateForm('dress_code' as any, e.target.checked ? 'Smart casual' : '')}
+                    className="w-4 h-4 rounded border-gray-300 flex-shrink-0" />
+                  <span className="text-sm text-gray-700">Dress code required</span>
+                </label>
+                {!!(formData as any).dress_code && (
+                  <input
+                    type="text"
+                    value={(formData as any).dress_code || ''}
+                    onChange={e => updateForm('dress_code' as any, e.target.value)}
+                    placeholder="e.g. Smart casual, All-white, Native attire"
+                    className={`${inp} mt-1`}
+                  />
+                )}
+              </div>
+
+              {/* Gender restriction */}
+              <div className="mt-3">
+                <label className="block text-sm text-gray-700 mb-1.5">Audience restriction</label>
+                <select
+                  value={(formData as any).gender_restriction || ''}
+                  onChange={e => updateForm('gender_restriction' as any, e.target.value)}
+                  className={inp}
+                >
+                  <option value="">Open to everyone</option>
+                  <option value="women_only">Women only</option>
+                  <option value="men_only">Men only</option>
+                </select>
+              </div>
             </div>
+
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1.5">
                 Additional notes <span className="text-gray-400 font-normal">(optional)</span>
@@ -159,7 +202,7 @@ export default function Step1Basics({ formData, updateForm, errors, categories }
               <textarea
                 value={formData.notes || ''}
                 onChange={e => updateForm('notes', e.target.value)}
-                placeholder="Dress code, what to bring, special instructions..."
+                placeholder="Anything else attendees should know..."
                 rows={3}
                 className={`${inp} resize-none`}
               />

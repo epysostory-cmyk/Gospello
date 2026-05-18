@@ -53,6 +53,13 @@ interface FormState {
   parking_available: boolean
   child_friendly: boolean
   notes: string
+  shuttle_available: boolean
+  wheelchair_accessible: boolean
+  food_provided: boolean
+  accommodation_available: boolean
+  dress_code: string
+  no_recording: boolean
+  gender_restriction: string
   timezone: string
   livestream_url: string
 }
@@ -89,6 +96,13 @@ const INITIAL_FORM_STATE: FormState = {
   parking_available: false,
   child_friendly: false,
   notes: '',
+  shuttle_available: false,
+  wheelchair_accessible: false,
+  food_provided: false,
+  accommodation_available: false,
+  dress_code: '',
+  no_recording: false,
+  gender_restriction: '',
   timezone: 'Africa/Lagos',
   livestream_url: '',
 }
@@ -154,6 +168,13 @@ export default function EventFormStepper({ isEditMode = false, initialEvent, eve
         parking_available: initialEvent.parking_available || false,
         child_friendly: initialEvent.child_friendly || false,
         notes: initialEvent.notes || '',
+        shuttle_available: (initialEvent as any).shuttle_available || false,
+        wheelchair_accessible: (initialEvent as any).wheelchair_accessible || false,
+        food_provided: (initialEvent as any).food_provided || false,
+        accommodation_available: (initialEvent as any).accommodation_available || false,
+        dress_code: (initialEvent as any).dress_code || '',
+        no_recording: (initialEvent as any).no_recording || false,
+        gender_restriction: (initialEvent as any).gender_restriction || '',
         timezone: (initialEvent as any).timezone || 'Africa/Lagos',
         livestream_url: (initialEvent as any).livestream_url || '',
       })
@@ -357,6 +378,13 @@ export default function EventFormStepper({ isEditMode = false, initialEvent, eve
         parking_available: formData.parking_available,
         child_friendly: formData.child_friendly,
         notes: formData.notes || null,
+        shuttle_available: formData.shuttle_available,
+        wheelchair_accessible: formData.wheelchair_accessible,
+        food_provided: formData.food_provided,
+        accommodation_available: formData.accommodation_available,
+        dress_code: formData.dress_code || null,
+        no_recording: formData.no_recording,
+        gender_restriction: formData.gender_restriction || null,
         timezone: formData.timezone || 'Africa/Lagos',
         livestream_url: formData.livestream_url || null,
       }

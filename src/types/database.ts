@@ -162,6 +162,13 @@ export interface Event {
   parking_available: boolean
   child_friendly: boolean
   notes: string | null
+  shuttle_available: boolean
+  wheelchair_accessible: boolean
+  food_provided: boolean
+  accommodation_available: boolean
+  dress_code: string | null
+  no_recording: boolean
+  gender_restriction: string | null
   featured_until: string | null
   // New fields
   is_online: boolean
