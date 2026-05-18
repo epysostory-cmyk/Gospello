@@ -14,8 +14,7 @@ import { getEventLifecycle } from '@/types/database'
 import RegistrationButton from '@/components/ui/RegistrationButton'
 import SaveButton from '@/components/ui/SaveButton'
 import ViewCounter from '@/components/ui/ViewCounter'
-import ShareButton from '@/components/ui/ShareButton'
-import FlyerButtons from '@/components/ui/FlyerButtons'
+import ShareEventButton from '@/components/ui/ShareEventButton'
 import EventQuickActions from './_components/EventQuickActions'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
 import CountdownTimer from '@/components/ui/CountdownTimer'
@@ -279,9 +278,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             )}
           </div>
 
-          {/* Share Flyer */}
+          {/* Share */}
           <div className="mt-4">
-            <FlyerButtons slug={e.slug} eventTitle={e.title} />
+            <ShareEventButton slug={e.slug} eventTitle={e.title} eventUrl={eventUrl}
+              eventDate={shareDate} eventLocation={shareLocation} eventDescription={e.description ?? ''} />
           </div>
         </div>
 
@@ -513,8 +513,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               location={shareLocation} description={e.description} />
             {e.timezone && e.timezone !== 'UTC' && <EventTimezone timezone={e.timezone} startDate={e.start_date} />}
           </div>
-          <ShareButton eventTitle={e.title} eventUrl={eventUrl} eventDate={shareDate}
-            eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} />
+          <div className="mt-3">
+            <ShareEventButton slug={e.slug} eventTitle={e.title} eventUrl={eventUrl}
+              eventDate={shareDate} eventLocation={shareLocation} eventDescription={e.description ?? ''} />
+          </div>
         </div>
 
         {/* ── Organizer ── */}
@@ -975,21 +977,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     )}
                   </div>
 
-                  {/* Calendar + flyer */}
+                  {/* Calendar + share */}
                   <div className="border-t border-gray-100 px-5 py-4 space-y-2">
                     <AddToCalendar title={e.title} startDate={e.start_date} endDate={e.end_date}
                       location={shareLocation} description={e.description} />
-                    <FlyerButtons slug={e.slug} eventTitle={e.title} />
-                  </div>
-                </div>
-
-                {/* Share */}
-                <div className="px-1">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Share</p>
-                  <ShareButton eventTitle={e.title} eventUrl={eventUrl} eventDate={shareDate}
-                    eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} compact />
-                  <div className="mt-3">
-                    <FlyerButtons slug={e.slug} eventTitle={e.title} />
+                    <ShareEventButton slug={e.slug} eventTitle={e.title} eventUrl={eventUrl}
+                      eventDate={shareDate} eventLocation={shareLocation} eventDescription={e.description ?? ''} />
                   </div>
                 </div>
 
