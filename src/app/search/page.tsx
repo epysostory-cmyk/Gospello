@@ -5,27 +5,28 @@ export const dynamic = 'force-dynamic'
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Search, Calendar, MapPin, Building2, Users, ArrowRight, Music, BookOpen, HeartHandshake, Mic2, Baby, Globe } from 'lucide-react'
+import { Search, Calendar, MapPin, Building2, Users, ArrowRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 interface Props {
   searchParams: Promise<{ q?: string; city?: string; tab?: string }>
 }
 
-const QUICK_CATEGORIES = [
-  { label: 'Concerts',     q: 'concert',      Icon: Music },
-  { label: 'Conferences',  q: 'conference',    Icon: Mic2 },
-  { label: 'Bible Study',  q: 'bible study',   Icon: BookOpen },
-  { label: 'Outreach',     q: 'outreach',      Icon: HeartHandshake },
-  { label: 'Youth',        q: 'youth',         Icon: Baby },
-  { label: 'Crusades',     q: 'crusade',       Icon: Globe },
-]
-
 export default async function SearchPage({ searchParams }: Props) {
   const { q = '', tab = 'all' } = await searchParams
   const query = q.trim()
 
   if (!query) {
+    const admin = createAdminClient()
+    const { data: categories } = await admin
+      .from('categories')
+      .select('name, slug, color')
+      .eq('is_visible', true)
+      .order('sort_order', { ascending: true })
+      .limit(12)
+
+    const topics = categories ?? []
+
     return (
       <div className="min-h-screen bg-white">
         {/* Hero search area */}
@@ -53,24 +54,30 @@ export default async function SearchPage({ searchParams }: Props) {
           </div>
         </div>
 
-        {/* Quick categories */}
-        <div className="max-w-xl mx-auto px-4 -mt-5">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-3">Browse by topic</p>
-            <div className="grid grid-cols-3 gap-2">
-              {QUICK_CATEGORIES.map(({ label, q: catQ, Icon }) => (
-                <Link
-                  key={label}
-                  href={`/search?q=${encodeURIComponent(catQ)}`}
-                  className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-gray-50 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 transition-colors text-xs font-semibold"
-                >
-                  <Icon className="w-5 h-5" />
-                  {label}
-                </Link>
-              ))}
+        {/* Browse by Topic */}
+        {topics.length > 0 && (
+          <div className="max-w-xl mx-auto px-4 -mt-5">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-3">Browse by Topic</p>
+              <div className="flex flex-wrap gap-2">
+                {topics.map(({ name, slug, color }) => (
+                  <Link
+                    key={slug}
+                    href={`/events?category=${slug}`}
+                    className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:opacity-80 active:scale-95"
+                    style={{
+                      backgroundColor: (color ?? '#6B7280') + '18',
+                      color: color ?? '#6B7280',
+                      border: `1px solid ${(color ?? '#6B7280')}30`,
+                    }}
+                  >
+                    {name}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="max-w-xl mx-auto px-4 mt-6 pb-10">
           <p className="text-xs text-gray-400 text-center">Gospello — Nigeria&apos;s gospel event directory</p>
