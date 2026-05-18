@@ -386,6 +386,13 @@ export default function EventFormStepper({ isEditMode = false, initialEvent, eve
         parking_available: formData.parking_available,
         child_friendly: formData.child_friendly,
         notes: formData.notes || null,
+        shuttle_available: formData.shuttle_available,
+        wheelchair_accessible: formData.wheelchair_accessible,
+        food_provided: formData.food_provided,
+        accommodation_available: formData.accommodation_available,
+        dress_code: formData.dress_code || null,
+        no_recording: formData.no_recording,
+        gender_restriction: formData.gender_restriction || null,
         timezone: formData.timezone || 'Africa/Lagos',
         livestream_url: formData.livestream_url || null,
       }
