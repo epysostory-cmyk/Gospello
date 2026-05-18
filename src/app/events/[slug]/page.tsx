@@ -86,6 +86,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   const e = event as EventWithRelations
 
+  const hostEventsQuery = e.church_id
+    ? admin.from('events').select('id,title,slug,start_date,city,banner_url,is_free,location_name').eq('church_id',e.church_id).eq('status','approved').neq('id',e.id).gte('start_date',new Date().toISOString()).order('start_date',{ascending:true}).limit(3)
+    : e.seeded_organizer_id
+    ? admin.from('events').select('id,title,slug,start_date,city,banner_url,is_free,location_name').eq('seeded_organizer_id',e.seeded_organizer_id).eq('status','approved').neq('id',e.id).gte('start_date',new Date().toISOString()).order('start_date',{ascending:true}).limit(3)
+    : admin.from('events').select('id,title,slug,start_date,city,banner_url,is_free,location_name').eq('organizer_id',e.organizer_id!).eq('status','approved').neq('id',e.id).gte('start_date',new Date().toISOString()).order('start_date',{ascending:true}).limit(3)
+
   const [
     { count: attendanceCount },
     initialAttended,
@@ -93,20 +99,24 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     { data: relatedCat },
     { data: relatedCity },
     { count: hostEventCount },
+    { data: hostEventsRaw },
   ] = await Promise.all([
     admin.from('attendances').select('id', { count: 'exact', head: true }).eq('event_id', e.id),
     checkUserAttended(e.id),
     checkEventSaved(e.id),
-    supabase.from('events').select('id,title,slug,start_date,city,banner_url,is_free').eq('status','approved').eq('category',e.category).neq('id',e.id).gte('start_date',new Date().toISOString()).limit(3),
-    supabase.from('events').select('id,title,slug,start_date,city,banner_url,is_free').eq('status','approved').eq('city',e.city).neq('category',e.category).neq('id',e.id).gte('start_date',new Date().toISOString()).limit(2),
+    supabase.from('events').select('id,title,slug,start_date,city,banner_url,is_free').eq('status','approved').eq('category',e.category).neq('id',e.id).gte('start_date',new Date().toISOString()).limit(4),
+    supabase.from('events').select('id,title,slug,start_date,city,banner_url,is_free').eq('status','approved').eq('city',e.city).neq('category',e.category).neq('id',e.id).gte('start_date',new Date().toISOString()).limit(3),
     e.church_id
       ? admin.from('events').select('id',{count:'exact',head:true}).eq('church_id',e.church_id).eq('status','approved')
       : e.seeded_organizer_id
       ? admin.from('events').select('id',{count:'exact',head:true}).eq('seeded_organizer_id',e.seeded_organizer_id).eq('status','approved')
-      : admin.from('events').select('id',{count:'exact',head:true}).eq('organizer_id',e.organizer_id).eq('status','approved'),
+      : admin.from('events').select('id',{count:'exact',head:true}).eq('organizer_id',e.organizer_id!).eq('status','approved'),
+    hostEventsQuery,
   ])
 
-  const seenIds = new Set<string>()
+  const hostEvents = (hostEventsRaw ?? []) as (Event & { location_name?: string | null })[]
+  const hostEventIds = new Set(hostEvents.map(ev => ev.id))
+  const seenIds = new Set<string>([...hostEventIds])
   const related: Event[] = []
   for (const ev of [...(relatedCat ?? []), ...(relatedCity ?? [])]) {
     if (!seenIds.has(ev.id)) { seenIds.add(ev.id); related.push(ev as Event) }
@@ -537,13 +547,46 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </p>
         </div>
 
-        {/* ── Related Events ── */}
+        {/* ── More from this host ── */}
+        {hostEvents.length > 0 && host && (
+          <>
+            <div className="h-2 bg-gray-50" />
+            <div className="py-6">
+              <div className="flex items-center justify-between px-5 mb-4">
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">More from</p>
+                  <h2 className="text-[17px] font-bold text-gray-900 leading-tight">{host.name}</h2>
+                </div>
+                <Link href={host.href} className="text-sm font-semibold text-indigo-600 flex-shrink-0">View all →</Link>
+              </div>
+              <div className="flex gap-3 px-5 overflow-x-auto pb-2 [scrollbar-width:none] [-webkit-overflow-scrolling:touch]">
+                {hostEvents.map(ev => (
+                  <Link key={ev.id} href={`/events/${ev.slug}`} className="flex-shrink-0 w-[180px] group">
+                    <div className="aspect-video rounded-2xl overflow-hidden bg-gray-100 mb-2 relative">
+                      {(ev as Event & { banner_url?: string | null }).banner_url
+                        ? <Image src={(ev as Event & { banner_url?: string | null }).banner_url!} alt={ev.title} width={180} height={101} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200" />
+                        : <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold text-xl">{ev.title[0]}</div>
+                      }
+                      <span className={`absolute top-1.5 left-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full ${ev.is_free ? 'bg-emerald-500 text-white' : 'bg-gray-900 text-white'}`}>
+                        {ev.is_free ? 'Free' : 'Paid'}
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">{ev.title}</p>
+                    <p className="text-xs text-gray-400 mt-1">{formatDate(ev.start_date, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ── You might also like ── */}
         {related.length > 0 && (
           <>
             <div className="h-2 bg-gray-50" />
             <div className="px-5 py-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-[17px] font-bold text-gray-900">More Events</h2>
+                <h2 className="text-[17px] font-bold text-gray-900">You might also like</h2>
                 <Link href="/events" className="text-sm font-semibold text-indigo-600 hover:underline">See all</Link>
               </div>
               <div className="space-y-4">
@@ -825,11 +868,41 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
               <div className="h-px bg-gray-100 mb-8" />
 
-              {/* Related events */}
+              {/* More from this host */}
+              {hostEvents.length > 0 && host && (
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">More from</p>
+                      <h2 className="text-[17px] font-bold text-gray-900">{host.name}</h2>
+                    </div>
+                    <Link href={host.href} className="text-sm font-semibold text-indigo-600 hover:underline">View all →</Link>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    {hostEvents.map(ev => (
+                      <Link key={ev.id} href={`/events/${ev.slug}`} className="group block">
+                        <div className="aspect-video rounded-xl overflow-hidden bg-gray-100 mb-2.5 relative">
+                          {(ev as Event & { banner_url?: string | null }).banner_url
+                            ? <Image src={(ev as Event & { banner_url?: string | null }).banner_url!} alt={ev.title} width={240} height={135} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200" />
+                            : <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold text-lg">{ev.title[0]}</div>
+                          }
+                          <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${ev.is_free ? 'bg-emerald-500 text-white' : 'bg-gray-900 text-white'}`}>
+                            {ev.is_free ? 'Free' : 'Paid'}
+                          </span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">{ev.title}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{formatDate(ev.start_date, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* You might also like */}
               {related.length > 0 && (
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-5">
-                    <h2 className="text-[17px] font-bold text-gray-900">More Events</h2>
+                    <h2 className="text-[17px] font-bold text-gray-900">You might also like</h2>
                     <Link href="/events" className="text-sm font-semibold text-indigo-600 hover:underline">See all</Link>
                   </div>
                   <div className="grid grid-cols-3 gap-4">

@@ -21,7 +21,7 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
 
   const [churchRes, orgRes] = await Promise.all([
     adminClient.from('churches')
-      .select('id, name, slug, city, state, logo_url, is_claimed, verified_badge, claim_requested_at, created_at, is_hidden, pastor_name')
+      .select('id, name, slug, city, state, logo_url, is_claimed, verified_badge, claim_requested_at, created_at, is_hidden, pastor_name, description, service_times, phone, website_url, instagram, facebook, address, denomination')
       .eq('created_by_admin', true)
       .order('created_at', { ascending: false }),
     adminClient.from('seeded_organizers')
@@ -34,12 +34,33 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
     logo_url: string | null; is_claimed: boolean; verified_badge: boolean
     claim_requested_at: string | null; created_at: string; is_hidden: boolean
     contact: string | null; type: 'church' | 'organizer'
+    // Church completeness fields
+    description?: string | null; service_times?: string | null; phone?: string | null
+    website?: string | null; instagram?: string | null; facebook?: string | null
+    address?: string | null; denomination?: string | null
+  }
+
+  function profileScore(row: Row): number {
+    if (row.type !== 'church') return -1
+    let s = 0
+    if (row.logo_url)                                                 s += 20
+    if (row.description?.trim())                                      s += 15
+    if (row.service_times)                                            s += 15
+    if (row.address?.trim())                                          s += 10
+    if (row.phone?.trim())                                            s += 10
+    if (row.website?.trim() || row.instagram?.trim() || row.facebook?.trim()) s += 10
+    if (row.contact?.trim())                                          s += 10
+    if (row.denomination?.trim())                                     s += 10
+    return s
   }
 
   const churches: Row[] = (churchRes.data ?? []).map(c => ({
     id: c.id, name: c.name, slug: c.slug, city: c.city, state: c.state, logo_url: c.logo_url,
     is_claimed: c.is_claimed, verified_badge: c.verified_badge, claim_requested_at: c.claim_requested_at,
     created_at: c.created_at, is_hidden: c.is_hidden, contact: c.pastor_name, type: 'church' as const,
+    description: c.description, service_times: c.service_times, phone: c.phone,
+    website: c.website_url, instagram: c.instagram, facebook: c.facebook,
+    address: c.address, denomination: c.denomination,
   }))
 
   const organizers: Row[] = (orgRes.data ?? []).map(o => ({
@@ -218,6 +239,24 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
                 <ClaimBadge row={row} />
                 <span className="text-[10px] text-gray-400">{formatDate(row.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
               </div>
+
+              {row.type === 'church' && (() => {
+                const score = profileScore(row)
+                const color = score >= 80 ? 'bg-emerald-500' : score >= 50 ? 'bg-amber-400' : 'bg-rose-400'
+                const textColor = score >= 80 ? 'text-emerald-700' : score >= 50 ? 'text-amber-700' : 'text-rose-600'
+                const bgColor = score >= 80 ? 'bg-emerald-50' : score >= 50 ? 'bg-amber-50' : 'bg-rose-50'
+                return (
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Profile completeness</span>
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${bgColor} ${textColor}`}>{score}%</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${score}%` }} />
+                    </div>
+                  </div>
+                )
+              })()}
 
               <div className="flex items-center gap-1.5 pt-3 border-t border-gray-50 flex-wrap">
                 <Link
