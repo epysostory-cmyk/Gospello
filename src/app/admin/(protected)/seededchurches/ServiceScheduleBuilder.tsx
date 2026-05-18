@@ -39,39 +39,45 @@ export default function ServiceScheduleBuilder({ entries, onChange }: Props) {
   return (
     <div className="space-y-2">
       {entries.map((entry, i) => (
-        <div key={i} className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          <select
-            value={entry.day}
-            onChange={e => update(i, 'day', e.target.value)}
-            className="w-28 px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          >
-            {DAYS.map(d => (
-              <option key={d.value} value={d.value}>{d.label}</option>
-            ))}
-          </select>
+        <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2 sm:space-y-0 sm:bg-transparent sm:border-0 sm:p-0 sm:flex sm:items-center sm:gap-2">
+          {/* Row 1 on mobile: day + time */}
+          <div className="flex items-center gap-2">
+            <select
+              value={entry.day}
+              onChange={e => update(i, 'day', e.target.value)}
+              className="w-28 px-2 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            >
+              {DAYS.map(d => (
+                <option key={d.value} value={d.value}>{d.label}</option>
+              ))}
+            </select>
 
-          <input
-            type="text"
-            placeholder="Service name (e.g. First Service)"
-            value={entry.name}
-            onChange={e => update(i, 'name', e.target.value)}
-            className="flex-1 min-w-0 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          />
+            <input
+              type="time"
+              value={entry.time}
+              onChange={e => update(i, 'time', e.target.value)}
+              className="flex-1 sm:flex-none sm:w-32 px-2 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
+          </div>
 
-          <input
-            type="time"
-            value={entry.time}
-            onChange={e => update(i, 'time', e.target.value)}
-            className="w-32 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          />
+          {/* Row 2 on mobile: name + delete */}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Service name (e.g. First Service)"
+              value={entry.name}
+              onChange={e => update(i, 'name', e.target.value)}
+              className="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
 
-          <button
-            type="button"
-            onClick={() => remove(i)}
-            className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded"
-          >
-            <X size={16} />
-          </button>
+            <button
+              type="button"
+              onClick={() => remove(i)}
+              className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded flex-shrink-0"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
       ))}
 
