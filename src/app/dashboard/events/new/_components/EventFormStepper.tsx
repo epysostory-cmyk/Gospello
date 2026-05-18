@@ -111,9 +111,10 @@ interface Props {
   isEditMode?: boolean
   initialEvent?: Partial<Event>
   eventStatus?: string
+  prefillLocation?: { city: string; state: string; address: string; location_name: string }
 }
 
-export default function EventFormStepper({ isEditMode = false, initialEvent, eventStatus }: Props) {
+export default function EventFormStepper({ isEditMode = false, initialEvent, eventStatus, prefillLocation }: Props) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormState>(INITIAL_FORM_STATE)
@@ -179,19 +180,26 @@ export default function EventFormStepper({ isEditMode = false, initialEvent, eve
         livestream_url: (initialEvent as any).livestream_url || '',
       })
     } else {
-      // Load from localStorage (creation mode)
+      // Load from localStorage (creation mode), then overlay prefill if present
       const savedDraft = localStorage.getItem(DRAFT_KEY)
       if (savedDraft) {
         try {
           const parsed = JSON.parse(savedDraft)
-          // Always default visibility to public — never restore a draft value
           setFormData({ ...parsed, visibility: 'public' })
         } catch (e) {
           console.error('Failed to parse saved draft:', e)
         }
+      } else if (prefillLocation) {
+        setFormData(prev => ({
+          ...prev,
+          city: prefillLocation.city,
+          state: prefillLocation.state,
+          address: prefillLocation.address,
+          location_name: prefillLocation.location_name,
+        }))
       }
     }
-  }, [isEditMode, initialEvent])
+  }, [isEditMode, initialEvent]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load categories from DB
   useEffect(() => {

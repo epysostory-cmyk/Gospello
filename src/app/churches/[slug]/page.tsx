@@ -124,6 +124,9 @@ function gradientFor(name: string) {
 export default async function ChurchPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const supabase = createAdminClient()
+  const { createClient: createServerClient } = await import('@/lib/supabase/server')
+  const authClient = await createServerClient()
+  const { data: { user } } = await authClient.auth.getUser()
 
   const { data: church } = await supabase.from('churches').select('*').eq('slug', slug).eq('is_hidden', false).single()
   if (!church) notFound()
@@ -148,6 +151,10 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
   const initial = c.name[0]?.toUpperCase() ?? '?'
   const location = [c.city, c.state].filter(Boolean).join(', ')
   const pastorLine = [c.leader_title, c.pastor_name].filter(Boolean).join(' ')
+  const isOwner = !!user && !!(c as any).owner_user_id && user.id === (c as any).owner_user_id
+  const addEventUrl = isOwner
+    ? `/dashboard/events/new?from_church=${c.id}&church_name=${encodeURIComponent(c.name)}&city=${encodeURIComponent(c.city ?? '')}&state=${encodeURIComponent(c.state ?? '')}&address=${encodeURIComponent(c.address ?? '')}&location_name=${encodeURIComponent(c.name)}`
+    : null
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
 
   const jsonLd = {
@@ -410,6 +417,16 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                 {upcoming.length} upcoming event{upcoming.length !== 1 ? 's' : ''}
               </span>
             </div>
+
+            {addEventUrl && (
+              <Link
+                href={addEventUrl}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm"
+              >
+                <Calendar className="w-4 h-4" />
+                Post an Event
+              </Link>
+            )}
           </div>
         </div>
       </div>
