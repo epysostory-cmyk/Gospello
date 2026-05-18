@@ -3,11 +3,17 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const runtime = 'edge'
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-NG', {
-    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-    timeZone: 'Africa/Lagos',
-  })
+function fmtMonth(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', timeZone: 'Africa/Lagos' }).toUpperCase()
+}
+function fmtDay(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { day: 'numeric', timeZone: 'Africa/Lagos' })
+}
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Africa/Lagos' })
+}
+function fmtFullDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Africa/Lagos' })
 }
 
 export async function GET(
@@ -16,7 +22,7 @@ export async function GET(
 ) {
   const { slug } = await params
   const url = new URL(req.url)
-  const format = url.searchParams.get('format') ?? 'square' // 'square' | 'story'
+  const format = url.searchParams.get('format') ?? 'square'
 
   const supabase = createAdminClient()
   const { data: event } = await supabase
@@ -32,24 +38,26 @@ export async function GET(
   const W = 1080
   const H = isStory ? 1920 : 1080
 
-  const hostName = (event as any).churches?.name
+  const hostName: string = (event as any).churches?.name
     ?? (event as any).seeded_organizers?.name
     ?? (event as any).profiles?.display_name
     ?? 'Gospello'
 
-  const venue = (event as any).is_online
+  const venue: string = (event as any).is_online
     ? 'Online Event'
-    : [(event as any).location_name, (event as any).city].filter(Boolean).join(', ') || 'Nigeria'
+    : [(event as any).location_name, (event as any).city].filter(Boolean).join(' · ') || 'Nigeria'
 
-  const price = (event as any).is_free
+  const isFree: boolean = (event as any).is_free
+  const priceLabel: string = isFree
     ? 'Free'
     : (event as any).price != null
-    ? `${(event as any).currency ?? '₦'}${Number((event as any).price).toLocaleString()}`
+    ? `₦${Number((event as any).price).toLocaleString()}`
     : 'Paid'
 
-  const dateStr = fmtDate((event as any).start_date)
+  const startIso: string = (event as any).start_date
+  const title: string = (event as any).title
 
-  // Try to fetch banner as base64 for embedding
+  // Fetch banner
   let bannerB64: string | null = null
   if ((event as any).banner_url) {
     try {
@@ -60,164 +68,259 @@ export async function GET(
         const mime = res.headers.get('content-type') ?? 'image/jpeg'
         bannerB64 = `data:${mime};base64,${b64}`
       }
-    } catch { /* skip banner */ }
+    } catch { /* skip */ }
   }
 
-  const titleLen = ((event as any).title as string).length
-  const titleSize = titleLen > 60 ? 52 : titleLen > 40 ? 62 : titleLen > 25 ? 74 : 88
+  // Title font sizing
+  const titleLen = title.length
+  const titleSize = isStory
+    ? (titleLen > 60 ? 62 : titleLen > 40 ? 72 : titleLen > 25 ? 84 : 96)
+    : (titleLen > 60 ? 52 : titleLen > 40 ? 62 : titleLen > 25 ? 72 : 82)
+
+  // Layout measurements
+  const bannerH = isStory ? 760 : 480
+  const contentPad = isStory ? 80 : 68
 
   return new ImageResponse(
     <div
       style={{
         width: W, height: H,
         display: 'flex', flexDirection: 'column',
-        background: 'linear-gradient(145deg, #0f0720 0%, #1a0a3d 40%, #0d1b4b 100%)',
+        background: '#0b0b12',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
         position: 'relative', overflow: 'hidden',
-        fontFamily: 'sans-serif',
       }}
     >
-      {/* Banner image as background with heavy overlay */}
-      {bannerB64 && (
-        <img
-          src={bannerB64}
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%',
-            objectFit: 'cover', opacity: 0.18,
-          }}
-        />
-      )}
-
-      {/* Gradient overlay — heavier at bottom */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(to bottom, rgba(15,7,32,0.3) 0%, rgba(15,7,32,0.5) 40%, rgba(15,7,32,0.95) 100%)',
-      }} />
-
-      {/* Decorative glow circles */}
-      <div style={{
-        position: 'absolute', top: -120, right: -120,
-        width: 600, height: 600, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(124,58,237,0.35) 0%, transparent 70%)',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: -80, left: -80,
-        width: 500, height: 500, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%)',
-      }} />
-
-      {/* Top bar — Gospello logo */}
-      <div style={{
-        position: 'relative', display: 'flex', alignItems: 'center',
-        padding: isStory ? '60px 70px 0' : '52px 68px 0',
-        gap: 18,
-      }}>
-        <div style={{
-          width: 56, height: 56, borderRadius: 16,
-          background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 32px rgba(124,58,237,0.6)',
-        }}>
-          <span style={{ color: 'white', fontSize: 30, fontWeight: 900 }}>G</span>
-        </div>
-        <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px' }}>
-          Gospello
-        </span>
-        {/* Price badge */}
-        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+      {/* ── Banner section ── */}
+      <div style={{ width: W, height: bannerH, position: 'relative', display: 'flex', flexShrink: 0 }}>
+        {bannerB64 ? (
+          <img
+            src={bannerB64}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'flex' }}
+          />
+        ) : (
+          /* Fallback gradient banner */
           <div style={{
-            background: (event as any).is_free ? 'rgba(16,185,129,0.2)' : 'rgba(124,58,237,0.3)',
-            border: `1.5px solid ${(event as any).is_free ? 'rgba(16,185,129,0.5)' : 'rgba(124,58,237,0.6)'}`,
-            borderRadius: 40, padding: '10px 24px',
-            color: (event as any).is_free ? '#6ee7b7' : '#c4b5fd',
-            fontSize: 22, fontWeight: 800,
+            width: '100%', height: '100%', display: 'flex',
+            background: 'linear-gradient(135deg, #13001f 0%, #1e0a3c 50%, #0d1b4b 100%)',
           }}>
-            {price}
-          </div>
-        </div>
-      </div>
-
-      {/* Main content — centered vertically */}
-      <div style={{
-        position: 'relative', flex: 1, display: 'flex', flexDirection: 'column',
-        justifyContent: isStory ? 'flex-end' : 'center',
-        padding: isStory ? '0 70px 100px' : '0 68px',
-        gap: 0,
-      }}>
-        {/* Banner thumbnail (story format only) */}
-        {isStory && bannerB64 && (
-          <div style={{
-            width: '100%', height: 640, borderRadius: 32, overflow: 'hidden',
-            marginBottom: 64, boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
-            display: 'flex',
-          }}>
-            <img src={bannerB64} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{
+              position: 'absolute', top: '50%', left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 400, height: 400, borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(124,58,237,0.4) 0%, transparent 70%)',
+              display: 'flex',
+            }} />
           </div>
         )}
-
-        {/* Host name */}
+        {/* Scrim at bottom of banner for smooth transition */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24,
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 160,
+          background: 'linear-gradient(to bottom, transparent, #0b0b12)',
+          display: 'flex',
+        }} />
+      </div>
+
+      {/* ── Content section ── */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        padding: `32px ${contentPad}px ${isStory ? 80 : 56}px`,
+        position: 'relative',
+      }}>
+
+        {/* Host + price row */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: isStory ? 36 : 28,
         }}>
-          <div style={{ width: 5, height: 32, background: '#7C3AED', borderRadius: 3 }} />
-          <span style={{ color: '#a78bfa', fontSize: 26, fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-            {hostName}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            {/* Host avatar circle */}
+            <div style={{
+              width: isStory ? 56 : 48, height: isStory ? 56 : 48,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #7C3AED, #4f46e5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <span style={{ color: 'white', fontSize: isStory ? 24 : 20, fontWeight: 800 }}>
+                {hostName.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <span style={{
+              color: 'rgba(255,255,255,0.55)',
+              fontSize: isStory ? 26 : 22,
+              fontWeight: 600,
+              letterSpacing: '0.2px',
+            }}>
+              {hostName}
+            </span>
+          </div>
+
+          {/* Price badge */}
+          <div style={{
+            background: isFree ? 'rgba(16,185,129,0.15)' : 'rgba(124,58,237,0.2)',
+            border: `1.5px solid ${isFree ? 'rgba(16,185,129,0.4)' : 'rgba(124,58,237,0.5)'}`,
+            borderRadius: 100, padding: isStory ? '12px 28px' : '10px 22px',
+            display: 'flex',
+          }}>
+            <span style={{
+              color: isFree ? '#34d399' : '#a78bfa',
+              fontSize: isStory ? 24 : 20,
+              fontWeight: 800,
+              letterSpacing: '-0.3px',
+            }}>
+              {priceLabel}
+            </span>
+          </div>
         </div>
 
         {/* Event title */}
         <div style={{
-          color: 'white', fontSize: titleSize, fontWeight: 900,
-          lineHeight: 1.08, letterSpacing: '-1.5px', marginBottom: 48,
+          color: '#ffffff',
+          fontSize: titleSize,
+          fontWeight: 800,
+          lineHeight: 1.12,
+          letterSpacing: '-1px',
+          marginBottom: isStory ? 48 : 36,
+          flex: isStory ? 0 : 1,
+          display: 'flex',
+          alignItems: isStory ? 'flex-start' : 'center',
         }}>
-          {(event as any).title}
+          {title}
         </div>
 
-        {/* Info pills row */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-          {/* Date */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 16, padding: '18px 28px',
-          }}>
-            <span style={{ fontSize: 28 }}>📅</span>
-            <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 24, fontWeight: 600 }}>
-              {dateStr}
-            </span>
+        {/* Divider */}
+        <div style={{
+          width: '100%', height: 1,
+          background: 'rgba(255,255,255,0.08)',
+          marginBottom: isStory ? 40 : 30,
+          display: 'flex',
+        }} />
+
+        {/* Date + venue row */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: isStory ? 48 : 36,
+          marginBottom: isStory ? 40 : 0,
+        }}>
+          {/* Date block */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            {/* Calendar badge */}
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              background: '#1a1a2e',
+              border: '1.5px solid rgba(255,255,255,0.1)',
+              borderRadius: isStory ? 18 : 14,
+              overflow: 'hidden',
+              width: isStory ? 80 : 66,
+              flexShrink: 0,
+            }}>
+              <div style={{
+                background: '#7C3AED',
+                width: '100%',
+                padding: isStory ? '6px 0' : '5px 0',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <span style={{ color: 'white', fontSize: isStory ? 18 : 15, fontWeight: 700, letterSpacing: '1px' }}>
+                  {fmtMonth(startIso)}
+                </span>
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: isStory ? '8px 0' : '6px 0',
+              }}>
+                <span style={{ color: 'white', fontSize: isStory ? 34 : 28, fontWeight: 900, lineHeight: 1 }}>
+                  {fmtDay(startIso)}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: isStory ? 26 : 22, fontWeight: 700, letterSpacing: '-0.3px' }}>
+                {fmtTime(startIso)}
+              </span>
+              <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: isStory ? 20 : 17, fontWeight: 500 }}>
+                {fmtFullDate(startIso).split(',').slice(0, 2).join(',')}
+              </span>
+            </div>
           </div>
 
-          {/* Venue */}
+          {/* Vertical divider */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 16, padding: '18px 28px',
-          }}>
-            <span style={{ fontSize: 28 }}>{(event as any).is_online ? '🌐' : '📍'}</span>
-            <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 24, fontWeight: 600 }}>
+            width: 1, height: isStory ? 60 : 50,
+            background: 'rgba(255,255,255,0.08)',
+            display: 'flex', flexShrink: 0,
+          }} />
+
+          {/* Venue */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, overflow: 'hidden' }}>
+            <div style={{
+              width: isStory ? 44 : 36, height: isStory ? 44 : 36,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1.5px solid rgba(255,255,255,0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <span style={{ fontSize: isStory ? 22 : 18 }}>
+                {(event as any).is_online ? '🌐' : '📍'}
+              </span>
+            </div>
+            <span style={{
+              color: 'rgba(255,255,255,0.6)',
+              fontSize: isStory ? 24 : 20,
+              fontWeight: 600,
+              letterSpacing: '-0.2px',
+              overflow: 'hidden',
+            }}>
               {venue}
             </span>
           </div>
         </div>
+
+        {/* Bottom bar: gospello branding */}
+        {!isStory && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginTop: 'auto', paddingTop: 24,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: '#7C3AED',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <span style={{ color: 'white', fontSize: 14, fontWeight: 900 }}>G</span>
+              </div>
+              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 18, fontWeight: 700, letterSpacing: '0.5px' }}>
+                gospello.com
+              </span>
+            </div>
+            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 16, fontWeight: 500 }}>
+              Discover Gospel Events
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Bottom bar */}
-      <div style={{
-        position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: isStory ? '0 70px 70px' : '0 68px 52px',
-      }}>
-        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 22, fontWeight: 600, letterSpacing: '1px' }}>
-          gospello.com
-        </span>
-        <span style={{
-          color: 'rgba(255,255,255,0.3)', fontSize: 20,
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 10, padding: '8px 20px',
+      {/* Story: bottom branding */}
+      {isStory && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+          paddingBottom: 80,
         }}>
-          Discover Gospel Events
-        </span>
-      </div>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: '#7C3AED',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ color: 'white', fontSize: 18, fontWeight: 900 }}>G</span>
+          </div>
+          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 24, fontWeight: 700, letterSpacing: '0.5px' }}>
+            gospello.com
+          </span>
+        </div>
+      )}
     </div>,
     { width: W, height: H }
   )
