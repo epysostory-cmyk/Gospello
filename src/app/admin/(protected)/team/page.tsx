@@ -1,11 +1,13 @@
 export const dynamic = 'force-dynamic'
 
+import { requireAdminRole } from '@/lib/admin-auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate } from '@/lib/utils'
 import AddAdminFormNew from './AddAdminFormNew'
 import DeleteAdminButton from './DeleteAdminButton'
 
 export default async function AdminTeamPage() {
+  await requireAdminRole(['super_admin'])
   const adminClient = createAdminClient()
 
   const { data: adminUsers } = await adminClient

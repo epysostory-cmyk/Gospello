@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import { requireAdminRole } from '@/lib/admin-auth'
 import Link from 'next/link'
 import { Settings, Bell, Shield, Layout, Heart, MessageSquare, Globe, FileText, Shield as ShieldIcon, Home } from 'lucide-react'
 import { saveGeneralSettings, saveNotificationSettings, saveSecuritySettings } from './actions'
@@ -11,6 +12,7 @@ export default async function AdminSettingsPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  await requireAdminRole(['super_admin'])
   const params = await searchParams
   const saved = params.saved === '1'
   const siteSettings = await getSiteSettings()

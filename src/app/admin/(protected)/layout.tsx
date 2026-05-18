@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import AdminSidebar from './AdminSidebar'
 import AdminMobileNav from './AdminMobileNav'
+import AdminInactivityGuard from './AdminInactivityGuard'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -37,6 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {children}
         </main>
       </div>
+      <AdminInactivityGuard />
     </div>
   )
 }

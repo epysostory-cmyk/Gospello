@@ -1,10 +1,12 @@
 export const dynamic = 'force-dynamic'
 
+import { requireAdminRole } from '@/lib/admin-auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import AddCategoryForm from './AddCategoryForm'
 import CategoryBulkTable from './CategoryBulkTable'
 
 export default async function AdminCategoriesPage() {
+  await requireAdminRole(['super_admin'])
   const adminClient = createAdminClient()
 
   const [{ data: categories }, { data: eventCounts }] = await Promise.all([
