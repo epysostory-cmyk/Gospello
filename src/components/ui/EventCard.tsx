@@ -34,7 +34,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
   const daysUntil = (eventStart.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
 
   // Use the same lifecycle logic as the event page
-  const lifecycle = getEventLifecycle(event.start_date, event.end_date)
+  const lifecycle = getEventLifecycle(event.start_date, event.end_date, event.daily_schedule ?? undefined)
   const isUpcoming = lifecycle === 'upcoming'
   const isOngoing  = lifecycle === 'ongoing'
   const hasEnded   = lifecycle === 'ended'

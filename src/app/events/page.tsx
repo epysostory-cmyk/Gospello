@@ -47,7 +47,7 @@ const TIMEFRAME_OPTIONS = [
 
 function scoreEvent(event: Event, now: Date): number {
   let score = 0
-  const lifecycle = getEventLifecycle(event.start_date, event.end_date)
+  const lifecycle = getEventLifecycle(event.start_date, event.end_date, event.daily_schedule ?? undefined)
   if (lifecycle === 'ongoing') return 200 + (event.is_featured ? 40 : 0)
   if (lifecycle === 'ended') return -100
   const daysUntil = (new Date(event.start_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
