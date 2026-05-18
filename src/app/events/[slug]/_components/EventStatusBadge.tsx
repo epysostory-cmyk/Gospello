@@ -1,10 +1,11 @@
 'use client'
 
-import { getEventLifecycle } from '@/types/database'
+import { getEventLifecycle, DaySchedule } from '@/types/database'
 
 interface Props {
   startDate: string
   endDate?: string | null
+  dailySchedule?: DaySchedule[] | null
 }
 
 /**
@@ -12,8 +13,8 @@ interface Props {
  * not the server's UTC clock. This fixes events appearing "Upcoming" on the
  * detail page even after they've started for Nigerian users (WAT = UTC+1).
  */
-export function EventStatusBadge({ startDate, endDate }: Props) {
-  const lifecycle = getEventLifecycle(startDate, endDate)
+export function EventStatusBadge({ startDate, endDate, dailySchedule }: Props) {
+  const lifecycle = getEventLifecycle(startDate, endDate, dailySchedule)
 
   const badge = {
     upcoming: { label: 'Upcoming',       cls: 'bg-amber-100 text-amber-800' },
@@ -28,8 +29,8 @@ export function EventStatusBadge({ startDate, endDate }: Props) {
   )
 }
 
-export function EventDaysChip({ startDate, endDate }: Props) {
-  const lifecycle = getEventLifecycle(startDate, endDate)
+export function EventDaysChip({ startDate, endDate, dailySchedule }: Props) {
+  const lifecycle = getEventLifecycle(startDate, endDate, dailySchedule)
   const tz = 'Africa/Lagos'
   const toCalendarDate = (d: Date) =>
     new Date(d.toLocaleDateString('en-CA', { timeZone: tz })) // YYYY-MM-DD in Lagos time

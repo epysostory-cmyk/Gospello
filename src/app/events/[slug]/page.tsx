@@ -122,7 +122,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   }
 
   const catMap = await getCategoryMap()
-  const lifecycle = getEventLifecycle(e.start_date, e.end_date)
+  const lifecycle = getEventLifecycle(e.start_date, e.end_date, e.daily_schedule)
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
   const eventUrl = `${siteUrl}/events/${e.slug}`
   const attendance = attendanceCount ?? 0
@@ -244,7 +244,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         <div className="px-5 pt-6 pb-5">
           {/* Badges */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <EventStatusBadge startDate={e.start_date} endDate={e.end_date} />
+            <EventStatusBadge startDate={e.start_date} endDate={e.end_date} dailySchedule={e.daily_schedule} />
             <span className={`text-xs font-bold px-3 py-1 rounded-full ${
               e.is_free
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -653,7 +653,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {/* Title + badges — below banner */}
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <EventStatusBadge startDate={e.start_date} endDate={e.end_date} />
+                  <EventStatusBadge startDate={e.start_date} endDate={e.end_date} dailySchedule={e.daily_schedule} />
                   <span className={`text-xs font-bold px-3 py-1 rounded-full ${
                     e.is_free
                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'

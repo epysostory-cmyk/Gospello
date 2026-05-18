@@ -239,13 +239,59 @@ export interface AdminUser {
 }
 
 /** Returns 'upcoming' | 'ongoing' | 'ended' based on event dates.
- *  If no end_date is set, the event is treated as ended 5 hours after start. */
-export function getEventLifecycle(startDate: string, endDate?: string | null): EventLifecycle {
+ *  For multi-day events with daily_schedule, 'ongoing' only fires during an
+ *  actual session window today — not during the dead hours between days. */
+export function getEventLifecycle(
+  startDate: string,
+  endDate?: string | null,
+  dailySchedule?: DaySchedule[] | null,
+): EventLifecycle {
   const now = new Date()
   const start = new Date(startDate)
   const end = endDate ? new Date(endDate) : new Date(start.getTime() + 5 * 60 * 60 * 1000)
+
   if (now < start) return 'upcoming'
   if (now > end) return 'ended'
+
+  // Event date range is active. For multi-day scheduled events, check whether
+  // we're actually inside a session window right now. If not, show 'upcoming'
+  // (next session hasn't started yet today) rather than 'ongoing'.
+  if (dailySchedule && dailySchedule.length > 1) {
+    const todayStr = now.toISOString().slice(0, 10) // "YYYY-MM-DD"
+    const todayDay = dailySchedule.find(d => d.date === todayStr)
+
+    if (!todayDay) {
+      // No sessions scheduled for today — we're between days
+      return 'upcoming'
+    }
+
+    // Check if now falls inside any of today's session windows
+    const sessions = todayDay.sessions?.length
+      ? todayDay.sessions
+      : todayDay.start_time
+      ? [{ start_time: todayDay.start_time, end_time: todayDay.end_time ?? null, title: null, speaker: null }]
+      : []
+
+    const inSession = sessions.some(s => {
+      if (!s.start_time) return false
+      // Session times are "HH:MM" — combine with today's date to get full timestamps
+      const [sh, sm] = s.start_time.split(':').map(Number)
+      const sessionStart = new Date(now)
+      sessionStart.setHours(sh, sm, 0, 0)
+
+      if (s.end_time) {
+        const [eh, em] = s.end_time.split(':').map(Number)
+        const sessionEnd = new Date(now)
+        sessionEnd.setHours(eh, em, 0, 0)
+        return now >= sessionStart && now <= sessionEnd
+      }
+      // No end time — treat session as 1 hour long
+      return now >= sessionStart && now <= new Date(sessionStart.getTime() + 60 * 60 * 1000)
+    })
+
+    return inSession ? 'ongoing' : 'upcoming'
+  }
+
   return 'ongoing'
 }
 
