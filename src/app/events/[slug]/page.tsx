@@ -15,7 +15,7 @@ import RegistrationButton from '@/components/ui/RegistrationButton'
 import SaveButton from '@/components/ui/SaveButton'
 import ViewCounter from '@/components/ui/ViewCounter'
 import ShareButton from '@/components/ui/ShareButton'
-import SaveFlyerButton from '@/components/ui/SaveFlyerButton'
+import ShareFlyerButton from '@/components/ui/ShareFlyerButton'
 import EventQuickActions from './_components/EventQuickActions'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
 import CountdownTimer from '@/components/ui/CountdownTimer'
@@ -239,11 +239,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </div>
             </div>
           </div>
-          {e.banner_url && (
-            <div className="absolute bottom-3 right-3">
-              <SaveFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
-            </div>
-          )}
         </div>
 
         {/* ── Title block ── */}
@@ -282,6 +277,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 <CountdownTimer startDate={e.start_date} />
               </p>
             )}
+          </div>
+
+          {/* Share Flyer */}
+          <div className="mt-4">
+            <ShareFlyerButton slug={e.slug} eventTitle={e.title} />
           </div>
         </div>
 
@@ -979,7 +979,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   <div className="border-t border-gray-100 px-5 py-4 space-y-2">
                     <AddToCalendar title={e.title} startDate={e.start_date} endDate={e.end_date}
                       location={shareLocation} description={e.description} />
-                    {e.banner_url && <SaveFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />}
+                    <ShareFlyerButton slug={e.slug} eventTitle={e.title} />
                   </div>
                 </div>
 
@@ -988,6 +988,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Share</p>
                   <ShareButton eventTitle={e.title} eventUrl={eventUrl} eventDate={shareDate}
                     eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} compact />
+                  <div className="mt-3">
+                    <ShareFlyerButton slug={e.slug} eventTitle={e.title} />
+                  </div>
                 </div>
 
                 {/* Views */}

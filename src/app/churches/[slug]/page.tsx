@@ -9,6 +9,7 @@ import {
   ExternalLink, ShieldCheck, CheckCircle, AlertTriangle,
 } from 'lucide-react'
 import EventCard from '@/components/ui/EventCard'
+import ServiceFlyerButton from '@/components/ui/ServiceFlyerButton'
 import type { Church, Event } from '@/types/database'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -424,9 +425,12 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
               </span>
             </div>
 
-            {(addEventUrl || editUrl) && (
-              <div className="mt-4 flex items-center gap-2 flex-wrap">
-                {addEventUrl && (
+            <div className="mt-4 flex items-center gap-2 flex-wrap">
+              {/* Service flyer — always visible for claimed/verified churches */}
+              {(c.is_claimed || c.verified_badge) && (
+                <ServiceFlyerButton slug={c.slug} churchName={c.name} />
+              )}
+              {addEventUrl && (
                   <Link
                     href={addEventUrl}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm"
@@ -435,17 +439,16 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                     Post an Event
                   </Link>
                 )}
-                {editUrl && (
-                  <Link
-                    href={editUrl}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-sm font-semibold transition-colors shadow-sm"
-                  >
-                    <Pencil className="w-4 h-4" />
-                    Edit Profile
-                  </Link>
-                )}
-              </div>
-            )}
+              {editUrl && (
+                <Link
+                  href={editUrl}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-sm font-semibold transition-colors shadow-sm"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit Profile
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>

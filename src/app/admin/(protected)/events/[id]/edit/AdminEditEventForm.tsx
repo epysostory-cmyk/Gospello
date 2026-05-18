@@ -739,20 +739,23 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
           <p className="text-sm font-semibold text-gray-900">Additional Info</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {([
-              ['parking_available',      'Parking available'],
-              ['shuttle_available',       'Bus / shuttle available'],
-              ['child_friendly',          'Child-friendly'],
-              ['wheelchair_accessible',   'Wheelchair accessible'],
-              ['food_provided',           'Food / refreshments provided'],
-              ['accommodation_available', 'Accommodation available'],
-              ['no_recording',            'No recording allowed'],
-            ] as [string, string][]).map(([key, label]) => (
+              ['parking_available',      'Parking available',              false],
+              ['shuttle_available',       'Bus / shuttle available',        false],
+              ['child_friendly',          'Child-friendly',                 true],
+              ['wheelchair_accessible',   'Wheelchair accessible',          false],
+              ['food_provided',           'Food / refreshments provided',   false],
+              ['accommodation_available', 'Accommodation available',        false],
+              ['no_recording',            'No recording allowed',           true],
+            ] as [string, string, boolean][])
+              .filter(([,, onlineOk]) => !(form as any).is_online || onlineOk)
+              .map(([key, label]) => (
               <label key={key} className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={!!(form as any)[key]} onChange={e => set(key, e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-[#7C3AED]" />
                 <span className="text-sm text-gray-700">{label}</span>
               </label>
             ))}
           </div>
+          {!(form as any).is_online && (
           <div>
             <label className="flex items-center gap-3 cursor-pointer mb-2">
               <input type="checkbox" checked={!!(form as any).dress_code} onChange={e => set('dress_code', e.target.checked ? 'Smart casual' : '')} className="w-4 h-4 rounded border-gray-300 text-[#7C3AED]" />
@@ -762,6 +765,7 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
               <input type="text" value={(form as any).dress_code} onChange={e => set('dress_code', e.target.value)} placeholder="e.g. Smart casual, All-white, Native attire" className={inputCls} />
             )}
           </div>
+          )}
           <div>
             <label className={labelCls}>Audience restriction</label>
             <select value={(form as any).gender_restriction || ''} onChange={e => set('gender_restriction', e.target.value)} className={inputCls}>
