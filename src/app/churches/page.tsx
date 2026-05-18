@@ -67,7 +67,6 @@ async function getChurches(params: SearchParams) {
     const { data: eventRows } = await supabase
       .from('events')
       .select('church_id')
-      .eq('status', 'approved')
       .in('church_id', churches.map(c => c.id))
     for (const row of eventRows ?? []) {
       if (row.church_id) eventCountMap[row.church_id] = (eventCountMap[row.church_id] ?? 0) + 1
