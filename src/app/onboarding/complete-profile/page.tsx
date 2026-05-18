@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, Check } from 'lucide-react'
 import type { AccountType } from '@/types/database'
+import { validateFullName } from '@/lib/validation'
 
 const NIGERIAN_STATES = [
   'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
@@ -77,7 +78,8 @@ export default function CompleteProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!displayName.trim()) { setError('Please enter your name'); return }
+    const nameErr = accountType === 'organizer' ? validateFullName(displayName) : null
+    if (nameErr) { setError(nameErr); return }
     if (accountType === 'church' && !churchName.trim()) { setError('Please enter your church name'); return }
     if (!state) { setError('Please select your state'); return }
 
