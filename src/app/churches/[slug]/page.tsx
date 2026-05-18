@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
-  MapPin, Globe, Phone, ArrowLeft, Calendar,
+  MapPin, Globe, Phone, ArrowLeft, Calendar, Pencil,
   ExternalLink, ShieldCheck, CheckCircle, AlertTriangle,
 } from 'lucide-react'
 import EventCard from '@/components/ui/EventCard'
@@ -135,6 +135,9 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
   const adminClient = createAdminClient()
   const now = new Date().toISOString()
 
+  // Check if current user is an admin
+  const isAdmin = user ? !!(await adminClient.from('admin_users').select('id').eq('id', user.id).maybeSingle()).data : false
+
   const { data: eventsData } = await adminClient
     .from('events')
     .select('*, churches(*)')
@@ -155,6 +158,9 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
   const addEventUrl = isOwner
     ? `/dashboard/events/new?from_church=${c.id}&church_name=${encodeURIComponent(c.name)}&city=${encodeURIComponent(c.city ?? '')}&state=${encodeURIComponent(c.state ?? '')}&address=${encodeURIComponent(c.address ?? '')}&location_name=${encodeURIComponent(c.name)}`
     : null
+  const editUrl = isAdmin
+    ? `/admin/seededchurches/church/${c.id}/edit`
+    : isOwner ? '/dashboard/profile' : null
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
 
   const jsonLd = {
@@ -418,14 +424,27 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
               </span>
             </div>
 
-            {addEventUrl && (
-              <Link
-                href={addEventUrl}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm"
-              >
-                <Calendar className="w-4 h-4" />
-                Post an Event
-              </Link>
+            {(addEventUrl || editUrl) && (
+              <div className="mt-4 flex items-center gap-2 flex-wrap">
+                {addEventUrl && (
+                  <Link
+                    href={addEventUrl}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Post an Event
+                  </Link>
+                )}
+                {editUrl && (
+                  <Link
+                    href={editUrl}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-sm font-semibold transition-colors shadow-sm"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit Profile
+                  </Link>
+                )}
+              </div>
             )}
           </div>
         </div>
