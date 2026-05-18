@@ -68,7 +68,7 @@ function ServiceTimesDisplay({ raw }: { raw: string }) {
   if (entries && Array.isArray(entries) && entries.length > 0) {
     const byDay = new Map<string, typeof entries>()
     for (const e of entries) {
-      const d = e.day.toLowerCase()
+      const d = (e.day ?? 'sunday').toLowerCase()
       if (!byDay.has(d)) byDay.set(d, [])
       byDay.get(d)!.push(e)
     }
