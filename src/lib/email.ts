@@ -92,9 +92,10 @@ function btn(url: string, text: string, bg = '#7C3AED'): string {
   </table>`
 }
 
-function logoHeader(color = '#FFFFFF'): string {
-  return `<span style="font-size:26px;font-weight:900;color:${color};letter-spacing:-0.5px;">Gospello</span>
-          <div style="width:40px;height:3px;background:${color === '#FFFFFF' ? 'rgba(255,255,255,0.4)' : '#7C3AED'};margin:10px auto 0;border-radius:2px;"></div>`
+const LOGO_URL = 'https://atrdstihzvnvbgxveplm.supabase.co/storage/v1/object/public/site-assets/logo/dccedb39-bf4b-4b4b-beec-fc285f57ad68/1777020281172.png'
+
+function logoHeader(_color = '#FFFFFF'): string {
+  return `<img src="${LOGO_URL}" alt="Gospello" style="height:48px;width:auto;display:block;margin:0 auto;" />`
 }
 
 function benefitRow(icon: string, text: string): string {
