@@ -3,23 +3,8 @@
 import { useActionState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { useState } from 'react'
-import { Loader2, Check } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { addCategory } from './actions'
-
-const ICON_OPTIONS = [
-  // Worship & Prayer
-  '🙏','🔥','✨','🕊️','🙌','👐','🫶','🌊',
-  // Events & Music
-  '🎵','🎤','🎶','🎸','🥁','🎺','🎻','🎹',
-  // Church & Ministry
-  '⛪','🏛️','📖','📜','✝️','💒','🛐','📿',
-  // People & Community
-  '👥','🌟','💫','🌍','🤝','🧑‍🤝‍🧑','🫂','🌺',
-  // Media & Tech
-  '🎙️','📻','📺','💻','📱','🎧','📡','🔊',
-  // Misc
-  '🌈','💡','🏆','🎯','🎗️','🕯️','⭐','🔑',
-]
 
 const COLOR_OPTIONS = [
   { value: '#7C3AED', label: 'Purple' },
@@ -41,7 +26,7 @@ function SubmitButton() {
       className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-60"
     >
       {pending && <Loader2 className="w-4 h-4 animate-spin" />}
-      {pending ? 'Saving...' : 'Add Category'}
+      {pending ? 'Adding...' : 'Add Category'}
     </button>
   )
 }
@@ -50,8 +35,7 @@ export default function AddCategoryForm() {
   const [state, formAction] = useActionState(addCategory, null)
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
-  const [selectedIcon, setSelectedIcon] = useState('')
-  const [selectedColor, setSelectedColor] = useState('#6B7280')
+  const [selectedColor, setSelectedColor] = useState('#7C3AED')
   const [open, setOpen] = useState(false)
 
   function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -64,135 +48,117 @@ export default function AddCategoryForm() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
       >
-        + Add Category
+        + New Category
       </button>
     )
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-6">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-sm font-semibold text-gray-900">Add New Category</h2>
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 className="text-sm font-semibold text-gray-900">New Category</h2>
         <button
           onClick={() => setOpen(false)}
-          className="text-gray-500 hover:text-gray-700 text-xs"
+          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
           Cancel
         </button>
       </div>
 
-      <form action={formAction} className="space-y-5">
-        {/* Hidden fields for selected icon/color */}
-        <input type="hidden" name="icon" value={selectedIcon} />
+      <form action={formAction} className="p-6 space-y-5">
+        <input type="hidden" name="icon" value="" />
         <input type="hidden" name="color" value={selectedColor} />
 
         {state?.error && (
-          <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg">
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
             {state.error}
           </p>
         )}
         {state?.success && (
-          <p className="text-sm text-green-400 bg-green-500/10 border border-green-500/20 px-3 py-2 rounded-lg">
-            Category added!
+          <p className="text-sm text-green-700 bg-green-50 border border-green-200 px-4 py-3 rounded-xl">
+            Category added successfully.
           </p>
         )}
 
-        {/* Name + Slug */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Name *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Name *</label>
             <input
               type="text"
               name="name"
               value={name}
               onChange={handleNameChange}
               required
+              autoFocus
               placeholder="e.g. Revival Meetings"
-              className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Slug *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Slug *</label>
             <input
               type="text"
               name="slug"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               required
-              placeholder="e.g. revival"
-              className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="e.g. revival-meetings"
+              className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
-            <p className="text-xs text-gray-400 mt-1">Cannot be changed after creation</p>
+            <p className="text-xs text-gray-400 mt-1">Auto-filled from name. Cannot be changed later.</p>
           </div>
         </div>
 
-        {/* Description */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1.5">Description <span className="text-gray-400">(optional)</span></label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Description <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
           <textarea
             name="description"
             rows={2}
             placeholder="Short description of this category"
             maxLength={200}
-            className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
           />
         </div>
 
-        {/* Icon Picker */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-2">
-            Icon *
-            {selectedIcon && (
-              <span className="ml-2 text-gray-900 text-base">{selectedIcon} selected</span>
-            )}
-          </label>
-          <div className="grid grid-cols-8 gap-1.5">
-            {ICON_OPTIONS.map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                onClick={() => setSelectedIcon(emoji)}
-                className={`w-10 h-10 flex items-center justify-center rounded-lg text-xl transition-all ${
-                  selectedIcon === emoji
-                    ? 'bg-indigo-600 ring-2 ring-indigo-400 scale-110'
-                    : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                }`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Color Picker */}
-        <div>
-          <label className="block text-xs font-medium text-gray-400 mb-2">Accent Color</label>
-          <div className="flex gap-2 flex-wrap">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Accent Color</label>
+          <div className="flex items-center gap-3 flex-wrap">
             {COLOR_OPTIONS.map((c) => (
               <button
                 key={c.value}
                 type="button"
                 onClick={() => setSelectedColor(c.value)}
                 title={c.label}
-                className="relative w-8 h-8 rounded-full transition-transform hover:scale-110"
+                className={`w-8 h-8 rounded-full transition-all ${
+                  selectedColor === c.value
+                    ? 'ring-2 ring-offset-2 ring-gray-400 scale-110'
+                    : 'hover:scale-105'
+                }`}
                 style={{ backgroundColor: c.value }}
-              >
-                {selectedColor === c.value && (
-                  <Check className="w-4 h-4 text-white absolute inset-0 m-auto" />
-                )}
-              </button>
+              />
             ))}
-          </div>
-          {/* Preview card */}
-          <div className="mt-3 flex items-center gap-3 p-3 rounded-xl w-fit" style={{ backgroundColor: selectedColor + '20', border: `1px solid ${selectedColor}40` }}>
-            <span className="text-2xl">{selectedIcon || '?'}</span>
-            <span className="text-sm font-semibold" style={{ color: selectedColor }}>{name || 'Category Name'}</span>
+            <span className="text-xs text-gray-400 ml-1">
+              {COLOR_OPTIONS.find(c => c.value === selectedColor)?.label}
+            </span>
           </div>
         </div>
 
-        <SubmitButton />
+        <div className="flex items-center justify-between pt-1">
+          <div
+            className="text-sm font-semibold px-3 py-1 rounded-full"
+            style={{
+              backgroundColor: selectedColor + '18',
+              color: selectedColor,
+            }}
+          >
+            {name || 'Preview'}
+          </div>
+          <SubmitButton />
+        </div>
       </form>
     </div>
   )

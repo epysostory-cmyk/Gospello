@@ -334,11 +334,11 @@ export default function CreateProfileForm({ adminId }: Props) {
         <div className="space-y-5">
           <div>
             <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-              Full Name <span className="text-red-500">*</span>
+              Full Name or Stage Name <span className="text-red-500">*</span>
             </label>
             <input
               value={form.name} onChange={e => set('name', e.target.value)}
-              placeholder="e.g. John Adewale"
+              placeholder="e.g. Mercy Chinwo, Frank Edwards, Emma OMG"
               className={`mt-1.5 w-full px-3 py-2.5 rounded-xl border text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/20 ${fieldErrors.name ? 'border-red-400' : 'border-gray-200'}`}
             />
             {fieldErrors.name && <p className="text-xs text-red-500 mt-1">{fieldErrors.name}</p>}

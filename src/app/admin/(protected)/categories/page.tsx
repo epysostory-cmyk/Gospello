@@ -20,26 +20,30 @@ export default async function AdminCategoriesPage() {
   }
 
   const cats = categories ?? []
+  const visibleCount = cats.filter(c => c.is_visible).length
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Event Categories</h1>
-          <p className="text-gray-500 mt-0.5 text-sm">
-            {cats.length} categories · {cats.filter(c => c.is_visible).length} visible on website
-          </p>
+    <div className="space-y-6 max-w-3xl">
+      {/* Header */}
+      <div>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Event Categories</h1>
+            <p className="text-gray-500 mt-1 text-sm">
+              {cats.length} total &mdash; {visibleCount} visible on the website
+            </p>
+          </div>
+          <AddCategoryForm />
         </div>
-        <AddCategoryForm />
+        <p className="text-xs text-gray-400 mt-3">
+          Hiding a category removes it from the website without deleting it. Events in that category keep their tag.
+        </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
+      {/* List */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <CategoryBulkTable cats={cats} countMap={countMap} />
       </div>
-
-      <p className="text-xs text-gray-400">
-        Tip: Use the eye icon to hide a category without deleting it. Hidden categories won&apos;t show on the website but existing events keep their category.
-      </p>
     </div>
   )
 }

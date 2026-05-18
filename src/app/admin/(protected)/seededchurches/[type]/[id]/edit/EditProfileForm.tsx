@@ -293,7 +293,7 @@ export default function EditProfileForm({ type, profile }: Props) {
           {!isChurch && (
             <>
               <Field label="Contact Person">
-                <input className={inputCls} value={form.contact_person} onChange={e => set('contact_person', e.target.value)} placeholder="Full name" />
+                <input className={inputCls} value={form.contact_person} onChange={e => set('contact_person', e.target.value)} placeholder="Full name or stage name" />
               </Field>
               <Field label="Ministry Type">
                 <input className={inputCls} value={form.ministry_type} onChange={e => set('ministry_type', e.target.value)} placeholder="e.g. Youth Ministry" />
