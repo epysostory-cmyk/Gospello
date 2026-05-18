@@ -8,11 +8,11 @@ const WARN_BEFORE_MS  = 2 * 60 * 1000          // warn 2 minutes before logout
 
 export default function AdminInactivityGuard() {
   const router = useRouter()
-  const idleTimer  = useRef<ReturnType<typeof setTimeout>>()
-  const warnTimer  = useRef<ReturnType<typeof setTimeout>>()
+  const idleTimer  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const warnTimer  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [showWarning, setShowWarning] = useState(false)
   const [secondsLeft, setSecondsLeft] = useState(120)
-  const countdownRef = useRef<ReturnType<typeof setInterval>>()
+  const countdownRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
 
   const signOut = useCallback(async () => {
     await fetch('/auth/signout', { method: 'POST' })
