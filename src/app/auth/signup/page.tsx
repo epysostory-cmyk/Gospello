@@ -307,10 +307,10 @@ function SignUpForm() {
         {/* Full name — organizer */}
         <div className="overflow-hidden transition-all duration-200" style={{ maxHeight: accountType === 'organizer' ? '110px' : '0', opacity: accountType === 'organizer' ? 1 : 0 }}>
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1.5">Full Name or Stage Name</label>
             <input id="fullName" type="text" value={fullName} onChange={e => setFullName(e.target.value)}
-              placeholder="e.g. Tunde Bello" autoComplete="name" className={INPUT_CLS} />
-            <p className="text-xs text-gray-400 mt-1">First and last name</p>
+              placeholder="e.g. Mercy Chinwo, Frank Edwards, Emma OMG" autoComplete="name" className={INPUT_CLS} />
+            <p className="text-xs text-gray-400 mt-1">This is how you&apos;ll appear publicly — use your stage name if that&apos;s how people know you</p>
           </div>
         </div>
 

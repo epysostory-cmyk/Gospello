@@ -246,16 +246,19 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
           {/* Display name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              {isOrganizer ? 'Full Name' : 'Display name'} <span className="text-red-400">*</span>
+              {isOrganizer ? 'Full Name or Stage Name' : 'Display name'} <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               value={form.display_name}
               onChange={e => setField('display_name', e.target.value)}
-              placeholder={isOrganizer ? 'e.g. John Adewale' : 'Your name or ministry name'}
+              placeholder={isOrganizer ? 'e.g. Mercy Chinwo, Frank Edwards, Emma OMG' : 'Your name or ministry name'}
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]"
               maxLength={80}
             />
+            {isOrganizer && (
+              <p className="text-xs text-gray-400 mt-1">Use your stage name if that&apos;s how people know you</p>
+            )}
           </div>
 
           {/* Organizer-only fields */}
