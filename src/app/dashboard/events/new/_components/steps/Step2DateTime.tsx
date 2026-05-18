@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+import { Copy } from 'lucide-react'
 import type { DaySchedule, EventSession } from '@/types/database'
 import TimezoneSelector from '@/components/ui/TimezoneSelector'
 
@@ -59,6 +61,7 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
   const schedule: DaySchedule[] = formData.daily_schedule || []
   const dateRange = eventType === 'multi' ? getDateRange(formData.start_date, formData.end_date) : []
   const tooLong = dateRange.length > 14
+  const [sameSchedule, setSameSchedule] = useState(false)
 
   function handleToggle(type: 'single' | 'multi') {
     updateForm('event_type', type)
@@ -120,6 +123,55 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
       return { ...d, sessions: sessions.length ? sessions : [emptySession()] }
     }))
   }
+
+  function copyToAll(sourceDate: string) {
+    const source = schedule.find(d => d.date === sourceDate)
+    if (!source) return
+    const sourceSessions = getSessions(source)
+    updateForm('daily_schedule', schedule.map(d => ({
+      ...d,
+      sessions: sourceSessions.map(s => ({ ...s })),
+    })))
+  }
+
+  function handleSameScheduleToggle(on: boolean) {
+    setSameSchedule(on)
+    if (on && schedule.length > 1) {
+      const sourceSessions = getSessions(schedule[0])
+      updateForm('daily_schedule', schedule.map(d => ({
+        ...d,
+        sessions: sourceSessions.map(s => ({ ...s })),
+      })))
+    }
+  }
+
+  function updateSharedSession(idx: number, field: keyof EventSession, value: string) {
+    const updated = schedule.map(d => {
+      const sessions = getSessions(d).map((s, i) =>
+        i === idx ? { ...s, [field]: value || null } : s
+      )
+      return { ...d, sessions }
+    })
+    updateForm('daily_schedule', updated)
+  }
+
+  function addSharedSession() {
+    const updated = schedule.map(d => ({
+      ...d,
+      sessions: [...getSessions(d), emptySession()],
+    }))
+    updateForm('daily_schedule', updated)
+  }
+
+  function removeSharedSession(idx: number) {
+    const updated = schedule.map(d => {
+      const sessions = getSessions(d).filter((_, i) => i !== idx)
+      return { ...d, sessions: sessions.length ? sessions : [emptySession()] }
+    })
+    updateForm('daily_schedule', updated)
+  }
+
+  const sharedSessions = schedule.length > 0 ? getSessions(schedule[0]) : [emptySession()]
 
   return (
     <div className="space-y-6">
@@ -237,64 +289,149 @@ export default function Step2DateTime({ formData, updateForm, errors }: StepProp
             <p className="text-sm text-red-600">{errors.daily_schedule}</p>
           )}
 
-          {/* Per-day cards */}
+          {/* Per-day schedule */}
           {!tooLong && schedule.length > 0 && (
             <div className="space-y-4">
-              <label className="block text-sm font-semibold text-gray-900">What happens each day?</label>
-              {schedule.map((day, idx) => {
-                const sessions = getSessions(day)
-                return (
-                  <div key={day.date} className="border border-gray-200 rounded-xl overflow-hidden">
-                    <div className="bg-gray-50 px-4 py-2.5 border-b border-gray-200">
-                      <p className="text-sm font-semibold text-gray-900">Day {idx + 1} — {fmtDayFull(day.date)}</p>
-                    </div>
-                    <div className="p-4 space-y-3">
-                      <input
-                        type="text"
-                        value={day.label ?? ''}
-                        onChange={e => updateDayLabel(day.date, e.target.value)}
-                        placeholder="Day theme — e.g. Workers Retreat (optional)"
-                        className={inp}
-                      />
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-semibold text-gray-900">What happens each day?</label>
 
-                      {sessions.map((session, sIdx) => (
-                        <div key={sIdx} className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={session.title ?? ''}
-                            onChange={e => updateSession(day.date, sIdx, 'title', e.target.value)}
-                            placeholder={sIdx === 0 ? 'e.g. Morning Service' : 'e.g. Evening Session'}
-                            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 bg-white transition-colors"
-                          />
-                          <input
-                            type="time"
-                            value={session.start_time ?? ''}
-                            onChange={e => updateSession(day.date, sIdx, 'start_time', e.target.value)}
-                            className="w-28 px-3 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-gray-900 bg-white transition-colors"
-                          />
-                          {sessions.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeSession(day.date, sIdx)}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 text-lg"
-                            >
-                              ×
-                            </button>
-                          )}
-                        </div>
-                      ))}
-
-                      <button
-                        type="button"
-                        onClick={() => addSession(day.date)}
-                        className="text-sm text-gray-600 font-medium hover:text-gray-900 transition-colors"
-                      >
-                        + Add program
-                      </button>
+                {/* Same schedule toggle — only show for 2+ days */}
+                {schedule.length > 1 && (
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <div
+                      onClick={() => handleSameScheduleToggle(!sameSchedule)}
+                      className={`relative w-9 h-5 rounded-full transition-colors ${sameSchedule ? 'bg-gray-900' : 'bg-gray-200'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${sameSchedule ? 'translate-x-4' : 'translate-x-0'}`} />
                     </div>
+                    <span className="text-xs font-medium text-gray-600">Same schedule every day</span>
+                  </label>
+                )}
+              </div>
+
+              {/* SAME SCHEDULE MODE — one shared template */}
+              {sameSchedule ? (
+                <div className="border border-gray-900 rounded-xl overflow-hidden">
+                  <div className="bg-gray-900 px-4 py-2.5">
+                    <p className="text-sm font-semibold text-white">Schedule for all {schedule.length} days</p>
+                    <p className="text-xs text-gray-400 mt-0.5">This will apply to every day of your event</p>
                   </div>
-                )
-              })}
+                  <div className="p-4 space-y-3">
+                    {sharedSessions.map((session, sIdx) => (
+                      <div key={sIdx} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={session.title ?? ''}
+                          onChange={e => updateSharedSession(sIdx, 'title', e.target.value)}
+                          placeholder={sIdx === 0 ? 'e.g. Morning Service' : 'e.g. Evening Session'}
+                          className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 bg-white transition-colors"
+                        />
+                        <input
+                          type="time"
+                          value={session.start_time ?? ''}
+                          onChange={e => updateSharedSession(sIdx, 'start_time', e.target.value)}
+                          className="w-28 px-3 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-gray-900 bg-white transition-colors"
+                        />
+                        <input
+                          type="time"
+                          value={session.end_time ?? ''}
+                          onChange={e => updateSharedSession(sIdx, 'end_time', e.target.value)}
+                          className="w-28 px-3 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-gray-900 bg-white transition-colors"
+                        />
+                        {sharedSessions.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeSharedSession(sIdx)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 text-lg"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addSharedSession}
+                      className="text-sm text-gray-600 font-medium hover:text-gray-900 transition-colors"
+                    >
+                      + Add program
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* INDIVIDUAL DAY MODE */
+                schedule.map((day, idx) => {
+                  const sessions = getSessions(day)
+                  return (
+                    <div key={day.date} className="border border-gray-200 rounded-xl overflow-hidden">
+                      <div className="bg-gray-50 px-4 py-2.5 border-b border-gray-200 flex items-center justify-between">
+                        <p className="text-sm font-semibold text-gray-900">Day {idx + 1} — {fmtDayFull(day.date)}</p>
+                        {schedule.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => copyToAll(day.date)}
+                            className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors px-2 py-1 rounded-lg hover:bg-gray-100"
+                            title="Copy this day's schedule to all other days"
+                          >
+                            <Copy className="w-3 h-3" />
+                            Copy to all days
+                          </button>
+                        )}
+                      </div>
+                      <div className="p-4 space-y-3">
+                        <input
+                          type="text"
+                          value={day.label ?? ''}
+                          onChange={e => updateDayLabel(day.date, e.target.value)}
+                          placeholder="Day theme — e.g. Workers Retreat (optional)"
+                          className={inp}
+                        />
+
+                        {sessions.map((session, sIdx) => (
+                          <div key={sIdx} className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={session.title ?? ''}
+                              onChange={e => updateSession(day.date, sIdx, 'title', e.target.value)}
+                              placeholder={sIdx === 0 ? 'e.g. Morning Service' : 'e.g. Evening Session'}
+                              className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 bg-white transition-colors"
+                            />
+                            <input
+                              type="time"
+                              value={session.start_time ?? ''}
+                              onChange={e => updateSession(day.date, sIdx, 'start_time', e.target.value)}
+                              className="w-28 px-3 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-gray-900 bg-white transition-colors"
+                            />
+                            <input
+                              type="time"
+                              value={session.end_time ?? ''}
+                              onChange={e => updateSession(day.date, sIdx, 'end_time', e.target.value)}
+                              className="w-28 px-3 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-gray-900 bg-white transition-colors"
+                            />
+                            {sessions.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeSession(day.date, sIdx)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 text-lg"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={() => addSession(day.date)}
+                          className="text-sm text-gray-600 font-medium hover:text-gray-900 transition-colors"
+                        >
+                          + Add program
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
           )}
 

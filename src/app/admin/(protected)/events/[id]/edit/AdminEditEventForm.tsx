@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ArrowLeft, Upload, Loader2 } from 'lucide-react'
+import { ArrowLeft, Upload, Loader2, Copy } from 'lucide-react'
 import { NIGERIAN_STATES, COUNTRY_LIST } from '@/lib/utils'
 import type { CategoryRow } from '@/app/actions/categories'
 import type { DaySchedule } from '@/types/database'
@@ -74,6 +74,7 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
   const isMultiDay = Array.isArray(event.daily_schedule) && event.daily_schedule.length > 0
 
   const [eventType, setEventType] = useState<'single' | 'multi'>(isMultiDay ? 'multi' : 'single')
+  const [sameEditSchedule, setSameEditSchedule] = useState(false)
   const [scheduleMap, setScheduleMap] = useState<Record<string, { label: string; sessions: import('@/types/database').EventSession[] }>>(() => {
     if (isMultiDay) {
       return Object.fromEntries(
@@ -436,9 +437,95 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Daily Schedule</p>
-                    <span className="text-xs text-gray-400">{completedDays}/{dateRange.length} days set</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-400">{completedDays}/{dateRange.length} days set</span>
+                      {dateRange.length > 1 && (
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                          <div
+                            onClick={() => {
+                              const on = !sameEditSchedule
+                              setSameEditSchedule(on)
+                              if (on && dateRange.length > 1) {
+                                const first = scheduleMap[dateRange[0]] ?? { label: '', sessions: [{ title: null, start_time: null, end_time: null, speaker: null }] }
+                                const srcSessions = first.sessions?.length ? first.sessions : [{ title: null, start_time: null, end_time: null, speaker: null }]
+                                setScheduleMap(prev => {
+                                  const next = { ...prev }
+                                  for (const d of dateRange) next[d] = { ...prev[d] ?? { label: '' }, sessions: srcSessions.map((s: import('@/types/database').EventSession) => ({ ...s })) }
+                                  return next
+                                })
+                              }
+                            }}
+                            className={`relative w-8 h-4 rounded-full transition-colors cursor-pointer ${sameEditSchedule ? 'bg-[#7C3AED]' : 'bg-gray-200'}`}
+                          >
+                            <span className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${sameEditSchedule ? 'translate-x-4' : 'translate-x-0'}`} />
+                          </div>
+                          <span className="text-[11px] font-medium text-gray-500">Same every day</span>
+                        </label>
+                      )}
+                    </div>
                   </div>
-                  {dateRange.map((date, idx) => {
+
+                  {/* SAME SCHEDULE MODE */}
+                  {sameEditSchedule && dateRange.length > 0 && (() => {
+                    const sharedEntry = scheduleMap[dateRange[0]] ?? { label: '', sessions: [{ title: null, start_time: null, end_time: null, speaker: null }] }
+                    const sharedSessions: import('@/types/database').EventSession[] = sharedEntry.sessions?.length ? sharedEntry.sessions : [{ title: null, start_time: null, end_time: null, speaker: null }]
+                    const updateShared = (sIdx: number, field: string, value: string) => {
+                      setScheduleMap(prev => {
+                        const next = { ...prev }
+                        for (const d of dateRange) {
+                          const cur = next[d] ?? { label: '', sessions: [] }
+                          next[d] = { ...cur, sessions: cur.sessions.map((s: import('@/types/database').EventSession, i: number) => i === sIdx ? { ...s, [field]: value || null } : s) }
+                        }
+                        return next
+                      })
+                    }
+                    const addShared = () => setScheduleMap(prev => {
+                      const next = { ...prev }
+                      for (const d of dateRange) { const cur = next[d] ?? { label: '', sessions: [] }; next[d] = { ...cur, sessions: [...cur.sessions, { title: null, start_time: null, end_time: null, speaker: null }] } }
+                      return next
+                    })
+                    const removeShared = (sIdx: number) => setScheduleMap(prev => {
+                      const next = { ...prev }
+                      for (const d of dateRange) { const cur = next[d] ?? { label: '', sessions: [] }; const updated = cur.sessions.filter((_: import('@/types/database').EventSession, i: number) => i !== sIdx); next[d] = { ...cur, sessions: updated.length ? updated : [{ title: null, start_time: null, end_time: null, speaker: null }] } }
+                      return next
+                    })
+                    return (
+                      <div className="rounded-xl border-2 border-[#7C3AED]/40 overflow-hidden">
+                        <div className="bg-violet-50 px-4 py-2.5">
+                          <p className="text-sm font-bold text-[#7C3AED]">Schedule for all {dateRange.length} days</p>
+                          <p className="text-xs text-violet-400 mt-0.5">Applies to every day automatically</p>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          {sharedSessions.map((session: import('@/types/database').EventSession, sIdx: number) => (
+                            <div key={sIdx} className="border border-gray-100 rounded-lg p-3 space-y-2 bg-gray-50/50">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Session {sIdx + 1}</span>
+                                {sharedSessions.length > 1 && <button type="button" onClick={() => removeShared(sIdx)} className="text-xs text-red-400 hover:text-red-600">Remove</button>}
+                              </div>
+                              <input type="text" value={session.title ?? ''} onChange={e => updateShared(sIdx, 'title', e.target.value)} placeholder="Session name" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] bg-white" />
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-[10px] font-medium text-gray-400 mb-1">Start Time (optional)</label>
+                                  <input type="time" value={session.start_time ?? ''} onChange={e => updateShared(sIdx, 'start_time', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#7C3AED] bg-white" />
+                                  {session.start_time && <p className="text-xs text-[#7C3AED] mt-0.5">{fmt12(session.start_time)}</p>}
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-medium text-gray-400 mb-1">End Time (optional)</label>
+                                  <input type="time" value={session.end_time ?? ''} onChange={e => updateShared(sIdx, 'end_time', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#7C3AED] bg-white" />
+                                  {session.end_time && <p className="text-xs text-gray-500 mt-0.5">{fmt12(session.end_time)}</p>}
+                                </div>
+                              </div>
+                              <input type="text" value={session.speaker ?? ''} onChange={e => updateShared(sIdx, 'speaker', e.target.value)} placeholder="Speaker / Minister (optional)" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:border-[#7C3AED] bg-white" />
+                            </div>
+                          ))}
+                          <button type="button" onClick={addShared} className="w-full py-2 rounded-lg border border-dashed border-[#7C3AED]/40 text-sm font-semibold text-[#7C3AED] hover:bg-violet-50 transition-colors">+ Add Session</button>
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  {/* INDIVIDUAL DAY MODE */}
+                  {!sameEditSchedule && dateRange.map((date, idx) => {
                     const entry = scheduleMap[date] ?? { label: '', sessions: [{ title: null, start_time: null, end_time: null, speaker: null }] }
                     const sessions = entry.sessions?.length ? entry.sessions : [{ title: null, start_time: null, end_time: null, speaker: null }]
                     const hasContent = sessions.some((s: import('@/types/database').EventSession) => s.title || s.start_time)
@@ -473,7 +560,26 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
                             <p className={`text-sm font-bold ${hasContent ? 'text-[#7C3AED]' : 'text-gray-700'}`}>{fmtDayFull(date)}</p>
                             {entry.label && <p className="text-xs text-violet-500 font-medium mt-0.5 truncate">{entry.label}</p>}
                           </div>
-                          <span className="text-[11px] text-gray-400">{sessions.filter((s: import('@/types/database').EventSession) => s.title || s.start_time).length} session{sessions.filter((s: import('@/types/database').EventSession) => s.title || s.start_time).length !== 1 ? 's' : ''}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-gray-400">{sessions.filter((s: import('@/types/database').EventSession) => s.title || s.start_time).length} session{sessions.filter((s: import('@/types/database').EventSession) => s.title || s.start_time).length !== 1 ? 's' : ''}</span>
+                            {dateRange.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const src = scheduleMap[date] ?? { label: '', sessions }
+                                  setScheduleMap(prev => {
+                                    const next = { ...prev }
+                                    for (const d of dateRange) next[d] = { ...next[d] ?? { label: '' }, sessions: src.sessions.map((s: import('@/types/database').EventSession) => ({ ...s })) }
+                                    return next
+                                  })
+                                }}
+                                className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-[#7C3AED] transition-colors px-1.5 py-0.5 rounded hover:bg-violet-50"
+                                title="Copy this day's schedule to all other days"
+                              >
+                                <Copy className="w-3 h-3" /> Copy to all
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <div className="p-4 space-y-3">
                           <input
