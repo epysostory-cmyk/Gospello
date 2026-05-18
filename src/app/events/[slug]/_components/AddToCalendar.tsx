@@ -1,51 +1,40 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { CalendarPlus, ChevronDown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { CalendarPlus, X, Check } from 'lucide-react'
 
 interface Props {
   title: string
-  startDate: string        // ISO string from DB, e.g. "2026-05-01T18:00:00"
-  endDate?: string | null  // ISO string or null
-  location: string         // "Venue Name, City" or "Online Event"
+  startDate: string
+  endDate?: string | null
+  location: string
   description?: string | null
 }
 
-/** Format a date to the ical/Google compact format: YYYYMMDDTHHmmssZ */
 function toCalDate(iso: string): string {
-  // Treat DB dates as local Nigeria time (UTC+1) if they have no offset
-  const d = new Date(iso)
-  return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+  return new Date(iso).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
 }
 
-/** Build a Google Calendar add-event URL */
-function googleCalUrl(props: Props): string {
-  const start = toCalDate(props.startDate)
-  // Default to 2 hours after start if no end date
-  const end = props.endDate
+function endOrDefault(props: Props): string {
+  return props.endDate
     ? toCalDate(props.endDate)
     : toCalDate(new Date(new Date(props.startDate).getTime() + 2 * 60 * 60 * 1000).toISOString())
+}
 
+function googleCalUrl(props: Props): string {
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text: props.title,
-    dates: `${start}/${end}`,
+    dates: `${toCalDate(props.startDate)}/${endOrDefault(props)}`,
     details: props.description?.substring(0, 500) ?? '',
     location: props.location,
   })
-  return `https://calendar.google.com/calendar/render?${params.toString()}`
+  // /r/eventedit triggers Google Calendar app on Android via App Links
+  return `https://calendar.google.com/calendar/r/eventedit?${params.toString()}`
 }
 
-/** Build the raw text of an .ics file */
 function buildIcs(props: Props): string {
-  const start = toCalDate(props.startDate)
-  const end = props.endDate
-    ? toCalDate(props.endDate)
-    : toCalDate(new Date(new Date(props.startDate).getTime() + 2 * 60 * 60 * 1000).toISOString())
-
   const desc = (props.description ?? '').replace(/\n/g, '\\n').substring(0, 500)
-  const uid = `gospello-${Date.now()}@gospello.com`
-
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -53,10 +42,10 @@ function buildIcs(props: Props): string {
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${uid}`,
+    `UID:gospello-${Date.now()}@gospello.com`,
     `DTSTAMP:${toCalDate(new Date().toISOString())}`,
-    `DTSTART:${start}`,
-    `DTEND:${end}`,
+    `DTSTART:${toCalDate(props.startDate)}`,
+    `DTEND:${endOrDefault(props)}`,
     `SUMMARY:${props.title}`,
     `DESCRIPTION:${desc}`,
     `LOCATION:${props.location}`,
@@ -66,90 +55,170 @@ function buildIcs(props: Props): string {
 }
 
 function downloadIcs(props: Props) {
-  const ics = buildIcs(props)
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+  const blob = new Blob([buildIcs(props)], { type: 'text/calendar;charset=utf-8' })
   const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${props.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}.ics`
+  const a = Object.assign(document.createElement('a'), {
+    href: url,
+    download: `${props.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}.ics`,
+  })
   a.click()
   URL.revokeObjectURL(url)
 }
 
+type Option = 'google' | 'apple' | 'outlook'
+
 export default function AddToCalendar(props: Props) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [added, setAdded] = useState<Option | null>(null)
 
-  // Close when clicking outside
+  const day = new Date(props.startDate).getDate()
+
+  const OPTIONS: { id: Option; label: string; sub: string; icon: React.ReactNode }[] = [
+    {
+      id: 'google',
+      label: 'Google Calendar',
+      sub: 'Opens in app on Android · browser on desktop',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 48 48">
+          <path fill="#4285F4" d="M45.5 20H24v8.5h12.4C34.8 34 30 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 6 1.1 8.2 3l6-6C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c11 0 20.5-8 20.5-21 0-1.4-.1-2.7-.4-4z"/>
+          <path fill="#34A853" d="M6.3 14.7l7 5.1C15.1 16 19.2 13 24 13c3.1 0 6 1.1 8.2 3l6-6C34.6 5.1 29.6 3 24 3c-7.6 0-14.2 4.3-17.7 11.7z"/>
+          <path fill="#FBBC05" d="M24 45c5.5 0 10.5-1.9 14.3-5.1l-6.6-5.6C29.8 36 27 37 24 37c-6 0-10.8-3.9-12.4-9.5l-7 5.4C8.1 40.7 15.4 45 24 45z"/>
+          <path fill="#EA4335" d="M45.5 20H24v8.5h12.4c-.8 2.3-2.2 4.2-4.1 5.6l6.6 5.6c3.9-3.6 6.1-8.9 6.1-15.2 0-1.4-.1-2.7-.4-4z"/>
+        </svg>
+      ),
+    },
+    {
+      id: 'apple',
+      label: 'Apple Calendar',
+      sub: 'iPhone & Mac · opens Add Event sheet instantly',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <rect width="24" height="24" rx="5" fill="#1C1C1E"/>
+          <rect x="3" y="8" width="18" height="13" rx="2" fill="white"/>
+          <rect x="3" y="5" width="18" height="5" fill="#FF3B30"/>
+          <rect x="3" y="6.5" width="18" height="1.5" fill="#CC0000"/>
+          <rect x="7" y="3" width="2" height="5" rx="1" fill="#1C1C1E"/>
+          <rect x="15" y="3" width="2" height="5" rx="1" fill="#1C1C1E"/>
+          <text x="12" y="19" textAnchor="middle" fontSize="6.5" fontWeight="700" fill="#1C1C1E" fontFamily="system-ui">{day}</text>
+        </svg>
+      ),
+    },
+    {
+      id: 'outlook',
+      label: 'Outlook / Other',
+      sub: 'Outlook, Thunderbird, any .ics-compatible app',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+          <rect width="48" height="48" rx="8" fill="#0078D4"/>
+          <rect x="6" y="12" width="22" height="26" rx="3" fill="white"/>
+          <rect x="20" y="16" width="22" height="18" rx="2" fill="#50A0D8"/>
+          <path d="M20 20 L31 27 L42 20" stroke="white" strokeWidth="1.5" fill="none"/>
+          <circle cx="17" cy="26" r="5" fill="white"/>
+          <text x="17" y="29" textAnchor="middle" fontSize="5.5" fontWeight="800" fill="#0078D4" fontFamily="system-ui">{day}</text>
+        </svg>
+      ),
+    },
+  ]
+
+  // Lock body scroll when sheet is open
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    if (open) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = ''
+    return () => { document.body.style.overflow = '' }
+  }, [open])
+
+  function handleOption(id: Option) {
+    if (id === 'google') {
+      window.open(googleCalUrl(props), '_blank', 'noopener,noreferrer')
+    } else {
+      downloadIcs(props)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+    setAdded(id)
+    setTimeout(() => {
+      setAdded(null)
+      setOpen(false)
+    }, 1400)
+  }
 
   return (
-    <div ref={ref} className="relative w-full">
+    <>
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen(true)}
         className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-600 font-medium py-2.5 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm"
       >
         <CalendarPlus className="w-4 h-4 text-indigo-500" />
         Add to Calendar
-        <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
+      {/* Backdrop */}
       {open && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-white border border-gray-100 rounded-2xl shadow-lg overflow-hidden z-20">
-          {/* Google Calendar */}
-          <a
-            href={googleCalUrl(props)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
-          >
-            {/* Google coloured icon */}
-            <svg width="18" height="18" viewBox="0 0 48 48" className="flex-shrink-0">
-              <path fill="#4285F4" d="M45.5 20H24v8.5h12.4C34.8 34 30 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 6 1.1 8.2 3l6-6C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c11 0 20.5-8 20.5-21 0-1.4-.1-2.7-.4-4z"/>
-              <path fill="#34A853" d="M6.3 14.7l7 5.1C15.1 16 19.2 13 24 13c3.1 0 6 1.1 8.2 3l6-6C34.6 5.1 29.6 3 24 3c-7.6 0-14.2 4.3-17.7 11.7z"/>
-              <path fill="#FBBC05" d="M24 45c5.5 0 10.5-1.9 14.3-5.1l-6.6-5.6C29.8 36 27 37 24 37c-6 0-10.8-3.9-12.4-9.5l-7 5.4C8.1 40.7 15.4 45 24 45z"/>
-              <path fill="#EA4335" d="M45.5 20H24v8.5h12.4c-.8 2.3-2.2 4.2-4.1 5.6l6.6 5.6c3.9-3.6 6.1-8.9 6.1-15.2 0-1.4-.1-2.7-.4-4z"/>
-            </svg>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Google Calendar</p>
-              <p className="text-xs text-gray-500">Opens in a new tab</p>
-            </div>
-          </a>
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+          onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
+        >
+          {/* Sheet */}
+          <div className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
 
-          <div className="border-t border-gray-50" />
-
-          {/* Apple / iCal */}
-          <button
-            type="button"
-            onClick={() => { downloadIcs(props); setOpen(false) }}
-            className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
-          >
-            {/* Apple calendar icon */}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
-              <rect width="24" height="24" rx="5" fill="#FF3B30"/>
-              <rect x="3" y="7" width="18" height="14" rx="2" fill="white"/>
-              <rect x="3" y="5" width="18" height="4" rx="2" fill="#FF3B30"/>
-              <rect x="7" y="3" width="2" height="4" rx="1" fill="#FF3B30"/>
-              <rect x="15" y="3" width="2" height="4" rx="1" fill="#FF3B30"/>
-              <text x="12" y="18" textAnchor="middle" fontSize="7" fontWeight="700" fill="#FF3B30" fontFamily="Arial">
-                {new Date(props.startDate).getDate()}
-              </text>
-            </svg>
-            <div className="text-left">
-              <p className="text-sm font-semibold text-gray-900">Apple Calendar</p>
-              <p className="text-xs text-gray-500">Downloads .ics file</p>
+            {/* Handle (mobile) */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-gray-200" />
             </div>
-          </button>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div>
+                <p className="font-bold text-gray-900 text-sm">Add to Calendar</p>
+                <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[220px]">{props.title}</p>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+              >
+                <X className="w-3.5 h-3.5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Options */}
+            <div className="p-3">
+              {OPTIONS.map((opt, i) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => handleOption(opt.id)}
+                  disabled={added !== null}
+                  className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors text-left disabled:opacity-60"
+                >
+                  <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center">
+                    {added === opt.id ? (
+                      <Check className="w-5 h-5 text-emerald-500" strokeWidth={2.5} />
+                    ) : (
+                      opt.icon
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">{opt.label}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5 leading-tight">{opt.sub}</p>
+                  </div>
+                  {added === opt.id && (
+                    <span className="text-xs font-semibold text-emerald-500 flex-shrink-0">Added!</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Footer note */}
+            <div className="px-5 pb-5 pt-1">
+              <p className="text-[11px] text-gray-400 text-center leading-relaxed">
+                On iPhone, tap <strong className="text-gray-500">Apple Calendar</strong> — it opens the Add Event sheet in your Calendar app instantly.
+                On Android, <strong className="text-gray-500">Google Calendar</strong> opens the app directly.
+              </p>
+            </div>
+
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
