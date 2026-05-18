@@ -13,7 +13,6 @@ export async function addCategory(
   const color = formData.get('color') as string
 
   if (!name || !slug) return { error: 'Name and slug are required' }
-  if (!icon) return { error: 'Please choose an icon' }
 
   const adminClient = createAdminClient()
 
@@ -113,7 +112,6 @@ export async function updateCategory(
 ) {
   if (!data.name) return { error: 'Name is required' }
   if (!data.slug) return { error: 'Slug is required' }
-  if (!data.icon) return { error: 'Please choose an icon' }
   if (!/^[a-z0-9-]+$/.test(data.slug)) return { error: 'Slug can only contain lowercase letters, numbers, and hyphens' }
 
   const adminClient = createAdminClient()
