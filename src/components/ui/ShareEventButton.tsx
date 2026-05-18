@@ -10,17 +10,19 @@ interface Props {
   eventDate?: string
   eventLocation?: string
   eventDescription?: string
+  bannerUrl?: string | null
 }
 
 export default function ShareEventButton({
-  slug, eventTitle, eventUrl, eventDate = '', eventLocation = '', eventDescription = '',
+  slug, eventTitle, eventUrl, eventDate = '', eventLocation = '', eventDescription = '', bannerUrl,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [dlState, setDlState] = useState<'idle' | 'loading' | 'done'>('idle')
 
-  const flyerUrl = `/api/events/${slug}/flyer?format=square`
-  const fileName = `${eventTitle.replace(/[^a-z0-9\s]/gi, '').trim().replace(/\s+/g, '-').toLowerCase() || 'event-flyer'}.png`
+  const flyerUrl = bannerUrl ?? `/api/events/${slug}/flyer?format=square`
+  const ext = flyerUrl.includes('.png') ? 'png' : flyerUrl.includes('.webp') ? 'webp' : 'jpg'
+  const fileName = `${eventTitle.replace(/[^a-z0-9\s]/gi, '').trim().replace(/\s+/g, '-').toLowerCase() || 'event-flyer'}.${ext}`
 
   const waUrl = eventUrl + '?ref=wa'
   const tgUrl = eventUrl + '?ref=tg'
@@ -51,7 +53,7 @@ export default function ShareEventButton({
   async function handleSave() {
     setDlState('loading')
     try {
-      const res = await fetch(flyerUrl)
+      const res = await fetch(flyerUrl, { mode: 'cors' })
       if (!res.ok) throw new Error()
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
@@ -159,10 +161,9 @@ export default function ShareEventButton({
             </div>
 
             {/* Divider */}
-            <div className="mx-4 my-3 border-t border-gray-100" />
-
-            {/* Flyer section */}
-            <div className="px-4 pb-5">
+            {/* Flyer section — only shown when the event has an actual uploaded image */}
+            {bannerUrl && <div className="mx-4 my-3 border-t border-gray-100" />}
+            <div className={`px-4 pb-5${bannerUrl ? '' : ' hidden'}`}>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2.5">Event Flyer</p>
               <div className="flex gap-2">
                 <a

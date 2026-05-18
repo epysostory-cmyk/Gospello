@@ -281,7 +281,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           {/* Share */}
           <div className="mt-4">
             <ShareEventButton slug={e.slug} eventTitle={e.title} eventUrl={eventUrl}
-              eventDate={shareDate} eventLocation={shareLocation} eventDescription={e.description ?? ''} />
+              eventDate={shareDate} eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} />
           </div>
         </div>
 
@@ -515,7 +515,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </div>
           <div className="mt-3">
             <ShareEventButton slug={e.slug} eventTitle={e.title} eventUrl={eventUrl}
-              eventDate={shareDate} eventLocation={shareLocation} eventDescription={e.description ?? ''} />
+              eventDate={shareDate} eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} />
           </div>
         </div>
 
