@@ -285,13 +285,11 @@ export async function GET(
             marginTop: 'auto', paddingTop: 24,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: 8,
-                background: '#7C3AED',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <span style={{ color: 'white', fontSize: 14, fontWeight: 900 }}>G</span>
-              </div>
+              <img
+                src="https://atrdstihzvnvbgxveplm.supabase.co/storage/v1/object/public/site-assets/logo/dccedb39-bf4b-4b4b-beec-fc285f57ad68/1777020281172.png"
+                style={{ height: 28, width: 'auto', display: 'flex' }}
+                alt="Gospello"
+              />
               <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 18, fontWeight: 700, letterSpacing: '0.5px' }}>
                 gospello.com
               </span>
@@ -306,16 +304,14 @@ export async function GET(
       {/* Story: bottom branding */}
       {isStory && (
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14,
           paddingBottom: 80,
         }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: '#7C3AED',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ color: 'white', fontSize: 18, fontWeight: 900 }}>G</span>
-          </div>
+          <img
+            src="https://atrdstihzvnvbgxveplm.supabase.co/storage/v1/object/public/site-assets/logo/dccedb39-bf4b-4b4b-beec-fc285f57ad68/1777020281172.png"
+            style={{ height: 36, width: 'auto', display: 'flex' }}
+            alt="Gospello"
+          />
           <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 24, fontWeight: 700, letterSpacing: '0.5px' }}>
             gospello.com
           </span>
