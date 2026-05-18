@@ -123,8 +123,9 @@ function SignUpForm() {
   const [showPassword, setShowPassword]   = useState(false)
   const [state, setState]                 = useState('')
   const [city, setCity]                   = useState('')
-  const [ministryTypes, setMinistryTypes] = useState<string[]>([])
-  const [loading, setLoading]             = useState(false)
+  const [ministryTypes, setMinistryTypes]     = useState<string[]>([])
+  const [otherMinistryText, setOtherMinistry] = useState('')
+  const [loading, setLoading]                 = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError]                 = useState('')
   const [emailError, setEmailError]       = useState('')
@@ -155,6 +156,11 @@ function SignUpForm() {
     if (nameError) { setError(nameError); triggerShake(); return }
     if (accountType === 'organizer' && ministryTypes.length === 0) {
       setError('Please select at least one ministry type')
+      triggerShake()
+      return
+    }
+    if (accountType === 'organizer' && ministryTypes.includes('Other') && !otherMinistryText.trim()) {
+      setError('Please describe your ministry type')
       triggerShake()
       return
     }
@@ -195,7 +201,9 @@ function SignUpForm() {
           accountType,
           displayName,
           state: state || undefined,
-          ministryType: ministryTypes.length > 0 ? ministryTypes.join(', ') : undefined,
+          ministryType: ministryTypes.length > 0
+          ? ministryTypes.map(t => t === 'Other' ? otherMinistryText.trim() : t).join(', ')
+          : undefined,
         }),
       }).catch(() => {})
     }
@@ -372,11 +380,25 @@ function SignUpForm() {
                     }`}
                   >
                     {selected && <Check className="w-3 h-3 flex-shrink-0" strokeWidth={3} />}
-                    {type}
+                    {type === 'Other' && selected && otherMinistryText.trim() ? otherMinistryText.trim() : type}
                   </button>
                 )
               })}
             </div>
+            {ministryTypes.includes('Other') && (
+              <div className="mt-3">
+                <input
+                  type="text"
+                  value={otherMinistryText}
+                  onChange={e => setOtherMinistry(e.target.value)}
+                  placeholder="e.g. Gospel Blogger, Christian Comedian, Intercessor..."
+                  maxLength={60}
+                  autoFocus
+                  className={INPUT_CLS}
+                />
+                <p className="text-xs text-gray-400 mt-1">Describe how you best describe your ministry</p>
+              </div>
+            )}
           </div>
         </div>
 
