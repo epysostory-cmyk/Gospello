@@ -16,6 +16,13 @@ export async function addCategory(
 
   const adminClient = createAdminClient()
 
+  const { data: existing } = await adminClient
+    .from('categories')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle()
+  if (existing) return { error: `A category with the slug "${slug}" already exists. Choose a different name or edit the slug.` }
+
   // Get current max sort_order
   const { data: maxRow } = await adminClient
     .from('categories')
