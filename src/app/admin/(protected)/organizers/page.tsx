@@ -46,7 +46,7 @@ export default async function AdminOrganizersPage({ searchParams }: { searchPara
           <h1 className="text-xl font-bold text-gray-900">Seeded Organizers</h1>
           <p className="text-gray-500 mt-0.5 text-sm">Admin-created organizer profiles — not tied to any user account</p>
         </div>
-        <Link href="/admin/profiles/new"
+        <Link href="/admin/seededchurches/new"
           className="inline-flex items-center gap-1.5 px-4 h-10 rounded-xl bg-[#7C3AED] text-white text-sm font-semibold hover:bg-[#6D28D9] transition-colors">
           <Plus className="w-4 h-4" /> New Organizer
         </Link>
@@ -74,7 +74,7 @@ export default async function AdminOrganizersPage({ searchParams }: { searchPara
       {/* Table */}
       {pageRows.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-          <p className="text-gray-500">No organizers found. <Link href="/admin/profiles/new" className="text-[#7C3AED] underline">Create one</Link></p>
+          <p className="text-gray-500">No organizers found. <Link href="/admin/seededchurches/new" className="text-[#7C3AED] underline">Create one</Link></p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">

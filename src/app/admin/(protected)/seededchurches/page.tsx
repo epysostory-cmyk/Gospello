@@ -5,6 +5,7 @@ import { Plus, Search, Building2, Mic2, CheckCircle, Clock, AlertCircle, Pencil,
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import Image from 'next/image'
+import ProfileCardActions from './ProfileCardActions'
 
 interface SearchParams { q?: string; type?: string; status?: string; page?: string }
 const PAGE_SIZE = 24
@@ -70,7 +71,7 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
     const s = overrides.status !== undefined ? overrides.status : status; if (s && s !== 'all') next.status = s
     const pg = overrides.page !== undefined ? overrides.page : String(page); if (pg && pg !== '1') next.page = pg
     const qs = new URLSearchParams(next).toString()
-    return `/admin/profiles${qs ? '?' + qs : ''}`
+    return `/admin/seededchurches${qs ? '?' + qs : ''}`
   }
 
   function ClaimBadge({ row }: { row: Row }) {
@@ -102,7 +103,7 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
           <h1 className="text-xl font-bold text-gray-900">Seeded Profiles</h1>
           <p className="text-sm text-gray-500 mt-0.5">Admin-created churches and organizers not tied to user accounts</p>
         </div>
-        <Link href="/admin/profiles/new"
+        <Link href="/admin/seededchurches/new"
           className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-[#7C3AED] text-white text-sm font-semibold hover:bg-[#6D28D9] transition-colors">
           <Plus className="w-4 h-4" /> New Profile
         </Link>
@@ -132,7 +133,7 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
       {/* Filters panel */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
         <div className="p-4 border-b border-gray-100">
-          <form method="GET" action="/admin/profiles" className="flex gap-2">
+          <form method="GET" action="/admin/seededchurches" className="flex gap-2">
             {type   !== 'all' && <input type="hidden" name="type"   value={type} />}
             {status !== 'all' && <input type="hidden" name="status" value={status} />}
             <div className="relative flex-1">
@@ -184,7 +185,7 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
         <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           <Building2 className="w-8 h-8 text-gray-200 mx-auto mb-2" />
           <p className="text-sm text-gray-400">No profiles found.</p>
-          <Link href="/admin/profiles/new" className="mt-2 inline-block text-sm text-[#7C3AED] hover:underline">Create one →</Link>
+          <Link href="/admin/seededchurches/new" className="mt-2 inline-block text-sm text-[#7C3AED] hover:underline">Create one →</Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -218,17 +219,23 @@ export default async function AdminProfilesPage({ searchParams }: { searchParams
                 <span className="text-[10px] text-gray-400">{formatDate(row.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
               </div>
 
-              <div className="flex items-center gap-2 pt-3 border-t border-gray-50">
+              <div className="flex items-center gap-1.5 pt-3 border-t border-gray-50 flex-wrap">
                 <Link
                   href={row.type === 'church' ? `/churches/${row.slug}` : `/organizers/${row.id}`}
                   target="_blank"
-                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 transition-colors"
+                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 transition-colors mr-auto"
                 >
                   <ExternalLink className="w-3 h-3" /> View
                 </Link>
+                <ProfileCardActions
+                  id={row.id}
+                  type={row.type}
+                  name={row.name}
+                  isHidden={row.is_hidden}
+                />
                 <Link
-                  href={`/admin/profiles/${row.type}/${row.id}/edit`}
-                  className="ml-auto flex items-center gap-1 text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 px-3 py-1.5 rounded-lg transition-colors"
+                  href={`/admin/seededchurches/${row.type}/${row.id}/edit`}
+                  className="flex items-center gap-1 text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 px-3 py-1.5 rounded-lg transition-colors"
                 >
                   <Pencil className="w-3 h-3" /> Edit
                 </Link>

@@ -183,7 +183,7 @@ export default function CreateProfileForm({ adminId }: Props) {
       })
       if (result.error) { setError(result.error); return }
       localStorage.removeItem(DRAFT_KEY)
-      router.push('/admin/profiles')
+      router.push('/admin/seededchurches')
     })
   }
 

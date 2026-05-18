@@ -174,7 +174,7 @@ export default function EditProfileForm({ type, profile }: Props) {
         return
       }
       setSuccess(true)
-      setTimeout(() => router.push('/admin/profiles'), 1200)
+      setTimeout(() => router.push('/admin/seededchurches'), 1200)
     })
   }
 
@@ -182,7 +182,7 @@ export default function EditProfileForm({ type, profile }: Props) {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/admin/profiles" className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500">
+        <Link href="/admin/seededchurches" className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
@@ -392,7 +392,7 @@ export default function EditProfileForm({ type, profile }: Props) {
 
       {/* Save */}
       <div className="flex justify-end gap-3 pb-8">
-        <Link href="/admin/profiles" className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+        <Link href="/admin/seededchurches" className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
           Cancel
         </Link>
         <button

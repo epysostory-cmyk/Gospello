@@ -187,7 +187,7 @@ export default async function AdminAnalyticsPage() {
           { label: 'Total Views',    value: totalViews,                 icon: Eye,       color: '#0891B2', bg: '#CFFAFE', href: null },
           { label: 'Total Users',    value: totalUsersRes.count ?? 0,   icon: Users,     color: '#059669', bg: '#D1FAE5', href: '/admin/users' },
           { label: 'Registrations',  value: totalAttendancesRes.count ?? 0, icon: UserCheck, color: '#D97706', bg: '#FEF3C7', href: null },
-          { label: 'Churches',       value: totalChurchesRes.count ?? 0, icon: Building2, color: '#7C3AED', bg: '#EDE9FE', href: '/admin/profiles' },
+          { label: 'Churches',       value: totalChurchesRes.count ?? 0, icon: Building2, color: '#7C3AED', bg: '#EDE9FE', href: '/admin/seededchurches' },
           { label: 'Organizers',     value: totalOrgsRes.count ?? 0,    icon: Mic2,      color: '#2563EB', bg: '#DBEAFE', href: '/admin/organizers' },
         ].map(({ label, value, icon: Icon, color, bg, href }) => {
           const card = (

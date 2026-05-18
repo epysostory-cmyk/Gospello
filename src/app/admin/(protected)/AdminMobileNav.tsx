@@ -19,7 +19,7 @@ const ALL_NAV: NavItem[] = [
   { href: '/admin',              label: 'Dashboard',          icon: LayoutDashboard, exact: true, roles: ['super_admin','admin','moderator'] },
   { href: '/admin/analytics',    label: 'Analytics',          icon: BarChart2,                    roles: ['super_admin','admin'] },
   { href: '/admin/events',       label: 'Events',             icon: Calendar,                     roles: ['super_admin','admin','moderator'] },
-  { href: '/admin/profiles',     label: 'Seeded Churches',    icon: Building2,                    roles: ['super_admin','admin','moderator'] },
+  { href: '/admin/seededchurches',     label: 'Seeded Churches',    icon: Building2,                    roles: ['super_admin','admin','moderator'] },
   { href: '/admin/organizations',label: 'User Profiles',      icon: Users,                        roles: ['super_admin','admin'] },
   { href: '/admin/organizers',   label: 'Seeded Organizers',  icon: Mic2,                         roles: ['super_admin','admin'] },
   { href: '/admin/categories',   label: 'Categories',      icon: Grid3X3,                      roles: ['super_admin'] },

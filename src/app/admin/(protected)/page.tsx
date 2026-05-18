@@ -91,7 +91,7 @@ export default async function AdminOverviewPage() {
           <p className="text-sm text-gray-500 mt-0.5">Welcome back — here's what's happening on Gospello</p>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/admin/profiles/new"
+          <Link href="/admin/seededchurches/new"
             className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-[#7C3AED] text-white text-sm font-semibold hover:bg-[#6D28D9] transition-colors">
             <Plus className="w-3.5 h-3.5" /> New Church
           </Link>
@@ -154,7 +154,7 @@ export default async function AdminOverviewPage() {
         {[
           { label: 'Pending Review',     value: pendingEvents,  icon: Clock,         color: '#D97706', bg: '#FEF3C7', href: '/admin/moderation' },
           { label: 'Approved Events',    value: approvedEvents, icon: CheckCircle,   color: '#059669', bg: '#D1FAE5', href: '/admin/events?status=approved' },
-          { label: 'Seeded Churches',    value: totalChurches,  icon: Building2,     color: '#7C3AED', bg: '#EDE9FE', href: '/admin/profiles' },
+          { label: 'Seeded Churches',    value: totalChurches,  icon: Building2,     color: '#7C3AED', bg: '#EDE9FE', href: '/admin/seededchurches' },
           { label: 'Seeded Organizers',  value: totalOrgs,      icon: Mic2,          color: '#2563EB', bg: '#DBEAFE', href: '/admin/organizers' },
         ].map(({ label, value, icon: Icon, color, bg, href }) => (
           <Link key={label} href={href}
@@ -252,7 +252,7 @@ export default async function AdminOverviewPage() {
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Quick Actions</p>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: 'New Church',    href: '/admin/profiles/new',    primary: true },
+                { label: 'New Church',    href: '/admin/seededchurches/new',    primary: true },
                 { label: 'New Event',     href: '/admin/events/new',       primary: true },
                 { label: 'View Claims',   href: '/admin/claims',           primary: false },
                 { label: 'Manage Users',  href: '/admin/users',            primary: false },
