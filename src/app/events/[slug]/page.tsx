@@ -772,18 +772,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 </div>
               )}
 
-              {/* Venue */}
-              {!e.is_online && (
-                <div className="mb-8">
-                  <h2 className="text-[17px] font-bold text-gray-900 mb-3">Venue</h2>
-                  <p className="text-sm font-semibold text-gray-900">{e.location_name}</p>
-                  {e.address && <p className="text-sm text-gray-500 mt-0.5">{e.address}</p>}
-                  <p className="text-sm text-gray-500">{e.city}, {e.state}</p>
-                  <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
-                    className="text-sm font-semibold text-indigo-600 mt-1.5 inline-block">Open in Google Maps →</a>
-                </div>
-              )}
-
               {/* Amenities */}
               {(e.parking_available || e.child_friendly || e.notes) && (
                 <div className="mb-8">
