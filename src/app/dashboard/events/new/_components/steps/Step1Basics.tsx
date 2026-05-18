@@ -142,14 +142,16 @@ export default function Step1Basics({ formData, updateForm, errors, categories }
               <p className="text-sm font-semibold text-gray-900 mb-3">Additional Info</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {([
-                  ['parking_available',       'Parking available'],
-                  ['shuttle_available',        'Bus / shuttle available'],
-                  ['child_friendly',           'Child-friendly'],
-                  ['wheelchair_accessible',    'Wheelchair accessible'],
-                  ['food_provided',            'Food / refreshments provided'],
-                  ['accommodation_available',  'Accommodation available'],
-                  ['no_recording',             'No recording allowed'],
-                ] as [string, string][]).map(([key, label]) => (
+                  ['parking_available',       'Parking available',              false],
+                  ['shuttle_available',        'Bus / shuttle available',        false],
+                  ['child_friendly',           'Child-friendly',                 true],
+                  ['wheelchair_accessible',    'Wheelchair accessible',          false],
+                  ['food_provided',            'Food / refreshments provided',   false],
+                  ['accommodation_available',  'Accommodation available',        false],
+                  ['no_recording',             'No recording allowed',           true],
+                ] as [string, string, boolean][])
+                  .filter(([,, onlineOk]) => !formData.is_online || onlineOk)
+                  .map(([key, label]) => (
                   <label key={key} className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox"
                       checked={!!(formData as any)[key]}
@@ -160,8 +162,8 @@ export default function Step1Basics({ formData, updateForm, errors, categories }
                 ))}
               </div>
 
-              {/* Dress code — text reveals when ticked */}
-              <div className="mt-3">
+              {/* Dress code — physical events only */}
+              {!formData.is_online && <div className="mt-3">
                 <label className="flex items-center gap-3 cursor-pointer mb-2">
                   <input type="checkbox"
                     checked={!!(formData as any).dress_code}
@@ -178,7 +180,7 @@ export default function Step1Basics({ formData, updateForm, errors, categories }
                     className={`${inp} mt-1`}
                   />
                 )}
-              </div>
+              </div>}
 
               {/* Gender restriction */}
               <div className="mt-3">
