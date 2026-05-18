@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate } from '@/lib/utils'
-import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, MessageCircle, User } from 'lucide-react'
+import { Calendar, MapPin, ArrowLeft, ExternalLink, ShieldCheck, CheckCircle, AlertTriangle, Globe, Phone, MessageCircle, User, Pencil } from 'lucide-react'
 import type { Profile, SeededOrganizer, Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import EventCard from '@/components/ui/EventCard'
@@ -65,6 +65,13 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
   const { id } = await params
   const supabase = createAdminClient()
   const adminClient = createAdminClient()
+  const { createClient: createServerClient } = await import('@/lib/supabase/server')
+  const authClient = await createServerClient()
+  const { data: { user } } = await authClient.auth.getUser()
+
+  const isAdmin = user
+    ? !!(await adminClient.from('admin_users').select('id').eq('id', user.id).maybeSingle()).data
+    : false
 
   const { data: profileData } = await supabase
     .from('profiles')
@@ -112,6 +119,13 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
   const locationStr = isSeeded
     ? [seeded!.city, seeded!.state].filter(Boolean).join(', ')
     : [(organizer as unknown as Record<string, string | null>)?.city, organizer!.state].filter(Boolean).join(', ')
+
+  const isOwner = user
+    ? (!isSeeded && organizer?.id === user.id) || (isSeeded && seeded?.owner_user_id === user.id)
+    : false
+  const editUrl = isAdmin
+    ? isSeeded ? `/admin/seededchurches/organizer/${seeded!.id}/edit` : null
+    : isOwner ? '/dashboard/profile' : null
 
   const isVerified      = isSeeded ? seeded!.verified_badge       : false
   const isClaimed       = isSeeded ? seeded!.is_claimed           : true
@@ -291,6 +305,19 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
               </>
             )}
           </div>
+
+          {/* Edit Profile button */}
+          {editUrl && (
+            <div className="mt-3">
+              <Link
+                href={editUrl}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200 text-xs font-semibold hover:bg-indigo-100 transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Edit Profile
+              </Link>
+            </div>
+          )}
 
           {/* Mobile social icons */}
           {hasSocials && (
