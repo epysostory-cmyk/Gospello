@@ -44,6 +44,71 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
+const DAY_ORDER = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+const DAY_LABEL: Record<string, string> = {
+  sunday: 'Sunday', monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday',
+  thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday',
+}
+
+function fmt12(time: string) {
+  if (!time) return ''
+  const [hStr, mStr] = time.split(':')
+  const h = parseInt(hStr, 10)
+  const m = mStr ?? '00'
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12 = h % 12 || 12
+  return `${h12}:${m} ${ampm}`
+}
+
+function ServiceTimesDisplay({ raw }: { raw: string }) {
+  let entries: { day: string; name: string; time: string }[] | null = null
+  try { entries = JSON.parse(raw) } catch { /* legacy text */ }
+
+  if (entries && Array.isArray(entries) && entries.length > 0) {
+    const byDay = new Map<string, typeof entries>()
+    for (const e of entries) {
+      const d = e.day.toLowerCase()
+      if (!byDay.has(d)) byDay.set(d, [])
+      byDay.get(d)!.push(e)
+    }
+    const days = DAY_ORDER.filter(d => byDay.has(d))
+
+    return (
+      <div className="px-4 py-4 border-b border-gray-100">
+        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Service Schedule</p>
+        <div className="space-y-3">
+          {days.map(day => (
+            <div key={day}>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{DAY_LABEL[day]}</p>
+              {byDay.get(day)!.map((e, i) => (
+                <div key={i} className="flex items-center justify-between py-0.5">
+                  <span className="text-sm text-gray-700">{e.name || 'Service'}</span>
+                  <span className="text-sm font-semibold text-gray-900 ml-4">{fmt12(e.time)}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Legacy free-text fallback
+  return (
+    <div className="px-4 py-4 border-b border-gray-100">
+      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Service Times</p>
+      <div className="space-y-2">
+        {raw.split('\n').filter(Boolean).map((line, i) => (
+          <div key={i} className="flex items-start gap-2.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+            <p className="text-sm text-gray-800">{line}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const GRADIENTS = [
   'from-violet-600 to-indigo-700',
   'from-blue-600 to-cyan-700',
@@ -152,54 +217,7 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
         <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
 
           {c.service_times && (
-            <div className="px-4 py-4 border-b border-gray-100">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Service Times</p>
-              <div className="space-y-3">
-                {c.service_times.split('\n').filter(Boolean).map((line, i) => {
-                  // "Wednesday Service: 6:00 pm (Midweek Recharge)"
-                  const colonMatch = line.match(/^([^:\d]+):\s*(.+)$/)
-                  if (colonMatch) {
-                    const label = colonMatch[1].trim()
-                    const rest = colonMatch[2].trim()
-                    const noteMatch = rest.match(/\(([^)]+)\)/)
-                    const note = noteMatch ? noteMatch[1] : ''
-                    const time = rest.replace(/\([^)]+\)/g, '').replace(/[,&]\s*$/, '').trim()
-                    return (
-                      <div key={i} className="flex items-start gap-2.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide leading-none mb-1">{label}</p>
-                          <p className="text-sm font-semibold text-gray-900">{time}</p>
-                          {note && <p className="text-xs text-gray-400 mt-0.5">{note}</p>}
-                        </div>
-                      </div>
-                    )
-                  }
-                  // "Sundays 7:00 am, 9:00 am, & 11:00 am"
-                  const timeIdx = line.search(/\b\d{1,2}:\d{2}/)
-                  if (timeIdx > 0) {
-                    const label = line.slice(0, timeIdx).trim()
-                    const time = line.slice(timeIdx).replace(/[,&]\s*$/, '').trim()
-                    return (
-                      <div key={i} className="flex items-start gap-2.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide leading-none mb-1">{label}</p>
-                          <p className="text-sm font-semibold text-gray-900">{time}</p>
-                        </div>
-                      </div>
-                    )
-                  }
-                  // Fallback
-                  return (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
-                      <p className="text-sm text-gray-800">{line}</p>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
+            <ServiceTimesDisplay raw={c.service_times} />
           )}
 
           {c.address && (

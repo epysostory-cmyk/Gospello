@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, Save, Eye, EyeOff, Upload, X } from 'lucide-react'
 import Link from 'next/link'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import { updateAdminChurch, updateAdminOrganizer } from './actions'
+import ServiceScheduleBuilder, { type ServiceEntry } from '../../../ServiceScheduleBuilder'
 
 const DENOMINATIONS = [
   'Pentecostal', 'Charismatic', 'Apostolic', 'Anglican', 'Catholic', 'Methodist',
@@ -94,7 +95,10 @@ export default function EditProfileForm({ type, profile }: Props) {
     leader_title:  church!.leader_title ?? '',
     founder:       church!.founder ?? '',
     denomination:  church!.denomination ?? '',
-    service_times: church!.service_times ? church!.service_times.split('\n') : [''],
+    service_times: (() => {
+      if (!church!.service_times) return [] as ServiceEntry[]
+      try { return JSON.parse(church!.service_times) as ServiceEntry[] } catch { return [] as ServiceEntry[] }
+    })(),
     whatsapp: '', twitter: '', youtube: '', contact_person: '', ministry_type: '',
     is_hidden: church!.is_hidden,
   } : {
@@ -113,11 +117,11 @@ export default function EditProfileForm({ type, profile }: Props) {
     source_url:     org!.source_url ?? '',
     contact_person: org!.contact_person ?? '',
     ministry_type:  org!.ministry_type ?? '',
-    pastor_name: '', leader_title: '', founder: '', denomination: '', service_times: [''],
+    pastor_name: '', leader_title: '', founder: '', denomination: '', service_times: [] as ServiceEntry[],
     is_hidden: org!.is_hidden,
   })
 
-  const set = (key: string, val: string | boolean | string[]) =>
+  const set = (key: string, val: string | boolean | string[] | ServiceEntry[]) =>
     setForm(prev => ({ ...prev, [key]: val }))
 
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -278,27 +282,11 @@ export default function EditProfileForm({ type, profile }: Props) {
                   {DENOMINATIONS.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </Field>
-              <Field label="Service Times">
-                {form.service_times.map((t, i) => (
-                  <div key={i} className="flex gap-2 mb-2">
-                    <input
-                      className={inputCls}
-                      value={t}
-                      onChange={e => {
-                        const next = [...form.service_times]
-                        next[i] = e.target.value
-                        set('service_times', next)
-                      }}
-                      placeholder="e.g. Sundays 8:00 AM"
-                    />
-                    {form.service_times.length > 1 && (
-                      <button type="button" onClick={() => set('service_times', form.service_times.filter((_, j) => j !== i))}
-                        className="text-xs text-red-500 hover:text-red-700 px-2">✕</button>
-                    )}
-                  </div>
-                ))}
-                <button type="button" onClick={() => set('service_times', [...form.service_times, ''])}
-                  className="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add service time</button>
+              <Field label="Service Schedule">
+                <ServiceScheduleBuilder
+                  entries={form.service_times as ServiceEntry[]}
+                  onChange={entries => set('service_times', entries)}
+                />
               </Field>
             </>
           )}
