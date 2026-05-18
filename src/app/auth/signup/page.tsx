@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Eye, EyeOff, Loader2, Check, ChevronLeft } from 'lucide-react'
 import { NIGERIAN_STATES } from '@/lib/utils'
+import { validateFullName } from '@/lib/validation'
 import type { AccountType } from '@/types/database'
 
 const SIGNUP_MINISTRY_TYPES = [
@@ -16,17 +17,6 @@ const SIGNUP_MINISTRY_TYPES = [
   'Campus Fellowship', 'Other',
 ]
 
-function validateFullName(name: string): string | null {
-  const trimmed = name.trim()
-  if (!trimmed) return 'Please enter your full name'
-  if (/[0-9]/.test(trimmed)) return 'Your name should not contain numbers'
-  if (/[^a-zA-ZÀ-ÖØ-öø-ÿ\s'\-.]/.test(trimmed)) return 'Your name contains invalid characters'
-  const words = trimmed.split(/\s+/).filter(Boolean)
-  if (words.length < 2) return 'Please enter your first and last name'
-  if (words.some(w => w.length < 2)) return 'Each part of your name must be at least 2 characters'
-  if (trimmed.length > 60) return 'Name is too long'
-  return null
-}
 
 function validateChurchName(name: string): string | null {
   const trimmed = name.trim()

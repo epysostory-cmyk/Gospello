@@ -9,6 +9,7 @@ import type { AccountType } from '@/types/database'
 import ImageCropModal from '@/components/ui/ImageCropModal'
 import OrganizerTypeChips from '@/components/ui/OrganizerTypeChips'
 import { NIGERIAN_STATES } from '@/lib/utils'
+import { validateFullName } from '@/lib/validation'
 
 interface ProfileFormProps {
   userId: string
@@ -119,7 +120,8 @@ export default function ProfileForm({ userId, initialData }: ProfileFormProps) {
     setError('')
     setSuccess(false)
 
-    if (!form.display_name.trim()) { setError('Display name is required'); setSaving(false); return }
+    const nameErr = !isChurch ? validateFullName(form.display_name) : (!form.display_name.trim() ? 'Church name is required' : null)
+    if (nameErr) { setError(nameErr); setSaving(false); return }
     if (!isChurch && !form.bio.trim()) { setError('Short description is required — help people know who you are'); setSaving(false); return }
     if (!avatarUrl && !avatarFile) { setError('Profile photo is required — please upload a photo'); setSaving(false); return }
 

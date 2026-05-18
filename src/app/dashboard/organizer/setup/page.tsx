@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { NIGERIAN_STATES } from '@/lib/utils'
+import { validateFullName } from '@/lib/validation'
 import { Loader2, Phone, Globe, Link2, ChevronRight, ChevronLeft } from 'lucide-react'
 import BackButton from '@/components/ui/BackButton'
 import OrganizerTypeChips from '@/components/ui/OrganizerTypeChips'
@@ -130,7 +131,7 @@ export default function OrganizerSetupPage() {
 
   function validate(s: number): Record<string, string> {
     const errs: Record<string, string> = {}
-    if (s === 0 && !form.display_name.trim()) errs.display_name = 'Full name is required'
+    if (s === 0) { const e = validateFullName(form.display_name); if (e) errs.display_name = e }
     if (s === 1) {
       if (!form.state) errs.state = 'State is required'
       if (!form.city) errs.city = 'City is required'
@@ -149,7 +150,7 @@ export default function OrganizerSetupPage() {
     e.preventDefault()
     const errs = validate(step)
     if (Object.keys(errs).length) { setFieldErrors(errs); return }
-    if (!form.display_name.trim()) { setError('Full name is required'); return }
+    const nameErr = validateFullName(form.display_name); if (nameErr) { setError(nameErr); return }
 
     setSaving(true)
     setError('')
