@@ -11,6 +11,7 @@ import { NIGERIAN_STATES } from '@/lib/utils'
 import { createAdminProfile } from './actions'
 import ImageCropModal from '@/components/ui/ImageCropModal'
 import OrganizerTypeChips from '@/components/ui/OrganizerTypeChips'
+import ServiceScheduleBuilder, { type ServiceEntry } from '../ServiceScheduleBuilder'
 
 const DENOMINATIONS = [
   'Pentecostal', 'Charismatic', 'Apostolic', 'Anglican', 'Catholic', 'Methodist',
@@ -62,7 +63,7 @@ export default function CreateProfileForm({ adminId }: Props) {
     description: '', source_url: '',
     // church-specific
     pastor_name: '', leader_title: '', founder: '', denomination: '',
-    service_times: [''],
+    service_times: [] as ServiceEntry[],
     // organizer-specific
     contact_person: '', ministry_types: [] as string[], ministry_other: '',
   })
@@ -134,14 +135,6 @@ export default function CreateProfileForm({ adminId }: Props) {
     setFieldErrors(prev => { const n = { ...prev }; delete n[key]; return n })
   }
 
-  function addServiceTime() { setForm(p => ({ ...p, service_times: [...p.service_times, ''] })) }
-  function setServiceTime(i: number, v: string) {
-    setForm(p => { const s = [...p.service_times]; s[i] = v; return { ...p, service_times: s } })
-  }
-  function removeServiceTime(i: number) {
-    setForm(p => ({ ...p, service_times: p.service_times.filter((_, idx) => idx !== i) }))
-  }
-
   // ── Step validation for organizer ──
   function validateOrgStep(s: number): Record<string, string> {
     const errs: Record<string, string> = {}
@@ -178,7 +171,7 @@ export default function CreateProfileForm({ adminId }: Props) {
         logoUrl,
         form: {
           ...form,
-          service_times: form.service_times.filter(s => s.trim()),
+          service_times: form.service_times,
         },
       })
       if (result.error) { setError(result.error); return }
@@ -235,18 +228,11 @@ export default function CreateProfileForm({ adminId }: Props) {
           </select>
         </div>
         <div>
-          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Service Times</label>
-          {form.service_times.map((st, i) => (
-            <div key={i} className="flex gap-2 mt-1.5">
-              <input value={st} onChange={e => setServiceTime(i, e.target.value)}
-                placeholder="e.g. Sundays 8AM & 10AM"
-                className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED]" />
-              {form.service_times.length > 1 && (
-                <button type="button" onClick={() => removeServiceTime(i)} className="px-3 py-2 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 text-sm">✕</button>
-              )}
-            </div>
-          ))}
-          <button type="button" onClick={addServiceTime} className="mt-2 text-xs font-semibold text-[#7C3AED] hover:underline">+ Add service time</button>
+          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2 block">Service Schedule</label>
+          <ServiceScheduleBuilder
+            entries={form.service_times}
+            onChange={entries => setForm(p => ({ ...p, service_times: entries }))}
+          />
         </div>
       </div>
       {/* Location */}
