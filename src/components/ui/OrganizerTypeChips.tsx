@@ -25,7 +25,6 @@ interface Props {
 
 export default function OrganizerTypeChips({ value, onChange, max = 3, otherText = '', onOtherTextChange }: Props) {
   const [query, setQuery] = useState('')
-  const [localOther, setLocalOther] = useState(otherText)
 
   const hasOther = value.includes('Other')
   const unselected = ALL_TYPES.filter(t => !value.includes(t))
@@ -42,6 +41,10 @@ export default function OrganizerTypeChips({ value, onChange, max = 3, otherText
     }
   }
 
+  function chipLabel(type: string) {
+    return type === 'Other' && otherText.trim() ? otherText.trim() : type
+  }
+
   return (
     <div className="space-y-3">
       <p className="text-xs text-gray-500">Select up to {max}</p>
@@ -56,9 +59,25 @@ export default function OrganizerTypeChips({ value, onChange, max = 3, otherText
               onClick={() => toggle(type)}
               className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-900 text-white flex items-center gap-1.5"
             >
-              {type} <span className="text-white/60">×</span>
+              {chipLabel(type)} <span className="text-white/60">×</span>
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Other custom input — shown right after chip selection, before the search */}
+      {hasOther && (
+        <div>
+          <input
+            type="text"
+            value={otherText}
+            onChange={e => onOtherTextChange?.(e.target.value)}
+            placeholder="Describe your ministry type, e.g. Personal Coach"
+            maxLength={60}
+            autoFocus
+            className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:border-gray-900"
+          />
+          <p className="text-xs text-gray-400 mt-1">This will replace &quot;Other&quot; when saved</p>
         </div>
       )}
 
@@ -91,23 +110,6 @@ export default function OrganizerTypeChips({ value, onChange, max = 3, otherText
             )}
           </div>
         </>
-      )}
-
-      {/* Other custom input */}
-      {hasOther && (
-        <div>
-          <input
-            type="text"
-            value={localOther}
-            onChange={e => setLocalOther(e.target.value)}
-            onBlur={() => onOtherTextChange?.(localOther)}
-            placeholder="Describe your ministry type..."
-            maxLength={60}
-            autoFocus
-            className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:border-gray-900"
-          />
-          <p className="text-xs text-gray-400 mt-1">Tell us what best describes you</p>
-        </div>
       )}
     </div>
   )
