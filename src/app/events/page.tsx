@@ -173,7 +173,7 @@ export default async function EventsPage({
     : null
 
   const featuredEvents = !hasFilters
-    ? events.filter(e => e.is_featured && getEventLifecycle(e.start_date, e.end_date) !== 'ended').slice(0, 2)
+    ? events.filter(e => e.is_featured && getEventLifecycle(e.start_date, e.end_date, e.daily_schedule ?? undefined) !== 'ended').slice(0, 2)
     : []
 
   return (
@@ -410,8 +410,8 @@ export default async function EventsPage({
             <div className="sm:hidden space-y-3 pb-6">
               {events.map(event => {
                 const cat = catMap[event.category]
-                const hasEnded = getEventLifecycle(event.start_date, event.end_date) === 'ended'
-                const isOngoing = getEventLifecycle(event.start_date, event.end_date) === 'ongoing'
+                const hasEnded = getEventLifecycle(event.start_date, event.end_date, event.daily_schedule ?? undefined) === 'ended'
+                const isOngoing = getEventLifecycle(event.start_date, event.end_date, event.daily_schedule ?? undefined) === 'ongoing'
                 return (
                   <Link
                     key={event.id}
