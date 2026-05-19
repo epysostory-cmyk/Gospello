@@ -12,6 +12,16 @@ import SaveButton from '@/components/ui/SaveButton'
 
 const LOCATION_KEY = 'gospello_user_location'
 const LOCATION_TTL = 24 * 60 * 60 * 1000
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
 const PAGE_SIZE = 10
 
 interface Category {
@@ -76,18 +86,20 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
   }
 }
 
-function loadCachedLocation(): string | null {
+interface CachedLocation { state: string; lat: number; lng: number; timestamp: number }
+
+function loadCachedLocation(): CachedLocation | null {
   try {
     const raw = localStorage.getItem(LOCATION_KEY)
     if (!raw) return null
-    const { state, timestamp } = JSON.parse(raw)
-    if (Date.now() - timestamp > LOCATION_TTL) { localStorage.removeItem(LOCATION_KEY); return null }
-    return state ?? null
+    const parsed = JSON.parse(raw)
+    if (Date.now() - parsed.timestamp > LOCATION_TTL) { localStorage.removeItem(LOCATION_KEY); return null }
+    return parsed ?? null
   } catch { return null }
 }
 
-function saveLocation(state: string) {
-  try { localStorage.setItem(LOCATION_KEY, JSON.stringify({ state, timestamp: Date.now() })) } catch { /* ignore */ }
+function saveLocation(state: string, lat: number, lng: number) {
+  try { localStorage.setItem(LOCATION_KEY, JSON.stringify({ state, lat, lng, timestamp: Date.now() })) } catch { /* ignore */ }
 }
 
 type DateFilter = 'all' | 'today' | 'tomorrow' | 'weekend' | 'custom'
@@ -106,6 +118,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
   const [nearMeDetecting, setNearMeDetecting] = useState(false)
   const [nearMeState, setNearMeState] = useState<string | null>(null)
   const [nearMeTooltip, setNearMeTooltip] = useState(false)
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
 
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [sheetStateSearch, setSheetStateSearch] = useState('')
@@ -123,15 +136,30 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
 
   const handleNearMe = useCallback(() => {
     if (nearMeActive) {
-      setNearMeActive(false); setNearMeState(null); setStateFilter(null)
+      setNearMeActive(false); setNearMeState(null); setStateFilter(null); setUserCoords(null)
       return
     }
+
+    // Restore from cache first for instant response
+    const cached = loadCachedLocation()
+    if (cached) {
+      setNearMeState(cached.state); setStateFilter(cached.state)
+      setUserCoords({ lat: cached.lat, lng: cached.lng }); setNearMeActive(true)
+      return
+    }
+
     if (!navigator.geolocation) { setNearMeTooltip(true); setTimeout(() => setNearMeTooltip(false), 3000); return }
     setNearMeDetecting(true)
     navigator.geolocation.getCurrentPosition(
       async pos => {
-        const state = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
-        if (state) { setNearMeState(state); setStateFilter(state); setNearMeActive(true); saveLocation(state) }
+        const { latitude, longitude } = pos.coords
+        const state = await reverseGeocode(latitude, longitude)
+        if (state) {
+          setNearMeState(state); setStateFilter(state)
+          setUserCoords({ lat: latitude, lng: longitude })
+          setNearMeActive(true)
+          saveLocation(state, latitude, longitude)
+        }
         setNearMeDetecting(false)
       },
       () => { setNearMeTooltip(true); setNearMeDetecting(false); setTimeout(() => setNearMeTooltip(false), 3000) },
@@ -164,8 +192,22 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
     return true
   })
 
-  const displayedEvents = filteredEvents.slice(0, visibleCount)
-  const hasMore = filteredEvents.length > visibleCount
+  // When Near Me is active and we have the user's coords, sort by distance (closest first).
+  // Events without coordinates fall to the end — they still show up, just unranked.
+  const sortedEvents = nearMeActive && userCoords
+    ? [...filteredEvents].sort((a, b) => {
+        const aDist = a.latitude != null && a.longitude != null
+          ? haversineKm(userCoords.lat, userCoords.lng, a.latitude, a.longitude)
+          : Infinity
+        const bDist = b.latitude != null && b.longitude != null
+          ? haversineKm(userCoords.lat, userCoords.lng, b.latitude, b.longitude)
+          : Infinity
+        return aDist - bDist
+      })
+    : filteredEvents
+
+  const displayedEvents = sortedEvents.slice(0, visibleCount)
+  const hasMore = sortedEvents.length > visibleCount
   const hasActiveFilters = dateFilter !== 'all' || stateFilter !== null || categoryFilter !== null
 
   // Count active filters for badge
@@ -174,7 +216,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
   const clearAllFilters = useCallback(() => {
     setDateFilter('all'); setAppliedFrom(''); setAppliedTo('')
     setPendingFrom(''); setPendingTo(''); setCustomOpen(false)
-    setStateFilter(null); setNearMeActive(false); setNearMeState(null)
+    setStateFilter(null); setNearMeActive(false); setNearMeState(null); setUserCoords(null)
     setCategoryFilter(null)
   }, [])
 

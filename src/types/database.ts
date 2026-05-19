@@ -190,6 +190,8 @@ export interface Event {
   daily_schedule: DaySchedule[] | null
   timezone: string
   livestream_url: string | null
+  latitude: number | null
+  longitude: number | null
   // admin fields
   rejection_reason: string | null
   approved_at: string | null

@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
+import { geocodeEvent } from '@/lib/geocode'
 import type { DaySchedule } from '@/types/database'
 
 interface AdminEventInput {
@@ -53,6 +54,10 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
     // Only real auth organizer profiles get organizer_id set.
     const organizer_id        = selectedProfile.profileType === 'auth_org'   ? selectedProfile.id : null
 
+    const coords = form.is_online ? null : await geocodeEvent({
+      address: form.address, city: form.city, state: form.state, country: form.country,
+    })
+
     const { data, error } = await adminClient.from('events').insert({
       organizer_id,
       church_id,
@@ -99,6 +104,8 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
       source_url:        form.source_url || null,
       timezone:          form.timezone || 'Africa/Lagos',
       livestream_url:    form.livestream_url || null,
+      latitude:          coords?.latitude ?? null,
+      longitude:         coords?.longitude ?? null,
     }).select('id').single()
 
     if (error) return { error: error.message }
@@ -121,6 +128,10 @@ export async function updateAdminEvent(input: AdminEventUpdateInput): Promise<{ 
   const adminClient = createAdminClient()
 
   try {
+    const coords = form.is_online ? null : await geocodeEvent({
+      address: form.address, city: form.city, state: form.state, country: form.country,
+    })
+
     const { error } = await adminClient.from('events').update({
       title:             form.title.trim(),
       description:       form.description.trim() || 'No description provided.',
@@ -160,6 +171,8 @@ export async function updateAdminEvent(input: AdminEventUpdateInput): Promise<{ 
       source_url:             form.source_url || null,
       timezone:          form.timezone || 'Africa/Lagos',
       livestream_url:    form.livestream_url || null,
+      latitude:          coords?.latitude ?? null,
+      longitude:         coords?.longitude ?? null,
     }).eq('id', eventId)
 
     if (error) return { error: error.message }

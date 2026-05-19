@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
+import { geocodeEvent } from '@/lib/geocode'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
@@ -26,6 +27,10 @@ export async function POST(request: NextRequest) {
 
     // slugify() already appends a random suffix for uniqueness
     const slug = slugify(body.title)
+
+    const coords = body.is_online ? null : await geocodeEvent({
+      address: body.address, city: body.city, state: body.state, country: body.country,
+    })
 
     // Prepare event data
     const eventData = {
@@ -73,6 +78,8 @@ export async function POST(request: NextRequest) {
       is_featured: false,
       featured_until: null,
       views_count: 0,
+      latitude:  coords?.latitude ?? null,
+      longitude: coords?.longitude ?? null,
     }
 
     // Insert event using admin client (handles defaults)

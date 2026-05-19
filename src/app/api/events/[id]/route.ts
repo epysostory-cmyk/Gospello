@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { geocodeEvent } from '@/lib/geocode'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function PUT(
@@ -29,6 +30,10 @@ export async function PUT(
     if (!event || event.organizer_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
+
+    const coords = body.is_online ? null : await geocodeEvent({
+      address: body.address, city: body.city, state: body.state, country: body.country,
+    })
 
     // Prepare update data
     const updateData: Record<string, any> = {
@@ -74,6 +79,8 @@ export async function PUT(
       daily_schedule: body.daily_schedule || null,
       timezone: body.timezone || 'Africa/Lagos',
       livestream_url: body.livestream_url || null,
+      latitude:  coords?.latitude ?? null,
+      longitude: coords?.longitude ?? null,
     }
 
     const { data, error } = await adminClient
