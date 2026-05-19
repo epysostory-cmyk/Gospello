@@ -8,9 +8,8 @@ import EventCard from '@/components/ui/EventCard'
 import { formatDate, formatTime } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
-import { Search, MapPin, X } from 'lucide-react'
+import { Search, MapPin, X, SlidersHorizontal } from 'lucide-react'
 import NearMeButton from '@/components/ui/NearMeButton'
-import CategoryScroller from '@/components/ui/CategoryScroller'
 import Link from 'next/link'
 import Image from 'next/image'
 import HaveAnEventCTA from '@/components/ui/HaveAnEventCTA'
@@ -27,22 +26,22 @@ interface SearchParams {
   page?: string
 }
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 18
 
 const FALLBACK_CATEGORIES = [
-  { slug: 'worship',    name: 'Worship',    icon: '🙏' },
-  { slug: 'prayer',     name: 'Prayer',     icon: '✨' },
-  { slug: 'conference', name: 'Conference', icon: '🎤' },
-  { slug: 'youth',      name: 'Youth',      icon: '🌟' },
-  { slug: 'training',   name: 'Training',   icon: '📖' },
-  { slug: 'concert',    name: 'Concert',    icon: '🎵' },
-  { slug: 'other',      name: 'Other',      icon: '⭐' },
+  { slug: 'worship',    name: 'Worship',    icon: '🙏', color: null },
+  { slug: 'prayer',     name: 'Prayer',     icon: '✨', color: null },
+  { slug: 'conference', name: 'Conference', icon: '🎤', color: null },
+  { slug: 'youth',      name: 'Youth',      icon: '🌟', color: null },
+  { slug: 'training',   name: 'Training',   icon: '📖', color: null },
+  { slug: 'concert',    name: 'Concert',    icon: '🎵', color: null },
+  { slug: 'other',      name: 'Other',      icon: '⭐', color: null },
 ]
 
 const TIMEFRAME_OPTIONS = [
-  { value: 'today',   label: 'Today',        emoji: '📅' },
-  { value: 'weekend', label: 'This Weekend',  emoji: '🎉' },
-  { value: 'week',    label: 'This Week',     emoji: '🗓️' },
+  { value: 'today',   label: 'Today' },
+  { value: 'weekend', label: 'Weekend' },
+  { value: 'week',    label: 'This week' },
 ] as const
 
 function scoreEvent(event: Event, now: Date): number {
@@ -98,8 +97,6 @@ async function getEvents(params: SearchParams) {
   }
   if (params.timeframe === 'week') {
     const now      = new Date()
-    // Week runs Sunday–Saturday. Find the Sunday that started this week,
-    // then the Saturday that ends it (always in the future relative to that Sunday).
     const sunday   = new Date(now); sunday.setDate(now.getDate() - now.getDay()); sunday.setHours(0, 0, 0, 0)
     const saturday = new Date(sunday); saturday.setDate(sunday.getDate() + 6); saturday.setHours(23, 59, 59, 999)
     query = query.gte('start_date', now.toISOString()).lte('start_date', saturday.toISOString())
@@ -149,13 +146,13 @@ export default async function EventsPage({
     getEvents(params),
     adminClient
       .from('categories')
-      .select('id, name, slug, icon, color')
+      .select('id, name, slug, icon, color, description')
       .eq('is_visible', true)
       .order('sort_order', { ascending: true }),
     getLocationOptions(),
   ])
 
-  const { countries: availableCountries, states: availableStates } = locationOptions
+  const { states: availableStates } = locationOptions
   const categoryOptions = categoriesRes.data?.length ? categoriesRes.data : FALLBACK_CATEGORIES
   const catMap = Object.fromEntries(
     (categoriesRes.data ?? []).map(c => [c.slug, { name: c.name, icon: c.icon ?? null, color: c.color ?? '#6B7280' }])
@@ -170,349 +167,300 @@ export default async function EventsPage({
   }
 
   const hasFilters = !!(params.q || params.city || params.state || params.country || params.category || params.timeframe)
-  const activeCategoryLabel = params.category
-    ? categoryOptions.find(c => c.slug === params.category)?.name
+  const activeCat = params.category
+    ? categoryOptions.find(c => c.slug === params.category)
     : null
 
-  /* Split featured vs regular for the "no filter" browse view */
-  const featuredEvents  = !hasFilters ? events.filter(e => e.is_featured && getEventLifecycle(e.start_date, e.end_date) !== 'ended') : []
-  const regularEvents   = !hasFilters ? events.filter(e => !e.is_featured || getEventLifecycle(e.start_date, e.end_date) === 'ended') : events
-
-  const now = new Date()
-  // Week = Sunday through Saturday. Find end-of-week Saturday 23:59.
-  const weekSunday = new Date(now); weekSunday.setDate(now.getDate() - now.getDay()); weekSunday.setHours(0, 0, 0, 0)
-  const weekSaturday = new Date(weekSunday); weekSaturday.setDate(weekSunday.getDate() + 6); weekSaturday.setHours(23, 59, 59, 999)
-  const thisWeekEvents = !hasFilters
-    ? regularEvents.filter(e => {
-        const start = new Date(e.start_date)
-        return start >= now && start <= weekSaturday && getEventLifecycle(e.start_date, e.end_date) !== 'ended'
-      })
-    : []
-
   return (
-    <div className="min-h-screen bg-[#F7F8FA]">
+    <div className="min-h-screen bg-gray-50">
 
-      {/* ── HEADER ─────────────────────────────────────────────────── */}
-      <section className="bg-white border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-7 pb-4">
-
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 mb-4">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              {activeCategoryLabel ? `${activeCategoryLabel} Events` : 'Gospel Events'}
-            </h1>
-            {total > 0 && (
-              <p className="text-sm text-gray-400">
-                {total.toLocaleString()} event{total !== 1 ? 's' : ''}
-                {params.state ? ` · ${params.state}` : params.city ? ` · ${params.city}` : ''}
-              </p>
-            )}
-          </div>
-
-          {/* Search */}
-          <form method="GET" action="/events" className="flex gap-2 max-w-xl mb-5">
+      {/* ── STICKY SEARCH HEADER ── */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <form method="GET" action="/events" className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
                 type="text"
                 name="q"
                 defaultValue={params.q}
-                placeholder="Search events, churches, cities…"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Search events, cities, churches…"
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-gray-100 border-0 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
               />
+              {params.category && <input type="hidden" name="category" value={params.category} />}
+              {params.state    && <input type="hidden" name="state"    value={params.state} />}
+              {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
             </div>
-            {params.category  && <input type="hidden" name="category"  value={params.category} />}
-            {params.state     && <input type="hidden" name="state"     value={params.state} />}
-            {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
-            <button type="submit" className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors">
-              Search
-            </button>
-            {params.q && (
-              <Link href={buildUrl({ q: undefined, page: undefined })}
-                className="flex-shrink-0 flex items-center px-3 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50">
-                <X className="w-4 h-4" />
-              </Link>
-            )}
+            {params.q
+              ? <Link href={buildUrl({ q: undefined, page: undefined })}
+                  className="flex-shrink-0 flex items-center justify-center w-10 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
+                  <X className="w-4 h-4" />
+                </Link>
+              : <button type="submit"
+                  className="flex-shrink-0 flex items-center justify-center w-10 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+                  <Search className="w-4 h-4" />
+                </button>
+            }
           </form>
-
-          {/* Category scroller */}
-          <CategoryScroller
-            activeSlug={params.category}
-            allUrl={buildUrl({ category: undefined, page: undefined })}
-            categories={categoryOptions.map(cat => ({
-              slug: cat.slug,
-              name: cat.name,
-              icon: cat.icon ?? null,
-              url: buildUrl({ category: cat.slug, page: undefined }),
-            }))}
-          />
         </div>
 
-        {/* Timeframe + location filter bar */}
-        <div className="border-t border-gray-100">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center gap-2">
-            {TIMEFRAME_OPTIONS.map((tf) => (
+        {/* Category pills */}
+        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-2 px-4 pb-3 min-w-max">
+            <Link
+              href={buildUrl({ category: undefined, page: undefined })}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                !params.category
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              All
+            </Link>
+            {categoryOptions.map(cat => {
+              const active = params.category === cat.slug
+              return (
+                <Link
+                  key={cat.slug}
+                  href={buildUrl({ category: cat.slug, page: undefined })}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                    active
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {cat.icon && <span className="text-base leading-none">{cat.icon}</span>}
+                  {cat.name}
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4">
+
+        {/* ── CATEGORY CONTEXT ── */}
+        {activeCat && (
+          <div className="pt-5 pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {activeCat.icon && (
+                  <span className="text-3xl leading-none">{activeCat.icon}</span>
+                )}
+                <div>
+                  <h1 className="text-xl font-extrabold text-gray-900">{activeCat.name}</h1>
+                  {total > 0 && (
+                    <p className="text-sm text-gray-400 mt-0.5">{total} event{total !== 1 ? 's' : ''}</p>
+                  )}
+                </div>
+              </div>
               <Link
-                key={tf.value}
-                href={buildUrl({ timeframe: params.timeframe === tf.value ? undefined : tf.value, page: undefined })}
-                className={`text-xs font-semibold px-3.5 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
-                  params.timeframe === tf.value
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'text-gray-500 border-gray-200 hover:border-gray-400 hover:text-gray-700'
-                }`}
+                href="/events"
+                className="flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-700 transition-colors"
               >
-                {tf.label}
+                <X className="w-3.5 h-3.5" />
+                Clear
               </Link>
-            ))}
-
-            <div className="flex items-center gap-2 ml-auto">
-              <NearMeButton basePath="/events" compact />
-              {availableStates.length > 0 && (
-                <form method="GET" action="/events" className="flex items-center gap-1.5">
-                  {params.q         && <input type="hidden" name="q"         value={params.q} />}
-                  {params.category  && <input type="hidden" name="category"  value={params.category} />}
-                  {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
-                  <div className="relative flex items-center border border-gray-200 rounded-full overflow-hidden">
-                    <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
-                    <select
-                      name="state"
-                      defaultValue={params.state ?? ''}
-                      className="pl-8 pr-4 py-1.5 text-xs font-semibold text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
-                    >
-                      <option value="">All States</option>
-                      {availableStates.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <button type="submit" className="px-3 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-colors">
-                    Go
-                  </button>
-                </form>
-              )}
             </div>
+          </div>
+        )}
 
-            {hasFilters && (
-              <Link href="/events" className="text-xs font-medium text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1">
-                <X className="w-3 h-3" /> Clear
-              </Link>
+        {/* ── TIME + LOCATION FILTERS ── */}
+        <div className="flex items-center gap-2 py-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {TIMEFRAME_OPTIONS.map(tf => (
+            <Link
+              key={tf.value}
+              href={buildUrl({ timeframe: params.timeframe === tf.value ? undefined : tf.value, page: undefined })}
+              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                params.timeframe === tf.value
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+              }`}
+            >
+              {tf.label}
+            </Link>
+          ))}
+
+          <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+            <NearMeButton basePath="/events" compact />
+            {availableStates.length > 0 && (
+              <form method="GET" action="/events">
+                {params.q         && <input type="hidden" name="q"         value={params.q} />}
+                {params.category  && <input type="hidden" name="category"  value={params.category} />}
+                {params.timeframe && <input type="hidden" name="timeframe" value={params.timeframe} />}
+                <div className="relative flex items-center bg-white border border-gray-200 rounded-full overflow-hidden">
+                  <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
+                  <select
+                    name="state"
+                    defaultValue={params.state ?? ''}
+                    onChange={e => e.currentTarget.form?.submit()}
+                    className="pl-8 pr-4 py-1.5 text-sm font-medium text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="">All States</option>
+                    {availableStates.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </form>
             )}
           </div>
         </div>
-      </section>
 
-      {/* ── RESULTS ────────────────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-        {/* Active filter chips */}
+        {/* ── ACTIVE FILTER CHIPS ── */}
         {(params.q || params.state || params.city) && (
-          <div className="flex flex-wrap gap-2 mb-5">
+          <div className="flex flex-wrap gap-2 mb-4">
             {params.q && (
               <span className="flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-full">
                 &ldquo;{params.q}&rdquo;
-                <Link href={buildUrl({ q: undefined })} className="hover:text-indigo-900 leading-none">×</Link>
+                <Link href={buildUrl({ q: undefined })} className="hover:text-indigo-900">×</Link>
               </span>
             )}
             {params.state && (
               <span className="flex items-center gap-1.5 text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
                 📍 {params.state}
-                <Link href={buildUrl({ state: undefined })} className="hover:text-gray-900 leading-none">×</Link>
+                <Link href={buildUrl({ state: undefined })} className="hover:text-gray-900">×</Link>
               </span>
             )}
             {params.city && (
               <span className="flex items-center gap-1.5 text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
                 📍 {params.city}
-                <Link href={buildUrl({ city: undefined })} className="hover:text-gray-900 leading-none">×</Link>
+                <Link href={buildUrl({ city: undefined })} className="hover:text-gray-900">×</Link>
               </span>
             )}
           </div>
         )}
 
+        {/* ── RESULTS ── */}
         {events.length === 0 ? (
-          /* ── EMPTY STATE ── */
-          <div className="text-center py-20">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-3xl">
-              🔍
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">
-              {activeCategoryLabel ? `No ${activeCategoryLabel} events found` : 'No events found'}
-            </h3>
-            <p className="text-gray-500 mb-6 text-sm max-w-xs mx-auto">
-              {hasFilters ? 'Try a different filter or search term' : 'New events are added regularly — check back soon'}
+          <div className="py-24 text-center">
+            <div className="text-5xl mb-4">{activeCat?.icon ?? '🔍'}</div>
+            <h2 className="text-lg font-bold text-gray-900 mb-2">
+              {activeCat ? `No ${activeCat.name} events right now` : 'No events found'}
+            </h2>
+            <p className="text-sm text-gray-500 max-w-xs mx-auto mb-6">
+              {hasFilters
+                ? 'Try removing a filter — there might be events nearby or in a different time window.'
+                : 'New events are added regularly. Check back soon.'}
             </p>
             {hasFilters && (
-              <Link
-                href="/events"
-                className="inline-flex items-center gap-1.5 bg-indigo-600 text-white text-sm font-bold px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors"
-              >
+              <Link href="/events"
+                className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-colors">
                 Browse all events
               </Link>
             )}
           </div>
         ) : (
           <>
-            {/* ── FEATURED EVENTS (no filter view only) ── */}
-            {featuredEvents.length > 0 && (
-              <section className="mb-8">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-base font-black text-gray-900">⭐ Featured</span>
-                  <div className="flex-1 h-px bg-gray-200" />
-                </div>
-                <div className={`grid gap-4 ${featuredEvents.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
-                  {featuredEvents.slice(0, 2).map(event => (
-                    <EventCard key={event.id} event={event} variant="featured" categoryInfo={catMap[event.category]} attendanceCount={attendanceCountMap[event.id]} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ── HAPPENING THIS WEEK (no filter view only) ── */}
-            {thisWeekEvents.length > 0 && (
-              <section className="mb-8">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-base font-black text-gray-900">🔥 This Week</span>
-                  <div className="flex-1 h-px bg-gray-200" />
-                  <Link href={buildUrl({ timeframe: 'week' })} className="text-xs font-semibold text-indigo-600 hover:underline whitespace-nowrap">
-                    See all →
-                  </Link>
-                </div>
-
-                {/* Mobile: horizontal scroll */}
-                <div className="flex gap-3 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:hidden pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {thisWeekEvents.slice(0, 6).map(event => (
-                    <Link
-                      key={event.id}
-                      href={`/events/${event.slug}`}
-                      className="flex-shrink-0 w-52 bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 active:scale-95 transition-transform"
-                    >
-                      <div className="relative h-32 bg-gray-100">
-                        {event.banner_url
-                          ? <Image src={event.banner_url} alt={event.title} fill className="object-cover" />
-                          : <div className="w-full h-full flex items-center justify-center text-4xl font-black text-gray-200">{event.title[0]}</div>
-                        }
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                        <span className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${event.is_free ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>
-                          {event.is_free ? 'Free' : 'Paid'}
-                        </span>
-                        <p className="absolute bottom-2 left-2 right-2 text-white text-xs font-bold line-clamp-2 leading-snug">{event.title}</p>
-                      </div>
-                      <div className="px-3 py-2">
-                        <p className="text-[11px] text-gray-500">
-                          {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}
-                        </p>
-                        {event.city && <p className="text-[11px] text-gray-400 truncate">📍 {event.city}</p>}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Desktop: grid */}
-                <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {thisWeekEvents.slice(0, 6).map(event => (
-                    <EventCard key={event.id} event={event} categoryInfo={catMap[event.category]} attendanceCount={attendanceCountMap[event.id]} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ── ALL EVENTS / FILTERED RESULTS ── */}
-            {(regularEvents.length > 0 || hasFilters) && (
-              <section>
-                {!hasFilters && (regularEvents.length > 0) && (
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-base font-black text-gray-900">All Events</span>
-                    <div className="flex-1 h-px bg-gray-200" />
-                    <span className="text-xs text-gray-400">{regularEvents.length} events</span>
+            {/* No-filter view: featured strip */}
+            {!hasFilters && (() => {
+              const featured = events.filter(e => e.is_featured && getEventLifecycle(e.start_date, e.end_date) !== 'ended')
+              if (!featured.length) return null
+              return (
+                <div className="mb-6">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Featured</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {featured.slice(0, 2).map(event => (
+                      <EventCard key={event.id} event={event} variant="featured" categoryInfo={catMap[event.category]} attendanceCount={attendanceCountMap[event.id]} />
+                    ))}
                   </div>
-                )}
-
-                {/* Mobile: compact list */}
-                <div className="flex flex-col sm:hidden gap-2.5">
-                  {(hasFilters ? events : regularEvents).map(event => {
-                    const categoryInfo = catMap[event.category]
-                    const hasEnded = getEventLifecycle(event.start_date, event.end_date) === 'ended'
-                    return (
-                      <Link
-                        key={event.id}
-                        href={`/events/${event.slug}`}
-                        className="flex gap-3 p-3 rounded-2xl bg-white border border-gray-100 active:bg-gray-50 transition-colors"
-                        style={{ opacity: hasEnded ? 0.55 : 1 }}
-                      >
-                        <div className="flex-shrink-0 w-[72px] h-[72px] rounded-xl overflow-hidden relative bg-gray-100">
-                          {event.banner_url ? (
-                            <Image
-                              src={event.banner_url}
-                              alt={event.title}
-                              width={72}
-                              height={72}
-                              className={`object-cover w-full h-full ${hasEnded ? 'grayscale' : ''}`}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-2xl">
-                              {categoryInfo?.icon ?? '🎵'}
-                            </div>
-                          )}
-                          {hasEnded && (
-                            <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
-                              <span className="text-[9px] font-black text-white bg-black/60 px-1.5 py-0.5 rounded-full">ENDED</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full text-white ${event.is_free ? 'bg-emerald-500' : 'bg-amber-500'}`}>
-                              {event.is_free ? 'FREE' : event.price != null ? `₦${event.price.toLocaleString()}` : 'PAID'}
-                            </span>
-                            {categoryInfo && (
-                              <span className="text-[10px] text-gray-400 font-medium">{categoryInfo.icon} {categoryInfo.name}</span>
-                            )}
-                          </div>
-                          <p className="text-sm font-bold text-gray-900 leading-snug line-clamp-2">{event.title}</p>
-                          <p className="text-xs text-gray-400">
-                            {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}
-                          </p>
-                          {(event.city || event.is_online) && (
-                            <p className="text-xs text-gray-400 truncate">
-                              {event.is_online ? '🌐 Online' : `📍 ${[event.location_name, event.city].filter(Boolean).join(' · ')}`}
-                            </p>
-                          )}
-                        </div>
-                      </Link>
-                    )
-                  })}
                 </div>
+              )
+            })()}
 
-                {/* Desktop: card grid */}
-                <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                  {(hasFilters ? events : regularEvents).map((event) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      categoryInfo={catMap[event.category]}
-                      attendanceCount={attendanceCountMap[event.id]}
-                    />
-                  ))}
-                </div>
-              </section>
+            {/* Main list */}
+            {!hasFilters && (
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                All Events
+              </p>
             )}
+
+            {/* Mobile: tall cards (not tiny thumbnails) */}
+            <div className="sm:hidden space-y-3 pb-6">
+              {events.map(event => {
+                const cat = catMap[event.category]
+                const hasEnded = getEventLifecycle(event.start_date, event.end_date) === 'ended'
+                const isOngoing = getEventLifecycle(event.start_date, event.end_date) === 'ongoing'
+                return (
+                  <Link
+                    key={event.id}
+                    href={`/events/${event.slug}`}
+                    className="flex gap-0 rounded-2xl bg-white border border-gray-100 overflow-hidden active:scale-[0.99] transition-transform"
+                    style={{ opacity: hasEnded ? 0.6 : 1 }}
+                  >
+                    {/* Square image */}
+                    <div className="flex-shrink-0 w-[110px] relative bg-gray-100">
+                      {event.banner_url
+                        ? <Image src={event.banner_url} alt={event.title} fill className={`object-cover ${hasEnded ? 'grayscale' : ''}`} />
+                        : <div className="absolute inset-0 flex items-center justify-center text-3xl bg-indigo-50">
+                            {cat?.icon ?? '🎵'}
+                          </div>
+                      }
+                      {isOngoing && (
+                        <div className="absolute top-2 left-2">
+                          <span className="flex items-center gap-1 text-[9px] font-black bg-green-500 text-white px-1.5 py-0.5 rounded-full">
+                            <span className="w-1 h-1 rounded-full bg-white animate-pulse" />LIVE
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 p-3.5 flex flex-col justify-between gap-1.5">
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${event.is_free ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {event.is_free ? 'Free' : event.price != null ? `₦${event.price.toLocaleString()}` : 'Paid'}
+                          </span>
+                          {cat && !params.category && (
+                            <span className="text-[10px] text-gray-400 font-medium truncate">{cat.icon} {cat.name}</span>
+                          )}
+                        </div>
+                        <p className="text-[14px] font-bold text-gray-900 leading-snug line-clamp-2">{event.title}</p>
+                      </div>
+
+                      <div className="space-y-0.5">
+                        <p className="text-xs text-gray-500 font-medium">
+                          {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })}
+                          {' · '}{formatTime(event.start_date)}
+                        </p>
+                        {(event.city || event.is_online) && (
+                          <p className="text-xs text-gray-400 truncate">
+                            {event.is_online ? '🌐 Online' : `📍 ${[event.location_name, event.city].filter(Boolean).join(', ')}`}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+
+            {/* Desktop: card grid */}
+            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-8">
+              {events.map(event => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  categoryInfo={catMap[event.category]}
+                  attendanceCount={attendanceCountMap[event.id]}
+                />
+              ))}
+            </div>
           </>
         )}
 
         {/* Pagination */}
         {pages > 1 && (
-          <div className="flex justify-center gap-2 mt-10">
+          <div className="flex justify-center items-center gap-2 py-8">
             {page > 1 && (
               <Link href={buildUrl({ page: String(page - 1) })}
                 className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                 ← Prev
               </Link>
             )}
-            {Array.from({ length: Math.min(pages, 5) }, (_, i) => i + 1).map((p) => (
-              <Link key={p} href={buildUrl({ page: String(p) })}
-                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-colors ${
-                  p === page ? 'bg-indigo-600 text-white' : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50'
-                }`}>
-                {p}
-              </Link>
-            ))}
+            <span className="text-sm text-gray-400 font-medium px-2">
+              Page {page} of {pages}
+            </span>
             {page < pages && (
               <Link href={buildUrl({ page: String(page + 1) })}
                 className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
