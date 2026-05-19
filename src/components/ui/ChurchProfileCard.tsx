@@ -44,6 +44,7 @@ export default function ChurchProfileCard({ church, eventCount = 0 }: Props) {
                 fill
                 className="object-cover scale-150 blur-xl opacity-40"
                 sizes="300px"
+                unoptimized
               />
             </div>
           )}
@@ -77,6 +78,7 @@ export default function ChurchProfileCard({ church, eventCount = 0 }: Props) {
                 width={56}
                 height={56}
                 className="object-cover w-full h-full"
+                unoptimized
               />
             ) : (
               <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>

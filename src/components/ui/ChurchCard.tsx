@@ -53,7 +53,7 @@ export default function ChurchCard({ church, eventCount }: ChurchCardProps) {
         {/* Square photo */}
         <div className="flex-shrink-0 w-24 h-24 relative">
           {church.logo_url ? (
-            <Image src={church.logo_url} alt={church.name} fill className="object-cover" />
+            <Image src={church.logo_url} alt={church.name} fill className="object-cover" unoptimized />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
               <span className="text-white font-black text-3xl">{initial}</span>
@@ -108,7 +108,7 @@ export default function ChurchCard({ church, eventCount }: ChurchCardProps) {
         {/* Photo area — tall enough to actually see */}
         <div className="relative h-36 flex-shrink-0">
           {church.logo_url ? (
-            <Image src={church.logo_url} alt={church.name} fill className="object-cover" />
+            <Image src={church.logo_url} alt={church.name} fill className="object-cover" unoptimized />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
               <span className="text-white font-black text-5xl opacity-80">{initial}</span>
