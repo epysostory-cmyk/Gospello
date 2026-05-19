@@ -346,7 +346,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {!e.is_online && e.city && (
                 <p className="text-sm text-gray-500 mt-0.5">{[e.address, e.city, e.state].filter(Boolean).join(', ')}</p>
               )}
-              {!e.is_online && (
+              {!e.is_online && (e.location_name || e.address || e.city) && (
                 <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
                   className="text-sm font-semibold text-indigo-600 mt-1 inline-block">
                   Get directions →
@@ -752,7 +752,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     {!e.is_online && e.city && (
                       <p className="text-sm text-gray-500 mt-0.5">{[e.address, e.city, e.state].filter(Boolean).join(', ')}</p>
                     )}
-                    {!e.is_online && (
+                    {!e.is_online && (e.location_name || e.address || e.city) && (
                       <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
                         className="text-sm font-semibold text-indigo-600 mt-1 inline-block">Get directions →</a>
                     )}
