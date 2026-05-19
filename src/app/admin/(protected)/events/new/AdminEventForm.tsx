@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { Search, ArrowLeft, ChevronDown, Upload, Loader2, Copy } from 'lucide-react'
 import { NIGERIAN_STATES, COUNTRY_LIST } from '@/lib/utils'
 import { getVisibleCategories, type CategoryRow } from '@/app/actions/categories'
-import { createAdminEvent } from './actions'
+import { createAdminEvent, uploadAdminBanner } from './actions'
 import TimezoneSelector from '@/components/ui/TimezoneSelector'
 import SpeakerTagInput from '@/components/ui/SpeakerTagInput'
 import RecurringSection from '@/components/ui/RecurringSection'
@@ -55,16 +55,6 @@ interface Props { adminId: string; profiles: Profile[] }
 
 const DRAFT_KEY = 'gospello_admin_event_draft'
 
-async function uploadBanner(file: File): Promise<string> {
-  const body = new FormData()
-  body.append('file', file)
-  body.append('bucket', 'event-banners')
-  body.append('folder', 'event-banners')
-  const res = await fetch('/api/upload', { method: 'POST', body })
-  const json = await res.json()
-  if (!res.ok) throw new Error(json.error ?? 'Upload failed')
-  return json.url as string
-}
 
 export default function AdminEventForm({ adminId, profiles }: Props) {
   const router = useRouter()
@@ -167,7 +157,10 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
     setUploading(true)
     setUploadError('')
     try {
-      const url = await uploadBanner(file)
+      const fd = new FormData()
+      fd.append('file', file)
+      const { url, error: uploadErr } = await uploadAdminBanner(fd)
+      if (uploadErr || !url) { setUploadError(uploadErr ?? 'Upload failed'); return }
       set('banner_url', url)
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed')
@@ -401,7 +394,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
           {form.banner_url ? (
             <div className="space-y-3">
               <div className="relative h-44 rounded-xl overflow-hidden bg-gray-100">
-                <Image src={form.banner_url} alt="Banner preview" fill className="object-cover" />
+                <Image src={form.banner_url} alt="Banner preview" fill className="object-cover" unoptimized />
               </div>
               <button type="button" onClick={() => { set('banner_url', ''); if (bannerRef.current) bannerRef.current.value = '' }}
                 className="w-full py-2 px-4 rounded-xl border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors">

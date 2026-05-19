@@ -6,6 +6,29 @@ import { geocodeEvent } from '@/lib/geocode'
 import type { DaySchedule, RecurrenceRule } from '@/types/database'
 import { generateOccurrenceDates } from '@/lib/recurrence'
 
+export async function uploadAdminBanner(formData: FormData): Promise<{ url?: string; error?: string }> {
+  const file = formData.get('file') as File | null
+  if (!file) return { error: 'No file provided' }
+  if (file.size > 5 * 1024 * 1024) return { error: 'Banner must be under 5 MB' }
+
+  const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  if (!allowed.includes(file.type)) return { error: 'Only JPEG, PNG, GIF, or WebP allowed' }
+
+  const admin = createAdminClient()
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const path = `event-banners/${Date.now()}.${ext}`
+  const bytes = await file.arrayBuffer()
+
+  const { error: uploadErr } = await admin.storage
+    .from('event-banners')
+    .upload(path, bytes, { contentType: file.type, upsert: true })
+
+  if (uploadErr) return { error: uploadErr.message }
+
+  const { data: { publicUrl } } = admin.storage.from('event-banners').getPublicUrl(path)
+  return { url: publicUrl }
+}
+
 interface AdminEventInput {
   adminId: string
   selectedProfile: {
