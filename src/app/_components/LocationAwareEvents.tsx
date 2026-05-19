@@ -539,7 +539,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
                         {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })}{event.time_tba ? ' · Time TBA' : ` · ${formatTime(event.start_date)}`}
                       </p>
                       <p className="mt-0.5 text-[12px] text-gray-400 truncate">
-                        {event.is_online ? 'Online' : [event.location_name, event.city].filter(Boolean).join(' · ') || 'Venue TBA'}
+                        {event.is_online ? 'Online' : [event.location_name, event.city].filter(Boolean).join(' · ') || 'TBD'}
                       </p>
                       <div className="mt-2" onClick={e => e.preventDefault()}>
                         <SaveButton eventId={event.id} initialSaved={false} variant="icon" size="sm" />

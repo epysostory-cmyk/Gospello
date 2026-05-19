@@ -143,11 +143,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const firstSessionTime = e.daily_schedule?.[0]?.sessions?.find((s: { start_time: string | null }) => s.start_time)?.start_time
     ?? e.daily_schedule?.[0]?.start_time
   const displayTime = hasSchedule
-    ? (firstSessionTime ? fmt12(firstSessionTime) : 'Time To Be Announced')
-    : e.time_tba ? 'Time To Be Announced' : formatTime(e.start_date)
+    ? (firstSessionTime ? fmt12(firstSessionTime) : 'TBD (To Be Announced)')
+    : e.time_tba ? 'TBD (To Be Announced)' : formatTime(e.start_date)
   const displayVenue = e.is_online
     ? (e.online_platform ?? 'Online Event')
-    : [e.location_name, e.city].filter(Boolean).join(', ') || 'Venue To Be Announced'
+    : [e.location_name, e.city].filter(Boolean).join(', ') || 'TBD (To Be Announced)'
   const displayPrice = e.is_free
     ? 'Free'
     : e.price != null
@@ -346,7 +346,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {!e.is_online && e.city && (
                 <p className="text-sm text-gray-500 mt-0.5">{[e.address, e.city, e.state].filter(Boolean).join(', ')}</p>
               )}
-              {!e.is_online && (e.location_name || e.address || e.city) && (
+              {!e.is_online && (e.location_name || e.address) && (
                 <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
                   className="text-sm font-semibold text-indigo-600 mt-1 inline-block">
                   Get directions →
@@ -752,7 +752,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     {!e.is_online && e.city && (
                       <p className="text-sm text-gray-500 mt-0.5">{[e.address, e.city, e.state].filter(Boolean).join(', ')}</p>
                     )}
-                    {!e.is_online && (e.location_name || e.address || e.city) && (
+                    {!e.is_online && (e.location_name || e.address) && (
                       <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
                         className="text-sm font-semibold text-indigo-600 mt-1 inline-block">Get directions →</a>
                     )}

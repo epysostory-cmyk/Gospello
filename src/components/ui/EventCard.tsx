@@ -230,7 +230,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
             {event.is_online ? (
               <><Globe className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" /><span className="text-gray-600 font-medium">Online</span></>
             ) : (
-              <><MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" /><span className="text-gray-600 font-medium truncate">{event.location_name || event.city || 'Venue TBA'}</span></>
+              <><MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" /><span className="text-gray-600 font-medium truncate">{event.location_name || event.city || 'TBD'}</span></>
             )}
           </div>
         </div>
