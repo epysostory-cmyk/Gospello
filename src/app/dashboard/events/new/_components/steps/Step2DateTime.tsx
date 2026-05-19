@@ -102,7 +102,15 @@ function RecurringSection({ formData, updateForm }: { formData: any; updateForm:
               <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Repeats</label>
               <select
                 value={rule.frequency}
-                onChange={e => patch({ frequency: e.target.value })}
+                onChange={e => {
+                  const freq = e.target.value
+                  patch({
+                    frequency: freq,
+                    // Ensure week_of_month is set when switching to monthly so the UI default
+                    // of "First [Day]" is actually stored in the rule, not left as undefined
+                    ...(freq === 'monthly' && !rule.week_of_month ? { week_of_month: 1 } : {}),
+                  })
+                }}
                 className={inp}
               >
                 <option value="weekly">Weekly</option>
