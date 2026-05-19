@@ -123,6 +123,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   }
 
   const catMap = await getCategoryMap()
+  const catInfo = e.category ? catMap[e.category] : null
   const lifecycle = getEventLifecycle(e.start_date, e.end_date, e.daily_schedule)
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gospello.com').trim()
   const eventUrl = `${siteUrl}/events/${e.slug}`
@@ -253,6 +254,20 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             }`}>
               {displayPrice}
             </span>
+            {catInfo && e.category && (
+              <Link
+                href={`/events?category=${e.category}`}
+                className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full border transition-colors hover:opacity-80"
+                style={{
+                  background: catInfo.color ? `${catInfo.color}15` : '#f3f4f6',
+                  color: catInfo.color ?? '#374151',
+                  borderColor: catInfo.color ? `${catInfo.color}40` : '#e5e7eb',
+                }}
+              >
+                {catInfo.icon && <span>{catInfo.icon}</span>}
+                {catInfo.name}
+              </Link>
+            )}
             {almostFull && (
               <span className="text-xs font-bold px-3 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
                 Almost full
@@ -678,6 +693,20 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                       : 'bg-amber-50 text-amber-700 border border-amber-200'
                   }`}>{displayPrice}</span>
+                  {catInfo && e.category && (
+                    <Link
+                      href={`/events?category=${e.category}`}
+                      className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full border transition-colors hover:opacity-80"
+                      style={{
+                        background: catInfo.color ? `${catInfo.color}15` : '#f3f4f6',
+                        color: catInfo.color ?? '#374151',
+                        borderColor: catInfo.color ? `${catInfo.color}40` : '#e5e7eb',
+                      }}
+                    >
+                      {catInfo.icon && <span>{catInfo.icon}</span>}
+                      {catInfo.name}
+                    </Link>
+                  )}
                   {almostFull && (
                     <span className="text-xs font-bold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200">Almost Full</span>
                   )}
