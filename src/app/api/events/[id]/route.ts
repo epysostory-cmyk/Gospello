@@ -50,7 +50,7 @@ export async function PUT(
       is_online: body.is_online,
       online_platform: body.online_platform || null,
       online_link: body.online_link || null,
-      location_name: body.location_name || null,
+      location_name: body.location_name || '',
       address: body.address || null,
       city: body.city || null,
       state: body.state || null,
