@@ -8,7 +8,7 @@ interface StepProps {
   errors: Record<string, string>
 }
 
-const ONLINE_PLATFORMS = ['Zoom', 'YouTube Live', 'Google Meet', 'Facebook Live', 'WhatsApp', 'Telegram', 'Other']
+const ONLINE_PLATFORMS = ['Zoom', 'YouTube Live', 'Google Meet', 'Facebook Live', 'Instagram Live', 'TikTok Live', 'WhatsApp', 'Telegram', 'Other']
 const inp = 'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 bg-white transition-colors'
 
 export default function Step3Location({ formData, updateForm, errors }: StepProps) {

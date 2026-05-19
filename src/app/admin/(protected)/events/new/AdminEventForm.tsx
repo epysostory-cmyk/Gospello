@@ -806,7 +806,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
                 <label className={labelCls}>Platform</label>
                 <select value={form.online_platform} onChange={e => set('online_platform', e.target.value)} className={inputCls}>
                   <option value="">Select platform</option>
-                  {['Zoom','Google Meet','YouTube Live','Facebook Live','Instagram Live','Other'].map(p => <option key={p} value={p}>{p}</option>)}
+                  {['Zoom','Google Meet','YouTube Live','Facebook Live','Instagram Live','TikTok Live','WhatsApp','Telegram','Other'].map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
               </div>
               <div>
