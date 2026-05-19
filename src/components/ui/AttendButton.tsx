@@ -24,6 +24,8 @@ interface Props {
   serverUserEmail?: string | null
   /** True when the current user is the organizer of this event — hide the button */
   isOrganizer?: boolean
+  /** True for online/virtual events — changes CTA copy */
+  isOnline?: boolean
 }
 
 export default function AttendButton({
@@ -39,6 +41,7 @@ export default function AttendButton({
   serverUserName,
   serverUserEmail,
   isOrganizer = false,
+  isOnline = false,
 }: Props) {
   const [user, setUser] = useState<User | null>(null)
   // If we got server-side user data, skip the loading state entirely
@@ -314,7 +317,7 @@ export default function AttendButton({
       <div className="space-y-1.5">
         <div className="w-full flex items-center justify-center gap-2.5 bg-emerald-50 text-emerald-700 font-semibold py-3.5 rounded-2xl border border-emerald-200 text-sm">
           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-          You&apos;re going! 🎉
+          {isOnline ? "You're in! 🎉" : "You're going! 🎉"}
         </div>
         {user && (
           <button
@@ -405,7 +408,7 @@ export default function AttendButton({
       ? { label: 'GET TICKETS', cls: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/25', Icon: Ticket }
       : mode === 'rsvp'
       ? { label: 'REGISTER FOR FREE', cls: 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20', Icon: UserCheck }
-      : { label: "I'M GOING", cls: 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20', Icon: UserPlus }
+      : { label: isOnline ? 'COUNT ME IN' : "I'M GOING", cls: 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20', Icon: UserPlus }
 
   const inputCls =
     'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-gray-900 placeholder-gray-400'

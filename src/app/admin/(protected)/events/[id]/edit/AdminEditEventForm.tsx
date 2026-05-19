@@ -9,6 +9,7 @@ import type { CategoryRow } from '@/app/actions/categories'
 import type { DaySchedule } from '@/types/database'
 import { updateAdminEvent } from '../../new/actions'
 import TimezoneSelector from '@/components/ui/TimezoneSelector'
+import SpeakerTagInput from '@/components/ui/SpeakerTagInput'
 
 /* ── Schedule helpers ─────────────────────────────────── */
 function fmt12(t: string): string {
@@ -307,7 +308,11 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
           </div>
           <div>
             <label className={labelCls}>Speakers / Guests</label>
-            <input value={form.speakers} onChange={e => set('speakers', e.target.value)} placeholder="e.g. Pastor John Doe, Mercy Chinwo" className={inputCls} />
+            <SpeakerTagInput
+              value={form.speakers}
+              onChange={v => set('speakers', v)}
+              placeholder="e.g. Pastor John Doe"
+            />
           </div>
         </div>
 

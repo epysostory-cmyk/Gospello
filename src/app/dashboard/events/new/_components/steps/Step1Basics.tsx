@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { CategoryRow } from '@/app/actions/categories'
+import SpeakerTagInput from '@/components/ui/SpeakerTagInput'
 
 interface StepProps {
   formData: any
@@ -130,12 +131,10 @@ export default function Step1Basics({ formData, updateForm, errors, categories }
               <label className="block text-sm font-semibold text-gray-900 mb-1.5">
                 Ministers & Speakers <span className="text-gray-400 font-normal">(optional)</span>
               </label>
-              <input
-                type="text"
+              <SpeakerTagInput
                 value={formData.speakers || ''}
-                onChange={e => updateForm('speakers', e.target.value)}
-                placeholder="e.g. Pastor Biodun Fatoyinbo, Dunsin Oyekan"
-                className={inp}
+                onChange={v => updateForm('speakers', v)}
+                placeholder="e.g. Pastor Biodun Fatoyinbo"
               />
             </div>
             <div>

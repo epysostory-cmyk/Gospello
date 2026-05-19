@@ -192,7 +192,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     <div className={compact ? '' : 'space-y-3'}>
       {registrationOpen ? (
         <RegistrationButton
-          event={{ id: e.id, registration_type: e.registration_type, price: e.price, payment_link: e.payment_link, rsvp_required: e.rsvp_required, is_free: e.is_free, title: e.title }}
+          event={{ id: e.id, registration_type: e.registration_type, price: e.price, payment_link: e.payment_link, rsvp_required: e.rsvp_required, is_free: e.is_free, title: e.title, is_online: e.is_online }}
           userId={user?.id ?? null}
           userName={user?.user_metadata?.display_name ?? null}
           userEmail={user?.email ?? null}

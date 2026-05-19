@@ -13,6 +13,7 @@ interface EventProps {
   rsvp_required?: boolean
   is_free?: boolean
   title?: string
+  is_online?: boolean
 }
 
 interface Props {
@@ -45,6 +46,7 @@ export default function RegistrationButton({
       serverUserName={userName ?? null}
       serverUserEmail={userEmail ?? null}
       isOrganizer={isOrganizer}
+      isOnline={event.is_online}
     />
   )
 }
