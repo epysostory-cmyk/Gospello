@@ -7,6 +7,7 @@ import type { RegistrationType } from '@/types/database'
 
 interface EventProps {
   id: string
+  slug?: string
   registration_type: RegistrationType
   price?: number | null
   payment_link?: string | null
@@ -14,6 +15,11 @@ interface EventProps {
   is_free?: boolean
   title?: string
   is_online?: boolean
+  start_date?: string
+  end_date?: string | null
+  location_name?: string | null
+  city?: string | null
+  description?: string | null
 }
 
 interface Props {
@@ -33,6 +39,10 @@ export default function RegistrationButton({
   isOrganizer = false,
   initialRegistered = false,
 }: Props) {
+  const location = event.is_online
+    ? 'Online Event'
+    : [event.location_name, event.city].filter(Boolean).join(', ') || ''
+
   return (
     <AttendButton
       eventId={event.id}
@@ -47,6 +57,11 @@ export default function RegistrationButton({
       serverUserEmail={userEmail ?? null}
       isOrganizer={isOrganizer}
       isOnline={event.is_online}
+      eventSlug={event.slug}
+      eventStartDate={event.start_date}
+      eventEndDate={event.end_date}
+      eventLocation={location}
+      eventDescription={event.description}
     />
   )
 }

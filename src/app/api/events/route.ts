@@ -3,6 +3,44 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
 import { geocodeEvent } from '@/lib/geocode'
 import { NextRequest, NextResponse } from 'next/server'
+import type { RecurrenceRule } from '@/types/database'
+
+function getNthWeekdayOfMonth(year: number, month: number, dayOfWeek: number, n: number): Date | null {
+  const first = new Date(year, month, 1)
+  const offset = (dayOfWeek - first.getDay() + 7) % 7
+  const day = 1 + offset + (n - 1) * 7
+  if (day > new Date(year, month + 1, 0).getDate()) return null
+  return new Date(year, month, day)
+}
+
+function generateOccurrenceDates(rule: RecurrenceRule, baseDate: Date): Date[] {
+  const max = Math.min(rule.occurrences ?? 52, 52)
+  const endDate = rule.end_date ? new Date(rule.end_date + 'T23:59:59') : null
+  const dates: Date[] = [new Date(baseDate)]
+  let current = new Date(baseDate)
+
+  while (dates.length < max) {
+    if (rule.frequency === 'weekly') {
+      current = new Date(current)
+      current.setDate(current.getDate() + rule.interval * 7)
+    } else {
+      // Monthly: advance by interval months then find the Nth weekday
+      current = new Date(current)
+      current.setMonth(current.getMonth() + rule.interval)
+      if (rule.week_of_month) {
+        const nthDay = getNthWeekdayOfMonth(current.getFullYear(), current.getMonth(), rule.day_of_week, rule.week_of_month)
+        if (!nthDay) break
+        current = nthDay
+        // Preserve time from base date
+        current.setHours(baseDate.getHours(), baseDate.getMinutes(), baseDate.getSeconds())
+      }
+    }
+    if (endDate && current > endDate) break
+    dates.push(new Date(current))
+  }
+
+  return dates
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,6 +118,60 @@ export async function POST(request: NextRequest) {
       views_count: 0,
       latitude:  coords?.latitude ?? null,
       longitude: coords?.longitude ?? null,
+    }
+
+    const recurrenceRule: RecurrenceRule | null = body.recurrence_rule ?? null
+
+    if (recurrenceRule) {
+      // Create the series record first
+      const seriesSlug = slugify(body.title + '-series')
+      const { data: series, error: seriesErr } = await adminClient
+        .from('event_series')
+        .insert([{
+          title: body.title,
+          slug: seriesSlug,
+          recurrence_rule: recurrenceRule,
+          organizer_id: user.id,
+        }])
+        .select()
+        .single()
+
+      if (seriesErr) {
+        return NextResponse.json({ error: seriesErr.message }, { status: 400 })
+      }
+
+      // Generate all occurrence dates
+      const baseDate = new Date(body.start_date)
+      const occurrences = generateOccurrenceDates(recurrenceRule, baseDate)
+
+      // Duration in ms (for computing end_date of each occurrence)
+      const durationMs = body.end_date
+        ? new Date(body.end_date).getTime() - baseDate.getTime()
+        : 2 * 60 * 60 * 1000 // default 2h
+
+      const childEvents = occurrences.map((occDate, idx) => {
+        const occEnd = new Date(occDate.getTime() + durationMs)
+        return {
+          ...eventData,
+          slug: slugify(body.title + (idx === 0 ? '' : `-${idx + 1}`)),
+          start_date: occDate.toISOString(),
+          end_date: body.end_date ? occEnd.toISOString() : null,
+          event_series_id: series.id,
+          latitude: coords?.latitude ?? null,
+          longitude: coords?.longitude ?? null,
+        }
+      })
+
+      const { data: insertedEvents, error: eventsErr } = await adminClient
+        .from('events')
+        .insert(childEvents)
+        .select()
+
+      if (eventsErr) {
+        return NextResponse.json({ error: eventsErr.message }, { status: 400 })
+      }
+
+      return NextResponse.json({ series, events: insertedEvents, count: insertedEvents?.length }, { status: 201 })
     }
 
     // Insert event using admin client (handles defaults)

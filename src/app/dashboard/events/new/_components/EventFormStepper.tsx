@@ -21,11 +21,21 @@ const DRAFT_KEY = 'gospello_event_draft'
 
 type RegistrationType = 'free_no_registration' | 'free_registration' | 'paid'
 
+interface RecurrenceRule {
+  frequency: 'weekly' | 'monthly'
+  interval: number
+  day_of_week: number
+  week_of_month?: number
+  occurrences?: number
+  end_date?: string
+}
+
 interface FormState {
   title: string
   description: string
   category: string
   event_type: 'single' | 'multi'
+  recurrence_rule: RecurrenceRule | null
   start_date: string
   start_time: string
   end_date: string
@@ -69,6 +79,7 @@ const INITIAL_FORM_STATE: FormState = {
   description: '',
   category: 'worship',
   event_type: 'single',
+  recurrence_rule: null,
   start_date: '',
   start_time: '',
   end_date: '',
@@ -138,6 +149,7 @@ export default function EventFormStepper({ isEditMode = false, initialEvent, eve
         description: initialEvent.description || '',
         category: initialEvent.category || 'worship',
         event_type: hasMultiDaySchedule ? 'multi' : 'single',
+        recurrence_rule: (initialEvent as any).recurrence_rule ?? null,
         start_date: initialEvent.start_date?.split('T')[0] || '',
         start_time: hasMultiDaySchedule ? '' : (initialEvent.start_date?.split('T')[1]?.substring(0, 5) || ''),
         end_date: initialEvent.end_date?.split('T')[0] || '',
@@ -395,6 +407,7 @@ export default function EventFormStepper({ isEditMode = false, initialEvent, eve
         gender_restriction: formData.gender_restriction || null,
         timezone: formData.timezone || 'Africa/Lagos',
         livestream_url: formData.livestream_url || null,
+        recurrence_rule: formData.recurrence_rule ?? null,
       }
 
       if (isEditMode && initialEvent?.id) {

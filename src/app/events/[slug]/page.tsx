@@ -7,7 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { formatDate, formatTime } from '@/lib/utils'
 import { getCategoryMap } from '@/lib/categories'
-import { Calendar, MapPin, Clock, Building2, Globe, ChevronLeft, Car, Baby, Mic, Ticket, Users, ChevronRight, Bus, Accessibility, UtensilsCrossed, BedDouble, ShirtIcon, VideoOff, UserCheck } from 'lucide-react'
+import { Calendar, MapPin, Clock, Building2, Globe, ChevronLeft, Car, Baby, Mic, Ticket, Users, ChevronRight, Bus, Accessibility, UtensilsCrossed, BedDouble, ShirtIcon, VideoOff, UserCheck, Repeat } from 'lucide-react'
 import type { DaySchedule } from '@/types/database'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
@@ -80,7 +80,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   const { data: event } = await supabase
     .from('events')
-    .select('*, churches(*), profiles(*), seeded_organizers(*)')
+    .select('*, churches(*), profiles(*), seeded_organizers(*), event_series(*)')
     .eq('slug', slug).eq('status', 'approved').single()
   if (!event) notFound()
 
@@ -195,7 +195,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     <div className={compact ? '' : 'space-y-3'}>
       {registrationOpen ? (
         <RegistrationButton
-          event={{ id: e.id, registration_type: e.registration_type, price: e.price, payment_link: e.payment_link, rsvp_required: e.rsvp_required, is_free: e.is_free, title: e.title, is_online: e.is_online }}
+          event={{ id: e.id, slug: e.slug, registration_type: e.registration_type, price: e.price, payment_link: e.payment_link, rsvp_required: e.rsvp_required, is_free: e.is_free, title: e.title, is_online: e.is_online, start_date: e.start_date, end_date: e.end_date, location_name: e.location_name, city: e.city, description: e.description }}
           userId={user?.id ?? null}
           userName={user?.user_metadata?.display_name ?? null}
           userEmail={user?.email ?? null}
@@ -247,6 +247,17 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
         {/* ── Title block ── */}
         <div className="px-5 pt-6 pb-5">
+          {/* Series banner */}
+          {(e as any).event_series && (
+            <Link
+              href={`/events/series/${(e as any).event_series.slug}`}
+              className="flex items-center gap-2 mb-4 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+            >
+              <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
+              Part of a recurring series — see all dates
+              <ChevronRight className="w-3.5 h-3.5 ml-auto flex-shrink-0" />
+            </Link>
+          )}
           {/* Badges */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">
             <EventStatusBadge startDate={e.start_date} endDate={e.end_date} dailySchedule={e.daily_schedule} />
@@ -689,6 +700,17 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
               {/* Title + badges — below banner */}
               <div className="mb-6">
+                {/* Series banner */}
+                {(e as any).event_series && (
+                  <Link
+                    href={`/events/series/${(e as any).event_series.slug}`}
+                    className="flex items-center gap-2 mb-4 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                  >
+                    <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
+                    Part of a recurring series — see all dates
+                    <ChevronRight className="w-3.5 h-3.5 ml-auto flex-shrink-0" />
+                  </Link>
+                )}
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <EventStatusBadge startDate={e.start_date} endDate={e.end_date} dailySchedule={e.daily_schedule} />
                   <span className={`text-xs font-bold px-3 py-1 rounded-full ${

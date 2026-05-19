@@ -11,6 +11,7 @@ import DiscoverOrganizers from './_components/DiscoverOrganizers'
 import type { OrganizerCard } from './_components/DiscoverOrganizers'
 import type { Event, Church } from '@/types/database'
 import HomeCategoryScroller from './_components/HomeCategoryScroller'
+import ServicesToday from './_components/ServicesToday'
 
 export const revalidate = 60
 
@@ -38,6 +39,7 @@ async function getHomepageData() {
       discoverProfileOrganizersRes,
       discoverSeededOrganizersRes,
       churchCtaRes,
+      servicesTodayRes,
     ] = await Promise.all([
       supabase
         .from('platform_settings')
@@ -98,6 +100,13 @@ async function getHomepageData() {
         .select('value')
         .eq('key', 'homepage_church_cta')
         .maybeSingle(),
+      adminClient
+        .from('churches')
+        .select('id, name, slug, city, state, service_times, logo_url, denomination, verified_badge')
+        .eq('is_hidden', false)
+        .not('service_times', 'is', null)
+        .neq('service_times', '')
+        .limit(40),
     ])
 
     const featuredEvents = (featuredRes.data ?? []) as Event[]
@@ -249,6 +258,10 @@ async function getHomepageData() {
       discoverChurches,
       discoverOrganizers: allOrgs,
       churchCta,
+      servicesTodayChurches: (servicesTodayRes.data ?? []) as Array<{
+        id: string; name: string; slug: string; city: string; state: string;
+        service_times: string; logo_url: string | null; denomination: string | null; verified_badge: boolean
+      }>,
     }
   } catch {
     return {
@@ -264,6 +277,7 @@ async function getHomepageData() {
       discoverChurches: [],
       discoverOrganizers: [],
       churchCta: null,
+      servicesTodayChurches: [],
     }
   }
 }
@@ -282,6 +296,7 @@ export default async function HomePage() {
     discoverChurches,
     discoverOrganizers,
     churchCta,
+    servicesTodayChurches,
   } = await getHomepageData()
 
   const displayCategories = categories.slice(0, 8)
@@ -370,6 +385,9 @@ export default async function HomePage() {
           </section>
         </div>
       )}
+
+      {/* ── SERVICES TODAY ────────────────────────────────────────────── */}
+      <ServicesToday churches={servicesTodayChurches} />
 
       {/* ── UPCOMING EVENTS ───────────────────────────────────────────── */}
       {upcomingEvents.length > 0 && (

@@ -193,6 +193,7 @@ export interface Event {
   latitude: number | null
   longitude: number | null
   time_tba: boolean
+  event_series_id: string | null
   // admin fields
   rejection_reason: string | null
   approved_at: string | null
@@ -203,7 +204,28 @@ export interface Event {
   profiles?: Profile | null
   churches?: Church | null
   seeded_organizers?: SeededOrganizer | null
+  event_series?: EventSeries | null
   attendances?: Attendance[]
+}
+
+export interface RecurrenceRule {
+  frequency: 'weekly' | 'monthly'
+  interval: number
+  day_of_week: number
+  week_of_month?: number
+  occurrences?: number
+  end_date?: string
+}
+
+export interface EventSeries {
+  id: string
+  title: string
+  slug: string
+  recurrence_rule: RecurrenceRule
+  organizer_id: string | null
+  church_id: string | null
+  seeded_organizer_id: string | null
+  created_at: string
 }
 
 export interface Registration {
