@@ -224,9 +224,8 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
       endDatetime = `${lastD}T${lastTime}:00${offset}`
     } else {
       if (!form.start_date) { setError('Start date is required'); return }
-      if (!form.start_time) { setError('Start time is required'); return }
       const offset = tzOffset(tz, form.start_date)
-      startDatetime = `${form.start_date}T${form.start_time}:00${offset}`
+      startDatetime = `${form.start_date}T${form.start_time || '00:00'}:00${offset}`
       endDatetime   = form.end_time ? `${form.start_date}T${form.end_time}:00${offset}` : null
     }
 
@@ -234,7 +233,7 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
     try {
       const result = await updateAdminEvent({
         eventId: event.id,
-        form: { ...form, daily_schedule },
+        form: { ...form, daily_schedule, time_tba: !form.start_time },
         startDatetime,
         endDatetime,
       })
@@ -391,7 +390,7 @@ export default function AdminEditEventForm({ adminId, event, categories }: Props
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelCls}>Start Time <span className="text-red-500">*</span></label>
+                  <label className={labelCls}>Start Time <span className="text-gray-400 font-normal text-xs">(leave blank if TBA)</span></label>
                   <input type="time" value={form.start_time} onChange={e => set('start_time', e.target.value)} className={inputCls} />
                   {form.start_time && <p className="text-xs text-[#7C3AED] font-semibold mt-1">{fmt12(form.start_time)}</p>}
                 </div>
