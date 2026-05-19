@@ -145,9 +145,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const displayTime = hasSchedule
     ? (firstSessionTime ? fmt12(firstSessionTime) : 'TBD (To Be Announced)')
     : e.time_tba ? 'TBD (To Be Announced)' : formatTime(e.start_date)
+  const venueKnown = !e.is_online && ((e.location_name && e.location_name !== 'TBD') || e.city)
   const displayVenue = e.is_online
     ? (e.online_platform ?? 'Online Event')
-    : [e.location_name, e.city].filter(Boolean).join(', ') || 'TBD (To Be Announced)'
+    : venueKnown
+      ? [e.location_name !== 'TBD' ? e.location_name : null, e.city].filter(Boolean).join(', ')
+      : 'TBD (To Be Announced)'
   const displayPrice = e.is_free
     ? 'Free'
     : e.price != null
@@ -329,7 +332,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <div>
               <p className="text-sm font-bold text-gray-900 leading-snug">{displayDate}</p>
               <p className="text-sm text-gray-500 mt-0.5">{displayTime}
-                {e.timezone && e.timezone !== 'UTC' && <> · <EventTimezone timezone={e.timezone} startDate={e.start_date} /></>}
+                {!e.time_tba && e.timezone && e.timezone !== 'UTC' && <> · <EventTimezone timezone={e.timezone} startDate={e.start_date} /></>}
               </p>
             </div>
           </div>
@@ -346,7 +349,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {!e.is_online && e.city && (
                 <p className="text-sm text-gray-500 mt-0.5">{[e.address, e.city, e.state].filter(Boolean).join(', ')}</p>
               )}
-              {!e.is_online && (e.location_name || e.address) && (
+              {!e.is_online && ((e.location_name && e.location_name !== 'TBD') || e.address) && (
                 <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
                   className="text-sm font-semibold text-indigo-600 mt-1 inline-block">
                   Get directions →
@@ -545,7 +548,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           <div className="flex flex-wrap gap-2">
             <AddToCalendar title={e.title} startDate={e.start_date} endDate={e.end_date}
               location={shareLocation} description={e.description} />
-            {e.timezone && e.timezone !== 'UTC' && <EventTimezone timezone={e.timezone} startDate={e.start_date} />}
+            {!e.time_tba && e.timezone && e.timezone !== 'UTC' && <EventTimezone timezone={e.timezone} startDate={e.start_date} />}
           </div>
           <div className="mt-3">
             <ShareEventButton slug={e.slug} eventTitle={e.title} eventUrl={eventUrl}
@@ -731,7 +734,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   <div>
                     <p className="text-sm font-bold text-gray-900 leading-snug">{displayDate}</p>
                     <p className="text-sm text-gray-500 mt-0.5">{displayTime}
-                      {e.timezone && e.timezone !== 'UTC' && <> · <EventTimezone timezone={e.timezone} startDate={e.start_date} /></>}
+                      {!e.time_tba && e.timezone && e.timezone !== 'UTC' && <> · <EventTimezone timezone={e.timezone} startDate={e.start_date} /></>}
                     </p>
                     {lifecycle === 'upcoming' && (
                       <p className="text-xs text-indigo-500 font-semibold mt-1">
@@ -752,7 +755,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     {!e.is_online && e.city && (
                       <p className="text-sm text-gray-500 mt-0.5">{[e.address, e.city, e.state].filter(Boolean).join(', ')}</p>
                     )}
-                    {!e.is_online && (e.location_name || e.address) && (
+                    {!e.is_online && ((e.location_name && e.location_name !== 'TBD') || e.address) && (
                       <a href={`https://maps.google.com/?q=${mapsQ}`} target="_blank" rel="noopener noreferrer"
                         className="text-sm font-semibold text-indigo-600 mt-1 inline-block">Get directions →</a>
                     )}
