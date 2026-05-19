@@ -8,7 +8,7 @@ import EventCard from '@/components/ui/EventCard'
 import { formatDate, formatTime } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
-import { Search, MapPin, X, SlidersHorizontal } from 'lucide-react'
+import { Search, MapPin, X } from 'lucide-react'
 import NearMeButton from '@/components/ui/NearMeButton'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -171,6 +171,10 @@ export default async function EventsPage({
     ? categoryOptions.find(c => c.slug === params.category)
     : null
 
+  const featuredEvents = !hasFilters
+    ? events.filter(e => e.is_featured && getEventLifecycle(e.start_date, e.end_date) !== 'ended').slice(0, 2)
+    : []
+
   return (
     <div className="min-h-screen bg-gray-50">
 
@@ -294,7 +298,6 @@ export default async function EventsPage({
                   <select
                     name="state"
                     defaultValue={params.state ?? ''}
-                    onChange={e => e.currentTarget.form?.submit()}
                     className="pl-8 pr-4 py-1.5 text-sm font-medium text-gray-700 bg-transparent focus:outline-none appearance-none cursor-pointer"
                   >
                     <option value="">All States</option>
@@ -352,20 +355,16 @@ export default async function EventsPage({
         ) : (
           <>
             {/* No-filter view: featured strip */}
-            {!hasFilters && (() => {
-              const featured = events.filter(e => e.is_featured && getEventLifecycle(e.start_date, e.end_date) !== 'ended')
-              if (!featured.length) return null
-              return (
+            {featuredEvents.length > 0 && (
                 <div className="mb-6">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Featured</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {featured.slice(0, 2).map(event => (
+                    {featuredEvents.map(event => (
                       <EventCard key={event.id} event={event} variant="featured" categoryInfo={catMap[event.category]} attendanceCount={attendanceCountMap[event.id]} />
                     ))}
                   </div>
                 </div>
-              )
-            })()}
+            )}
 
             {/* Main list */}
             {!hasFilters && (
