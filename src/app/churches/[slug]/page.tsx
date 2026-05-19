@@ -337,6 +337,7 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                 fill
                 className="object-cover scale-150 blur-2xl opacity-30"
                 priority
+                unoptimized
               />
             </div>
           )}
@@ -375,6 +376,7 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
                   width={96}
                   height={96}
                   className="object-cover w-full h-full"
+                  unoptimized
                 />
               ) : (
                 <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>

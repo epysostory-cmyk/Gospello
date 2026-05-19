@@ -198,6 +198,7 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
                   width={96}
                   height={96}
                   className="object-cover w-full h-full"
+                  unoptimized
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
