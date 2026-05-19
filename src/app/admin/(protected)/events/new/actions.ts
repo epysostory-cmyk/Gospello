@@ -61,6 +61,26 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
       address: form.address, city: form.city, state: form.state, country: form.country,
     })
 
+    // Create series first so every event insert (including the first) already has event_series_id set
+    let seriesId: string | null = null
+    if (recurrenceRule) {
+      const seriesSlug = slugify(form.title + '-series')
+      const { data: series, error: seriesErr } = await adminClient
+        .from('event_series')
+        .insert([{
+          title: form.title.trim(),
+          slug: seriesSlug,
+          recurrence_rule: recurrenceRule,
+          organizer_id: organizer_id,
+          church_id,
+          seeded_organizer_id,
+        }])
+        .select('id')
+        .single()
+      if (seriesErr) return { error: seriesErr.message }
+      seriesId = series.id
+    }
+
     const { data, error } = await adminClient.from('events').insert({
       organizer_id,
       church_id,
@@ -110,37 +130,18 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
       latitude:          coords?.latitude ?? null,
       longitude:         coords?.longitude ?? null,
       time_tba:          form.time_tba ?? false,
+      event_series_id:   seriesId,
     }).select('id').single()
 
     if (error) return { error: error.message }
 
-    // If recurring, create series + remaining occurrences
-    if (recurrenceRule && data) {
-      const seriesSlug = slugify(form.title + '-series')
-      const { data: series, error: seriesErr } = await adminClient
-        .from('event_series')
-        .insert([{
-          title: form.title.trim(),
-          slug: seriesSlug,
-          recurrence_rule: recurrenceRule,
-          organizer_id: organizer_id,
-          church_id,
-          seeded_organizer_id,
-        }])
-        .select()
-        .single()
-
-      if (seriesErr) return { error: seriesErr.message }
-
-      // Tag the first (already created) event with the series id
-      await adminClient.from('events').update({ event_series_id: series.id }).eq('id', data.id)
-
+    if (seriesId && data) {
       // Generate and insert remaining occurrences
       const baseDate   = new Date(startDatetime)
       const durationMs = endDatetime
         ? new Date(endDatetime).getTime() - baseDate.getTime()
         : 2 * 60 * 60 * 1000
-      const allDates = generateOccurrenceDates(recurrenceRule, baseDate)
+      const allDates = generateOccurrenceDates(recurrenceRule!, baseDate)
 
       if (allDates.length > 1) {
         const baseEventData = {
@@ -185,7 +186,7 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
           latitude: coords?.latitude ?? null,
           longitude: coords?.longitude ?? null,
           time_tba: form.time_tba ?? false,
-          event_series_id: series.id,
+          event_series_id: seriesId,
         }
 
         const childEvents = allDates.slice(1).map((occDate, idx) => ({

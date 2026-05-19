@@ -220,7 +220,7 @@ export default function EditProfileForm({ type, profile }: Props) {
               {logoUploading ? (
                 <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
               ) : logoUrl ? (
-                <Image src={logoUrl} alt="Logo" width={80} height={80} className="w-full h-full object-cover" />
+                <Image src={logoUrl} alt="Logo" width={80} height={80} className="w-full h-full object-cover" unoptimized />
               ) : (
                 <span className="text-3xl font-black text-gray-300">{profile.name[0]?.toUpperCase()}</span>
               )}
