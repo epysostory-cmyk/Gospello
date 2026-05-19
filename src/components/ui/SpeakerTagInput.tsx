@@ -24,16 +24,20 @@ export default function SpeakerTagInput({ value, onChange, placeholder = 'Type a
     const next = [...tags, trimmed]
     onChange(next.join(', '))
     setInput('')
+    // Keep focus inside the box — don't let the page jump
+    setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   function removeTag(index: number) {
     const next = tags.filter((_, i) => i !== index)
     onChange(next.join(', '))
+    inputRef.current?.focus()
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault()
+      e.stopPropagation()
       addTag(input)
     } else if (e.key === 'Backspace' && input === '' && tags.length > 0) {
       removeTag(tags.length - 1)
