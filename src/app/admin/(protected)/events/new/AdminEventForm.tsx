@@ -10,6 +10,7 @@ import { getVisibleCategories, type CategoryRow } from '@/app/actions/categories
 import { createAdminEvent } from './actions'
 import TimezoneSelector from '@/components/ui/TimezoneSelector'
 import SpeakerTagInput from '@/components/ui/SpeakerTagInput'
+import RecurringSection from '@/components/ui/RecurringSection'
 
 /* ── Schedule helpers ─────────────────────────────────── */
 function fmt12(t: string): string {
@@ -102,6 +103,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
   })
 
   const [eventType, setEventType] = useState<'single' | 'multi'>('single')
+  const [recurrenceRule, setRecurrenceRule] = useState<import('@/types/database').RecurrenceRule | null>(null)
   const [scheduleMap, setScheduleMap] = useState<Record<string, { label: string; sessions: EventSession[] }>>({})
   const [sameAdminSchedule, setSameAdminSchedule] = useState(false)
 
@@ -236,6 +238,7 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
         form: { ...form, daily_schedule, time_tba: !form.start_time },
         startDatetime,
         endDatetime,
+        recurrenceRule: recurrenceRule ?? undefined,
       })
       if (result.error) { setError(result.error); return }
       localStorage.removeItem(DRAFT_KEY)
@@ -789,6 +792,18 @@ export default function AdminEventForm({ adminId, profiles }: Props) {
           />
           <p className="text-xs text-gray-400">Select the timezone where this event takes place.</p>
         </div>
+
+        {/* Recurring events — single day only */}
+        {eventType === 'single' && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5">
+            <p className="text-sm font-semibold text-gray-900 mb-3">Recurrence</p>
+            <RecurringSection
+              rule={recurrenceRule}
+              startDate={form.start_date}
+              onChange={setRecurrenceRule}
+            />
+          </div>
+        )}
 
         {/* Location */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">

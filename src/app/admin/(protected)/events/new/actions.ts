@@ -3,7 +3,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
 import { geocodeEvent } from '@/lib/geocode'
-import type { DaySchedule } from '@/types/database'
+import type { DaySchedule, RecurrenceRule } from '@/types/database'
+import { generateOccurrenceDates } from '@/lib/recurrence'
 
 interface AdminEventInput {
   adminId: string
@@ -14,6 +15,7 @@ interface AdminEventInput {
   }
   startDatetime: string
   endDatetime: string | null
+  recurrenceRule?: RecurrenceRule
   form: {
     title: string; description: string; category: string
     is_online: boolean; online_platform: string; online_link: string
@@ -43,7 +45,7 @@ interface AdminEventInput {
 }
 
 export async function createAdminEvent(input: AdminEventInput): Promise<{ error?: string; id?: string }> {
-  const { adminId, selectedProfile, form, startDatetime, endDatetime } = input
+  const { adminId, selectedProfile, form, startDatetime, endDatetime, recurrenceRule } = input
   const adminClient = createAdminClient()
 
   try {
@@ -111,6 +113,94 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
     }).select('id').single()
 
     if (error) return { error: error.message }
+
+    // If recurring, create series + remaining occurrences
+    if (recurrenceRule && data) {
+      const seriesSlug = slugify(form.title + '-series')
+      const { data: series, error: seriesErr } = await adminClient
+        .from('event_series')
+        .insert([{
+          title: form.title.trim(),
+          slug: seriesSlug,
+          recurrence_rule: recurrenceRule,
+          organizer_id: organizer_id,
+          church_id,
+          seeded_organizer_id,
+        }])
+        .select()
+        .single()
+
+      if (seriesErr) return { error: seriesErr.message }
+
+      // Tag the first (already created) event with the series id
+      await adminClient.from('events').update({ event_series_id: series.id }).eq('id', data.id)
+
+      // Generate and insert remaining occurrences
+      const baseDate   = new Date(startDatetime)
+      const durationMs = endDatetime
+        ? new Date(endDatetime).getTime() - baseDate.getTime()
+        : 2 * 60 * 60 * 1000
+      const allDates = generateOccurrenceDates(recurrenceRule, baseDate)
+
+      if (allDates.length > 1) {
+        const baseEventData = {
+          organizer_id, church_id, seeded_organizer_id,
+          description: form.description.trim() || 'No description provided.',
+          category: form.category,
+          status: 'approved' as const,
+          is_online: form.is_online,
+          online_platform: form.online_platform || null,
+          online_link: form.online_link || null,
+          location_name: form.is_online ? (form.online_platform || 'Online') : (form.location_name.trim() || ''),
+          address: form.is_online ? null : (form.address.trim() || null),
+          city: form.is_online ? 'Online' : (form.city.trim() || ''),
+          state: form.is_online ? 'Online' : form.state,
+          country: form.is_online ? 'Online' : (form.country || 'Nigeria'),
+          registration_type: form.registration_type,
+          is_free: form.registration_type !== 'paid',
+          price: form.registration_type === 'paid' && form.price ? parseFloat(form.price) : null,
+          currency: form.currency || 'NGN',
+          payment_link: form.payment_link || null,
+          rsvp_required: form.registration_type === 'free_registration',
+          capacity: form.capacity ? parseInt(form.capacity) : null,
+          tags: form.tags,
+          banner_url: form.banner_url || null,
+          gallery_urls: [],
+          visibility: form.visibility,
+          speakers: form.speakers || null,
+          parking_available: form.parking_available,
+          child_friendly: form.child_friendly,
+          notes: form.notes || null,
+          shuttle_available: form.shuttle_available,
+          wheelchair_accessible: form.wheelchair_accessible,
+          food_provided: form.food_provided,
+          accommodation_available: form.accommodation_available,
+          dress_code: form.dress_code || null,
+          no_recording: form.no_recording,
+          gender_restriction: form.gender_restriction || null,
+          created_by_admin: true,
+          source_url: form.source_url || null,
+          timezone: form.timezone || 'Africa/Lagos',
+          livestream_url: form.livestream_url || null,
+          latitude: coords?.latitude ?? null,
+          longitude: coords?.longitude ?? null,
+          time_tba: form.time_tba ?? false,
+          event_series_id: series.id,
+        }
+
+        const childEvents = allDates.slice(1).map((occDate, idx) => ({
+          ...baseEventData,
+          title: form.title.trim(),
+          slug: slugify(form.title + `-${idx + 2}`),
+          start_date: occDate.toISOString(),
+          end_date: endDatetime ? new Date(occDate.getTime() + durationMs).toISOString() : null,
+        }))
+
+        const { error: childErr } = await adminClient.from('events').insert(childEvents)
+        if (childErr) return { error: childErr.message }
+      }
+    }
+
     return { id: data.id }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'An unexpected error occurred' }
