@@ -9,6 +9,7 @@ import { formatDate, formatTime } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { getEventLifecycle } from '@/types/database'
 import { Search, MapPin, X } from 'lucide-react'
+import { SUPPORTED_COUNTRIES } from '@/lib/countries'
 import NearMeButton from '@/components/ui/NearMeButton'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -242,6 +243,38 @@ export default async function EventsPage({
         </div>
       </div>
 
+      {/* ── COUNTRY STRIP ── */}
+      <div className="border-b border-gray-200 bg-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {SUPPORTED_COUNTRIES.map(c => {
+              const active = params.country === c.name
+              const isNigeria = c.name === 'Nigeria'
+              // For Nigeria: clicking clears country filter (it's the default/home)
+              // For others: clicking sets country filter and clears state (not relevant abroad)
+              const href = isNigeria
+                ? buildUrl({ country: undefined, state: undefined, page: undefined })
+                : buildUrl({ country: active ? undefined : c.name, state: undefined, page: undefined })
+              const isActiveNigeria = isNigeria && !params.country
+              return (
+                <Link
+                  key={c.name}
+                  href={href}
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                    active || isActiveNigeria
+                      ? 'border-gray-900 text-gray-900'
+                      : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="text-base">{c.flag}</span>
+                  {c.name === 'United Kingdom' ? 'UK' : c.name === 'United States' ? 'USA' : c.name}
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-4xl mx-auto px-4">
 
         {/* ── CATEGORY CONTEXT ── */}
@@ -288,7 +321,7 @@ export default async function EventsPage({
 
           <div className="flex items-center gap-2 ml-auto flex-shrink-0">
             <NearMeButton basePath="/events" compact />
-            {availableStates.length > 0 && (
+            {availableStates.length > 0 && !params.country && (
               <form method="GET" action="/events">
                 {params.q         && <input type="hidden" name="q"         value={params.q} />}
                 {params.category  && <input type="hidden" name="category"  value={params.category} />}

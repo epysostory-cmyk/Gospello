@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { NIGERIAN_STATES } from '@/lib/utils'
+import { SUPPORTED_COUNTRIES } from '@/lib/countries'
 import { createAdminProfile } from './actions'
 import ImageCropModal from '@/components/ui/ImageCropModal'
 import OrganizerTypeChips from '@/components/ui/OrganizerTypeChips'
@@ -57,7 +58,7 @@ export default function CreateProfileForm({ adminId }: Props) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const [form, setForm] = useState({
-    name: '', slug: '', state: 'Lagos', city: '', address: '',
+    name: '', slug: '', country: 'Nigeria', state: 'Lagos', city: '', address: '',
     phone: '', whatsapp: '', website: '', instagram: '', facebook: '',
     twitter: '', youtube: '',
     description: '', source_url: '',
@@ -238,18 +239,32 @@ export default function CreateProfileForm({ adminId }: Props) {
       {/* Location */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 space-y-4">
         <p className="text-sm font-semibold text-gray-900">Location</p>
+        <div>
+          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Country <span className="text-red-500">*</span></label>
+          <select value={form.country} onChange={e => { set('country', e.target.value); set('state', '') }}
+            className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] bg-white">
+            {SUPPORTED_COUNTRIES.map(c => <option key={c.name} value={c.name}>{c.flag} {c.name}</option>)}
+          </select>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">State <span className="text-red-500">*</span></label>
-            <select value={form.state} onChange={e => set('state', e.target.value)}
-              className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] bg-white">
-              {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{form.country === 'Nigeria' ? 'State' : 'State / Region'} <span className="text-red-500">*</span></label>
+            {form.country === 'Nigeria' ? (
+              <select value={form.state} onChange={e => set('state', e.target.value)}
+                className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#7C3AED] bg-white">
+                <option value="">Select state</option>
+                {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            ) : (
+              <input value={form.state} onChange={e => set('state', e.target.value)}
+                placeholder="e.g. Greater London"
+                className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED]" />
+            )}
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">City <span className="text-red-500">*</span></label>
             <input value={form.city} onChange={e => set('city', e.target.value)}
-              placeholder="e.g. Lagos"
+              placeholder={form.country === 'Nigeria' ? 'e.g. Lagos' : 'e.g. London'}
               className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C3AED]" />
           </div>
         </div>

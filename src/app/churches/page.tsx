@@ -9,12 +9,14 @@ import type { Church } from '@/types/database'
 import { Search, X, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
 import { NIGERIAN_STATES } from '@/lib/utils'
+import { SUPPORTED_COUNTRIES } from '@/lib/countries'
 import ListYourChurchCTA from '@/components/ui/ListYourChurchCTA'
 import NearMeButton from '@/components/ui/NearMeButton'
 
 interface SearchParams {
   q?: string
   state?: string
+  country?: string
   denomination?: string
   page?: string
 }
@@ -38,6 +40,8 @@ async function getChurches(params: SearchParams) {
     .range(from, to)
 
   if (params.q) query = query.or(`name.ilike.%${params.q}%,description.ilike.%${params.q}%,city.ilike.%${params.q}%,state.ilike.%${params.q}%`)
+  if (params.country) query = query.eq('country', params.country)
+  else query = query.eq('country', 'Nigeria') // default to Nigeria
   if (params.state) query = query.ilike('state', `%${params.state}%`)
   if (params.denomination) query = query.ilike('denomination', `%${params.denomination}%`)
 
@@ -91,6 +95,8 @@ export default async function ChurchesPage({
   const params = await searchParams
   const { churches, eventCountMap, denominations, total, page, pages } = await getChurches(params)
 
+  const activeCountry = params.country ?? 'Nigeria'
+  const isNigeria = activeCountry === 'Nigeria'
   const hasFilters = !!(params.q || params.state || params.denomination)
 
   function buildUrl(overrides: Partial<SearchParams>) {
@@ -109,22 +115,48 @@ export default async function ChurchesPage({
 
       {/* ── HEADER ──────────────────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-5">
+
+        {/* Country strip */}
+        <div className="border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {SUPPORTED_COUNTRIES.map(c => {
+                const active = activeCountry === c.name
+                return (
+                  <Link
+                    key={c.name}
+                    href={buildUrl({ country: c.name === 'Nigeria' ? undefined : c.name, state: undefined, page: undefined })}
+                    className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                      active
+                        ? 'border-gray-900 text-gray-900'
+                        : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="text-base">{c.flag}</span>
+                    {c.name === 'United Kingdom' ? 'UK' : c.name === 'United States' ? 'USA' : c.name}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-5">
 
           {/* Title row */}
           <div className="flex items-end justify-between gap-4 mb-5">
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-                Explore Churches
+                {isNigeria ? 'Explore Churches' : `Churches in ${activeCountry === 'United Kingdom' ? 'the UK' : activeCountry === 'United States' ? 'the USA' : activeCountry}`}
               </h1>
               <p className="text-sm text-gray-400 mt-1">
                 {total > 0 ? (
                   <>
-                    <span className="font-semibold text-gray-600">{total.toLocaleString()}</span> church profiles across Nigeria
+                    <span className="font-semibold text-gray-600">{total.toLocaleString()}</span> church{total !== 1 ? 'es' : ''}{isNigeria ? ' across Nigeria' : ` in ${activeCountry === 'United Kingdom' ? 'the UK' : activeCountry === 'United States' ? 'the USA' : activeCountry}`}
                     {params.state && <span> · {params.state}</span>}
                     {params.denomination && <span> · {params.denomination}</span>}
                   </>
-                ) : 'Find churches across all 36 states'}
+                ) : `Find churches${isNigeria ? ' across all 36 states' : ''}`}
               </p>
             </div>
           </div>
@@ -146,19 +178,21 @@ export default async function ChurchesPage({
               />
             </div>
 
-            <div className="relative sm:w-44">
-              <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-              <select
-                name="state"
-                defaultValue={params.state ?? ''}
-                className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer"
-              >
-                <option value="">All states</option>
-                {NIGERIAN_STATES.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
+            {isNigeria && (
+              <div className="relative sm:w-44">
+                <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                <select
+                  name="state"
+                  defaultValue={params.state ?? ''}
+                  className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer"
+                >
+                  <option value="">All states</option>
+                  {NIGERIAN_STATES.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="flex gap-2 flex-shrink-0">
               <button
@@ -204,8 +238,8 @@ export default async function ChurchesPage({
             </div>
           )}
 
-          {/* Denomination pills */}
-          {denominations.length > 0 && (
+          {/* Denomination pills — Nigeria only */}
+          {isNigeria && denominations.length > 0 && (
             <div
               className="flex gap-2 overflow-x-auto mt-4 -mx-4 sm:mx-0 px-4 sm:px-0 pb-1"
               style={{ scrollbarWidth: 'none' } as React.CSSProperties}

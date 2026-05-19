@@ -8,7 +8,7 @@ interface CreateProfileInput {
   visible: boolean
   logoUrl?: string | null
   form: {
-    name: string; slug: string; city: string; state: string; address: string
+    name: string; slug: string; country: string; city: string; state: string; address: string
     phone: string; whatsapp: string; website: string; instagram: string
     facebook: string; twitter: string; youtube: string
     description: string; source_url: string
@@ -38,7 +38,7 @@ export async function createAdminProfile(input: CreateProfileInput): Promise<{ e
         address:          form.address.trim() || null,
         city:             form.city.trim(),
         state:            form.state,
-        country:          'Nigeria',
+        country:          form.country || 'Nigeria',
         phone:            form.phone.trim() || null,
         website_url:      form.website.trim() || null,
         instagram:        form.instagram.trim() || null,
@@ -72,6 +72,7 @@ export async function createAdminProfile(input: CreateProfileInput): Promise<{ e
           : null,
         city:            form.city.trim(),
         state:           form.state,
+        country:         form.country || 'Nigeria',
         address:         form.address.trim() || null,
         phone:           form.phone.trim() || null,
         whatsapp:        form.whatsapp.trim() || null,

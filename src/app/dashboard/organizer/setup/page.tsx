@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { NIGERIAN_STATES } from '@/lib/utils'
+import { SUPPORTED_COUNTRIES } from '@/lib/countries'
 import { validateFullName } from '@/lib/validation'
 import { Loader2, Phone, Globe, Link2, ChevronRight, ChevronLeft } from 'lucide-react'
 import BackButton from '@/components/ui/BackButton'
@@ -22,6 +23,7 @@ type Form = {
   display_name: string
   contact_person: string
   ministry_types: string[]
+  country: string
   state: string
   city: string
   address: string
@@ -47,7 +49,7 @@ export default function OrganizerSetupPage() {
 
   const [form, setForm] = useState<Form>({
     display_name: '', contact_person: '', ministry_types: [],
-    state: 'Lagos', city: '', address: '',
+    country: 'Nigeria', state: 'Lagos', city: '', address: '',
     phone: '', whatsapp: '', website: '', instagram: '',
     facebook: '', twitter: '', youtube: '',
     bio: '',
@@ -285,15 +287,39 @@ export default function OrganizerSetupPage() {
               <>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
-                    State <span className="text-red-400">*</span>
+                    Country <span className="text-red-400">*</span>
                   </label>
                   <select
-                    value={form.state}
-                    onChange={e => update('state', e.target.value)}
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] bg-white ${fieldErrors.state ? 'border-red-400' : 'border-gray-200'}`}
+                    value={form.country}
+                    onChange={e => { update('country', e.target.value); update('state', '') }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] bg-white"
                   >
-                    {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                    {SUPPORTED_COUNTRIES.map(c => <option key={c.name} value={c.name}>{c.flag} {c.name}</option>)}
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">
+                    {form.country === 'Nigeria' ? 'State' : 'State / Region'} <span className="text-red-400">*</span>
+                  </label>
+                  {form.country === 'Nigeria' ? (
+                    <select
+                      value={form.state}
+                      onChange={e => update('state', e.target.value)}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] bg-white ${fieldErrors.state ? 'border-red-400' : 'border-gray-200'}`}
+                    >
+                      <option value="">Select state</option>
+                      {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={form.state}
+                      onChange={e => update('state', e.target.value)}
+                      placeholder="e.g. Greater London"
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] ${fieldErrors.state ? 'border-red-400' : 'border-gray-200'}`}
+                    />
+                  )}
                   {fieldErrors.state && <p className="text-xs text-red-500 mt-1">{fieldErrors.state}</p>}
                 </div>
 
@@ -305,7 +331,7 @@ export default function OrganizerSetupPage() {
                     type="text"
                     value={form.city}
                     onChange={e => update('city', e.target.value)}
-                    placeholder="e.g. Lekki"
+                    placeholder={form.country === 'Nigeria' ? 'e.g. Lekki' : 'e.g. London'}
                     className={`w-full px-3.5 py-2.5 rounded-xl border text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] ${fieldErrors.city ? 'border-red-400' : 'border-gray-200'}`}
                   />
                   {fieldErrors.city && <p className="text-xs text-red-500 mt-1">{fieldErrors.city}</p>}

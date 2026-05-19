@@ -6,7 +6,7 @@ interface UpdateChurchInput {
   id: string
   logoUrl?: string | null
   form: {
-    name: string; city: string; state: string; address: string
+    name: string; city: string; state: string; country: string; address: string
     phone: string; website: string; instagram: string; facebook: string
     description: string; source_url: string
     pastor_name: string; leader_title: string; founder: string
@@ -19,7 +19,7 @@ interface UpdateOrganizerInput {
   id: string
   logoUrl?: string | null
   form: {
-    name: string; city: string; state: string; address: string
+    name: string; city: string; state: string; country: string; address: string
     phone: string; whatsapp: string; website: string; instagram: string
     facebook: string; twitter: string; youtube: string
     description: string; source_url: string
@@ -40,6 +40,7 @@ export async function updateAdminChurch(input: UpdateChurchInput): Promise<{ err
       address:       form.address.trim() || null,
       city:          form.city.trim(),
       state:         form.state,
+      country:       form.country || 'Nigeria',
       phone:         form.phone.trim() || null,
       website_url:   form.website.trim() || null,
       instagram:     form.instagram.trim() || null,
@@ -73,6 +74,7 @@ export async function updateAdminOrganizer(input: UpdateOrganizerInput): Promise
       ministry_type:  form.ministry_type.trim() || null,
       city:           form.city.trim(),
       state:          form.state,
+      country:        form.country || 'Nigeria',
       address:        form.address.trim() || null,
       phone:          form.phone.trim() || null,
       whatsapp:       form.whatsapp.trim() || null,

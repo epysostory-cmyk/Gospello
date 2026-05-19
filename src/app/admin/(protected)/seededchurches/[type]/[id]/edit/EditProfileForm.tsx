@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { ArrowLeft, Loader2, Save, Eye, EyeOff, Upload, X } from 'lucide-react'
 import Link from 'next/link'
 import { NIGERIAN_STATES } from '@/lib/utils'
+import { SUPPORTED_COUNTRIES } from '@/lib/countries'
 import { updateAdminChurch, updateAdminOrganizer } from './actions'
 import ServiceScheduleBuilder, { type ServiceEntry } from '../../../ServiceScheduleBuilder'
 
@@ -25,7 +26,7 @@ const LEADERSHIP_TITLES = [
 
 interface ChurchProfile {
   id: string; name: string; logo_url: string | null; description: string | null
-  address: string | null; city: string; state: string; phone: string | null
+  address: string | null; city: string; state: string; country: string; phone: string | null
   website_url: string | null; instagram: string | null; facebook: string | null
   pastor_name: string | null; leader_title: string | null; founder: string | null
   denomination: string | null; service_times: string | null
@@ -34,7 +35,7 @@ interface ChurchProfile {
 
 interface OrgProfile {
   id: string; name: string; logo_url: string | null; description: string | null
-  address: string | null; city: string; state: string; phone: string | null
+  address: string | null; city: string; state: string; country: string; phone: string | null
   whatsapp: string | null; website: string | null; instagram: string | null
   facebook: string | null; twitter: string | null; youtube: string | null
   contact_person: string | null; ministry_type: string | null
@@ -84,6 +85,7 @@ export default function EditProfileForm({ type, profile }: Props) {
     name:          church!.name,
     city:          church!.city,
     state:         church!.state,
+    country:       church!.country ?? 'Nigeria',
     address:       church!.address ?? '',
     phone:         church!.phone ?? '',
     website:       church!.website_url ?? '',
@@ -105,6 +107,7 @@ export default function EditProfileForm({ type, profile }: Props) {
     name:           org!.name,
     city:           org!.city,
     state:          org!.state,
+    country:        org!.country ?? 'Nigeria',
     address:        org!.address ?? '',
     phone:          org!.phone ?? '',
     whatsapp:       org!.whatsapp ?? '',
@@ -150,7 +153,7 @@ export default function EditProfileForm({ type, profile }: Props) {
           id: profile.id,
           logoUrl,
           form: {
-            name: form.name, city: form.city, state: form.state, address: form.address,
+            name: form.name, city: form.city, state: form.state, country: form.country, address: form.address,
             phone: form.phone, website: form.website, instagram: form.instagram, facebook: form.facebook,
             description: form.description, source_url: form.source_url,
             pastor_name: form.pastor_name, leader_title: form.leader_title,
@@ -163,7 +166,7 @@ export default function EditProfileForm({ type, profile }: Props) {
           id: profile.id,
           logoUrl,
           form: {
-            name: form.name, city: form.city, state: form.state, address: form.address,
+            name: form.name, city: form.city, state: form.state, country: form.country, address: form.address,
             phone: form.phone, whatsapp: form.whatsapp, website: form.website,
             instagram: form.instagram, facebook: form.facebook, twitter: form.twitter,
             youtube: form.youtube, description: form.description, source_url: form.source_url,
@@ -308,14 +311,24 @@ export default function EditProfileForm({ type, profile }: Props) {
         {/* Location */}
         <section className="p-5 space-y-4">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Location</h2>
+          <Field label="Country">
+            <select className={inputCls} value={form.country} onChange={e => { set('country', e.target.value); set('state', '') }}>
+              {SUPPORTED_COUNTRIES.map(c => <option key={c.name} value={c.name}>{c.flag} {c.name}</option>)}
+            </select>
+          </Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="State">
-              <select className={inputCls} value={form.state} onChange={e => set('state', e.target.value)}>
-                {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+            <Field label={form.country === 'Nigeria' ? 'State' : 'State / Region'}>
+              {form.country === 'Nigeria' ? (
+                <select className={inputCls} value={form.state} onChange={e => set('state', e.target.value)}>
+                  <option value="">Select state</option>
+                  {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              ) : (
+                <input className={inputCls} value={form.state} onChange={e => set('state', e.target.value)} placeholder="e.g. Greater London" />
+              )}
             </Field>
             <Field label="City">
-              <input className={inputCls} value={form.city} onChange={e => set('city', e.target.value)} />
+              <input className={inputCls} value={form.city} onChange={e => set('city', e.target.value)} placeholder={form.country === 'Nigeria' ? 'e.g. Lagos' : 'e.g. London'} />
             </Field>
           </div>
           <Field label="Address">

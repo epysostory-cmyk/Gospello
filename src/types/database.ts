@@ -94,6 +94,7 @@ export interface SeededOrganizer {
   ministry_type: string | null
   city: string
   state: string
+  country: string
   address: string | null
   phone: string | null
   website: string | null

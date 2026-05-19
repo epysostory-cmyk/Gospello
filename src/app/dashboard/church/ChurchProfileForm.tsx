@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { NIGERIAN_STATES } from '@/lib/utils'
+import { SUPPORTED_COUNTRIES } from '@/lib/countries'
 import { Loader2, Camera, CheckCircle, AlertCircle, Plus, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import type { Church } from '@/types/database'
@@ -189,18 +190,36 @@ export default function ChurchProfileForm({ church }: Props) {
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
+            <select value={form.country} onChange={e => { update('country', e.target.value); update('state', '') }}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+              {SUPPORTED_COUNTRIES.map(c => <option key={c.name} value={c.name}>{c.flag} {c.name}</option>)}
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">City</label>
               <input type="text" value={form.city} onChange={e => update('city', e.target.value)}
+                placeholder={form.country === 'Nigeria' ? 'e.g. Lagos' : 'e.g. London'}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">State</label>
-              <select value={form.state} onChange={e => update('state', e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                {form.country === 'Nigeria' ? 'State' : 'State / Region'}
+              </label>
+              {form.country === 'Nigeria' ? (
+                <select value={form.state} onChange={e => update('state', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                  <option value="">Select state</option>
+                  {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              ) : (
+                <input type="text" value={form.state} onChange={e => update('state', e.target.value)}
+                  placeholder="e.g. Greater London"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              )}
             </div>
           </div>
 
