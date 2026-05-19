@@ -223,14 +223,14 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
             {event.end_date && event.end_date.split('T')[0] !== event.start_date.split('T')[0] ? (
               <span>{formatDate(event.start_date, { month: 'short', day: 'numeric' })} – {formatDate(event.end_date, { month: 'short', day: 'numeric' })}</span>
             ) : (
-              <span>{formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatTime(event.start_date)}</span>
+              <span>{formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })}{event.time_tba ? ' · Time TBA' : ` · ${formatTime(event.start_date)}`}</span>
             )}
           </div>
           <div className="flex items-center gap-2 text-xs">
             {event.is_online ? (
               <><Globe className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" /><span className="text-gray-600 font-medium">Online</span></>
             ) : (
-              <><MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" /><span className="text-gray-600 font-medium truncate">{event.location_name || event.city || 'In Person'}</span></>
+              <><MapPin className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" /><span className="text-gray-600 font-medium truncate">{event.location_name || event.city || 'Venue TBA'}</span></>
             )}
           </div>
         </div>

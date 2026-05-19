@@ -192,6 +192,7 @@ export interface Event {
   livestream_url: string | null
   latitude: number | null
   longitude: number | null
+  time_tba: boolean
   // admin fields
   rejection_reason: string | null
   approved_at: string | null

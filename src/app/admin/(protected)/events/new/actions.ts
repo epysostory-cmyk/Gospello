@@ -38,6 +38,7 @@ interface AdminEventInput {
     daily_schedule: DaySchedule[] | null
     timezone: string
     livestream_url: string
+    time_tba?: boolean
   }
 }
 
@@ -106,6 +107,7 @@ export async function createAdminEvent(input: AdminEventInput): Promise<{ error?
       livestream_url:    form.livestream_url || null,
       latitude:          coords?.latitude ?? null,
       longitude:         coords?.longitude ?? null,
+      time_tba:          form.time_tba ?? false,
     }).select('id').single()
 
     if (error) return { error: error.message }
@@ -173,6 +175,7 @@ export async function updateAdminEvent(input: AdminEventUpdateInput): Promise<{ 
       livestream_url:    form.livestream_url || null,
       latitude:          coords?.latitude ?? null,
       longitude:         coords?.longitude ?? null,
+      time_tba:          form.time_tba ?? false,
     }).eq('id', eventId)
 
     if (error) return { error: error.message }
