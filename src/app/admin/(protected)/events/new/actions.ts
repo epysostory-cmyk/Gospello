@@ -15,17 +15,29 @@ export async function uploadAdminBanner(formData: FormData): Promise<{ url?: str
   if (!allowed.includes(file.type)) return { error: 'Only JPEG, PNG, GIF, or WebP allowed' }
 
   const admin = createAdminClient()
+  const bucket = 'event-banners'
+
+  // Ensure bucket exists and is public
+  const { data: existing } = await admin.storage.getBucket(bucket)
+  if (!existing) {
+    await admin.storage.createBucket(bucket, {
+      public: true,
+      fileSizeLimit: 10485760,
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+    })
+  }
+
   const ext = file.name.split('.').pop() ?? 'jpg'
   const path = `event-banners/${Date.now()}.${ext}`
   const bytes = await file.arrayBuffer()
 
   const { error: uploadErr } = await admin.storage
-    .from('event-banners')
+    .from(bucket)
     .upload(path, bytes, { contentType: file.type, upsert: true })
 
   if (uploadErr) return { error: uploadErr.message }
 
-  const { data: { publicUrl } } = admin.storage.from('event-banners').getPublicUrl(path)
+  const { data: { publicUrl } } = admin.storage.from(bucket).getPublicUrl(path)
   return { url: publicUrl }
 }
 

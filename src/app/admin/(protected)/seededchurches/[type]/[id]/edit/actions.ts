@@ -12,6 +12,17 @@ export async function uploadAdminLogo(formData: FormData): Promise<{ url?: strin
 
   const admin = createAdminClient()
   const bucket = 'avatars'
+
+  // Ensure bucket exists and is public
+  const { data: existing } = await admin.storage.getBucket(bucket)
+  if (!existing) {
+    await admin.storage.createBucket(bucket, {
+      public: true,
+      fileSizeLimit: 5242880,
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+    })
+  }
+
   const ext = file.name.split('.').pop() ?? 'jpg'
   const path = `seeded-profiles/${Date.now()}.${ext}`
   const bytes = await file.arrayBuffer()
