@@ -143,8 +143,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const firstSessionTime = e.daily_schedule?.[0]?.sessions?.find((s: { start_time: string | null }) => s.start_time)?.start_time
     ?? e.daily_schedule?.[0]?.start_time
   const displayTime = hasSchedule
-    ? (firstSessionTime ? fmt12(firstSessionTime) : 'TBD (To Be Announced)')
-    : e.time_tba ? 'TBD (To Be Announced)' : formatTime(e.start_date)
+    ? (firstSessionTime ? fmt12(firstSessionTime) : 'Time: TBD (To Be Announced Soon)')
+    : e.time_tba ? 'Time: TBD (To Be Announced Soon)' : formatTime(e.start_date)
   const venueKnown = !e.is_online && ((e.location_name && e.location_name !== 'TBD') || e.city)
   const displayVenue = e.is_online
     ? (e.online_platform ?? 'Online Event')

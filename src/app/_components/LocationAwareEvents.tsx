@@ -536,7 +536,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
                       </div>
                       <p className="mt-1 font-semibold text-gray-900 leading-snug line-clamp-2 text-sm">{event.title}</p>
                       <p className="mt-1 text-[12px] text-gray-500">
-                        {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })}{event.time_tba ? ' · Time TBA' : ` · ${formatTime(event.start_date)}`}
+                        {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })}{event.time_tba ? ' · Time TBD' : ` · ${formatTime(event.start_date)}`}
                       </p>
                       <p className="mt-0.5 text-[12px] text-gray-400 truncate">
                         {event.is_online ? 'Online' : [event.location_name, event.city].filter(Boolean).join(' · ') || 'TBD'}

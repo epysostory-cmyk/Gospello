@@ -223,7 +223,7 @@ export default function EventCard({ event, variant = 'default', attendanceCount,
             {event.end_date && event.end_date.split('T')[0] !== event.start_date.split('T')[0] ? (
               <span>{formatDate(event.start_date, { month: 'short', day: 'numeric' })} – {formatDate(event.end_date, { month: 'short', day: 'numeric' })}</span>
             ) : (
-              <span>{formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })}{event.time_tba ? ' · Time TBA' : ` · ${formatTime(event.start_date)}`}</span>
+              <span>{formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })}{event.time_tba ? ' · Time TBD' : ` · ${formatTime(event.start_date)}`}</span>
             )}
           </div>
           <div className="flex items-center gap-2 text-xs">
