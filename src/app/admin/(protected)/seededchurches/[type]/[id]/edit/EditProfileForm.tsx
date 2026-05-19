@@ -7,7 +7,7 @@ import { ArrowLeft, Loader2, Save, Eye, EyeOff, Upload, X } from 'lucide-react'
 import Link from 'next/link'
 import { NIGERIAN_STATES } from '@/lib/utils'
 import { SUPPORTED_COUNTRIES } from '@/lib/countries'
-import { updateAdminChurch, updateAdminOrganizer } from './actions'
+import { updateAdminChurch, updateAdminOrganizer, uploadAdminLogo } from './actions'
 import ServiceScheduleBuilder, { type ServiceEntry } from '../../../ServiceScheduleBuilder'
 
 const DENOMINATIONS = [
@@ -57,16 +57,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inputCls = 'w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent'
 
-async function uploadLogo(file: File): Promise<string> {
-  const fd = new FormData()
-  fd.append('file', file)
-  fd.append('bucket', 'avatars')
-  fd.append('folder', 'seeded-profiles')
-  const res = await fetch('/api/upload', { method: 'POST', body: fd })
-  const json = await res.json()
-  if (!res.ok || !json.url) throw new Error(json.error ?? 'Upload failed')
-  return json.url as string
-}
 
 export default function EditProfileForm({ type, profile }: Props) {
   const router = useRouter()
@@ -133,7 +123,10 @@ export default function EditProfileForm({ type, profile }: Props) {
     setLogoUploading(true)
     setError('')
     try {
-      const url = await uploadLogo(file)
+      const fd = new FormData()
+      fd.append('file', file)
+      const { url, error: uploadErr } = await uploadAdminLogo(fd)
+      if (uploadErr || !url) { setError(uploadErr ?? 'Upload failed'); return }
       setLogoUrl(url)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Logo upload failed')

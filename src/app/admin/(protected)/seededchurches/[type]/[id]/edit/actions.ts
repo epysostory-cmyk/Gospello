@@ -2,6 +2,30 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 
+export async function uploadAdminLogo(formData: FormData): Promise<{ url?: string; error?: string }> {
+  const file = formData.get('file') as File | null
+  if (!file) return { error: 'No file provided' }
+  if (file.size > 3 * 1024 * 1024) return { error: 'Logo must be under 3 MB' }
+
+  const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  if (!allowed.includes(file.type)) return { error: 'Only JPEG, PNG, GIF, or WebP allowed' }
+
+  const admin = createAdminClient()
+  const bucket = 'avatars'
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const path = `seeded-profiles/${Date.now()}.${ext}`
+  const bytes = await file.arrayBuffer()
+
+  const { error: uploadErr } = await admin.storage
+    .from(bucket)
+    .upload(path, bytes, { contentType: file.type, upsert: true })
+
+  if (uploadErr) return { error: uploadErr.message }
+
+  const { data: { publicUrl } } = admin.storage.from(bucket).getPublicUrl(path)
+  return { url: publicUrl }
+}
+
 interface UpdateChurchInput {
   id: string
   logoUrl?: string | null
