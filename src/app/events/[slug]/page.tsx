@@ -24,6 +24,7 @@ import { EventStatusBadge } from './_components/EventStatusBadge'
 import EventTimezone from './_components/EventTimezone'
 import { checkUserAttended } from '@/app/actions/attendance'
 import { checkEventSaved } from '@/app/actions/saved-events'
+import DownloadFlyerButton from './_components/DownloadFlyerButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -283,6 +284,24 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <ShareEventButton slug={e.slug} eventTitle={e.title} eventUrl={eventUrl}
               eventDate={shareDate} eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} />
           </div>
+
+          {/* Flyer actions */}
+          {e.banner_url && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <a
+                href={e.banner_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-indigo-200 text-sm font-semibold transition-all shadow-sm group"
+              >
+                <svg className="w-4 h-4 text-indigo-500 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                View Flyer
+              </a>
+              <DownloadFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
+            </div>
+          )}
         </div>
 
         {/* ── Date / Location / Host card ── */}
@@ -982,8 +1001,29 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     <AddToCalendar title={e.title} startDate={e.start_date} endDate={e.end_date}
                       location={shareLocation} description={e.description} />
                     <ShareEventButton slug={e.slug} eventTitle={e.title} eventUrl={eventUrl}
-                      eventDate={shareDate} eventLocation={shareLocation} eventDescription={e.description ?? ''} />
+                      eventDate={shareDate} eventLocation={shareLocation} eventDescription={e.description ?? ''} bannerUrl={e.banner_url} />
                   </div>
+
+                  {/* Flyer actions */}
+                  {e.banner_url && (
+                    <div className="border-t border-gray-100 px-5 py-4">
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Event Flyer</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <a
+                          href={e.banner_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-indigo-200 text-sm font-semibold transition-all shadow-sm group"
+                        >
+                          <svg className="w-4 h-4 text-indigo-500 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          View Flyer
+                        </a>
+                        <DownloadFlyerButton bannerUrl={e.banner_url} eventTitle={e.title} />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Views */}
