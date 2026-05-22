@@ -273,6 +273,20 @@ export default function DiscoverChurches({ churches }: Props) {
               </p>
             </Link>
           ))}
+
+          {/* End-cap: See all churches in filtered state */}
+          <Link
+            href={stateFilter ? `/churches?state=${encodeURIComponent(stateFilter)}` : '/churches'}
+            className="group flex-shrink-0 snap-start w-[160px] md:w-[176px] bg-gray-50 border border-dashed border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:border-gray-400 hover:bg-gray-100 transition-all"
+          >
+            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-3 group-hover:bg-gray-300 transition-colors">
+              <ChevronRight className="w-5 h-5 text-gray-600" />
+            </div>
+            <p className="text-[13px] font-semibold text-gray-700 leading-snug">
+              {stateFilter ? `See all ${stateFilter} churches` : 'See all churches'}
+            </p>
+          </Link>
+
           <div className="flex-shrink-0 w-4" />
         </div>
       )}
