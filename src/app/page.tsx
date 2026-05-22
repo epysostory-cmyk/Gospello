@@ -162,16 +162,15 @@ async function getHomepageData() {
       .from('churches')
       .select('id, name, slug, logo_url, denomination, city, state, verified_badge')
       .eq('is_hidden', false)
-      .not('logo_url', 'is', null)
       .order('verified_badge', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(200)
       .then(r => r.data ?? [])
 
     const discoverChurches = [
       ...allChurchesWithPhoto.filter(c => approvedChurchIds.has(c.id)),
       ...allChurchesWithPhoto.filter(c => !approvedChurchIds.has(c.id)),
-    ].slice(0, 10).map(c => ({
+    ].slice(0, 150).map(c => ({
       id: c.id,
       name: c.name,
       slug: c.slug,
