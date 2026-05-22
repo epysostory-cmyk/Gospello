@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { requireAdminRole } from '@/lib/admin-auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate } from '@/lib/utils'
+import { ShieldCheck, Shield, Eye } from 'lucide-react'
 import AddAdminFormNew from './AddAdminFormNew'
 import DeleteAdminButton from './DeleteAdminButton'
 
@@ -15,76 +16,101 @@ export default async function AdminTeamPage() {
     .select('id, email, role, created_at')
     .order('created_at', { ascending: false })
 
-  const ROLE_LABELS: Record<string, string> = {
-    super_admin: 'Super Admin', admin: 'Admin', moderator: 'Moderator',
-  }
-  const ROLE_CLS: Record<string, string> = {
-    super_admin: 'bg-red-100 text-red-700 border-red-200',
-    admin:       'bg-violet-100 text-violet-700 border-violet-200',
-    moderator:   'bg-amber-100 text-amber-700 border-amber-200',
+  const ROLE_META: Record<string, { label: string; cls: string; icon: typeof ShieldCheck; desc: string }> = {
+    super_admin: {
+      label: 'Super Admin',
+      cls:   'bg-red-100 text-red-700 border-red-200',
+      icon:  ShieldCheck,
+      desc:  'Full access — roles, settings, billing',
+    },
+    admin: {
+      label: 'Admin',
+      cls:   'bg-violet-100 text-violet-700 border-violet-200',
+      icon:  Shield,
+      desc:  'Manage profiles, events, claims, users',
+    },
+    moderator: {
+      label: 'Moderator',
+      cls:   'bg-amber-100 text-amber-700 border-amber-200',
+      icon:  Eye,
+      desc:  'Create profiles & events, view queue',
+    },
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-2xl">
+
+      {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Roles &amp; Admins</h1>
-        <p className="text-gray-500 mt-0.5 text-sm">Manage administrative team members and permissions</p>
+        <h1 className="text-xl font-bold text-gray-900">Team</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Admin accounts and their permissions</p>
       </div>
 
-      {/* Role permissions card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5">
-        <h2 className="text-sm font-semibold text-gray-900 mb-4">Permission Matrix</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { role: 'Super Admin', cls: 'border-red-200 bg-red-50', perms: ['Everything below', 'Assign/remove roles', 'Platform settings', 'Billing & usage'] },
-            { role: 'Admin',       cls: 'border-violet-200 bg-violet-50', perms: ['Create unclaimed profiles', 'Create events under any profile', 'Approve/reject claims', 'Suspend & hide accounts', 'Feature/unfeature events', 'Manage categories'] },
-            { role: 'Moderator',   cls: 'border-amber-200 bg-amber-50', perms: ['Create unclaimed profiles', 'Create events under any profile', 'View event queue'] },
-          ].map(({ role, cls, perms }) => (
-            <div key={role} className={`rounded-xl border p-4 ${cls}`}>
-              <p className="text-sm font-bold text-gray-900 mb-2">{role}</p>
-              <ul className="space-y-1">
-                {perms.map(p => <li key={p} className="text-xs text-gray-600 flex gap-1.5"><span className="text-green-500 flex-shrink-0">✓</span>{p}</li>)}
-              </ul>
+      {/* Role reference — compact cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {Object.entries(ROLE_META).map(([key, meta]) => {
+          const Icon = meta.icon
+          return (
+            <div key={key} className={`rounded-2xl border p-4 ${meta.cls.replace('text-', 'border-').replace('bg-', 'bg-')}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <Icon className="w-4 h-4" />
+                <p className="text-sm font-bold">{meta.label}</p>
+              </div>
+              <p className="text-xs opacity-80 leading-snug">{meta.desc}</p>
             </div>
-          ))}
-        </div>
+          )
+        })}
       </div>
 
+      {/* Add admin form */}
       <AddAdminFormNew />
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h2 className="text-sm font-semibold text-gray-900">Admin Team</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-gray-100 bg-gray-50">
-              <tr>
-                {['Email','Role','Joined','Actions'].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {!adminUsers || adminUsers.length === 0 ? (
-                <tr><td colSpan={4} className="px-5 py-10 text-center text-sm text-gray-400">No admin users</td></tr>
-              ) : (adminUsers as any[]).map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3.5"><p className="text-sm font-medium text-gray-900">{user.email}</p></td>
-                  <td className="px-5 py-3.5">
-                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${ROLE_CLS[user.role] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                      {ROLE_LABELS[user.role] || user.role}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5"><p className="text-sm text-gray-500">{formatDate(user.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}</p></td>
-                  <td className="px-5 py-3.5"><DeleteAdminButton userId={user.id} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Team list */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">
+          {adminUsers?.length ?? 0} admin{adminUsers?.length !== 1 ? 's' : ''}
+        </p>
+
+        {!adminUsers || adminUsers.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
+            <p className="text-sm text-gray-400">No admin users yet</p>
+          </div>
+        ) : (adminUsers as any[]).map((user) => {
+          const meta = ROLE_META[user.role]
+          const Icon = meta?.icon ?? Shield
+          const initial = user.email[0].toUpperCase()
+          return (
+            <div key={user.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-4">
+              <div className="flex items-center gap-3">
+                {/* Avatar */}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold border ${meta?.cls ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                  {initial}
+                </div>
+
+                {/* Info */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{user.email}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    Added {formatDate(user.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                </div>
+
+                {/* Role badge */}
+                <span className={`flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${meta?.cls ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                  <Icon className="w-3 h-3" />
+                  {meta?.label ?? user.role}
+                </span>
+              </div>
+
+              {/* Delete — separated so it's intentional */}
+              <div className="mt-3 pt-3 border-t border-gray-50 flex justify-end">
+                <DeleteAdminButton userId={user.id} />
+              </div>
+            </div>
+          )
+        })}
       </div>
+
     </div>
   )
 }
