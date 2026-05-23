@@ -498,54 +498,80 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         {filteredEvents.length === 0 ? (
           <div className="flex flex-col items-center py-20 text-center">
-            <p className="text-4xl mb-4">🔍</p>
             <h3 className="text-xl font-bold text-gray-900 mb-2">No events found</h3>
-            <p className="text-gray-500 mb-6">Try adjusting your filters</p>
+            <p className="text-gray-500 mb-6 text-sm">Try adjusting your filters</p>
             <button onClick={clearAllFilters}
-              className="px-6 py-3 bg-gray-900 text-white rounded-xl font-medium text-sm">
-              Clear Filters
+              className="px-6 py-3 bg-gray-900 text-white rounded-xl font-semibold text-sm">
+              Clear filters
             </button>
           </div>
         ) : (
           <>
             {/* Mobile: compact list */}
-            <div className="flex flex-col md:hidden" style={{ gap: 10 }}>
+            <div className="flex flex-col md:hidden gap-2.5">
               {displayedEvents.map(event => {
                 const categoryInfo = catMap[event.category]
+                // Relative date label
+                const now = new Date(); now.setHours(0,0,0,0)
+                const evDay = new Date(event.start_date); evDay.setHours(0,0,0,0)
+                const diff = Math.round((evDay.getTime() - now.getTime()) / 86400000)
+                const dateLabel =
+                  diff === 0 ? 'Today'
+                  : diff === 1 ? 'Tomorrow'
+                  : diff > 1 && diff < 7 ? `In ${diff} days`
+                  : formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })
+                const isUrgent = diff <= 1
+
                 return (
-                  <Link
+                  <div
                     key={event.id}
-                    href={`/events/${event.slug}`}
-                    className="flex gap-3 p-3 rounded-2xl bg-white active:bg-gray-50 active:scale-[0.99] transition-all duration-100 border border-gray-100"
+                    className="relative rounded-2xl bg-white border border-gray-100 active:scale-[0.99] transition-transform duration-100 overflow-hidden"
                   >
-                    <div className="flex-shrink-0 rounded-xl overflow-hidden" style={{ width: 90, height: 90 }}>
-                      {event.banner_url ? (
-                        <Image src={event.banner_url} alt={event.title} width={90} height={90} className="object-cover w-full h-full" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                          <span className="text-gray-400 font-black text-2xl">{event.title[0]}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${event.is_free ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {/* Full-card link */}
+                    <Link
+                      href={`/events/${event.slug}`}
+                      className="flex gap-3 p-3 pr-12"
+                    >
+                      {/* Thumbnail */}
+                      <div className="flex-shrink-0 rounded-xl overflow-hidden" style={{ width: 88, height: 88 }}>
+                        {event.banner_url ? (
+                          <Image src={event.banner_url} alt={event.title} width={88} height={88} className="object-cover w-full h-full" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                            <span className="text-gray-300 font-black text-2xl">{event.title[0]}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Text */}
+                      <div className="flex-1 min-w-0">
+                        {/* Date — first, prominent */}
+                        <p className={`text-[11px] font-bold mb-0.5 ${isUrgent ? 'text-rose-500' : 'text-gray-400'}`}>
+                          {dateLabel}
+                          {!event.time_tba && (
+                            <span className="font-normal"> · {formatTime(event.start_date)}</span>
+                          )}
+                        </p>
+
+                        <p className="font-semibold text-gray-900 leading-snug line-clamp-2 text-[13.5px]">
+                          {event.title}
+                        </p>
+
+                        <p className="mt-1 text-[11.5px] text-gray-400 truncate">
+                          {event.is_online ? 'Online' : [event.location_name, event.city].filter(Boolean).join(' · ') || 'Location TBD'}
+                        </p>
+
+                        <span className={`inline-block mt-1.5 text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${event.is_free ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
                           {event.is_free ? 'Free' : event.price != null ? `₦${event.price.toLocaleString()}` : 'Paid'}
                         </span>
-                        {categoryInfo && <span className="text-[11px] text-gray-400 truncate">{categoryInfo.name}</span>}
                       </div>
-                      <p className="mt-1 font-semibold text-gray-900 leading-snug line-clamp-2 text-sm">{event.title}</p>
-                      <p className="mt-1 text-[12px] text-gray-500">
-                        {formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })}{event.time_tba ? ' · Time TBD' : ` · ${formatTime(event.start_date)}`}
-                      </p>
-                      <p className="mt-0.5 text-[12px] text-gray-400 truncate">
-                        {event.is_online ? 'Online' : [event.location_name, event.city].filter(Boolean).join(' · ') || 'TBD'}
-                      </p>
-                      <div className="mt-2" onClick={e => e.preventDefault()}>
-                        <SaveButton eventId={event.id} initialSaved={false} variant="icon" size="sm" />
-                      </div>
+                    </Link>
+
+                    {/* Save button — outside the Link, absolutely positioned */}
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <SaveButton eventId={event.id} initialSaved={false} variant="icon" size="sm" />
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>

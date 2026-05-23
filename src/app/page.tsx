@@ -1,9 +1,8 @@
 import Link from 'next/link'
-import { Search, ArrowRight, ChevronRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import EventCard from '@/components/ui/EventCard'
-import ChurchCard from '@/components/ui/ChurchCard'
 import SectionHeader from '@/components/ui/SectionHeader'
 import LocationAwareEvents from './_components/LocationAwareEvents'
 import DiscoverChurches from './_components/DiscoverChurches'
@@ -12,6 +11,8 @@ import type { OrganizerCard } from './_components/DiscoverOrganizers'
 import type { Event, Church } from '@/types/database'
 import HomeCategoryScroller from './_components/HomeCategoryScroller'
 import ServicesToday from './_components/ServicesToday'
+import HomeJustAdded from './_components/HomeJustAdded'
+import HomePostEventFAB from './_components/HomePostEventFAB'
 
 export const revalidate = 60
 
@@ -239,9 +240,23 @@ async function getHomepageData() {
       }
     }
 
+    // Top states by upcoming event volume — for hero quick links
+    const stateCount: Record<string, number> = {}
+    for (const ev of upcomingEvents) {
+      if (ev.state) stateCount[ev.state] = (stateCount[ev.state] ?? 0) + 1
+    }
+    const topStates = Object.entries(stateCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([state]) => state)
+
+    // Just added — most recently posted upcoming events
+    const justAdded = upcomingEvents.slice(0, 8)
+
     return {
       featuredEvents,
       upcomingEvents,
+      justAdded,
       featuredChurches,
       churchEventCountMap,
       categories: categoriesWithEvents,
@@ -261,11 +276,13 @@ async function getHomepageData() {
         id: string; name: string; slug: string; city: string; state: string;
         service_times: string; logo_url: string | null; denomination: string | null; verified_badge: boolean
       }>,
+      topStates,
     }
   } catch {
     return {
       featuredEvents: [],
       upcomingEvents: [],
+      justAdded: [],
       featuredChurches: [],
       churchEventCountMap: {} as Record<string, number>,
       categories: [],
@@ -277,6 +294,7 @@ async function getHomepageData() {
       discoverOrganizers: [],
       churchCta: null,
       servicesTodayChurches: [],
+      topStates: [],
     }
   }
 }
@@ -285,6 +303,7 @@ export default async function HomePage() {
   const {
     featuredEvents,
     upcomingEvents,
+    justAdded,
     featuredChurches,
     churchEventCountMap,
     categories,
@@ -296,6 +315,7 @@ export default async function HomePage() {
     discoverOrganizers,
     churchCta,
     servicesTodayChurches,
+    topStates,
   } = await getHomepageData()
 
   const displayCategories = categories.slice(0, 8)
@@ -304,7 +324,6 @@ export default async function HomePage() {
   const heroHeadlineGradient = heroSettings?.hero_headline_gradient ?? 'near you'
   const heroHeadline3 = heroSettings?.hero_headline_3 ?? ''
   const heroSubheadline = heroSettings?.hero_subheadline ?? 'Worship nights, conferences, prayer gatherings, youth programs and more — across all 36 Nigerian states.'
-  const heroBadge = heroSettings?.hero_badge ?? ''
   const popularSearches: string[] = (heroSettings?.hero_popular_searches ?? 'Worship,Lagos,Conference,Prayer,Youth')
     .split(',')
     .map((s: string) => s.trim())
@@ -317,64 +336,94 @@ export default async function HomePage() {
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section className="bg-white">
-        <div className="max-w-3xl mx-auto px-5 sm:px-6 pt-16 pb-14 sm:pt-24 sm:pb-20 text-center">
+        <div className="max-w-3xl mx-auto px-5 sm:px-6 pt-12 pb-10 sm:pt-24 sm:pb-20 text-center">
 
-          <h1 className="text-[2.6rem] sm:text-[3.5rem] font-black text-gray-950 tracking-tight leading-[1.08] mb-5">
+          {/* Headline — tighter on mobile */}
+          <h1 className="text-[1.85rem] sm:text-[3.5rem] font-black text-gray-950 tracking-tight leading-[1.1] sm:leading-[1.08] mb-4 sm:mb-5">
             {heroHeadline1}{' '}
             <span className="text-indigo-600">{heroHeadlineGradient}</span>
             {heroHeadline3 && <span> {heroHeadline3}</span>}
           </h1>
 
-          <p className="text-[17px] sm:text-lg text-gray-500 leading-relaxed max-w-xl mx-auto mb-10">
+          <p className="text-[15px] sm:text-lg text-gray-500 leading-relaxed max-w-xl mx-auto mb-7 sm:mb-10">
             {heroSubheadline}
           </p>
 
+          {/* Search */}
           <form action="/search" method="GET" className="max-w-xl mx-auto">
             <div className="flex items-center bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
-              <Search className="w-5 h-5 text-gray-400 ml-4 flex-shrink-0" />
               <input
-                type="text"
+                type="search"
                 name="q"
                 placeholder="Search events, churches, cities…"
-                className="flex-1 px-3 py-4 text-[15px] text-gray-900 placeholder-gray-400 bg-transparent focus:outline-none"
+                autoComplete="off"
+                className="flex-1 px-4 py-4 text-[15px] text-gray-900 placeholder-gray-400 bg-transparent focus:outline-none"
               />
               <button
                 type="submit"
-                className="flex-shrink-0 m-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors"
+                className="flex-shrink-0 m-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors"
               >
                 Search
               </button>
             </div>
           </form>
 
-          <div className="mt-5 flex items-center justify-center gap-x-1 gap-y-2 flex-wrap">
-            <span className="text-sm text-gray-400 mr-1">Popular:</span>
-            {popularSearches.slice(0, 5).map((tag, i) => (
-              <span key={tag} className="flex items-center">
-                <Link href={`/search?q=${encodeURIComponent(tag)}`} className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">
+          {/* Popular searches — pill chips, not plain links */}
+          {popularSearches.length > 0 && (
+            <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-400 font-medium">Popular</span>
+              {popularSearches.slice(0, 5).map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/search?q=${encodeURIComponent(tag)}`}
+                  className="text-xs font-medium text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:border-gray-400 hover:text-gray-900 active:bg-gray-100 transition-colors"
+                >
                   {tag}
                 </Link>
-                {i < Math.min(popularSearches.length, 5) - 1 && <span className="text-gray-300 mx-1.5">·</span>}
-              </span>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {/* State quick links — derived from real event data */}
+          {topStates.length > 0 && (
+            <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-400 font-medium">Events in</span>
+              {topStates.map((state) => (
+                <Link
+                  key={state}
+                  href={`/events?state=${encodeURIComponent(state)}`}
+                  className="text-xs font-semibold text-indigo-600 border border-indigo-100 bg-indigo-50 rounded-full px-3 py-1.5 hover:bg-indigo-100 active:bg-indigo-200 transition-colors"
+                >
+                  {state}
+                </Link>
+              ))}
+            </div>
+          )}
 
         </div>
       </section>
 
       {/* ── CATEGORIES ────────────────────────────────────────────────── */}
       {displayCategories.length > 0 && (
+        <HomeCategoryScroller categories={displayCategories} />
+      )}
+
+      {/* ── JUST ADDED ────────────────────────────────────────────────── */}
+      {justAdded.length > 0 && (
         <div className="border-t border-gray-100">
-          <HomeCategoryScroller categories={displayCategories} />
+          <HomeJustAdded events={justAdded} catMap={catMap} />
         </div>
       )}
 
       {/* ── FEATURED EVENTS ───────────────────────────────────────────── */}
       {featuredEvents.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4">
           <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Featured</h2>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Featured</h2>
+                <p className="text-sm text-gray-400 mt-0.5">Hand-picked by Gospello</p>
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {featuredEvents.map((event) => (
@@ -402,7 +451,6 @@ export default async function HomePage() {
       {!hasEvents && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           <section className="text-center py-24">
-            <p className="text-5xl mb-5">⛪</p>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Events coming soon</h2>
             <p className="text-gray-400 mb-8 text-sm">Be the first to post an event on Gospello.</p>
             <Link href="/auth/signup" className="inline-flex items-center gap-2 bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors text-sm">
@@ -420,8 +468,8 @@ export default async function HomePage() {
 
       {/* ── BOTTOM CTA ────────────────────────────────────────────────── */}
       {(churchCta === null || churchCta.visible !== false) && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          <section className="border border-gray-200 rounded-3xl px-8 py-12 sm:px-14 sm:py-14 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 sm:pb-20">
+          <section className="border border-gray-200 rounded-3xl px-6 py-10 sm:px-14 sm:py-14 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div className="max-w-lg">
               <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-950 leading-tight">
                 {churchCta?.heading ?? 'Running an event?'}
@@ -430,17 +478,17 @@ export default async function HomePage() {
                 {churchCta?.subtext ?? 'List it on Gospello for free. Reach believers across Nigeria — no tech skills needed.'}
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+            <div className="flex flex-col gap-3 sm:flex-row flex-shrink-0">
               <Link
                 href={churchCta?.button1_url ?? '/auth/signup?type=church'}
-                className="inline-flex items-center justify-center gap-2 bg-gray-950 hover:bg-gray-800 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-colors"
+                className="inline-flex items-center justify-center gap-2 bg-gray-950 hover:bg-gray-800 active:bg-gray-900 text-white font-semibold px-6 py-3.5 rounded-xl text-sm transition-colors"
               >
                 {churchCta?.button1_label ?? 'Register your church'}
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href={churchCta?.button2_url ?? '/auth/signup'}
-                className="inline-flex items-center justify-center bg-white hover:bg-gray-50 text-gray-800 font-semibold px-6 py-3 rounded-xl border border-gray-200 text-sm transition-colors"
+                className="inline-flex items-center justify-center bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-800 font-semibold px-6 py-3.5 rounded-xl border border-gray-200 text-sm transition-colors"
               >
                 {churchCta?.button2_label ?? 'Post an event'}
               </Link>
@@ -448,6 +496,9 @@ export default async function HomePage() {
           </section>
         </div>
       )}
+
+      {/* ── FLOATING POST EVENT BUTTON ────────────────────────────────── */}
+      <HomePostEventFAB />
 
     </div>
   )
