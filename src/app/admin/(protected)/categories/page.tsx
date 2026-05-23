@@ -23,26 +23,28 @@ export default async function AdminCategoriesPage() {
   const visibleCount = cats.filter(c => c.is_visible).length
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      {/* Header */}
-      <div>
-        <div className="flex items-start justify-between gap-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile-first header */}
+      <div className="bg-white border-b border-gray-100 px-4 pt-5 pb-4 sm:px-6">
+        <div className="flex items-start justify-between gap-3 mb-1">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Event Categories</h1>
-            <p className="text-gray-500 mt-1 text-sm">
-              {cats.length} total &mdash; {visibleCount} visible on the website
+            <h1 className="text-lg font-bold text-gray-900 leading-tight">Event Categories</h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {cats.length} total · {visibleCount} visible
             </p>
           </div>
           <AddCategoryForm />
         </div>
-        <p className="text-xs text-gray-400 mt-3">
-          Hiding a category removes it from the website without deleting it. Events in that category keep their tag.
+        <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+          Hiding a category removes it from the site without deleting events in it.
         </p>
       </div>
 
       {/* List */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        <CategoryBulkTable cats={cats} countMap={countMap} />
+      <div className="px-0 sm:px-4 sm:pt-4 sm:max-w-3xl sm:mx-auto">
+        <div className="bg-white sm:rounded-2xl sm:border sm:border-gray-200 sm:shadow-sm overflow-hidden">
+          <CategoryBulkTable cats={cats} countMap={countMap} />
+        </div>
       </div>
     </div>
   )
