@@ -48,16 +48,26 @@ function mapsUrl(name: string, city: string, state: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`
 }
 
+const MAX_DISPLAY = 6
+
 export default function ServicesToday({ churches }: Props) {
-  const { todayIndex, todayName, matching } = useMemo(() => {
+  const { todayIndex, todayName, matching, displayed, overflow } = useMemo(() => {
     const now = new Date()
     const idx = now.getDay()
     const names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     const filtered = churches.filter(c => churchHasServiceToday(c.service_times, idx))
-    return { todayIndex: idx, todayName: names[idx], matching: filtered }
+    return {
+      todayIndex: idx,
+      todayName: names[idx],
+      matching: filtered,
+      displayed: filtered.slice(0, MAX_DISPLAY),
+      overflow: Math.max(0, filtered.length - MAX_DISPLAY),
+    }
   }, [churches])
 
   if (matching.length === 0) return null
+
+  const dayParam = todayName.toLowerCase()
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-2">
@@ -65,10 +75,15 @@ export default function ServicesToday({ churches }: Props) {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Services today</h2>
-            <p className="text-sm text-gray-400 mt-0.5">Churches with services this {todayName}</p>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {matching.length} {matching.length === 1 ? 'church' : 'churches'} with services this {todayName}
+            </p>
           </div>
-          <Link href="/churches" className="text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors">
-            All churches
+          <Link
+            href={`/churches?day=${dayParam}`}
+            className="text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            See all
           </Link>
         </div>
 
@@ -76,7 +91,7 @@ export default function ServicesToday({ churches }: Props) {
           className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 snap-x snap-mandatory"
           style={{ scrollbarWidth: 'none' } as React.CSSProperties}
         >
-          {matching.map(church => {
+          {displayed.map(church => {
             const timesText = extractTimesForDay(church.service_times, todayIndex)
             const directionsHref = mapsUrl(church.name, church.city, church.state)
 
@@ -142,6 +157,22 @@ export default function ServicesToday({ churches }: Props) {
               </div>
             )
           })}
+
+          {/* End-cap — only when there are more than MAX_DISPLAY */}
+          {overflow > 0 && (
+            <Link
+              href={`/churches?day=${dayParam}`}
+              className="group flex-shrink-0 snap-start w-[240px] sm:w-auto border border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center p-5 hover:border-gray-400 hover:bg-gray-50 active:bg-gray-100 transition-all"
+            >
+              <p className="text-2xl font-black text-gray-300 group-hover:text-gray-400 transition-colors">
+                +{overflow}
+              </p>
+              <p className="text-[13px] font-semibold text-gray-600 mt-1 leading-snug">
+                more {todayName} services
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Tap to see all</p>
+            </Link>
+          )}
         </div>
       </section>
     </div>
