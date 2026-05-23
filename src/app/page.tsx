@@ -107,7 +107,7 @@ async function getHomepageData() {
         .eq('is_hidden', false)
         .not('service_times', 'is', null)
         .neq('service_times', '')
-        .limit(40),
+        .limit(80),
     ])
 
     const featuredEvents = (featuredRes.data ?? []) as Event[]
