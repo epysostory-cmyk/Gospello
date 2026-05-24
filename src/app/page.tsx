@@ -12,7 +12,6 @@ import type { Event, Church } from '@/types/database'
 import HomeCategoryScroller from './_components/HomeCategoryScroller'
 import ServicesToday from './_components/ServicesToday'
 import HomeJustAdded from './_components/HomeJustAdded'
-import HomePostEventFAB from './_components/HomePostEventFAB'
 
 export const revalidate = 60
 
@@ -496,9 +495,6 @@ export default async function HomePage() {
           </section>
         </div>
       )}
-
-      {/* ── FLOATING POST EVENT BUTTON ────────────────────────────────── */}
-      <HomePostEventFAB />
 
     </div>
   )
