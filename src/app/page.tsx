@@ -13,7 +13,6 @@ import HomeCategoryScroller from './_components/HomeCategoryScroller'
 import ServicesToday from './_components/ServicesToday'
 import HomeJustAdded from './_components/HomeJustAdded'
 import HomeNewChurches from './_components/HomeNewChurches'
-import NotificationNudge from './_components/NotificationNudge'
 
 export const revalidate = 60
 
@@ -462,8 +461,6 @@ export default async function HomePage() {
         />
       )}
 
-      {/* ── NOTIFICATION NUDGE (features 9 & 10) ─────────────────────── */}
-      <NotificationNudge />
 
       {/* Empty state */}
       {!hasEvents && (

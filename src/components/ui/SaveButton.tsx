@@ -29,6 +29,7 @@ interface Props {
   /** 'icon' renders a heart circle (for cards), 'button' renders the full-width sidebar button */
   variant?: 'icon' | 'button'
   size?: 'sm' | 'md'
+  onSaved?: (eventId: string) => void
 }
 
 export default function SaveButton({
@@ -38,6 +39,7 @@ export default function SaveButton({
   serverUserId,
   variant = 'button',
   size = 'sm',
+  onSaved,
 }: Props) {
   const [user, setUser] = useState<User | null>(null)
   const [loadingUser, setLoadingUser] = useState(serverUserId === undefined)
@@ -85,6 +87,7 @@ export default function SaveButton({
       setLocalSaved(updated)
       setIsSaved(next)
       triggerBounce()
+      if (next) onSaved?.(eventId)
       return
     }
 
@@ -96,7 +99,7 @@ export default function SaveButton({
       if (result.success) setIsSaved(false)
     } else {
       const result = await saveEvent(eventId)
-      if (result.success) setIsSaved(true)
+      if (result.success) { setIsSaved(true); onSaved?.(eventId) }
     }
 
     setIsLoading(false)

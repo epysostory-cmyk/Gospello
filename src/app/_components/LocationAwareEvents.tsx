@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { MapPin, Loader2, ArrowRight, X, SlidersHorizontal, ChevronDown, Users } from 'lucide-react'
+import WhatsAppShareToast from './WhatsAppShareToast'
 import Link from 'next/link'
 import Image from 'next/image'
 import EventCard from '@/components/ui/EventCard'
@@ -125,6 +126,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
   const [customOpen, setCustomOpen] = useState(false)
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [shareToast, setShareToast] = useState<{ title: string; slug: string } | null>(null)
 
   useEffect(() => { setVisibleCount(PAGE_SIZE) }, [dateFilter, stateFilter, categoryFilter, appliedFrom, appliedTo])
 
@@ -581,7 +583,13 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
 
                     {/* Save button — outside the Link, absolutely positioned */}
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <SaveButton eventId={event.id} initialSaved={false} variant="icon" size="sm" />
+                      <SaveButton
+                        eventId={event.id}
+                        initialSaved={false}
+                        variant="icon"
+                        size="sm"
+                        onSaved={() => setShareToast({ title: event.title, slug: event.slug })}
+                      />
                     </div>
                   </div>
                 )
@@ -612,6 +620,12 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
           </>
         )}
       </div>
+
+      {/* WhatsApp share toast — appears after saving an event */}
+      <WhatsAppShareToast
+        event={shareToast}
+        onDismiss={() => setShareToast(null)}
+      />
     </section>
   )
 }
