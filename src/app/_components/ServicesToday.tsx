@@ -1,9 +1,9 @@
 'use client'
 
-import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CheckCircle2, MapPin, Loader2, X } from 'lucide-react'
+import { CheckCircle2, MapPin, Loader2, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { NIGERIAN_STATES, formatServiceTimesForDay } from '@/lib/utils'
 
 interface ChurchWithTimes {
@@ -86,6 +86,29 @@ async function reverseGeocodeState(lat: number, lng: number): Promise<string | n
 }
 
 export default function ServicesToday({ churches }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canLeft, setCanLeft]   = useState(false)
+  const [canRight, setCanRight] = useState(true)
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanLeft(el.scrollLeft > 8)
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8)
+  }, [])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    el.addEventListener('scroll', checkScroll, { passive: true })
+    checkScroll()
+    return () => el.removeEventListener('scroll', checkScroll)
+  }, [checkScroll])
+
+  const scroll = (dir: 'left' | 'right') => {
+    scrollRef.current?.scrollBy({ left: dir === 'right' ? 520 : -520, behavior: 'smooth' })
+  }
+
   const [nearMeState, setNearMeState] = useState<'idle' | 'loading' | 'active' | 'denied'>('idle')
   const [activeState, setActiveState] = useState<string | null>(null)
   const [stateFilter, setStateFilter] = useState<string | null>(null)
@@ -208,12 +231,31 @@ export default function ServicesToday({ churches }: Props) {
               }
             </p>
           </div>
-          <Link
-            href={`/churches?day=${dayParam}${stateFilter ? `&state=${encodeURIComponent(stateFilter)}` : ''}`}
-            className="text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors flex-shrink-0 mt-0.5"
-          >
-            See all
-          </Link>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Scroll arrows — desktop only */}
+            <div className="hidden sm:flex items-center gap-1">
+              <button
+                onClick={() => scroll('left')}
+                disabled={!canLeft}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white disabled:opacity-30 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
+              </button>
+              <button
+                onClick={() => scroll('right')}
+                disabled={!canRight}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 bg-white disabled:opacity-30 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+            <Link
+              href={`/churches?day=${dayParam}${stateFilter ? `&state=${encodeURIComponent(stateFilter)}` : ''}`}
+              className="text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              See all
+            </Link>
+          </div>
         </div>
 
         {/* ── Near Me control row ── */}
@@ -300,6 +342,7 @@ export default function ServicesToday({ churches }: Props) {
         ) : (
           /* ── Cards ── */
           <div
+            ref={scrollRef}
             className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory"
             style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
           >
