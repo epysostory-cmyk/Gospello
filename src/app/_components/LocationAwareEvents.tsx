@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MapPin, Loader2, ArrowRight, X, SlidersHorizontal, ChevronDown } from 'lucide-react'
+import { MapPin, Loader2, ArrowRight, X, SlidersHorizontal, ChevronDown, Users } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import EventCard from '@/components/ui/EventCard'
@@ -524,6 +524,11 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
                 // Only highlight today/tomorrow — never past-start events
                 const isUrgent = diff === 0 || diff === 1
 
+                const attendance = attendanceCountMap[event.id] ?? 0
+                const waText = encodeURIComponent(
+                  `Check out this gospel event 🙌\n\n${event.title}\n\nhttps://www.gospello.com/events/${event.slug}`
+                )
+
                 return (
                   <div
                     key={event.id}
@@ -532,7 +537,7 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
                     {/* Full-card link */}
                     <Link
                       href={`/events/${event.slug}`}
-                      className="flex gap-3 p-3 pr-12"
+                      className="flex gap-3 p-3 pr-20"
                     >
                       {/* Thumbnail */}
                       <div className="flex-shrink-0 rounded-xl overflow-hidden" style={{ width: 88, height: 88 }}>
@@ -563,15 +568,36 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
                           {event.is_online ? 'Online' : [event.location_name, event.city].filter(Boolean).join(' · ') || 'Location TBD'}
                         </p>
 
-                        <span className={`inline-block mt-1.5 text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${event.is_free ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                          {event.is_free ? 'Free' : event.price != null ? `₦${event.price.toLocaleString()}` : 'Paid'}
-                        </span>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <span className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${event.is_free ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {event.is_free ? 'Free' : event.price != null ? `₦${event.price.toLocaleString()}` : 'Paid'}
+                          </span>
+                          {attendance >= 10 && (
+                            <span className="flex items-center gap-0.5 text-[10.5px] text-gray-400">
+                              <Users className="w-3 h-3" />
+                              {attendance} going
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </Link>
 
-                    {/* Save button — outside the Link, absolutely positioned */}
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {/* Action buttons — outside the Link, stacked top-right */}
+                    <div className="absolute right-3 top-3 flex flex-col items-center gap-1.5">
                       <SaveButton eventId={event.id} initialSaved={false} variant="icon" size="sm" />
+                      <a
+                        href={`https://wa.me/?text=${waText}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="w-8 h-8 rounded-full bg-[#25D366] flex items-center justify-center shadow-sm active:scale-95 transition-transform"
+                        aria-label="Share on WhatsApp"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="white">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.535 5.847L.057 23.492a.5.5 0 0 0 .614.612l5.757-1.505A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.954 9.954 0 0 1-5.031-1.36l-.361-.214-3.737.977.999-3.648-.235-.374A9.953 9.953 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+                        </svg>
+                      </a>
                     </div>
                   </div>
                 )

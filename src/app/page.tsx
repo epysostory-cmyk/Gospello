@@ -12,6 +12,8 @@ import type { Event, Church } from '@/types/database'
 import HomeCategoryScroller from './_components/HomeCategoryScroller'
 import ServicesToday from './_components/ServicesToday'
 import HomeJustAdded from './_components/HomeJustAdded'
+import HomeNewChurches from './_components/HomeNewChurches'
+import NotificationNudge from './_components/NotificationNudge'
 
 export const revalidate = 60
 
@@ -40,6 +42,7 @@ async function getHomepageData() {
       discoverSeededOrganizersRes,
       churchCtaRes,
       servicesTodayRes,
+      newChurchesRes,
     ] = await Promise.all([
       supabase
         .from('platform_settings')
@@ -107,6 +110,13 @@ async function getHomepageData() {
         .not('service_times', 'is', null)
         .neq('service_times', '')
         .limit(80),
+      adminClient
+        .from('churches')
+        .select('id, name, slug, city, state, logo_url, denomination, verified_badge')
+        .eq('is_hidden', false)
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+        .limit(12),
     ])
 
     const featuredEvents = (featuredRes.data ?? []) as Event[]
@@ -276,6 +286,10 @@ async function getHomepageData() {
         service_times: string; logo_url: string | null; denomination: string | null; verified_badge: boolean
       }>,
       topStates,
+      newChurches: (newChurchesRes.data ?? []) as Array<{
+        id: string; name: string; slug: string; city: string | null; state: string | null;
+        logo_url: string | null; denomination: string | null; verified_badge: boolean
+      }>,
     }
   } catch {
     return {
@@ -294,6 +308,7 @@ async function getHomepageData() {
       churchCta: null,
       servicesTodayChurches: [],
       topStates: [],
+      newChurches: [],
     }
   }
 }
@@ -315,6 +330,7 @@ export default async function HomePage() {
     churchCta,
     servicesTodayChurches,
     topStates,
+    newChurches,
   } = await getHomepageData()
 
   const displayCategories = categories.slice(0, 8)
@@ -436,6 +452,11 @@ export default async function HomePage() {
       {/* ── SERVICES TODAY ────────────────────────────────────────────── */}
       <ServicesToday churches={servicesTodayChurches} />
 
+      {/* ── NEW CHURCHES THIS MONTH ───────────────────────────────────── */}
+      {newChurches.length > 0 && (
+        <HomeNewChurches churches={newChurches} />
+      )}
+
       {/* ── UPCOMING EVENTS ───────────────────────────────────────────── */}
       {upcomingEvents.length > 0 && (
         <LocationAwareEvents
@@ -445,6 +466,9 @@ export default async function HomePage() {
           categories={categories}
         />
       )}
+
+      {/* ── NOTIFICATION NUDGE (features 9 & 10) ─────────────────────── */}
+      <NotificationNudge />
 
       {/* Empty state */}
       {!hasEvents && (
