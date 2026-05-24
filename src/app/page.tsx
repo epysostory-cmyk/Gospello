@@ -452,11 +452,6 @@ export default async function HomePage() {
       {/* ── SERVICES TODAY ────────────────────────────────────────────── */}
       <ServicesToday churches={servicesTodayChurches} />
 
-      {/* ── NEW CHURCHES THIS MONTH ───────────────────────────────────── */}
-      {newChurches.length > 0 && (
-        <HomeNewChurches churches={newChurches} />
-      )}
-
       {/* ── UPCOMING EVENTS ───────────────────────────────────────────── */}
       {upcomingEvents.length > 0 && (
         <LocationAwareEvents
