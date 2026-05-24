@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ShieldCheck, CheckCircle, Calendar, Clock } from 'lucide-react'
 import type { Church } from '@/types/database'
+import { formatServiceTimes } from '@/lib/utils'
 
 interface Props {
   church: Church
@@ -142,7 +143,7 @@ export default function ChurchProfileCard({ church, eventCount = 0 }: Props) {
                     <Clock className="w-3 h-3 text-violet-400 flex-shrink-0" />
                   </div>
                   <p className="text-[10px] text-gray-600 font-medium truncate leading-snug">
-                    {church.service_times}
+                    {formatServiceTimes(church.service_times)}
                   </p>
                 </div>
               </>

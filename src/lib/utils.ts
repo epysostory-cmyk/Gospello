@@ -59,6 +59,91 @@ export function isThisWeek(dateStr: string): boolean {
   return date >= now && date <= weekFromNow
 }
 
+interface ServiceEntry { day: string; name: string; time: string }
+
+/** Converts "08:00" → "8AM", "14:30" → "2:30PM" */
+function fmt12h(t: string): string {
+  const [h, m] = t.split(':').map(Number)
+  if (isNaN(h)) return t
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12  = h % 12 || 12
+  return m ? `${h12}:${String(m).padStart(2, '0')}${ampm}` : `${h12}${ampm}`
+}
+
+const DAY_LABEL: Record<string, string> = {
+  sunday: 'Sundays', monday: 'Mondays', tuesday: 'Tuesdays',
+  wednesday: 'Wednesdays', thursday: 'Thursdays', friday: 'Fridays', saturday: 'Saturdays',
+}
+
+/**
+ * Parses service_times regardless of whether it is plain text or the
+ * structured JSON saved by ServiceScheduleBuilder.
+ *
+ * JSON example: [{"day":"sunday","name":"Morning Service","time":"08:00"}]
+ * Plain text:   "Sundays 8AM, Wednesdays 6PM"
+ *
+ * Returns a clean human-readable string in all cases.
+ */
+export function formatServiceTimes(raw: string | null | undefined): string {
+  if (!raw) return ''
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return (parsed as ServiceEntry[])
+        .map(e => {
+          const day  = DAY_LABEL[e.day?.toLowerCase()] ?? e.day
+          const time = e.time ? fmt12h(e.time) : ''
+          const name = e.name?.trim() ? ` · ${e.name.trim()}` : ''
+          return [day, time].filter(Boolean).join(' ') + name
+        })
+        .join(', ')
+    }
+  } catch { /* plain text — fall through */ }
+  return raw
+}
+
+/**
+ * Same as formatServiceTimes but only returns entries matching a specific day.
+ * dayIndex: 0=Sun, 1=Mon … 6=Sat
+ */
+export function formatServiceTimesForDay(raw: string | null | undefined, dayIndex: number): string {
+  if (!raw) return ''
+  const DAY_KEYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+  const targetDay = DAY_KEYS[dayIndex]
+
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const todayEntries = (parsed as ServiceEntry[]).filter(
+        e => e.day?.toLowerCase() === targetDay
+      )
+      if (todayEntries.length > 0) {
+        return todayEntries
+          .map(e => {
+            const time = e.time ? fmt12h(e.time) : ''
+            const name = e.name?.trim() ? `${e.name.trim()} ` : ''
+            return `${name}${time}`.trim()
+          })
+          .join(', ')
+      }
+      // No entry for today — return all formatted (fallback)
+      return formatServiceTimes(raw)
+    }
+  } catch { /* plain text */ }
+
+  // Plain text — use the existing regex approach
+  const lower = raw.toLowerCase()
+  const dayShort = targetDay.slice(0, 3)
+  const regex = new RegExp(`(${dayShort}[a-z]*|${targetDay})s?[:\\s]*([^,\\n]+)`, 'i')
+  const match = lower.match(regex)
+  if (match) {
+    const idx = lower.indexOf(match[0])
+    const original = raw.substring(idx, idx + match[0].length).trim()
+    return original.length < 60 ? original : raw
+  }
+  return raw
+}
+
 export const CATEGORY_LABELS: Record<string, string> = {
   worship:    'Worship Nights',
   prayer:     'Prayer Events',

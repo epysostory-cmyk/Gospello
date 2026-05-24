@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckCircle2, MapPin, Loader2, X } from 'lucide-react'
-import { NIGERIAN_STATES } from '@/lib/utils'
+import { NIGERIAN_STATES, formatServiceTimesForDay } from '@/lib/utils'
 
 interface ChurchWithTimes {
   id: string
@@ -29,22 +29,15 @@ const LOCATION_KEY = 'gospello_user_location'
 const LOCATION_TTL = 24 * 60 * 60 * 1000
 
 function churchHasServiceToday(serviceTimes: string, dayIndex: number): boolean {
+  // Handle JSON format
+  try {
+    const parsed = JSON.parse(serviceTimes)
+    if (Array.isArray(parsed)) {
+      return parsed.some((e: { day: string }) => e.day?.toLowerCase() === DAY_FULL[dayIndex])
+    }
+  } catch { /* plain text */ }
   const lower = serviceTimes.toLowerCase()
   return lower.includes(DAY_SHORT[dayIndex]) || lower.includes(DAY_FULL[dayIndex])
-}
-
-function extractTimesForDay(serviceTimes: string, dayIndex: number): string {
-  const lower = serviceTimes.toLowerCase()
-  const dayFull  = DAY_FULL[dayIndex]
-  const dayShort = DAY_SHORT[dayIndex]
-  const regex = new RegExp(`(${dayShort}[a-z]*|${dayFull})s?[:\\s]*([^,\\n]+)`, 'i')
-  const match = lower.match(regex)
-  if (match) {
-    const idx = lower.indexOf(match[0])
-    const original = serviceTimes.substring(idx, idx + match[0].length).trim()
-    return original.length < 60 ? original : serviceTimes
-  }
-  return serviceTimes
 }
 
 function mapsUrl(name: string, city: string, state: string) {
@@ -311,7 +304,7 @@ export default function ServicesToday({ churches }: Props) {
             style={{ scrollbarWidth: 'none' } as React.CSSProperties}
           >
             {displayed.map(church => {
-              const timesText = extractTimesForDay(church.service_times, todayIndex)
+              const timesText = formatServiceTimesForDay(church.service_times, todayIndex)
               const directionsHref = mapsUrl(church.name, church.city, church.state)
 
               return (
