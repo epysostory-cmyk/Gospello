@@ -300,8 +300,8 @@ export default function ServicesToday({ churches }: Props) {
         ) : (
           /* ── Cards ── */
           <div
-            className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 snap-x snap-mandatory"
-            style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+            className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory"
+            style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
           >
             {displayed.map(church => {
               const timesText = formatServiceTimesForDay(church.service_times, todayIndex)

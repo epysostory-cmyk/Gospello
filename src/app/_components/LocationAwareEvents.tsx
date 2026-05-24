@@ -516,11 +516,13 @@ export default function LocationAwareEvents({ allEvents, attendanceCountMap, cat
                 const evDay = new Date(event.start_date); evDay.setHours(0,0,0,0)
                 const diff = Math.round((evDay.getTime() - now.getTime()) / 86400000)
                 const dateLabel =
-                  diff === 0 ? 'Today'
+                  diff < 0  ? 'Ongoing'
+                  : diff === 0 ? 'Today'
                   : diff === 1 ? 'Tomorrow'
-                  : diff > 1 && diff < 7 ? `In ${diff} days`
+                  : diff < 7 ? `In ${diff} days`
                   : formatDate(event.start_date, { weekday: 'short', month: 'short', day: 'numeric' })
-                const isUrgent = diff <= 1
+                // Only highlight today/tomorrow — never past-start events
+                const isUrgent = diff === 0 || diff === 1
 
                 return (
                   <div

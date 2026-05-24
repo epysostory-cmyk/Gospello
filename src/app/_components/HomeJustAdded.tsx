@@ -16,9 +16,10 @@ function relativeDate(dateStr: string): { label: string; hot: boolean } {
   const now = new Date()
   now.setHours(0, 0, 0, 0)
   const diff = Math.floor((event.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  if (diff < 0)  return { label: 'Ongoing', hot: false }
   if (diff === 0) return { label: 'Today', hot: true }
   if (diff === 1) return { label: 'Tomorrow', hot: true }
-  if (diff >= 2 && diff <= 6) return { label: `In ${diff} days`, hot: false }
+  if (diff < 7)  return { label: `In ${diff} days`, hot: false }
   return {
     label: event.toLocaleDateString('en-NG', {
       month: 'short',
