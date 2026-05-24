@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Calendar, CheckCircle, Clock, XCircle, Plus, ArrowRight, Building2 } from 'lucide-react'
+import { Calendar, CheckCircle, Clock, XCircle, Plus, ArrowRight, Building2, Code2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import type { Event } from '@/types/database'
 import { redirect } from 'next/navigation'
@@ -186,18 +186,43 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Church profile prompt */}
+      {/* Church tools — profile + embed */}
       {profile?.account_type === 'church' && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Building2 className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-            <p className="text-sm text-indigo-800 font-medium">
-              Manage your church&apos;s public profile, logo, and banner
-            </p>
-          </div>
-          <Link href="/dashboard/church" className="flex-shrink-0 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
-            Edit profile →
+        <div className="grid sm:grid-cols-2 gap-3">
+
+          {/* Church profile */}
+          <Link
+            href="/dashboard/church"
+            className="group flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 hover:border-gray-200 hover:shadow-sm transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">Church Profile</p>
+              <p className="text-xs text-gray-400 mt-0.5">Logo, banner, service times, denomination</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition-colors flex-shrink-0" />
           </Link>
+
+          {/* Embed widget */}
+          <Link
+            href="/dashboard/church/embed"
+            className="group flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 hover:border-gray-200 hover:shadow-sm transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
+              <Code2 className="w-5 h-5 text-violet-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-gray-900 group-hover:text-violet-600 transition-colors">Embed on your website</p>
+                <span className="text-[10px] font-bold text-violet-600 bg-violet-50 border border-violet-100 px-1.5 py-0.5 rounded-full">NEW</span>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">Your events, live on your church website</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-violet-400 transition-colors flex-shrink-0" />
+          </Link>
+
         </div>
       )}
     </div>
